@@ -1,0 +1,1203 @@
+* TODO for later
+- callstack overflows
+- IO capabilities: storage reads/writes, events, messages to L1,
+  precompile calls (delegation of execution to specialized circuit)
+
+* zkEVM spec
+:PROPERTIES:
+:CUSTOM_ID: zkevm-spec
+:END:
+This spec will contain 4 main parts:
+
+** VM semantics
+:PROPERTIES:
+:CUSTOM_ID: vm-semantics
+:END:
+
+VM execution consists of cycles and each cycles can be logically broken
+in three steps from circuit perspective:
+
+- create "pre-state" - perform all common operations for every opcode,
+  namely deal with exceptions, resources, edge cases like end of
+  execution, select operands, compute common values
+- materialize a set of "deltas" for every opcode. Even though only one
+  opcode is executed, in circuit we still take all possible branches
+- update a state based on "deltas" and the indicator of which opcode is
+  actually executed
+
+
+#+begin_src rust
+pub struct VmLocalState {
+    pub registers: [PrimitiveValue; REGISTERS_COUNT],
+    pub flags: Flags,
+    pub timestamp: u32,
+    pub current_ergs_per_pubdata_byte: u32,
+    pub tx_number_in_block: u16,
+    pub context_u128_register: u128,
+    pub callstack: Callstack,
+        // non-observable, but will be used for description
+        num_cycles_to_skip: usize,
+}
+
+pub struct Flags {
+    pub overflow_or_less_than_flag: bool,
+    pub equality_flag: bool,
+    pub greater_than_flag: bool,
+}
+
+pub struct Callstack {
+    pub current: CallStackEntry, // current frame execution context
+    pub inner: Vec<CallStackEntry>, // stack of contexts
+}
+
+pub struct CallStackEntry {
+    pub this_address: Address,
+    pub msg_sender: Address,
+    pub code_address: Address,
+    pub base_memory_page: MemoryPage,
+    pub code_page: MemoryPage,
+    pub sp: u16,
+    pub pc: u16,
+    pub exception_handler_location: u16,
+    pub ergs_remaining: u32,
+    pub this_shard_id: u8,
+    pub caller_shard_id: u8,
+    pub code_shard_id: u8,
+    pub is_static: bool,
+    pub is_local_frame: bool,
+    pub context_u128_value: u128,
+    pub heap_bound: u32,
+    pub aux_heap_bound: u32,
+}
+#+end_src
+
+*** Opcode properties for pre-state
+:PROPERTIES:
+:CUSTOM_ID: opcode-properties-for-pre-state
+:END:
+Each opcode has a set of properties that are non-runtime dependent and
+are used in pre-state step. Those are
+
+- ergs price - cost in units of resources. > 0
+- whether or not the opcode can be used in "static" execution context.
+  "static" context forbids all IO write-like modifications (storage
+  write, event/l1 message emission)
+- whether opcode is an explicit panic or no. =invalid= opcode is an
+  explicit panic
+- whether or not opcode can be used in "user space" or only in "kernel
+  space"
+
+*** Pre-state
+:PROPERTIES:
+:CUSTOM_ID: pre-state
+:END:
+During pre-state VM reads (if allowed) an opcode at the current PC,
+decodes it, tries to spend resources for it, resolves exceptions and
+selects operands
+
+Nop opcode substitute: =nop r0, r0, r0, r0=
+
+Panic opcode substitute: =ret.panic r0=
+
+Callstack depth: length of the =Callstack.inner= vector. Initial
+=current= =CallStackEntry= value is hardcoded, and at the start of the
+execution initial value is pushed to callstack
+
+Pre-state steps:
+
+- If num_cycles_to_skip == 0 and VM execution didn't (callstack depth
+  == 0) - read word (=U256=) from the current =code_page= at offset
+  =pc / 4= and select a corresponding 8-byte subword from it based on
+  =pc % 4=. Our opcode encoding is 8 bytes per opcode. Otherwise use
+  encoding of Nop opcode from above
+- Proceed with initial decoding, technical step, exceptionless
+- Resolve exceptions. Each condition contributes independently:
+  - If opcode is explicit panic - raise an exception
+  - Resolve ergs spending
+    - Get basic ergs price of opcode execution. Most opcodes only have
+      "basic" price
+    - if num_cycles_to_skip ≠ 0 also set opcode cost to 0
+    - try to subtract such cost from =ergs_remaining=. If there is not
+      enough (underflow) - raise an exception
+    - update =ergs_remaining= in the current execution context
+  - If opcode can only be used in "kernel mode" and we are not in it -
+    raise an exception
+  - If opcode can not be used in "static" context and we are in it -
+    raise an exception
+  - if current opcode depth (=Callstack.inner.len()= ) == maximum opcode
+    depth (system defining constant) - raise an exception
+- If any exception happened - mask current executed opcode into panic
+  opcode substitute from above
+- resolve conditional execution
+  - if opcode execution condition is not satisfied - mask current
+    executed opcode into Nop substitute
+  - Note: =ret.panic r0= is conditionless, so it will not be masked
+- Based on =src0= operand addressing mode prepare memory location to
+  read (if necessary) and tentatively adjust =sp= (update it's value in
+  current execution context). No overflow or underflow checks are done
+  here (this is an implementation detail and not guaranteed to be
+  unchanged)
+- Based on =src1= operand addressing mode prepare memory location to
+  write later on (if necessary) and tentatively adjust =sp= (update it's
+  value in current execution context). No overflow or underflow checks
+  are done here (this is an implementation detail and not guaranteed to
+  be unchanged)
+- Read "source" operands (those are of type =Primitive value= and can be
+  pointer or not):
+  - If =nop= opcode is executed then =sp= is still adjusted, but no
+    memory read will happen on this step, instead constant =0= (and
+    non-pointer) will be used. Nop opcode doesn't execute anything based
+    on values of source operands, but can still manipulate =sp= via
+    addressing modes
+  - read =src0= using resolved memory location, or register, or use
+    immediate
+  - use register for =src1=
+  - if opcode that we execute is "asymmetrical" and uses a flag that
+    means "swap operands" then swap values(!) of =src0= and =src1=. Such
+    opcodes are =sub=, =shift=, =div= and =ptr=
+- if num_cycles_to_skip ≠ 0 and execution didn't end then prepare
+  =new_pc= candidate as =pc + 1=
+  - unless said otherwise, all opcodes set =pc= value of the current
+    context to such new =new_pc= value
+- Prestate is
+
+#+begin_src rust
+pub struct PreState {
+    pub src0: PrimitiveValue,
+    pub src1: PrimitiveValue,
+    pub dst0_mem_location: Option<MemoryLocation>,
+    pub new_pc: u16,
+    pub is_kernel_mode: bool,
+}
+#+end_src
+
+Now we can continue into execution of all other opcodes independently
+
+** Particular opcodes
+:PROPERTIES:
+:CUSTOM_ID: particular-opcodes
+:END:
+NOTE: even though =src0= and =src1= are =PrimitiveValue= indicating
+whether they can be used as pointers for =ptr= opcode, unless mentioned
+otherwise we ignore =PrimitiveValue.is_pointer= flag and tread =src0=
+and =src1= as integers. Also unless mentioned otherwise all opcodes set
+=dst0= and =dst1= to have =is_pointer = false=
+
+- =invalid=
+
+  - doesn't have an execution path, and is purely marker opcode
+
+- =nop=
+
+  - performs no meaningful computations
+  - can be used to adjust =sp= via addressing modes
+
+- =add=
+
+  - compute and set =dst0 = src0 + src1 mod 2^256=
+  - compute =of= flag as =src0 + src1 >= 2^256=
+  - compute =eq= flag as =dst0 == 0=
+  - compute =gt= flag as =!of && !eq=
+  - if opcode is allowed to set flags, then set corresponding flags to
+    =VmLocalState.flags=
+
+- =sub=
+
+  - compute and set =dst0 = src0 - src1 mod 2^256=
+  - compute =of= flag as =src0 < src1=
+  - compute =eq= flag as =dst0 == 0=
+  - compute =gt= flag as =!of && !eq=
+  - if opcode is allowed to set flags, then set corresponding flags to
+    =VmLocalState.flags=
+
+- =mul=
+
+  - compute and set =dst0 = src0 * src1 mod 2^256=
+  - compute and set =dst1 = src0 * src1 >> 256=
+  - compute =of= flag as =dst1 != 0=
+  - compute =eq= flag as =dst0 == 0=
+  - compute =gt= flag as =!of && !eq=
+  - if opcode is allowed to set flags, then set corresponding flags to
+    =VmLocalState.flags=
+
+- =div=
+
+  - if =src1 != 0=:
+    - compute and set =dst0 = src0 / src1=
+    - compute and set =dst1 = src0 % src1=
+    - consider =of= flag as =false=
+    - compute =eq= flag as =dst0 == 0=
+    - compute =gt= flag as =dst1 == 0=
+  - else:
+    - set =dst0= and =dst1= to zero
+    - consider that =of= flag is =true=
+  - if opcode is allowed to set flags, then set corresponding flags to
+    =VmLocalState.flags=
+
+- =binop=
+
+  - depending on the modifier it's bitwise AND/OR/XOR
+  - compute and set =dst0 = src0 BINOP src1=
+    - consider =of= flag as =false=
+    - compute =eq= flag as =dst0 == 0=
+    - consider =gt= flag as =false=
+  - if opcode is allowed to set flags, then set corresponding flags to
+    =VmLocalState.flags=
+
+- =jump=
+
+  - sets PC of the current frame to the lowest 16 bits of =src0=
+  - note: it's condition of the jump is usually encoded as condition of
+    the opcode execution itself
+
+- =context=
+
+  - performs reads and writes of values from the current execution
+    context
+  - uses register-only addressing
+  - write operations:
+    - =ContextOpcode::SetContextU128= - available in kernel only. Sets
+      =context_u128_register= value to the lowest 128 bits of =src0=
+    - =ContextOpcode::SetErgsPerPubdataByte= - available in kernel only.
+      Sets =current_ergs_per_pubdata_byte= value to the lowest 32 bits
+      of =src0=
+    - =ContextOpcode::IncrementTxNumber= - available in kernel only.
+      Increments (wrapping) =tx_number_in_block= by 1. One of the rare
+      places where VM has any notion related to blocks/transactions
+  - read operations:
+    - =ContextOpcode::This= - sets =dst0= into
+      =uint256(current_context.this_address)=
+    - =ContextOpcode::Caller= - sets =dst0= into
+      =uint256(current_context.msg_sender)=
+    - =ContextOpcode::CodeAddress= - sets =dst0= into
+      =uint256(current_context.code_address)=
+    - =ContextOpcode::Meta= - sets =dst0= into encoding of Meta values
+      structure.
+      [[https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.2.1/src/definitions/abi/meta.rs]]
+
+    #+begin_src rust
+    let meta = VmMetaParameters {
+                        ergs_per_pubdata_byte: vm_state.local_state.current_ergs_per_pubdata_byte,
+                        this_shard_id: current_context.this_shard_id,
+                        caller_shard_id: current_context.caller_shard_id,
+                        code_shard_id: current_context.code_shard_id,
+                        heap_size: vm_state.local_state.callstack.get_current_stack().heap_bound,
+                        aux_heap_size: vm_state.local_state.callstack.get_current_stack().aux_heap_bound,
+                    };
+    #+end_src
+
+    - =ContextOpcode::ErgsLeft= - sets =dst0= into
+      =uint256(current_context.ergs_remaining)=
+    - =ContextOpcode::Sp= - sets =dst0= into
+      =uint256(current_context.sp)=
+    - =ContextOpcode::GetContextU128= - sets =dst0= into
+      =uint256(current_context.context_u128_value)= (NOT the
+      =VmLocalState.context_u128_register=)
+
+- =near call=
+
+  - it's a jump to the piece of code in the current contract, with
+    additional creation of execution frame that allows inner exception
+    handling with reverts of storage changes
+  - sets PC of the current execution frame to precomputed =new_pc= value
+    from pre-state
+  - parses =src0= into ABI
+    [[https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.2.1/src/definitions/abi/near_call.rs]].
+    This opcode uses register-only addressing for =src0=
+  - resets all =VmLocalState.flags=
+  - by convention if ABI specifies =abi.ergs_passed == 0= then we
+    consider all ergs to be passed to the next frame. Otherwise it's
+    =passed = max(ergs_remaining, abi.ergs_passed)=
+    - set =ergs_remaining= of the current frame to
+      =ergs_remaining - passed= (≥ 0)
+    - clone current execution context as =next_context= (meaning that we
+      preserve all the values in it that are not overwritten below)
+    - push current execution context to the callstack
+    - set =next_context.ergs_remaining = passed=
+    - set =next_context.pc = imm0=, where =imm0= is the value of
+      immediate from opcode encoding itself. Since =near_call= uses
+      register-only addressing, this area of opcode can be disjointly
+      used for other purposes
+    - set =next_context.EH = imm1=
+    - set =next_context.is_local = true=
+
+  =far_call=
+
+  - call the code located at another address
+  - by it's internal structure it tries to:
+    - read code hash on the destination address
+    - if code is absent on the address (code hash == 0) then use default
+      AA code hash from block properties if the address is not in the
+      kernel address space
+    - validate code hash by format
+    - if code hash is invalid then use special =UNMAPPED_PAGE=
+      (number 0) for code page that contains 0 values only and thus will
+      be interpreted as =invalid= opcodes only, leading to quick revert
+      of the callee
+    - otherwise request preimage of the code hash is unpacked into
+      specific code page, or if such code has was already unpacked once
+      in the execution then code page is reused (code page is readonly
+      for VM)
+    - pass information to the callee using the ABI, and validate few
+      other invariants in the process
+    - in general any exception on this stage will lead to using
+      =UNMAPPED_PAGE= as a code page for callee
+  - this opcode uses register-only addressing for =src0/src1= and in the
+    same manner as =near_call= uses =imm0= area of the opcode encoding
+    directly to set =EH= address
+  - reset all =VmLocalState.flags=
+  - read =is_static_call= and =is_call_shard= from opcode properties
+    (non-exclusive)
+  - read whether =far_call= is =normal=, =delegate= or =mimic=
+    (exclusive)
+  - sets PC of the current execution frame to precomputed =new_pc= value
+    from pre-state
+  - parse =src0= into =far_call_abi= as in
+    [[https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.2.1/src/definitions/abi/far_call.rs]]
+  - parse lowest 160 bits for =src1= as a =called_address=
+  - resolve extra limitations on =far_call_abi=
+    - =far_call_abi.constructor_call= is masked into =false= if current
+      context is not in kernel (callee is not an address in kernel
+      range)
+    - =far_call_abi.to_system= is masked into =false= if current context
+      is not in kernel
+  - Resolve callee destination more precisely
+    - if =is_call_shard= is =false= then set =new_code_shard_id= as
+      =this_shard_id= of the current context, otherwise use a value from
+      =far_call_abi=
+    - resolve =new_this_shard_id= as =new_code_shard_id= is =far_call=
+      is not =delegate=, otherwise use =this_shard_id= of the current
+      context
+  - claim some candidates for code memory page and stack/heap/aux heap
+    memory pages for the callee to use from monotonic counter
+  - now we have to resolve =mapped_code_page= and
+    =ergs_after_code_read_and_exceptions_resolution= as a result of
+    attempt to read code hash of the called address and pay for the
+    corresponding operations
+  - 
+
+* ISA v1.3.1
+:PROPERTIES:
+:CUSTOM_ID: isa-v1.3.1
+:END:
+** Changes over 1.1/1.2
+:PROPERTIES:
+:CUSTOM_ID: changes-over-1.11.2
+:END:
+- extra heap-like (writable) memory page per contract context, called
+  "aux heap" (mainly for calling system contracts)
+- =calldata= and =returndata= explicit memory pages are removed in
+  favour of "fat pointers" approach
+- all (aligned) 32 byte elements in VM are additionally tagged to be
+  "pointer" or "integer"
+- added opcode family =ptr= to manipulate pointers. The rule is
+  =ptr.X ptr, non-ptr -> ptr=, and panics otherwise
+- all frames after "far call" start with formal =sp = 1024=, that allows
+  to use beginning of the stack as a scratch space
+- use of "fat pointers" leads to multiple "returndata" regions
+  simultaneously accessible in contract's context, that may be handy for
+  optimizations
+- "far call" arguments are swapped: =in1= is the ABI data, =in2= is the
+  address
+- only two registers are set at the contract entry: =r1= is the ABI
+  data, =r2= is the constructor flag. =r3= and =r4= are still reserved
+  (as zeroed)
+- "UMA" opcodes got new option to increment the pointer
+
+*** Fat pointer construction
+:PROPERTIES:
+:CUSTOM_ID: fat-pointer-construction
+:END:
+Fat pointer is a structure of
+
+#+begin_src rust
+pub struct FatPointer {
+    pub offset: u32,
+    pub memory_page: u32,
+    pub start: u32,
+    pub length: u32,
+}
+#+end_src
+
+that is represented in a packed form in registers/memory as 256 bit
+integer, where top 128 bits are zeroes, and lowest 128 bits are packed
+=length || start || memory_page || offset=
+
+NOTE: =offset= is the "offset from the start"
+
+NOTE: VM only creates "wellformed" fat pointers, namely =start + length=
+doesn't overflow =u32= and also doesn't span beyond addressable address
+space =[0..2^24]=, so when we do checks during dereference we only need
+to check that =offset < length=. And when we do pointer arithmetic via
+e.g. =ptr.add= we only care that =ptr.offset + another_offset= doesn't
+overflow =u32=
+
+Only VM can create "root" memory pointers as a product of =ret= (caller
+gets fat pointer into "returndata" in =r1= in this case) and =far call=
+(callee gets fat pointer into "calldata" in =r1=)
+
+If one wants to read from fat pointer he can:
+
+- perform pointer arithmetics via =ptr.add= and =ptr.sub= instructions
+- form "packed" fat pointers for =far call= and =ret= ABI using
+  =ptr.pack= instruction
+- read (deref) the fat pointer with the rules:
+  - if =offset < length= then it will perform a memory read (it can read
+    a little beyond the formal end bound =start + length= due to
+    granularity of 32 byte access)
+  - if =offset >= length= then it will not access the memory and return
+    0 instead
+
+IMPORTANT: version 1.1.2 does NOT have extra costs of memory resize
+implemented, but 1.2 will. So if one does something like
+=ret heap[0..2^32]= it will not even form a fat pointer to
+=heap[0..2^32]=, but instead will burn all the ergs due to memory growth
+costs and do "panic" instead
+
+* /VM architecture reminder/
+:PROPERTIES:
+:CUSTOM_ID: vm-architecture-reminder
+:END:
+- 16 regs, with r0 being special 0-constant
+- GT, EQ, LT (overflow) flags
+- stack of max of 2^16 32-byte elements
+- ability to use 16 bit immediate for input operand
+
+** Opcode format
+:PROPERTIES:
+:CUSTOM_ID: opcode-format
+:END:
+We pack a set of
+=LOGICAL_OPCODE x EXCLUSIVE_MODIFIERS x NON_EXCLUSIVE_MODIFIERS x IN1_OPTIONS x OUT1_OPTIONS jointly=
+
+
+- bytes 1 and 2
+  - 11 bits to encode opcode and it's memory addressing modes for =in1=
+    and =out1=
+  - 3 bits to encode all conditional options (over flag combinations)
+    - unconditional
+    - greater than
+    - equal
+    - less than
+    - GE
+    - LE
+    - NE
+    - GTorLT
+  - Special note:
+    - We consider all unknown opcodes (as well as encoding of 0) to be
+      mapped into special "invalid opcode"
+  - 2 unused bits
+- byte 3:
+  - 2x4 bits for input operands registers
+- byte 4:
+  - 2x4 bits for output operands registers
+- byte 5: lowest 8 bits of =imm0=
+- byte 6: highest 8 bits of =imm0=
+- byte 7: lowest 8 bits of =imm1=
+- byte 8: highest 8 bits of =imm1=
+
+** Predicated execution
+:PROPERTIES:
+:CUSTOM_ID: predicated-execution
+:END:
+On decoding of every instruction (after some initial exception handling)
+if current set of conditional options does not activate the instruction
+we mask it to be =nop r0, r0, r0, r0= and execute instead
+
+By default the assembler assigns an =.always= modifier to instruction
+(so =add r1, r2, r3= is always executed)
+
+Conditional modifers:
+
+- =.always= - default one
+- =.lt= - activates if OF (LT, overflow) flag is TRUE
+- =.gt= - activates if GT flag is TRUE
+- =.eq= - activates if EQ flag is TRUE
+- =.ge= - activates if GT or EQ flag is TRUE
+- =.le= - activates if OF(LT) or EQ flag is TRUE
+- =.ne= - activates if EQ flag is FALSE
+- =.gtlt= - activates if LT or GT flag are TRUE (kind of spaceship C++
+  operator)
+
+** †Unused instruction encoding space
+:PROPERTIES:
+:CUSTOM_ID: unused-instruction-encoding-space
+:END:
+If we encounter a bit combination that is not yet used, we instead
+execute =ret.panic r0=
+
+** Instruction decoding and execution workflow
+:PROPERTIES:
+:CUSTOM_ID: instruction-decoding-and-execution-workflow
+:END:
+
+After we have selected 8 byte opcode we proceed as:
+
+- if we skip cycle - mask opcode into =ret r0, r0, r0, r0=
+- check if 1st byte of the opcode is 0. If so - mask opcode into
+  =ret.panic r0=
+- check if opcode is known (can be merged with a previous one). If not -
+  mask opcode into =ret.panic r0=
+  - for these checks we only need a single 8 bit table that can also
+    output additional information, such as ergs cost of this opcode. 8
+    bit table can also help us eliminate combinations where opcode tries
+    to set extra non-exclusive modifiers that are nonsense for this
+    opcode
+- check conditions state - if it's not satisfied then mask into
+  =ret r0, r0, r0, r0=
+  - note one all masking: we can mask only first 4 bytes. Addressing
+    mode will not care about =imm0/imm1= values
+- use one extra 8 bit table (or 6 bit table) that will map the encoding
+  into the set of
+  =logical opcode mask | opcode variants mask | (non-exclusive flags)=.
+  Here we can guarantee that in every branch of single logical opcode
+  only one(!) of it's exclusive variants will be executed, so we do not
+  need fallbacks of any form
+- perform SP modifications, form pre-state, etc as in the current
+  implementation
+- proceed into the corresponding opcode branch
+
+** Terminology
+:PROPERTIES:
+:CUSTOM_ID: terminology
+:END:
+- Despite the natural size of a word for SyncVM is 256 bits, the
+  following specification refers to it as a cell, a byte is 8-bits.
+
+** Common modifiers list
+:PROPERTIES:
+:CUSTOM_ID: common-modifiers-list
+:END:
+- =.set_flags= - explicit modifier to allow opcode to set flags
+  (otherwise keep the existing ones). For the opcodes that support such
+  modifier a shorter version is available, that is =!= (note that it is
+  not =.!=) and must be placed last. Example =sub.s! r1, r2, r3=
+- =.s= - swap operands for applicable opcodes
+
+** Opcodes
+:PROPERTIES:
+:CUSTOM_ID: opcodes
+:END:
+In general, every instruction that SETS flags first RESETS them if it
+has a =.set_flags= modifier
+
+*** Noop
+:PROPERTIES:
+:CUSTOM_ID: noop
+:END:
+=nop in1 in2 out1 out2= - does nothing, but is used for stack
+manipulations as described below
+
+*** Add
+:PROPERTIES:
+:CUSTOM_ID: add
+:END:
+=add.modifiers in1, in2, out1= - add instruction.
+
+Sets =of= flag on overflow (mod 2^256), =eq= flag if addition result ==
+0 (mod 2^256) and sets =gt= flag as =!of && !eq=
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+
+*** Sub
+:PROPERTIES:
+:CUSTOM_ID: sub
+:END:
+=sub.modifiers in1, in2, out1= - sub instruction.
+
+Sets =of= flag on borrow, =eq= flag if subtraction result == 0 (mod
+2^256) and sets =gt= flag as =!of && !eq=
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+- =.s= - swaps =in1= and =in2= after their reading from the
+  corresponding encoded locations.
+
+*** Mul
+:PROPERTIES:
+:CUSTOM_ID: mul
+:END:
+=mul in1, in2, out1, out2= - mul instruction.
+
+=in1 * in2 = out1 + (out2 << 256)= Sets =of= flag if =out2= ≠ 0, sets
+=eq= flag of =out1= = 0.
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+
+*** Div
+:PROPERTIES:
+:CUSTOM_ID: div
+:END:
+=div.modifiers in1, in2, out1, out2= - div instruction.
+
+Performs division of =op1.divrem(op2)= (after swaps). =out1= is
+quotient, =out2= is a remainder.
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+- =.s= - swaps =in1= and =in2= after their reading from the
+  corresponding encoded locations.
+
+Sets =of= flag if =op2= (divisor) is zero and in this case sets 0 for
+quotient and remainder, sets =eq= flag if =out1 == 0=, =gt= if
+=out2 == 0=.
+
+*** Binop
+:PROPERTIES:
+:CUSTOM_ID: binop
+:END:
+Binary operations
+
+- =and in1, in2, out1= - bitwise and
+- =or in1, in2, out1= - bitwise or
+- =xor in1, in2, out1= - bitwise xor
+- All of them are encoded as a single =binop.and= or =binop.xor= or
+  =binop.or=
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+
+Sets an =eq= flag if =out1= is zero
+
+*** Jump
+:PROPERTIES:
+:CUSTOM_ID: jump
+:END:
+- =jump label_true= performs a jump based on the current state of the
+  flags.
+  - follows the rules on the conditionals resolution (flags)
+  - from technical perspective =jump= and similar opcodes below can
+    perform =sp= manipulation using not-logically-used value of =out1=,
+    but it will not be accepted by assembler at least for now
+
+Does NOT set any flags
+
+*** Shifts and rotations
+:PROPERTIES:
+:CUSTOM_ID: shifts-and-rotations
+:END:
+shift operations. For a shift operation only use lowest 8 bits of in2
+operand. All of the operations support =.s= modification
+
+- =shl in1, in2, out1= - shift left, =in1 << (in2 mod 256)=
+- =shr in1, in2, out1= - shift right, =in1 >> (in2 mod 256)=
+- =rol in1, in2, out1= - cyclic shift left, =in1 <<< (in2 mod 256)=
+- =ror in1, in2, out1= - cyclic shift right, =in1 >>> (in2 mod 256)=
+- all of them are internally encoded as a single =shift.shl= and similar
+
+Non-exclusive modifiers:
+
+- =.set_flags=
+
+Sets an =eq= flag if =out1= is zero
+
+*** Ptr
+:PROPERTIES:
+:CUSTOM_ID: ptr
+:END:
+=ptr.<modifier> in1, in2, out1= - fat pointers manipulation instruction.
+
+- REQUIRES that first argument (=in1= if there is no =.s= modifier or
+  =in2= if there is =.s= modifier) is "pointer" type, otherwise panics
+- REQUIRES that second argument (=in2= if there is no =.s= modifier or
+  =in1= if there is =.s= modifier) is NOT a "pointer" type, otherwise
+  panics
+- IMPORTANT: below we use =in1= and =in2= for arguments positions AFTER
+  swapping if =.s= was used
+- if done properly it will set =out1= as the pointer type
+- first argument (once again, =in1= if there is no =.s= modifier or
+  =in2= if there is =.s= modifier) can be "packed" fat pointer (with
+  non-zero upper 128 bits), and those will not be touched by =.add= or
+  =.sub=. If one uses =.pack= modifier - then upper 128 bits will be
+  just overwritten
+- modifiers:
+  - =.add= will transform =offset= field of the fat pointer in =in1=
+    into =offset + u32(in2)=, with overflow checks. If overflow happens
+    then it panics
+  - =.sub= will transform =offset= field of the fat pointer in =in1=
+    into =offset - u32(in2)=, with underflow checks. If underflow
+    happens then it panics
+  - =.pack= will leave lowest 128 bits of =in1= untouched, will check
+    that lowest 128 bits of =in2= are zeroes (otherwise panics), and
+    will do basically "packing" (concatenation) between lowest part of
+    =in1= and highest part of =in2= forming packed fat pointer for
+    =far call= or =ret= ABI when necessary
+  - =.shrink= will transform the =length= field of the in =in1= into
+    =length - u32(in2)=, with underflow checks. If underflow happens
+    then it panics
+  - will NOT check that =offset < length= for fat pointer as it doesn't
+    matter until =uma= is used to dereference is
+  - note on "it panics" - it technically means that =out1= value will be
+    kept intact
+- panicking in this case means "burn all the ergs"
+- Non-exclusive modifiers:
+  - =.s= - swaps =in1= and =in2= after their reading from the
+    corresponding encoded locations. In this case an argument supplied
+    via =in2= would have to be a pointer, and non-pointer would have to
+    be supplied in =in1=
+
+*** Near call
+:PROPERTIES:
+:CUSTOM_ID: near-call
+:END:
+=near_call in1, jump_label, exception_handler_label= - performs a call
+of the code of the current contract (local call) that is located at
+=jump_label=, and if such call internally returns with error or panics
+then it will return to =exception_handler_label=, otherwise to =pc+1=.
+
+- =in1= follows the ABI
+  [[https://github.com/matter-labs/zkevm_opcode_defs/blob/eca49f88f610615a905f7fcfa688e04faf663aba/src/definitions/abi/near_call.rs#L6]]
+  If one uses =0= for =ergs_passed= it means "use all". Value of
+  =pubdata_byte_cost_to_set= is ignored unless opcode is used in a
+  system contract
+  - intended for internal calls, so compiler can use any ABI and calling
+    convention. No registers or flags will be affected during such call
+  - we can use it for our internal things like bootloader: we can wrap a
+    pair of AA call + fee payment in any order in such =near_call=, and
+    then rollback the entire frame atomically
+- WILL RESET ALL THE FLAGS
+
+In case of the =near_call= not expecting the callee to throw exceptions,
+it will not have an =exception_handler_label= attached to it. We can use
+a shorter form of =near_call=, which is =call jump_label= to represent
+such case. The =call= instruction can be expanded to
+
+- =near_call r0, jump_label, DEFAULT_UNWIND_DEST= where
+  =DEFAULT_UNWIND_DEST= is a system label which will be utilized by
+  linker.
+
+*** Log
+:PROPERTIES:
+:CUSTOM_ID: log
+:END:
+- =log in1, in2, out1= - will access the external data sources for
+  reads/writes based on it's exclusive modifiers
+  - Exclusive modifiers
+    - =.sread= - will read storage value using =in1= as key and write it
+      to =out1=
+    - =.swrite= - will write storage value using =in1= as key and =in2=
+      as value
+    - =.to_l1 in1, in2= - will send a special kind of event that will be
+      relayed to L1 using =in1= as key and =in2= as value
+    - =.event in1, in2= - will create an event using =in1= as key and
+      =in2= as value
+    - =.precompile in1, in2, out1= - will call a non-revertable
+      precompile using =in1= for parameters and burning amount of ergs
+      located in the lowest 32 bits of =in2= . Can only be used by
+      kernel mode contracts. This call may fail if there is not enough
+      ergs to burn, and since it's non-revertable then behavior is to do
+      nothing in this case, but return "false" (=0x0=). Otherwise call
+      is successful and returns "true" (=0x1=)
+      - we have the following format to pass the memory for precompile
+        call
+      - =in1= format is described at
+        [[https://github.com/matter-labs/zkevm_opcode_defs/blob/3f230110b225478abcf34554493c96b7e64478d8/src/definitions/abi/precompile_call.rs#L6]]
+        - IMPORTANT: Note that =input_memory_offset= and
+          =output_memory_offset= may be in BYTES or CELLS and the VM
+          side of precompile (VM code that prepares the data and uses
+          =precompile_call= ) and a corresponding circuit MUST use the
+          same convention. At the moment precompiles (keccak, sha256,
+          ecrecover) use CELL convention
+      - ergs will be burned down to 0 if there are not enough of them,
+        so kernel mode precompiles (VM side) should have a check before
+        issuing =log.precompile=
+  - Non-exclusive modifiers
+    - =.first= - will set marker the logical "first" markers in case of
+      chain of =log= is necessary to output all the data for e.g. event.
+      IMPORTANT: it's defined only for =event= and =to_l1= exclusive
+      options, so while =.swrite.first= will be passed by assembler, it
+      will fail in compiler
+  - shorter mnemonics are available
+    - =sload in1, out1= for =.sread= (meaning it will become "log.sread
+      in1, r0, out1" - a canonical format for "log" that formally has 2
+      input arguments and 1 output argument)
+    - =sstore in1, in2= for =.swrite=
+    - =event in1, in2= and =event.i= for =.event= or =.event.first=
+    - =to_l1 in1, in2= and =to_l1.i= for =.t0_l1= or =.to_l1.first=
+    - =precompile in1= for =.precompile=
+
+*** Context
+:PROPERTIES:
+:CUSTOM_ID: context
+:END:
+=context.modifiers in1/out1= - will read some value from the current
+execution context and write it into =out1=, or sets a context value from
+=in1=. =in1= =out1= can be register only!
+
+compiler takes care of distinguishing the affinity whether it's =in1= or
+=out1= based on the modifier
+
+Exclusive modifiers (largely what can be read or set):
+
+- =self-address= - address of self in the current execution frame. NOTE:
+  on =delegatecall= this address is preserved to be one of the caller
+- =caller= - address of the caller NOTE: on =delegatecall= this address
+  "caller of our caller"
+- =code_address= - returns address of the code that is actually
+  executed. Necessary to have Solidity's =immutable= under
+  =delegatecall=. So in the execution frame after =delegatecall= this
+  will be indeed an address of the contract that was called by
+  =delegatecall=
+- =meta= - a packed information about the current state of execution is
+  described in
+  [[https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.1.2/src/definitions/abi/meta.rs#L6][https://github.com/matter-labs/zkevm_opcode_defs/blob/3f230110b225478abcf34554493c96b7e64478d8/src/definitions/abi/meta.rs#L6]]
+- =ergs_left= - amount of ergs left in this execution frame
+- =sp= - returns current SP value
+- =get_context_u128= - get abstract u128 (zero extended) from the
+  current context
+- =set_context_u128= - sets u128 register that will be captured on the
+  next far call (and or reset to 0 if one executes return from this
+  contract(!))
+
+*** Important note for the opcodes below
+:PROPERTIES:
+:CUSTOM_ID: important-note-for-the-opcodes-below
+:END:
+Even though unaligned memory-like parameters are assumed to be 32 bits,
+in practice only 24 bits are addressable (and upper 8 bits are ignored)
+
+*** Far call
+:PROPERTIES:
+:CUSTOM_ID: far-call
+:END:
+=far_call in1, in2, exception_handler_label= - performs a call of the
+code of the contract address located in lowest 160 bits (in integer
+sense) of =in2= with extra call parameters such as ergs, etc located in
+=in1= . If such call internally returns with error or panics then it
+will return to =exception_handler_label=, otherwise to =pc+1=
+
+- =in1= format is described at
+  [[https://github.com/matter-labs/zkevm_opcode_defs/blob/eca49f88f610615a905f7fcfa688e04faf663aba/src/definitions/abi/far_call.rs#L25][https://github.com/matter-labs/zkevm_opcode_defs/blob/3f230110b225478abcf34554493c96b7e64478d8/src/definitions/abi/far_call.rs#L6]]
+
+  - Note that fields =constructor_call= and =consider_new_tx= are only
+    for kernel mode contracts purposes and are ignored if we are outside
+    of the kernel execution context
+  - On "forwarding modes" (same applies for =ret= family of opcodes
+    below): lowest 128 bits of =in1= must be either formed to "resemble"
+    fat pointer if one calls with parameters located in =heap= or
+    =aux heap= pages (and in this case VM will substitute the
+    corresponding memory page in packed fat pointer), or it HAS TO be
+    "pointer" type if one uses
+    =FarCallForwardPageType::ForwardFatPointer=. As =in1= contains
+    information in it's highest bits, it may be packed using =ptr.pack=
+    opcode in this case
+  - example of "resembling": if one wants to call another contract with
+    36 bytes of data located at offset 128 in "heap" then =in1= must be
+    =uint256(u32(128) || u32(128 + 36) || u32(whatever) || u32(128))=.
+    In this case =in1= doesn't have to be (and can not even formed as)
+    "pointer" type
+
+- will place fat pointer (with proper substitution of memory page based
+  on forwarding mode) into =r1=. =r1= will be marked to contain
+  "pointer" and not just integer for all purposes of =ptr= opcodes
+
+- if =constructor_call= is set and we are in kernel mode then will set
+  =1= to =r2=
+
+- will zero out =r3= and =r4= (reserved)
+
+- WILL RESET ALL THE FLAGS
+
+- Non-exclusive modifiers
+
+  - =.static= - will forbid any write-like "logs" and so state
+    modifications, event emissions, etc
+  - =.shard= - will call address in another shard by taking such data
+    from part of =in2=
+
+- Exclusive modifiers
+
+  - =.normal= - normal call. Has =call= mnemonic
+  - =.delegate= - will perform delegatecall that preserves some context
+    information. Has =delegatecall= mnemonic
+  - =.mimic= - will use a value in =r3= as a substitute to =msg.sender=
+    for the next call. Can only be used by bootloader and special
+    contracts with address <1024
+
+*** Return
+:PROPERTIES:
+:CUSTOM_ID: return
+:END:
+=ret.<modifier> in1, @optional_label= - perform a return. =in1= is used
+to encode returned slice parameters in case of returning from the
+=far_call=
+
+- =in1= format is described at
+  [[https://github.com/matter-labs/zkevm_opcode_defs/blob/eca49f88f610615a905f7fcfa688e04faf663aba/src/definitions/abi/ret.rs#L27][https://github.com/matter-labs/zkevm_opcode_defs/blob/3f230110b225478abcf34554493c96b7e64478d8/src/definitions/abi/ret.rs#L6]]
+  (applicable for return from =far_call= only)
+- If we return from =far_call= then:
+  - will place fat pointer (with proper substitution of memory page
+    based on forwarding mode) into =r1=. =r1= will be marked to contain
+    "pointer" and not just integer for all purposes of =ptr= opcodes
+  - will zero out =r2=, =r3= and =r4= (reserved)
+- WILL RESET ALL THE FLAGS
+- if one tries to use =RetForwardPageType::ForwardFatPointer= and =in1=
+  is NOT a "pointer" type, then =ret.panic= will execute instead
+- =ret.panic= places "empty fat pointer" into =r1=, that is still a
+  "pointer", but points into special memory page == 0 that is not
+  writable and contains zeroes
+- if =ret.panic= has happened then no matter what call type it was
+  (=near_call= or =far_call= ) then =OF= flag will be set
+- Has exclusive modifiers
+  - =.ok= - is normal return, will set PC to one that is not from
+    exception handler for this call
+  - =.err= - will return with error and jump to exception handler
+    provided by the caller. Can still propagate meaningful data through
+    the slice in it's own heap (like =revert("reason")= in Solidity)
+  - =.panic= - will return to exception handler provided by the caller,
+    and =OF= flag
+- non-exclusive modifiers:
+  - =.to_label= - will return to PC that corresponding to
+    =optional_label=
+
+The compiler prints the short mnemonic, which is converted to =ret= with
+the corresponding modifer:
+
+- =ret= → =ret.ok r1=
+- =revert= → =ret.err r1=
+- =panic= → =ret.panic r1=
+
+The =r1= argument encodes the return data and is only used for returning
+from the far calls. For local calls the default calling convention is
+used.
+
+*** UMA
+:PROPERTIES:
+:CUSTOM_ID: uma
+:END:
+(unaligned memory access)
+
+=uma.modifiers in1, optional(in2), optional(out1), optional(out2)= -
+will perform unaligned memory access depending on the modifiers. Will
+read-write 32 byte chunk, but byte-addressable for the location
+
+- Exclusive modifiers (a =write= modifier is not made non-exclusive to
+  avoid extra exception case on attempt to write to where it's not
+  allowed)
+  - =heap_read= - read by accessing the offset =u24(in1)= in the current
+    contract's heap and place the result into =out1=
+  - =heap_write= - write =in2= by accessing the offset =u24(in1)= in the
+    current contract's heap
+  - =aux_heap_read= - read by accessing the offset =u24(in1)= in the
+    current contract's aux heap and place the result into =out1=
+  - =aux_heap_write= - write =in2= by accessing the offset =u24(in1)= in
+    the current contract's aux heap
+  - =fat_ptr_read= - will dereference a "fat pointer" following the
+    rules described at the top of the page. It will PANIC if =in1= is
+    not a "pointer" type
+- there are shorthands =ld.1= and =st.1= for =heap_read= and
+  =heap_write= respectively. =ld.2= and =st.2= for aux heap and just
+  =ld= for fat pointer dereference
+- NOTE: version 1.2 if ISA will incur the costs for memory growth as the
+  result of =uma.heap_read/write= and =uma.aux_heap_read/write=
+- Non-exclusive modifiers:
+  - =.inc= - will increment lowest 32 bits of =in1= by 32 with overflow
+    check (otherwise panic) and place them in =out1= for =_write= ops or
+    into =out2= for =_read= ops
+
+NOTE: full list of acceptable syntax options examples :
+
+- =ld.1 src_offset, dst_reg=
+- =st.1 dst_offset, value=
+- =ld.1.inc src_offset, dst_reg, incremented_src_offset_reg=
+- =st.1.inc dst_offset, value, incremented_dst_offset_reg=
+- In all those shorthand cases =.inc= should be after "region", namely
+  =.st.inc.1= will not be accepted
+- =uma.inc.heap_read r1, rX, r2, r3= is accepted as canonical form used
+  internally by assembler
+
+** Structure and syntax
+:PROPERTIES:
+:CUSTOM_ID: structure-and-syntax
+:END:
+Every line in the assembly contains at most one instruction, i.o.w. =\n=
+is the separator between instructions. Aside from instructions, an
+assembly might contain the following entities:
+
+- single line comments starting with =;=
+- directives starting with =.= (e.g. =.globl=).
+- labels starting at the beginning of a space trimmed line and ending
+  with =:=. Labels are destinations for jumps.
+- empty lines which are to be ignored
+
+A common instruction has the following format:
+
+=mnemonic in1, in2, ..., inN, out1, out2, ..., outN= where =inN= is an
+input operand, =outN= is an output operand. For instance
+=add r1, r2, r3= put the sum of registers 1 and 2 and put it to
+register 3. Each operand can have at most 2 explicit input operands and
+at most 2 explicit output operands, with the only exception being
+=far_call= in "call account abstraction" mode that internally uses =r15=
+as an extra source
+
+Operands might be:
+
+- Register (=r1= to =r15= and =r0= is a special register which always
+  contains =0=)
+- 16 bit unsigned immediate (mere decimal numbers: =0=, =42=;
+  hexadecimal and binary immediates might also be introduced if it's
+  needed for VM tests, the reserved format for them: =0x42=, =0b01011=.
+  Note that the compiler will not produce numbers other than decimals in
+  MVP version.)
+- Memory - see Addressing modes section.
+- Symbols or labels designate the address of data or code in memory.
+  Assembler is to replace symbolic addresses with numeric ones (this is
+  really the task for a linker, but currently the assembler does it as
+  well). An instruction might either access the designated address
+  directly (=label=) or add or subtract a constant from it (=label+3= =
+  address of =label= plus 3 256-bits memory cells).
+
+Note that the following part of the spec refers to anything which might
+be calculated at the link time in assembler as a constant, i.e. a
+constant is either immediate, or a symbol or symbol+immediate.
+
+** Directives
+:PROPERTIES:
+:CUSTOM_ID: directives
+:END:
+- All labels must start with =.= !!!
+- =.data= the beginning of the data section. The following bytes are to
+  be interpreted as data and it can be addressed using "code" type
+  memory addressing option. From linking perspective =.data= section
+  will be placed after all the logical "code" (other labels)
+
+** Addressing modes
+:PROPERTIES:
+:CUSTOM_ID: addressing-modes
+:END:
+Operands must be in one of the following addressing modes:
+
+- register addressing mode (=rN=) - register content as used as the
+  operand. Example: =add r1, r2, r1=. =r0= (a virtual register always
+  containing =0=) is considered as a special case for register
+  addressing mode.
+- immediate addressing mode (=value= where =value= is a 16 bit
+  *constant*). Examples: =add #42, r1, r1=). Only =in1= can use such
+  addressing for source
+- stack addressing that allows to get an element of the stack and (if
+  necessary) simultaneously update an =sp= . In our case =sp= itself
+  points to the next empty cell, so accessing just =[sp]= not an error,
+  but may result in UB if initially no data was spaced there in some
+  previous instruction. User is responsible for code logical correctness
+  here! Examples:
+  - =add stack-[0], r2, r3= that will read a value at =sp - 1= and will
+    not modify the =sp= (remember, =sp= points to the next empty!)
+  - =add stack-=[r0 + 1], r2, r3= that will read a value at
+    =sp - r0 - 1 - 1= and will set =sp -= r0 + 1=
+  - =add stack+[0], r2, r3= is not possible - stack can not be grown by
+    read-like access
+  - =add r1, r2, stack+=[1]= that will write a value at =sp= and set
+    =sp += 1= (if movement of =sp= is by more than 1 then it will leave
+    uninit values on the stack
+  - =add r1, r2, stack-[2]= that will read a value at =sp - 2 - 1= and
+    will not modify =sp=
+  - =add r1, r2, stack=[2]= will place the result into stack element
+    number =2= (zero enumerated). Such access is also available for src
+    of source. Note that the assembler can also support a shorter form
+    =stack[2]= in the stack addressing mode with exactly the same
+    semantics.
+  - =stack-=[X]= is not possible for write-like behavior, as well as
+    =stack+[X]= that reads beyond the current =sp= without advancing(!)
+    the =sp=
+
+For each instruction, the first input operand could be in any of the
+addressing modes listed above with the exception of a few instructions
+explicitly mentioned below. The second input operand if present must
+always be in register addressing mode. The same applies to all the
+output operands.
+
+NOTE: SP modifications follow as:
+
+- first set SP based on =in1= data
+- then set SP based on =out1= data
+- if SP is read by the opcode then value after =out1= is used
+
+Instructions with addressing mode restrictions. These instructions can
+only use source and destination operands in registers:
+
+- =far_call=
+- =near_call=
+- =ret=
+- =uma=
+- =get_from_context=
+
+** Stack manipulation
+:PROPERTIES:
+:CUSTOM_ID: stack-manipulation
+:END:
+In the opcodes below we skip source or destination registers if they are
+meaningless, but for purposes of stack manipulation and consistency all
+the opcodes that have an option of non-register addressing mode may
+specify not default =r0= as sources. Example:
+=nop stack-=[42], [r0], stack+=[2], [r0]= is an acceptable encoding for
+=nop= . It will still not do any meaningful computations and will not
+perform any writes, but first it will do =sp -= 42 + 1= and then
+=sp += 2 + 1=, that allows modifications of a stack pointer if necessary
+without side effects
+
+** Suffixes
+:PROPERTIES:
+:CUSTOM_ID: suffixes
+:END:
+Instructions can have different modifiers that are expresses as a set of
+suffixes. For example, =sub= instruction implements =in1 - in2 = out1=
+(with borrow), but in some cases one would want to have the subtracted
+operand taken from memory, so it's possible to swap =in1= and =in2= for
+such instructions. Note that some "modifiers" are mutually exclusive and
+trying to specify them simultaneously will result in parsing error
+
+** Exceptions
+:PROPERTIES:
+:CUSTOM_ID: exceptions
+:END:
+Instructions can throw exceptions explicitly or implicitly.
+
+- When an exception is thrown the execution is jumped to an unwind label
+  (Error Handling Label, EH).
+- Instructions such as =near_call= and =far_call= explicitly defines the
+  EH label for the callee subroutine. Should an exception is thrown
+  inside the execution subroutine, the execution flow will jump to the
+  EH label defined in the abovementioned call instruction.
+- A throwing instruction does not need to carry the EH should it throws
+  an exception, as the EH is defined the caller's call instruction.
+
+** Virtual Machine Bootstrapping Status
+:PROPERTIES:
+:CUSTOM_ID: virtual-machine-bootstrapping-status
+:END:
+SyncVM's bootstrapping procedure can be seen as a user emits a
+=far_call= from an "outer" context and the execution jumps into the VM
+context and start execution.
+
+- The initial state of VM is all reset. meaning everything (registers,
+  heap, memory) is zero'ed out, except of registers responsible for
+  =far call= ABI.
+- Since it can be seen as a user doing =far_call= from an outer context,
+  initially =r1 - r4= might contain value about the call info.
+- Entry point of the program is just the first encountered instruction
+  (=pc = 0=)
+
+** Instruction size and alignments
+:PROPERTIES:
+:CUSTOM_ID: instruction-size-and-alignments
+:END:
+- In zkEVM, a cell is 256-bit in size, and is the basic length of a
+  word. The size of the program should be multiple of 32 bytes as it
+  consists of cells.
+- Instructions are 8-byte long, which means a cell can have 4
+  instructions. Instructions are padded (with zero bytes that map to
+  =panic= instruction) at the end of the code segment.
+- Note that PC labels are not cell-alignment bound, a PC label can point
+  to a sub-cell address. Program Counter points to a 8-byte segment of
+  the code memory.
+- Constants are 256-bit contiguous chunks (cell-aligned) in constant
+  pool memory section.
+
+[[https://www.notion.so/074f05c6e2104e9fb4c606bc478b53f0][]]
