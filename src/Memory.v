@@ -102,6 +102,8 @@ Section Memory.
                                    |}.
 
     Definition stack_address := address stack_page_params.
+    Definition stack_address_zero: stack_address := zero16.
+
     Definition stack_page := mem_parameterized stack_page_params.
 
 

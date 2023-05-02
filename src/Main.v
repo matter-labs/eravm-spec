@@ -1,6 +1,13 @@
+From RecordUpdate Require Import RecordSet.
 Require Common Memory Instruction State. 
 
 Import ZArith Common MemoryBase Memory Instruction State ZMod.
+
+(* Experimental: lens-like notations to set individual fields of records. *)
+Import RecordSetNotations.
+#[export] Instance etaX : Settable _ :=
+  settable! Build_global_state <gs_flags
+  ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
 
 
 (** TODO contract that manages code *)
@@ -111,64 +118,55 @@ Section Execution.
       reg_val_clipped = ZMod.resize word_bits code_address_bits reg_val ->
       uadd_overflow code_address_bits offset_reg_clipped imm = (code_absolute, overflow_ignored) ->
       relative_code_addressing gs reg imm code_absolute
-.
-  Inductive sp_adjustment : global_state -> reg_name -> u16 -> stack_address -> Prop :=
+  .
+
+  (** delta = reg + imm *)
+  Inductive sp_delta: global_state -> reg_name -> u16 -> stack_address -> Prop :=
   | spa_stack_pp: forall gs reg offset_reg offset_imm offset_reg_clipped
-                     stackaddr_delta
-                     overflow_ignored,
+                    stackaddr_delta
+                    overflow_ignored,
       fetch_gpr (gs_regs gs) reg (IntValue offset_reg) ->
       offset_reg_clipped = ZMod.resize word_bits _ offset_reg ->
 
       uadd_overflow _ offset_reg_clipped offset_imm = (stackaddr_delta, overflow_ignored) ->
-      sp_adjustment gs reg offset_imm stackaddr_delta
-.
-kajsndkjasndajnsd
-
-  (* IMPORTANT sort out offsets from effects *)
-  Inductive sp_adjustment_from_arg: global_state -> arg_any -> stack_address -> Prop :=
-  | spafg_stack_pp: forall gs reg offset_imm new_sp,
-      sp_adjustment gs reg offset_imm new_sp ->
-      sp_adjustment_from_arg gs (ArgStackPushPop reg offset_imm) new_sp
-  | spafg_stack_pp: forall gs sp,
-      forall reg,
-      sp_adjustment_from_arg gs (ArgReg reg ) sp
-.
+      sp_delta gs reg offset_imm stackaddr_delta
+  .
 
   Inductive resolve_loc: global_state -> arg_any -> loc ->  Prop :=
   | rslv_reg: forall gs reg, resolve_loc gs (ArgReg reg) (LocReg reg)
 
-  | rslv_stack_pp: forall gs reg base offset_imm sp_delta of_ignored new_sp,
+  | rslv_stack_pp: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
       fetch_sp (gs_regs gs) base ->
-      sp_adjustment gs reg offset_imm sp_delta ->
+      sp_delta gs reg offset_imm dlt_sp ->
 
-      uadd_overflow _ base sp_delta = (new_sp, of_ignored) ->
+      uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
       resolve_loc gs (ArgStackPushPop reg offset_imm)
         (LocStackAddress new_sp)
 
-  | rslv_stack_rel: forall gs reg base offset_imm sp_delta of_ignored new_sp,
-      fetch_sp (gs_regs gs) base ->
-      sp_adjustment gs reg offset_imm sp_delta ->
+  | rslv_stack_rel: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
+      fetch_sp gs.(gs_regs) base ->
+      sp_delta gs reg offset_imm dlt_sp ->
 
-      uadd_overflow _ base sp_delta = (new_sp, of_ignored) ->
+      uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
       resolve_loc gs (ArgStackOffset reg offset_imm)
         (LocStackAddress new_sp)
 
   | rslv_stack_abs: forall gs reg base abs_imm stackpage_id,
       active_stackpage_id gs stackpage_id ->
-      fetch_sp (gs_regs gs) base ->
+      fetch_sp gs.(gs_regs) base ->
 
       resolve_loc gs (ArgStackAddr reg abs_imm)
         (LocStackAddress abs_imm)
 
   | rslv_code: forall gs reg code_id abs_imm addr,
       active_codepage_id gs code_id ->
-     relative_code_addressing gs reg abs_imm addr ->
-     resolve_loc gs (ArgCodeAddr reg abs_imm) (LocCodeAddr addr)
+      relative_code_addressing gs reg abs_imm addr ->
+      resolve_loc gs (ArgCodeAddr reg abs_imm) (LocCodeAddr addr)
   .
 
-  Inductive fetch_result :=
-    | FetchIns (ins :instruction)
-    | FetchPV (pv: primitive_value) .
+  Inductive fetch_result : Set :=
+  | FetchIns (ins :instruction)
+  | FetchPV (pv: primitive_value) .
 
   Inductive fetch_loc: global_state -> loc -> fetch_result -> Prop :=
   | fetch_reg:
@@ -206,7 +204,7 @@ kajsndkjasndajnsd
 - PC
 - exceptions
    *)
-Inductive fetch_instr : global_state -> instruction -> Prop :=
+  Inductive fetch_instr : global_state -> instruction -> Prop :=
   | fi_fetch: forall gs pc ins,
       fetch_pc (gs_regs gs) pc ->
       fetch_loc gs (LocCodeAddr pc) (FetchIns ins) ->
@@ -216,51 +214,58 @@ Inductive fetch_instr : global_state -> instruction -> Prop :=
   | fp_update:
     forall pc sp gprs pc',
       (pc',false) = uinc_overflow _ pc ->
-      update_pc_regular (Build_regs_state gprs sp pc)
-        (Build_regs_state gprs sp pc').
+      update_pc_regular (Build_regs_state gprs sp pc) (Build_regs_state gprs sp pc').
 
-From RecordUpdate Require Import RecordSet.
-#[export] Instance etaX : Settable _ := settable! Build_global_state <gs_flags
-                                        ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
+  (* may affect SP through addessing on in1 and out1.
+     Takes effect before SP is read by the bytecode. sort out offsets from effects *)
+  Inductive sp_addressing_delta: global_state -> arg_any -> stack_address -> Prop :=
+  | spafg_stack_pp: forall gs reg offset_imm new_sp,
+      sp_delta gs reg offset_imm new_sp ->
+      sp_addressing_delta gs (ArgStackPushPop reg offset_imm) new_sp
+  | spafg_stack_reg_none: forall gs arg,
+      (forall reg offset_imm, arg <> ArgStackPushPop reg offset_imm) ->
+      sp_addressing_delta gs arg stack_address_zero.
+  .
 
-Import RecordSetNotations.
-Inductive step : global_state -> global_state -> Prop :=
- 
+  update_sp_
+
+  Inductive step : global_state -> global_state -> Prop :=
+
   | step_NOOP:
-    forall OF EQ GT regs regs' contracts mem_pages callstack context_u128 in1 in2 out1 out2
-    exec_cond,
+    forall OF EQ GT regs regs' contracts mem_pages callstack context_u128 in1 in2
+      out1 out2 regs0 regs1 regs2
+      exec_cond,
       let gs := {|
-          gs_flags := mk_fs OF EQ GT;
-          gs_regs := regs;
-          gs_mem_pages := mem_pages;
-          gs_contracts := contracts;
-          gs_callstack := callstack;
-          gs_context_u128 := context_u128;
-        |} in
+                 gs_flags := mk_fs OF EQ GT;
+                 gs_regs := regs0;
+                 gs_mem_pages := mem_pages;
+                 gs_contracts := contracts;
+                 gs_callstack := callstack;
+                 gs_context_u128 := context_u128;
+               |} in
 
       fetch_instr gs {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
                     ins_mods := ModEmpty;
                     ins_cond := exec_cond
                   |} ->
-      update_pc_regular regs regs' ->
-      update_sp_regular regs regs' ->
+      flags_activated exec_cond gs_flags ->
+      update_pc_regular regs0 regs1 ->
+      update_sp_addressing regs1 regs2 ->
 
       sp_adjustment gs reg offset_imm stackaddr_delta
-
-      
-      step gs (gs <| gs_regs := regs'' |>).
+        step gs (gs <| gs_regs := regs2 |>).
 
 
 
 
- 
-        (* {| *)
-        (*   gs_flags := mk_fs OF EQ GT; *)
-        (*   gs_regs := regs'; *)
-        (*   gs_mem_pages := mem_pages; *)
-        (*   gs_contracts := contracts; *)
-        (*   gs_callstack := callstack; *)
-        (*   gs_context_u128 := context_u128; *)
-        (* |}. *)
-(* todo: adjust SP *)
+  
+  (* {| *)
+  (*   gs_flags := mk_fs OF EQ GT; *)
+  (*   gs_regs := regs'; *)
+  (*   gs_mem_pages := mem_pages; *)
+  (*   gs_contracts := contracts; *)
+  (*   gs_callstack := callstack; *)
+  (*   gs_context_u128 := context_u128; *)
+  (* |}. *)
+  (* todo: adjust SP *)
