@@ -185,7 +185,7 @@ Section Memory.
 
     End GPR.
 
-    Record regs_state :=  {
+    Record regs_state :=  mk_regs {
         rs_gprs: list primitive_value;
         rs_sp: stack_address;
         rs_pc: code_address;

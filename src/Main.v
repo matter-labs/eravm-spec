@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Memory Instruction State. 
+Require Common Memory Instruction State.
 
 Import ZArith Common MemoryBase Memory Instruction State ZMod.
 
@@ -121,15 +121,15 @@ Section Execution.
   .
 
   (** delta = reg + imm *)
-  Inductive sp_delta: global_state -> reg_name -> u16 -> stack_address -> Prop :=
-  | spa_stack_pp: forall gs reg offset_reg offset_imm offset_reg_clipped
+  Inductive sp_delta: regs_state -> reg_name -> u16 -> stack_address -> Prop :=
+  | spa_stack_pp: forall regs reg offset_reg offset_imm offset_reg_clipped
                     stackaddr_delta
                     overflow_ignored,
-      fetch_gpr (gs_regs gs) reg (IntValue offset_reg) ->
+      fetch_gpr regs reg (IntValue offset_reg) ->
       offset_reg_clipped = ZMod.resize word_bits _ offset_reg ->
 
       uadd_overflow _ offset_reg_clipped offset_imm = (stackaddr_delta, overflow_ignored) ->
-      sp_delta gs reg offset_imm stackaddr_delta
+      sp_delta regs reg offset_imm stackaddr_delta
   .
 
   Inductive resolve_loc: global_state -> arg_any -> loc ->  Prop :=
@@ -137,7 +137,7 @@ Section Execution.
 
   | rslv_stack_pp: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
       fetch_sp (gs_regs gs) base ->
-      sp_delta gs reg offset_imm dlt_sp ->
+      sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
 
       uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
       resolve_loc gs (ArgStackPushPop reg offset_imm)
@@ -145,21 +145,21 @@ Section Execution.
 
   | rslv_stack_rel: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
       fetch_sp gs.(gs_regs) base ->
-      sp_delta gs reg offset_imm dlt_sp ->
+      sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
 
       uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
       resolve_loc gs (ArgStackOffset reg offset_imm)
         (LocStackAddress new_sp)
 
   | rslv_stack_abs: forall gs reg base abs_imm stackpage_id,
-      active_stackpage_id gs stackpage_id ->
+      active_stackpage_id gs.(gs_callstack) stackpage_id ->
       fetch_sp gs.(gs_regs) base ->
 
       resolve_loc gs (ArgStackAddr reg abs_imm)
         (LocStackAddress abs_imm)
 
   | rslv_code: forall gs reg code_id abs_imm addr,
-      active_codepage_id gs code_id ->
+      active_codepage_id gs.(gs_callstack) code_id ->
       relative_code_addressing gs reg abs_imm addr ->
       resolve_loc gs (ArgCodeAddr reg abs_imm) (LocCodeAddr addr)
   .
@@ -168,6 +168,7 @@ Section Execution.
   | FetchIns (ins :instruction)
   | FetchPV (pv: primitive_value) .
 
+  (* Address resolution *)
   Inductive fetch_loc: global_state -> loc -> fetch_result -> Prop :=
   | fetch_reg:
     forall gs reg_name value,
@@ -175,19 +176,21 @@ Section Execution.
       fetch_loc gs (LocReg reg_name) (FetchPV value)
   | fetch_stackaddr:
     forall gs stackpage addr value,
-      active_stackpage gs (StackPage _ _ stackpage) ->
+      active_stackpage gs.(gs_mem_pages) gs.(gs_callstack) (StackPage _ _ stackpage) ->
       load_result _ addr stackpage value ->
       fetch_loc gs (LocStackAddress addr) (FetchPV value)
   | fetch_codeaddr:
     forall gs codepage addr ins,
-      active_codepage gs (CodePage _ _ codepage) ->
+      active_codepage gs.(gs_mem_pages) gs.(gs_callstack) (CodePage _ _ codepage) ->
       load_result _ addr codepage ins ->
       fetch_loc gs (LocCodeAddr addr) (FetchIns ins)
   | fetch_constaddr:
     forall gs constpage addr value,
-      active_constpage gs (ConstPage _ _ constpage) ->
+      active_constpage gs.(gs_mem_pages) gs.(gs_callstack) (ConstPage _ _ constpage) ->
       load_result _ addr constpage value ->
       fetch_loc gs (LocConstAddr addr) (FetchPV (IntValue value))
+  (* TODO Come back for UMA; reading byte sequences is already implemented, see
+  tests in MemoryBase.v *)
   (* | fetch_heapaddr: *)
   (*   forall gs page addr value, *)
   (*     active_heappage gs (DataPage _ _ page) -> *)
@@ -214,29 +217,41 @@ Section Execution.
   | fp_update:
     forall pc sp gprs pc',
       (pc',false) = uinc_overflow _ pc ->
-      update_pc_regular (Build_regs_state gprs sp pc) (Build_regs_state gprs sp pc').
+      update_pc_regular (mk_regs gprs sp pc) (mk_regs gprs sp pc').
 
-  (* may affect SP through addessing on in1 and out1.
+  (* may affect SP through addressing on in1 and out1.
      Takes effect before SP is read by the bytecode. sort out offsets from effects *)
-  Inductive sp_addressing_delta: global_state -> arg_any -> stack_address -> Prop :=
-  | spafg_stack_pp: forall gs reg offset_imm new_sp,
-      sp_delta gs reg offset_imm new_sp ->
-      sp_addressing_delta gs (ArgStackPushPop reg offset_imm) new_sp
-  | spafg_stack_reg_none: forall gs arg,
+  Inductive sp_addressing_delta: regs_state -> arg_any -> stack_address -> Prop :=
+  | spafg_stack_pp: forall regs reg offset_imm new_sp,
+      sp_delta regs reg offset_imm new_sp ->
+      sp_addressing_delta regs (ArgStackPushPop reg offset_imm) new_sp
+  | spafg_stack_reg_none: forall regs arg,
       (forall reg offset_imm, arg <> ArgStackPushPop reg offset_imm) ->
-      sp_addressing_delta gs arg stack_address_zero.
-  .
+      sp_addressing_delta regs arg stack_address_zero.
 
-  update_sp_
+  (* partial because has to be applied twice: for in1 and for out1 arguments.  *)
+  Inductive update_sp_addressing_partial: arg_any -> regs_state -> regs_state -> Prop :=
+  | usap_update_partial:
+    forall gprs pc sp delta_sp sp' arg ,
+      sp_addressing_delta (mk_regs gprs sp pc) arg delta_sp ->
+      (sp',false) = uadd_overflow _ sp delta_sp ->
+      update_sp_addressing_partial arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
+
+  Inductive update_sp_addressing_full: arg_any -> arg_any -> regs_state -> regs_state -> Prop :=
+  | usap_update_full: forall arg1 arg2 regs0 regs1 regs2,
+    update_sp_addressing_partial arg1 regs0 regs1 ->
+    update_sp_addressing_partial arg2 regs1 regs2 ->
+    update_sp_addressing_full arg1 arg2 regs0 regs2.
+
+
 
   Inductive step : global_state -> global_state -> Prop :=
-
   | step_NOOP:
-    forall OF EQ GT regs regs' contracts mem_pages callstack context_u128 in1 in2
+    forall flags contracts mem_pages callstack context_u128 in1 in2
       out1 out2 regs0 regs1 regs2
       exec_cond,
       let gs := {|
-                 gs_flags := mk_fs OF EQ GT;
+                 gs_flags := flags;
                  gs_regs := regs0;
                  gs_mem_pages := mem_pages;
                  gs_contracts := contracts;
@@ -249,23 +264,43 @@ Section Execution.
                     ins_mods := ModEmpty;
                     ins_cond := exec_cond
                   |} ->
-      flags_activated exec_cond gs_flags ->
+      flags_activated exec_cond flags ->
       update_pc_regular regs0 regs1 ->
-      update_sp_addressing regs1 regs2 ->
+      update_sp_addressing_full in1 out1 regs1 regs2 ->
 
-      sp_adjustment gs reg offset_imm stackaddr_delta
-        step gs (gs <| gs_regs := regs2 |>).
-
-
-
+      step gs (gs <| gs_regs := regs2 |>).
+(* TODO think about other modifiers *)
 
   
-  (* {| *)
-  (*   gs_flags := mk_fs OF EQ GT; *)
-  (*   gs_regs := regs'; *)
-  (*   gs_mem_pages := mem_pages; *)
-  (*   gs_contracts := contracts; *)
-  (*   gs_callstack := callstack; *)
-  (*   gs_context_u128 := context_u128; *)
-  (* |}. *)
-  (* todo: adjust SP *)
+  (* | step_ADD: *)
+  (*   forall OF_LT EQ GT contracts mem_pages callstack context_u128 in1 in2 *)
+  (*     out1 out2 regs0 regs1 regs2 *)
+  (*     loc1 loc2 arg1 arg2 new_OF new_EQ res *)
+  (*     exec_cond, *)
+  (*     let gs := {| *)
+  (*                gs_flags := mk_fs OF_LT EQ GT; *)
+  (*                gs_regs := regs0; *)
+  (*                gs_mem_pages := mem_pages; *)
+  (*                gs_contracts := contracts; *)
+  (*                gs_callstack := callstack; *)
+  (*                gs_context_u128 := context_u128; *)
+  (*              |} in *)
+  (*     fetch_instr gs {| *)
+  (*                   ins_spec := OpAdd in1 in2 out1 ; *)
+  (*                   ins_mods := ModEmpty; *)
+  (*                   ins_cond := exec_cond *)
+  (*                 |} -> *)
+  (*     resolve_loc gs in1 loc1 -> *)
+  (*     resolve_loc gs in2 loc2 -> *)
+  (*     fetch_loc gs loc1 (FetchPV (IntValue arg1)) -> *)
+  (*     fetch_loc gs loc2 (FetchPV (IntValue arg2)) -> *)
+  (*     uadd_overflow _ arg1 arg2 = (res, new_OF) -> *)
+  (*     new_EQ = if Z.eq_dec (int_val _ res) 0%Z then true else false -> *)
+
+  (*                                                             (*TODO set GT, *)
+  (*     implement SET_FLAGS *) *)
+  (*     flags_activated exec_cond (mk_fs -> *)
+  (*     update_pc_regular regs0 regs1 -> *)
+  (*     update_sp_addressing_full in1 out1 regs1 regs2 -> *)
+  (*     step gs (gs <| gs_regs := regs2 |> <| gs_flags := mk_fs new_OF new_EQ|>). *)
+End Execution.

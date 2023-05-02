@@ -25,4 +25,4 @@ Program Definition mtestcase :
 reflexivity.
 Qed.
 
-Compute option_map (merge_bytes 8 (8*3)) (load_multicell data_page_params (mk_int_mod_truncated 24 3%Z) 3 m).
+(* Compute option_map (merge_bytes 8 (8*3)) (load_multicell data_page_params (mk_int_mod_truncated 24 3%Z) 3 m). *)
