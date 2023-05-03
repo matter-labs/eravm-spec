@@ -80,6 +80,7 @@ Section Execution.
 
   (** Location from where a value can be fetched. *)
   Inductive loc : Set :=
+  | LocImm: u16 ->  loc
   | LocReg : reg_name ->  loc
   | LocStackAddress: stack_address -> loc
   | LocCodeAddr: code_address -> loc
@@ -135,6 +136,8 @@ Section Execution.
   Inductive resolve_loc: global_state -> arg_any -> loc ->  Prop :=
   | rslv_reg: forall gs reg, resolve_loc gs (ArgReg reg) (LocReg reg)
 
+  | rslv_imm: forall gs imm, resolve_loc gs (ArgImm imm) (LocImm imm)
+
   | rslv_stack_pp: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
       fetch_sp (gs_regs gs) base ->
       sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
@@ -174,6 +177,12 @@ Section Execution.
     forall gs reg_name value,
       fetch_gpr (gs_regs gs) reg_name value ->
       fetch_loc gs (LocReg reg_name) (FetchPV value)
+
+  | fetch_imm:
+    forall gs imm imm',
+      imm' = mk_int_mod_truncated word_bits (int_val _ imm) ->
+      fetch_loc gs (LocImm imm) (FetchPV (IntValue imm'))
+
   | fetch_stackaddr:
     forall gs stackpage addr value,
       active_stackpage gs.(gs_mem_pages) gs.(gs_callstack) (StackPage _ _ stackpage) ->
