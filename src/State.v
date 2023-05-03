@@ -17,8 +17,8 @@ Record callframe_common := mk_cf {
 
 Record callframe_external :=
   mk_extcf {
-      ecf_this_address: mem_address;
-      ecf_msg_sender: mem_address;
+      ecf_this_address: contract_address;
+      ecf_msg_sender: contract_address;
       ecf_code_address: code_address; (* TODO check *)
       ecf_mem_context: ctx_mem_pages;
       ecf_is_static: bool; (** forbid any write-like "logs" and so state modifications, event emissions, etc *)
