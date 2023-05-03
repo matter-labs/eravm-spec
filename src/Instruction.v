@@ -18,9 +18,9 @@ Inductive arg_any :=
 | ArgStackPushPop (r:reg_name) (delta: u16 ): arg_any
 | ArgStackOffset (r:reg_name) (offset:u16): arg_any
 | ArgStackAddr (r:reg_name) (imm:u16): arg_any
-| ArgCodeAddr (r:reg_name) (imm:code_address): arg_any
+| ArgCodeAddr (r:reg_name) (imm:code_address): arg_any.
 
-with arg_reg :=
+Inductive arg_reg :=
 | ArgRegOnly:  reg_name -> arg_reg.
 
 Definition arg_reg_incl ar : arg_any :=
