@@ -13,21 +13,32 @@ Section Instruction.
 (* Variable instruction: Set. *)
 (* Variable invalid_ins: instruction. *)
 
+Inductive arg_reg : Set :=
+  | ArgReg (reg:reg_name).
+
+Inductive arg_imm : Set :=
+  | ArgImm (imm: u16).
+
+Inductive arg_reg_imm :=
+  | ArgRIReg : arg_reg -> arg_reg_imm
+  | ArgRIImm : arg_imm -> arg_reg_imm.
+
 Inductive arg_any :=
-| ArgReg (reg:reg_name) : arg_any
-| ArgImm (imm:u16) : arg_any
-| ArgStackPushPop (r:reg_name) (delta: stack_address): arg_any
-| ArgStackOffset (r:reg_name) (offset: stack_address): arg_any
-| ArgStackAddr (r:reg_name) (imm: stack_address): arg_any
-| ArgCodeAddr (r:reg_name) (imm:code_address): arg_any.
+| ArgAnyReg : arg_reg -> arg_any
+| ArgAnyImm : arg_imm -> arg_any
+| ArgAnyStackPushPop (r:reg_name) (delta: stack_address): arg_any
+| ArgAnyStackOffset (r:reg_name) (offset: stack_address): arg_any
+| ArgAnyStackAddr (r:reg_name) (imm: stack_address): arg_any
+| ArgAnyCodeAddr (r:reg_name) (imm:code_address): arg_any.
 
-Inductive arg_reg :=
-| ArgRegOnly:  reg_name -> arg_reg.
 
-Definition arg_reg_incl ar : arg_any :=
-  match ar with
-  | ArgRegOnly x => ArgReg x
+Definition arg_reg_incl : arg_reg -> arg_any := ArgAnyReg.
+Definition arg_ri_incl (ari: arg_reg_imm) : arg_any :=
+  match ari with
+  | ArgRIReg x => ArgAnyReg x
+  | ArgRIImm x => ArgAnyImm x
   end.
+
 
 Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
 Definition in_any := arg_any.

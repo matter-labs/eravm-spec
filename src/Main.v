@@ -134,16 +134,16 @@ Section Execution.
   .
 
   Inductive resolve_loc: global_state -> arg_any -> loc ->  Prop :=
-  | rslv_reg: forall gs reg, resolve_loc gs (ArgReg reg) (LocReg reg)
+  | rslv_reg: forall gs reg, resolve_loc gs (ArgAnyReg (ArgReg reg)) (LocReg reg)
 
-  | rslv_imm: forall gs imm, resolve_loc gs (ArgImm imm) (LocImm imm)
+  | rslv_imm: forall gs imm, resolve_loc gs (ArgAnyImm (ArgImm imm)) (LocImm imm)
 
   | rslv_stack_pp: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
       fetch_sp (gs_regs gs) base ->
       sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
 
       uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
-      resolve_loc gs (ArgStackPushPop reg offset_imm)
+      resolve_loc gs (ArgAnyStackPushPop reg offset_imm)
         (LocStackAddress new_sp)
 
   | rslv_stack_rel: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
@@ -151,20 +151,20 @@ Section Execution.
       sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
 
       uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
-      resolve_loc gs (ArgStackOffset reg offset_imm)
+      resolve_loc gs (ArgAnyStackOffset reg offset_imm)
         (LocStackAddress new_sp)
 
   | rslv_stack_abs: forall gs reg base abs_imm stackpage_id,
       active_stackpage_id gs.(gs_callstack) stackpage_id ->
       fetch_sp gs.(gs_regs) base ->
 
-      resolve_loc gs (ArgStackAddr reg abs_imm)
+      resolve_loc gs (ArgAnyStackAddr reg abs_imm)
         (LocStackAddress abs_imm)
 
   | rslv_code: forall gs reg code_id abs_imm addr,
       active_codepage_id gs.(gs_callstack) code_id ->
       relative_code_addressing gs reg abs_imm addr ->
-      resolve_loc gs (ArgCodeAddr reg abs_imm) (LocCodeAddr addr)
+      resolve_loc gs (ArgAnyCodeAddr reg abs_imm) (LocCodeAddr addr)
   .
 
   Inductive fetch_result : Set :=
@@ -233,9 +233,9 @@ Section Execution.
   Inductive sp_addressing_delta: regs_state -> arg_any -> stack_address -> Prop :=
   | spafg_stack_pp: forall regs reg offset_imm new_sp,
       sp_delta regs reg offset_imm new_sp ->
-      sp_addressing_delta regs (ArgStackPushPop reg offset_imm) new_sp
+      sp_addressing_delta regs (ArgAnyStackPushPop reg offset_imm) new_sp
   | spafg_stack_reg_none: forall regs arg,
-      (forall reg offset_imm, arg <> ArgStackPushPop reg offset_imm) ->
+      (forall reg offset_imm, arg <> ArgAnyStackPushPop reg offset_imm) ->
       sp_addressing_delta regs arg stack_address_zero.
 
   (* partial because has to be applied twice: for in1 and for out1 arguments.  *)
