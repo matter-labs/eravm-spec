@@ -247,10 +247,15 @@ Section Execution.
     update_sp_addressing_full arg1 arg2 regs0 regs2.
 
 
+  Inductive mod_set_flags: bool -> flags_state -> flags_state -> Prop :=
+    | msf_set:
+      forall fs, mod_set_flags true fs (mk_fs false false false)
+    | msf_clr:
+      forall fs, mod_set_flags false fs fs.
 
   Inductive step : global_state -> global_state -> Prop :=
   | step_NOOP:
-    forall flags contracts mem_pages callstack context_u128 in1 in2
+    forall flags flags' mod_sf contracts mem_pages callstack context_u128 in1 in2
       out1 out2 regs0 regs1 regs2
       exec_cond,
       let gs := {|
@@ -264,14 +269,15 @@ Section Execution.
 
       fetch_instr gs {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
-                    ins_mods := ModEmpty;
+                    ins_mods := mk_cmod false mod_sf;
                     ins_cond := exec_cond
                   |} ->
       flags_activated exec_cond flags ->
+      mod_set_flags mod_sf flags flags' ->
       update_pc_regular regs0 regs1 ->
       update_sp_addressing_full in1 out1 regs1 regs2 ->
 
-      step gs (gs <| gs_regs := regs2 |>).
+      step gs (gs <| gs_flags := flags' |> <| gs_regs := regs2 |>).
 (* TODO think about other modifiers *)
 
   

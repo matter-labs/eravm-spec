@@ -6,7 +6,10 @@ Import Common Memory.
 Inductive exec_conditions_type :=
 | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
-Inductive common_mods := ModSwap | ModSetFlags | ModEmpty.
+Record common_mod : Set := mk_cmod {
+                               cm_swap: bool;
+                               cm_set_flags: bool
+                             }.
 
 Section Instruction.
 
@@ -51,7 +54,7 @@ Inductive opcode_specific :=
 .
 Record instruction :=
 Ins { ins_spec: opcode_specific ;
-      ins_mods: common_mods ;
+      ins_mods: common_mod ;
       ins_cond: exec_conditions_type;
   }.
 
@@ -60,7 +63,7 @@ End Instruction.
 Definition ins_invalid :=
   {|
     ins_spec := OpInvalid;
-    ins_mods := ModEmpty;
+    ins_mods := mk_cmod false false;
     ins_cond:= IfAlways
   |}.
 
