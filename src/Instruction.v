@@ -39,7 +39,7 @@ Record common_mod : Set := mk_cmod {
                              }.
 (** - Condition of execution: instruction is executed only if the currently set
 flags are compatible with the condition. Each instruction has a condition
-encoded inside it. See [ins_mods], [global_state], [gs_flags]. *)
+encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]. *)
 
 Inductive exec_conditions_type :=
 | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
@@ -85,6 +85,7 @@ Module Arg.
   | Absolute (reg:reg_name) (imm: stack_address): stack
   | RelativeSP (reg:reg_name) (offset: stack_address): stack
   | RelativeSPWithPushPop (reg:reg_name) (delta: stack_address): stack
+  .
   (**
 §1.7. An effectful operand with implicit SP modification.
 
@@ -106,7 +107,6 @@ Module Arg.
 §1.7.4. If used in [OpNoOp], the value of SP is modified even if there was no actual read performed. See [OpNoOp].
    *)
 
-  .
 
 
   (** All these types are collected in the following definition. *)
