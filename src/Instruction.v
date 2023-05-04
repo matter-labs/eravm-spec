@@ -19,11 +19,11 @@ Inductive arg_reg : Set :=
 Inductive arg_imm : Set :=
   | ArgImm (imm: u16).
 
-Inductive arg_reg_imm :=
+Inductive arg_reg_imm : Set :=
   | ArgRIReg : arg_reg -> arg_reg_imm
   | ArgRIImm : arg_imm -> arg_reg_imm.
 
-Inductive arg_any :=
+Inductive arg_any : Set :=
 | ArgAnyReg : arg_reg -> arg_any
 | ArgAnyImm : arg_imm -> arg_any
 | ArgAnyStackPushPop (r:reg_name) (delta: stack_address): arg_any
@@ -41,18 +41,18 @@ Definition arg_ri_incl (ari: arg_reg_imm) : arg_any :=
 
 
 Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
-Definition in_any := arg_any.
-Definition out_any := arg_any.
-Definition in_reg := arg_reg.
-Definition out_reg := arg_reg.
+Definition in_any  : Set := arg_any.
+Definition out_any : Set := arg_any.
+Definition in_reg  : Set := arg_reg.
+Definition out_reg : Set := arg_reg.
 
-Inductive opcode_specific :=
+Inductive opcode_specific : Set :=
 | OpInvalid
 | OpNoOp: in_any-> in_reg -> out_any -> out_reg -> opcode_specific
 | OpBinOp : in_any-> in_reg -> out_any -> binop_mod -> opcode_specific
 | OpAdd: in_any-> in_reg -> out_any -> opcode_specific
 .
-Record instruction :=
+Record instruction : Set :=
 Ins { ins_spec: opcode_specific ;
       ins_mods: common_mod ;
       ins_cond: exec_conditions_type;
@@ -60,11 +60,11 @@ Ins { ins_spec: opcode_specific ;
 
 End Instruction.
 
-Definition ins_invalid :=
+Definition ins_invalid : instruction :=
   {|
     ins_spec := OpInvalid;
     ins_mods := mk_cmod false false;
     ins_cond:= IfAlways
   |}.
 
-Definition code_page := code_page instruction ins_invalid.
+Definition code_page : Type := code_page instruction ins_invalid.
