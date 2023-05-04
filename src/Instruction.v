@@ -1,6 +1,7 @@
 Require Common Memory.
 
 Import Common Memory.
+
 (** * Instructions *)
 
 Inductive exec_conditions_type :=
@@ -11,40 +12,95 @@ Record common_mod : Set := mk_cmod {
                                cm_set_flags: bool
                              }.
 
-Section Instruction.
+Module Arg.
 
-Inductive arg_reg : Set :=
-  | ArgReg (reg:reg_name).
+  (** ** Addressing modes *)
 
-Inductive arg_imm : Set :=
-  | ArgImm (imm: u16).
+Inductive reg : Set := Reg (reg:reg_name).
+Inductive imm : Set := Imm (imm: u16).
 
-Inductive arg_reg_imm : Set :=
-  | ArgRIReg : arg_reg -> arg_reg_imm
-  | ArgRIImm : arg_imm -> arg_reg_imm.
+Inductive code : Set := CodeAddr (r:reg_name) (imm:code_address).
+Inductive const: Set := ConstAddr (r:reg_name) (imm:code_address).
 
-Inductive arg_any : Set :=
-| ArgAnyReg : arg_reg -> arg_any
-| ArgAnyImm : arg_imm -> arg_any
-| ArgAnyStackPushPop (r:reg_name) (delta: stack_address): arg_any
-| ArgAnyStackOffset (r:reg_name) (offset: stack_address): arg_any
-| ArgAnyStackAddr (r:reg_name) (imm: stack_address): arg_any
-| ArgAnyCodeAddr (r:reg_name) (imm:code_address): arg_any.
+Inductive stack : Set :=
+| RelativeSPWithPushPop (r:reg_name) (delta: stack_address): stack
+| RelativeSP (r:reg_name) (offset: stack_address): stack
+| Absolute (r:reg_name) (imm: stack_address): stack
+.
 
+Inductive any : Set :=
+| ArgReg  : reg   -> any
+| ArgImm  : imm   -> any
+| ArgStack: stack -> any
+| ArgCode : code  -> any
+| ArgConst: const -> any
+.
 
-Definition arg_reg_incl : arg_reg -> arg_any := ArgAnyReg.
-Definition arg_ri_incl (ari: arg_reg_imm) : arg_any :=
-  match ari with
-  | ArgRIReg x => ArgAnyReg x
-  | ArgRIImm x => ArgAnyImm x
+Inductive in_any : Set :=
+| InReg  : reg   -> in_any
+| InImm  : imm   -> in_any
+| InStack: stack -> in_any
+| InCode : code  -> in_any
+| InConst: const -> in_any
+.
+
+Definition in_any_incl (ia: in_any) : any :=
+  match ia with
+  | InReg x => ArgReg x
+  | InImm x => ArgImm x
+  | InStack x => ArgStack x
+  | InCode x => ArgCode x
+  | InConst x => ArgConst x
   end.
 
+Inductive regonly : Set :=
+| RegOnly  : reg -> regonly
+.
+
+Definition in_reg : Set := regonly.
+
+Definition in_regonly_incl (ro: regonly) : any :=
+  match ro with | RegOnly r => ArgReg r end.
+
+(** The argument may either be a register, or an immediate value.
+Only `uma` requires such an input argument.
+ *)
+Inductive regimm : Set :=
+| RegImmR : reg -> regimm
+| RegImmI : imm -> regimm
+.
+Definition in_regimm : Set := regimm.
+
+Definition in_regimm_incl (ri: regimm) : any :=
+  match ri with
+  | RegImmR r => ArgReg r
+  | RegImmI i => ArgImm i
+  end.
+
+(** "Out" operands can not be immediate, it differs them from In operands*)
+Inductive out_any : Set :=
+| OutReg  : reg   -> out_any
+| OutStack: stack -> out_any
+.
+
+Definition out_any_incl (ia: out_any) : any :=
+  match ia with
+  | OutReg x => ArgReg x
+  | OutStack x => ArgStack x
+  end.
+
+Definition out_reg : Set := regonly.
+Definition out_reg_incl (ro: regonly) : any :=
+  match ro with | RegOnly r => ArgReg r end.
+
+(* out_regimm does not exist. *)
+
+End Arg.
+
+Section Instruction.
+Import Arg.
 
 Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
-Definition in_any  : Set := arg_any.
-Definition out_any : Set := arg_any.
-Definition in_reg  : Set := arg_reg.
-Definition out_reg : Set := arg_reg.
 
 Inductive opcode_specific : Set :=
 | OpInvalid
