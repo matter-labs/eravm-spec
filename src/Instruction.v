@@ -3,15 +3,12 @@ Require Common Memory.
 Import Common Memory.
 (** * Instructions *)
 
-
 Inductive exec_conditions_type :=
 | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
 Inductive common_mods := ModSwap | ModSetFlags | ModEmpty.
 
 Section Instruction.
-(* Variable instruction: Set. *)
-(* Variable invalid_ins: instruction. *)
 
 Inductive arg_reg : Set :=
   | ArgReg (reg:reg_name).
@@ -68,7 +65,3 @@ Definition ins_invalid :=
   |}.
 
 Definition code_page := code_page instruction ins_invalid.
-(*
-FIXME is this possible even?
- ArgRegRelative (r:reg_name) (offset:u16): arg_any (* FIXME not u16 *)
- *)
