@@ -24,12 +24,6 @@ Definition shard_id_type := u8.
 (** * Execution *)
 
 Section Execution.
-  Definition ifEQ (fs: flags_state) : Prop :=
-    match fs with
-    | mk_fs OF_LT true GT => True
-    | _ => False
-    end.
-
 
   Inductive flags_activated:  exec_conditions_type -> flags_state -> Prop
     :=
