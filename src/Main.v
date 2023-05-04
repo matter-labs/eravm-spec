@@ -223,29 +223,43 @@ Section Execution.
       (pc',false) = uinc_overflow _ pc ->
       update_pc_regular (mk_regs gprs sp pc) (mk_regs gprs sp pc').
 
-  (* may affect SP through addressing on in1 and out1.
+  (* may affect SP through addressing on in1 .
      Takes effect before SP is read by the bytecode. sort out offsets from effects *)
-  Inductive sp_addressing_delta: regs_state -> any -> stack_address -> Prop :=
-  | spafg_stack_pp: forall regs reg offset_imm new_sp,
+  Inductive sp_addressing_delta_in: regs_state -> in_any -> stack_address -> Prop :=
+  | spadi_stack_pp: forall regs reg offset_imm new_sp,
       sp_delta regs reg offset_imm new_sp ->
-      sp_addressing_delta regs (ArgStack (RelativeSPWithPushPop reg offset_imm)) new_sp
-  | spafg_stack_reg_none: forall regs arg,
-      (forall reg offset_imm, arg <> (ArgStack (RelativeSPWithPushPop reg offset_imm))) ->
-      sp_addressing_delta regs arg stack_address_zero.
+      sp_addressing_delta_in regs (InStack (RelativeSPWithPushPop reg offset_imm)) new_sp
+  | spadi_stack_reg_none: forall regs arg,
+      (forall reg offset_imm, arg <> (InStack (RelativeSPWithPushPop reg offset_imm))) ->
+      sp_addressing_delta_in regs arg stack_address_zero.
 
-  (* partial because has to be applied twice: for in1 and for out1 arguments.  *)
-  Inductive update_sp_addressing_partial: any -> regs_state -> regs_state -> Prop :=
-  | usap_update_partial:
+  Inductive update_sp_addressing_in: in_any -> regs_state -> regs_state -> Prop :=
+  | usai_update_partial:
     forall gprs pc sp delta_sp sp' arg ,
-      sp_addressing_delta (mk_regs gprs sp pc) arg delta_sp ->
-      (sp',false) = uadd_overflow _ sp delta_sp ->
-      update_sp_addressing_partial arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
+      sp_addressing_delta_in (mk_regs gprs sp pc) arg delta_sp ->
+      (sp',false) = usub_overflow _ sp delta_sp ->
+      update_sp_addressing_in arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
 
-  Inductive update_sp_addressing_full: any -> any -> regs_state -> regs_state -> Prop :=
+  Inductive sp_addresing_delta_out: regs_state -> out_any -> stack_address -> Prop :=
+  | spado_stack_pp: forall regs reg offset_imm new_sp,
+      sp_delta regs reg offset_imm new_sp ->
+      sp_addresing_delta_out regs (OutStack (RelativeSPWithPushPop reg offset_imm)) new_sp
+  | spado_stack_reg_none: forall regs arg,
+      (forall reg offset_imm, arg <> (OutStack (RelativeSPWithPushPop reg offset_imm))) ->
+      sp_addresing_delta_out regs arg stack_address_zero.
+
+  Inductive update_sp_addressing_out: out_any -> regs_state -> regs_state -> Prop :=
+  | usaio_update_partial:
+    forall gprs pc sp delta_sp sp' arg ,
+      sp_addresing_delta_out (mk_regs gprs sp pc) arg delta_sp ->
+      (sp',false) = uadd_overflow _ sp delta_sp ->
+      update_sp_addressing_out arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
+  
+  Inductive update_sp_addressing: in_any -> out_any -> regs_state -> regs_state -> Prop :=
   | usap_update_full: forall arg1 arg2 regs0 regs1 regs2,
-    update_sp_addressing_partial arg1 regs0 regs1 ->
-    update_sp_addressing_partial arg2 regs1 regs2 ->
-    update_sp_addressing_full arg1 arg2 regs0 regs2.
+    update_sp_addressing_in arg1 regs0 regs1 ->
+    update_sp_addressing_out arg2 regs1 regs2 ->
+    update_sp_addressing arg1 arg2 regs0 regs2.
 
 
   Inductive mod_set_flags: bool -> flags_state -> flags_state -> Prop :=
@@ -276,7 +290,7 @@ Section Execution.
       flags_activated exec_cond flags ->
       mod_set_flags mod_sf flags flags' ->
       update_pc_regular regs0 regs1 ->
-      update_sp_addressing_full (in_any_incl in1) (out_any_incl out1) regs1 regs2 ->
+      update_sp_addressing in1 out1 regs1 regs2 ->
 
       step gs (gs <| gs_flags := flags' |> <| gs_regs := regs2 |>).
 (* TODO think about other modifiers *)
