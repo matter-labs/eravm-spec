@@ -45,4 +45,8 @@ Navigate there and execute:
 
 1. `coq_makefile -f _CoqProject -o CoqMakefile` will create a file `CoqMakefile` for `make`. This should be done once.
 2. To build specs and proofs: `make -f CoqMakefile -j<number of threads> all`
-3. To generate docs: `coqdoc -toc -interpolate -utf8  -html -R src zkEVMSpec -d src src/*.v`. Docs require the previous step to succeed in order to perform the link resolution, otherwise the definitions will not be clickable. Docs in HTML format will be placed to `src/`. Generating PDF is possible too.
+3. To generate docs: `./build-docs.sh`.
+   - Requires `pandoc` to be installed; thanks to it, we can process arbitrary Markdown in verbatim blocks of CoqDoc.
+   - Docs in HTML format will be placed to `doc/`.
+   - Generating docs requires the previous step to succeed for the link
+     resolution, otherwise the definitions will not be clickable.
