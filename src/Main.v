@@ -108,10 +108,10 @@ Section Execution.
 
 
   Inductive relative_code_addressing: global_state -> reg_name -> u16 -> code_address -> Prop :=
-  | rca_code_pp: forall gs reg reg_val reg_val_clipped imm offset_reg_clipped
+  | rca_code_pp: forall gs reg reg_val imm offset_reg_clipped
                    code_absolute overflow_ignored,
       fetch_gpr (gs_regs gs) reg (IntValue reg_val) ->
-      reg_val_clipped = ZMod.resize word_bits code_address_bits reg_val ->
+      offset_reg_clipped = ZMod.resize word_bits code_address_bits reg_val ->
       uadd_overflow code_address_bits offset_reg_clipped imm = (code_absolute, overflow_ignored) ->
       relative_code_addressing gs reg imm code_absolute
   .

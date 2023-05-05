@@ -68,7 +68,7 @@ Section Memory.
     (** 24 bits, byte-addressable *)
     Definition data_page_params := {|
                                     addressable_block := u8;
-                                    address_bits := 24;
+                                    address_bits := 32;
                                     default_value := zero8;
                                     writable := true
                                   |}.
