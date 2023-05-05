@@ -18,7 +18,7 @@ TODO The exact binary encoding of instructions is different from the following d
 
 §1. Instructions have a part common to all instructions, and an instruction-specific part.
 
-§1.1. The common part consists of:
+§1.1. The common part [instruction] consists of:
 - Opcode: encodes instruction type. See [opcode_specific].
 - Common modifiers: alters the meaning of instruction. See [common_mod], [ins_mods].
 
@@ -44,9 +44,7 @@ encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]
 Inductive exec_conditions_type :=
 | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
-(** This common part is described by [instruction].
-
-§1.2. Additionally, depending on [opcode_specific], an instruction may have:
+(** §1.2. Additionally, depending on [opcode_specific], an instruction may have:
 
 - Exclusive modifiers: alter the meaning of instruction, e.g. [binop_mod].
 - Operands: up to two input operands `in1` and `in2`, and up to two output operands `out1` and `out2`. Their allowed formats are systematized in the section Addressing Modes.
@@ -61,24 +59,44 @@ Module Arg.
 
   (** §1. There are 7 main types of instruction arguments, differentiated by the way they are addressed. See [any].
 
-§1.1. Register, taking a value from one of GPR. See [global_state], [gs_regs].
+§1.1. #<b>#Register#</b>#, taking a value from one of GPR.
+
+§1.1.1. See [reg], [ArgReg], [global_state], [gs_regs].
    *)
 
   Inductive reg : Set := Reg (reg:reg_name).
 
-  (** §1.2. Immediate 16-bit value. *)
+  (** §1.2. #<b>#Immediate 16-bit #</b># value.
+
+§1.2.1. See [imm], [ArgImm]. *)
   Inductive imm : Set := Imm (imm: u16).
 
-  (** §1.3. Address on a code page, relative to a GPR. Resolved to (reg + imm). Code and const pages may coincide. *)
+  (** §1.3. #<b>#Address on a code page, relative to a GPR.#</b># Resolved to (reg + imm). Code and const pages may coincide. See [code], [ArgCode]. *)
   Inductive code : Set := CodeAddr (reg:reg_name) (imm:code_address).
 
-  (** §1.4. Address on a const page, relative to a GPR. Resolved to (reg + imm). Code and const pages may coincide. *)
+  (** §1.4. #<b>#Address on a const page, relative to a GPR.#</b>#
+
+§1.4.1. Resolved to (reg + imm).
+
+§1.4.2. Code and const pages may coincide.
+
+§1.4.3. See [const], [ArgConst]. *)
   Inductive const: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
   (**
-§1.5. Address on a stack page, relative to a GPR. Resolved to (reg + imm).
+§1.5. #<b># Address on a stack page, relative to a GPR. #</b>#
 
-§1.6. Address on a stack page, relative to SP and GPR. Resolved to (SP - reg + imm).
+§1.5.1. Resolved to (reg + imm).
+
+§1.5.2. See [Absolute], [ArgStack].
+
+§1.6. #<b>#Address on a stack page, relative to SP and GPR.#</b>#
+
+§1.6.1. Resolved to (SP - reg + imm).
+
+§1.6.2. Unlike [RelativeSPWithPushPop], the direction of offset does not change depending on read/write.
+
+§1.6.3. See [RelativeSP], [ArgStack].
 
    *)
   Inductive stack : Set :=
@@ -87,7 +105,7 @@ Module Arg.
   | RelativeSPWithPushPop (reg:reg_name) (delta: stack_address): stack
   .
   (**
-§1.7. An effectful operand with implicit SP modification.
+§1.7. #<b>#An effectful operand with implicit SP modification. #</b>#.
 
 §1.7.1. As in the previous case, it is an address on a stack page, relative to SP and GPR; the direction of the offset depends on the operation:
 
@@ -105,6 +123,8 @@ Module Arg.
 §1.7.3. If the instruction uses SP value somehow, then it will see the value AFTER the effects produced by resolution of `in1` and/or `out1`.
 
 §1.7.4. If used in [OpNoOp], the value of SP is modified even if there was no actual read performed. See [OpNoOp].
+
+§1.7.5. See [RelativeSPWithPushPop], [ArgStack].
    *)
 
 
@@ -174,9 +194,9 @@ input argument. *)
   (**
 §2.5. "Out" arguments can not be immediate values.
 
-§2.5.1. Also, a single immediate value is not enough to identify a memory cell, because we have multiple pages (see [memory_page].
+§2.5.1. Also, a single immediate value is not enough to identify a memory cell, because we have multiple pages (see [memory_page]).
 
-§2.5.1. "Out" arguments can not be code or const addresses either, because these memory regions are not writable.
+§2.5.2. "Out" arguments can not be code or const addresses either, because these memory regions are not writable.
 
 §2.6. Usually, the `out1` argument can be of any type (except for immediate value).
    *)
@@ -240,22 +260,28 @@ Check OpNoOp
 
 Here, operands `in1` and `out1` are using [RelativeSPWithPushPop] addressing mode.
 Therefore, executing this instruction will modify SP like that: first, [sp -= (r1 + 10)]; then, [sp += (r2 + 20)].
-
-This instruction has operands, but performs no operations with memory or registers, except the
-
-one. Both operands which can be Does not perform anything, but the operands in [Arg.Stack] addressing mode may be used to 
-- Adjust
        *)
+
   (** ** BinOp *)
   | OpBinOp : in_any -> in_reg -> out_any -> binop_mod -> opcode_specific
   (**
    Usage:
 
-- Depending on the exclusive modifier, 
+- Depending on the exclusive modifier,
    *)
   (** ** Add *)
   | OpAdd: in_any -> in_reg -> out_any -> opcode_specific
   .
+
+
+(** ** Common definitions *)
+
+  (**
+§1. An instruction type, including:
+- opcode-specific part;
+- common modifiers allowed to any instruction type;
+- execution conditions, describing under which conditions (flags) the instruction will be executed.
+   *)
   Record instruction : Set :=
     Ins {
         ins_spec: opcode_specific ;
@@ -263,8 +289,11 @@ one. Both operands which can be Does not perform anything, but the operands in [
         ins_cond: exec_conditions_type;
       }.
 
+  (**
+§2. Invalid instruction. It is a default value on code memory pages.
 
-  (** A definition for an invalid instruction. It is a default value on code memory pages. See [code_page]. *)
+§2.1. See [code_page]. It is parameterized by an instruction type for convenience of defining it.
+   *)
   Definition ins_invalid : instruction :=
     {|
       ins_spec := OpInvalid;
@@ -274,7 +303,7 @@ one. Both operands which can be Does not perform anything, but the operands in [
 
 End Def.
 
-(** A helper definition to specialize a code page with a (just defined) instruction type. *)
+(** §2.2. A helper definition to specialize a code page with a (just defined) instruction type. *)
 Definition code_page : Type := code_page instruction ins_invalid.
 
 (* Inner Operation
