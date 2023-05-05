@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Memory Instruction State.
+Require Common Memory Instruction State Addressing.
 
-Import ZArith Common MemoryBase Memory Instruction State ZMod.
+Import ZArith Addressing Common MemoryBase Memory Instruction State ZMod.
 
 (* Experimental: lens-like notations to set individual fields of records. *)
 Import RecordSetNotations.
@@ -73,95 +73,6 @@ Section Execution.
 
 
 
-  (** Location from where a value can be fetched. *)
-  Inductive loc : Set :=
-  | LocImm: u16 ->  loc
-  | LocReg : reg_name ->  loc
-  | LocStackAddress: stack_address -> loc
-  | LocCodeAddr: code_address -> loc
-  | LocConstAddr: const_address ->  loc
-  | LocHeapAddr: mem_page_id -> mem_address -> loc
-  | LocAuxHeapAddr: mem_page_id -> mem_address ->  loc.
-
-  (** Fetching value from general purpose register. *)
-  Inductive fetch_gpr : regs_state -> reg_name -> primitive_value -> Prop :=
-  | fr_fetch:
-    forall rs n regname val,
-      reg_n n regname ->
-      List.nth_error (rs_gprs rs) n = Some val ->
-      fetch_gpr rs regname val.
-
-  (** Fetching value of the stack pointer itself. *)
-  Inductive fetch_sp : regs_state -> stack_address -> Prop :=
-  | fsp_fetch:
-    forall rs (sp_value:stack_address),
-      rs_sp rs = sp_value ->
-      fetch_sp rs sp_value
-  .
-  (** Fetching value of the program counter itself. *)
-  Inductive fetch_pc : regs_state -> code_address -> Prop :=
-  | fpc_fetch:
-    forall rs (pc_value: code_address) ,
-      rs_pc rs = pc_value ->
-      fetch_pc rs pc_value
-  .
-
-
-  Inductive relative_code_addressing: global_state -> reg_name -> u16 -> code_address -> Prop :=
-  | rca_code_pp: forall gs reg reg_val imm offset_reg_clipped
-                   code_absolute overflow_ignored,
-      fetch_gpr (gs_regs gs) reg (IntValue reg_val) ->
-      offset_reg_clipped = ZMod.resize word_bits code_address_bits reg_val ->
-      uadd_overflow code_address_bits offset_reg_clipped imm = (code_absolute, overflow_ignored) ->
-      relative_code_addressing gs reg imm code_absolute
-  .
-
-  (** delta = reg + imm *)
-  Inductive sp_delta: regs_state -> reg_name -> u16 -> stack_address -> Prop :=
-  | spa_stack_pp: forall regs reg offset_reg offset_imm offset_reg_clipped
-                    stackaddr_delta
-                    overflow_ignored,
-      fetch_gpr regs reg (IntValue offset_reg) ->
-      offset_reg_clipped = ZMod.resize word_bits _ offset_reg ->
-
-      uadd_overflow _ offset_reg_clipped offset_imm = (stackaddr_delta, overflow_ignored) ->
-      sp_delta regs reg offset_imm stackaddr_delta
-  .
-
-  Inductive resolve_loc: global_state -> any -> loc ->  Prop :=
-  | rslv_reg: forall gs reg, resolve_loc gs (ArgReg (Reg reg)) (LocReg reg)
-
-  | rslv_imm: forall gs imm, resolve_loc gs (ArgImm (Imm imm)) (LocImm imm)
-
-  | rslv_stack_pp: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
-      fetch_sp (gs_regs gs) base ->
-      sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
-
-      uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
-      resolve_loc gs (ArgStack (RelativeSPWithPushPop reg offset_imm))
-        (LocStackAddress new_sp)
-
-  | rslv_stack_rel: forall gs reg base offset_imm dlt_sp of_ignored new_sp,
-      fetch_sp gs.(gs_regs) base ->
-      sp_delta gs.(gs_regs) reg offset_imm dlt_sp ->
-
-      uadd_overflow _ base dlt_sp = (new_sp, of_ignored) ->
-      resolve_loc gs (ArgStack (RelativeSP reg offset_imm))
-        (LocStackAddress new_sp)
-
-  | rslv_stack_abs: forall gs reg base abs_imm stackpage_id,
-      active_stackpage_id gs.(gs_callstack) stackpage_id ->
-      fetch_sp gs.(gs_regs) base ->
-
-      resolve_loc gs (ArgStack (Absolute reg abs_imm))
-        (LocStackAddress abs_imm)
-
-  | rslv_code: forall gs reg code_id abs_imm addr,
-      active_codepage_id gs.(gs_callstack) code_id ->
-      relative_code_addressing gs reg abs_imm addr ->
-      resolve_loc gs (ArgCode (CodeAddr reg abs_imm)) (LocCodeAddr addr)
-  .
-
   Inductive fetch_result : Set :=
   | FetchIns (ins :instruction)
   | FetchPV (pv: primitive_value) .
@@ -193,24 +104,11 @@ Section Execution.
       active_constpage gs.(gs_mem_pages) gs.(gs_callstack) (ConstPage _ _ constpage) ->
       load_result _ addr constpage value ->
       fetch_loc gs (LocConstAddr addr) (FetchPV (IntValue value))
-  (* TODO Come back for UMA; reading byte sequences is already implemented, see
-  tests in MemoryBase.v *)
-  (* | fetch_heapaddr: *)
-  (*   forall gs page addr value, *)
-  (*     active_heappage gs (DataPage _ _ page) -> *)
-  (*     (* here we need to glue together 256 bits from 32 bytes *) *)
-  (*     load_result _ addr const_page value -> *)
-  (*     fetch_loc gs (LocConstAddr addr) (FetchPV (IntValue value)) *)
 
-  (* | fetch_auxheapaddr: *)
   .
+  (* TODO UMA; reading byte sequences is already implemented, see
+  tests in MemoryBase.v *)
 
-
-  (* To encode an instruction:
-- addressing mode effect on sp
-- PC
-- exceptions
-   *)
   Inductive fetch_instr : global_state -> instruction -> Prop :=
   | fi_fetch: forall gs pc ins,
       fetch_pc (gs_regs gs) pc ->
@@ -222,44 +120,6 @@ Section Execution.
     forall pc sp gprs pc',
       (pc',false) = uinc_overflow _ pc ->
       update_pc_regular (mk_regs gprs sp pc) (mk_regs gprs sp pc').
-
-  (* may affect SP through addressing on in1 .
-     Takes effect before SP is read by the bytecode. sort out offsets from effects *)
-  Inductive sp_addressing_delta_in: regs_state -> in_any -> stack_address -> Prop :=
-  | spadi_stack_pp: forall regs reg offset_imm new_sp,
-      sp_delta regs reg offset_imm new_sp ->
-      sp_addressing_delta_in regs (InStack (RelativeSPWithPushPop reg offset_imm)) new_sp
-  | spadi_stack_reg_none: forall regs arg,
-      (forall reg offset_imm, arg <> (InStack (RelativeSPWithPushPop reg offset_imm))) ->
-      sp_addressing_delta_in regs arg stack_address_zero.
-
-  Inductive update_sp_addressing_in: in_any -> regs_state -> regs_state -> Prop :=
-  | usai_update_partial:
-    forall gprs pc sp delta_sp sp' arg ,
-      sp_addressing_delta_in (mk_regs gprs sp pc) arg delta_sp ->
-      (sp',false) = usub_overflow _ sp delta_sp ->
-      update_sp_addressing_in arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
-
-  Inductive sp_addresing_delta_out: regs_state -> out_any -> stack_address -> Prop :=
-  | spado_stack_pp: forall regs reg offset_imm new_sp,
-      sp_delta regs reg offset_imm new_sp ->
-      sp_addresing_delta_out regs (OutStack (RelativeSPWithPushPop reg offset_imm)) new_sp
-  | spado_stack_reg_none: forall regs arg,
-      (forall reg offset_imm, arg <> (OutStack (RelativeSPWithPushPop reg offset_imm))) ->
-      sp_addresing_delta_out regs arg stack_address_zero.
-
-  Inductive update_sp_addressing_out: out_any -> regs_state -> regs_state -> Prop :=
-  | usaio_update_partial:
-    forall gprs pc sp delta_sp sp' arg ,
-      sp_addresing_delta_out (mk_regs gprs sp pc) arg delta_sp ->
-      (sp',false) = uadd_overflow _ sp delta_sp ->
-      update_sp_addressing_out arg (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
-  
-  Inductive update_sp_addressing: in_any -> out_any -> regs_state -> regs_state -> Prop :=
-  | usap_update_full: forall arg1 arg2 regs0 regs1 regs2,
-    update_sp_addressing_in arg1 regs0 regs1 ->
-    update_sp_addressing_out arg2 regs1 regs2 ->
-    update_sp_addressing arg1 arg2 regs0 regs2.
 
 
   Inductive mod_set_flags: bool -> flags_state -> flags_state -> Prop :=
@@ -290,12 +150,12 @@ Section Execution.
       flags_activated exec_cond flags ->
       mod_set_flags mod_sf flags flags' ->
       update_pc_regular regs0 regs1 ->
-      update_sp_addressing in1 out1 regs1 regs2 ->
+      resolve_effect in1 out1 regs1 regs2 ->
 
       step gs (gs <| gs_flags := flags' |> <| gs_regs := regs2 |>).
 (* TODO think about other modifiers *)
 
-  
+
   (* | step_ADD: *)
   (*   forall OF_LT EQ GT contracts mem_pages callstack context_u128 in1 in2 *)
   (*     out1 out2 regs0 regs1 regs2 *)

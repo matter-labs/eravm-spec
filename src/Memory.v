@@ -59,7 +59,7 @@ Definition contract_collection_type := mem_parameterized contracts_params.
 
 (** * Mem page *)
 Section Memory.
-  
+
   Variable ins_type: Set.
   Variable invalid_ins: ins_type.
   Section Pages.
@@ -107,29 +107,30 @@ Section Memory.
     Definition stack_page := mem_parameterized stack_page_params.
 
 
+    Definition const_address_bits := 16.
+
     Definition const_page_params := {|
                                      addressable_block := word_type;
-                                     address_bits := 16;
+                                     address_bits := const_address_bits;
                                      default_value := zero256;
                                      writable := false
                                    |}.
-
-    Definition const_address := address const_page_params.
+    Definition const_address :=  address const_page_params.
     Definition const_page := mem_parameterized const_page_params.
 
 
-
-    Definition code_page_params := {|
-                                    addressable_block := ins_type;
-                                    address_bits := 16;
-                                    default_value := invalid_ins;
-                                    writable := false
-                                  |}.
 
     (* should be [address code_page_params] but we don't want to introduce
       dependency between code_address and instruction type *)
     Definition code_address_bits := 16.
     Definition code_address :=  ZMod.int_mod code_address_bits.
+    Definition code_page_params := {|
+                                    addressable_block := ins_type;
+                                    address_bits := code_address_bits;
+                                    default_value := invalid_ins;
+                                    writable := false
+                                  |}.
+
 
     Definition code_page := mem_parameterized code_page_params.
 
@@ -157,7 +158,7 @@ Section Memory.
     | PageAlloc :
       forall m, page_alloc p m (cons (length m, p) m).
 
- End Pages.
+  End Pages.
 
   (** * Registers*)
   (** There are 16 registers; [r0_reserved] always holds 0. *)
@@ -183,13 +184,38 @@ Section Memory.
       Inductive reg_writable: reg_name -> Prop :=
         RegWritableNotR0: forall reg, reg <> R0 -> reg_writable reg.
 
+
     End GPR.
 
     Record regs_state :=  mk_regs {
-        rs_gprs: list primitive_value;
-        rs_sp: stack_address;
-        rs_pc: code_address;
-      }.
+                              rs_gprs: list primitive_value;
+                              rs_sp: stack_address;
+                              rs_pc: code_address;
+                            }.
+
+    (** Fetching value from general purpose register. *)
+    Inductive fetch_gpr : regs_state -> reg_name -> primitive_value -> Prop :=
+    | fr_fetch:
+      forall rs n regname val,
+        reg_n n regname ->
+        List.nth_error (rs_gprs rs) n = Some val ->
+        fetch_gpr rs regname val.
+
+
+    (** Fetching value of the stack pointer itself. *)
+    Inductive fetch_sp : regs_state -> stack_address -> Prop :=
+    | fsp_fetch:
+      forall rs (sp_value:stack_address),
+        rs_sp rs = sp_value ->
+        fetch_sp rs sp_value
+    .
+    (** Fetching value of the program counter itself. *)
+    Inductive fetch_pc : regs_state -> code_address -> Prop :=
+    | fpc_fetch:
+      forall rs (pc_value: code_address) ,
+        rs_pc rs = pc_value ->
+        fetch_pc rs pc_value
+    .
 
     Record flags_state := mk_fs {
                               OF_LT: bool;
@@ -197,5 +223,20 @@ Section Memory.
                               GT: bool;
                             }.
     Definition flags_clear : flags_state := mk_fs false false false.
+
+
   End Regs.
+
+  Section Helpers.
+  Import ZMod.
+
+  Inductive extract_address bits: word_type -> int_mod bits -> Prop :=
+  |ea_extract: forall val,
+      extract_address bits val (ZMod.resize word_bits bits val).
+
+  Definition extract_code_address: word_type -> code_address -> Prop := extract_address _.
+  Definition extract_const_address: word_type -> const_address -> Prop := extract_address _.
+  Definition extract_stack_address: word_type -> stack_address -> Prop
+    := extract_address _.
+  End Helpers.
 End Memory.
