@@ -5,3 +5,4 @@ for file in `find doc -name '*.html'`
 do
 ./prepare.sh "$file"
 done
+cp -f coqdoc.css doc
