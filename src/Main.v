@@ -12,7 +12,7 @@ Import RecordSetNotations.
 
 (** TODO contract that manages code *)
 Definition code_managing_contract_address : contract_address
-  := ZMod.mk_int_mod_truncated 160 32770%Z.
+  := ZMod.int_mod_of 160 32770%Z.
 
 (* TODO *)
 Definition ergs_counter_type := u32.
@@ -86,7 +86,7 @@ Section Execution.
 
   | fetch_imm:
     forall gs imm imm',
-      imm' = mk_int_mod_truncated word_bits (int_val _ imm) ->
+      imm' = resize _ word_bits imm ->
       fetch_loc gs (LocImm imm) (FetchPV (IntValue imm'))
 
   | fetch_stackaddr:

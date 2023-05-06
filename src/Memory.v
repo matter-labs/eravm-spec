@@ -5,7 +5,7 @@ Import Common MemoryBase BinInt.
 (**  §1. A _word_ is a 256-bit unsigned number. *)
 Definition word_bits: nat := 256.
 Definition word_type : Set := ZMod.int_mod word_bits.
-Definition word_zero_value: word_type := ZMod.mk_int_mod_truncated word_bits 0%Z.
+Definition word_zero_value: word_type := ZMod.int_mod_of word_bits 0%Z.
 
 (** §2. A _storage_ is a linear mapping from $2^256$ #2<sup>256</sup>#
     addresses to words.

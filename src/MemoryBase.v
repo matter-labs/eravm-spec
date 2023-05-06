@@ -95,7 +95,7 @@ Proof.
       * inversion H.
         subst.
         econstructor; simpl; eauto ; [|constructor; auto].
-        unfold mk_int_mod_truncated.
+        unfold int_mod_of.
         unfold uinc_overflow.
         unfold uadd_overflow.
         f_equal; symmetry; assumption.
@@ -136,7 +136,7 @@ End Util.
 Definition merge_bytes bits resbits (ls: list (int_mod bits)) : int_mod resbits
   :=
   let only_zs := List.map (int_val bits) ls in
-  mk_int_mod_truncated resbits
+  int_mod_of resbits
     (concat_bytes_Z bits only_zs).
 
 

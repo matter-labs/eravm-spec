@@ -3,7 +3,8 @@ Require ZArith ZArith_ext.
 Import BinInt ZArith ZArith_ext.
 
 
-  (** * Machine integers modulo 2^N.
+
+(** * Machine integers modulo 2^N.
       Integers are encoded in binary form (see [BinNums.positive]), therefore we are able to
       efficiently reason about wide numbers e.g. 256-bit. *)
 Section Def.
@@ -12,7 +13,7 @@ Section Def.
   that use it. After the Section end, all definitions will be rewritten so that
   [bits] is passed to them explicitly. *)
   Variable bits: nat.
-  
+
   (** [bits_nz] is an implicit proof passed to all definitions in this section
   that use it. It forbids constructing integers modulo 1. After the Section end,
    all definitions will be rewritten so that [bits] is passed to them explicitly. *)
@@ -28,8 +29,26 @@ Section Def.
   with no more than [bits] binary digits. *)
   Record int_mod: Type := mk_int_mod {
                               int_val: Z;
-                              int_range: (0 <= int_val < characteristic)%Z
+                              int_range: in_range 0 int_val characteristic = true
                             }.
+
+  (** Equality *)
+
+  Lemma eq_values: forall (x y: int_mod),
+      x = y <-> int_val x = int_val y.
+  Proof.
+    intros x y; split.
+    - intros; subst; reflexivity.
+    - destruct x,y.
+      simpl in *.
+      intros ?; subst.
+      f_equal.
+      destruct (in_range 0 int_val1 characteristic); [|discriminate].
+      rewrite (Eqdep_dec.UIP_refl_bool _ int_range1).
+      rewrite (Eqdep_dec.UIP_refl_bool _ int_range0).
+      reflexivity.
+  Qed.
+
 
   (** ** Conversions *)
 
@@ -52,7 +71,6 @@ Section Def.
   Definition signed_max : Z := (characteristic / 2) - 1.
 
 
-
   (** An integer modulo 2^N falls in range between 0 inclusive and 2^N exclusive. *)
   Theorem int_mod_range:
     forall z : Z, (0 <= mod_pow2 z bits < characteristic)%Z.
@@ -64,11 +82,12 @@ Section Def.
   Qed.
 
   (** Ensure an integer is representable with N bits, truncating it if necessary. *)
-  Definition mk_int_mod_truncated (z: Z) : int_mod :=
-    let truncated := ZArith_ext.mod_pow2 z bits in
-    mk_int_mod truncated (int_mod_range z).
-
-
+  Definition int_mod_of (z: Z) : int_mod.
+    pose (truncated := ZArith_ext.mod_pow2 z bits).
+    refine (mk_int_mod truncated _).
+    apply in_range_spec_l.
+    apply (int_mod_range z).
+  Defined.
 
   (** ** Operations *)
   (** Addition, subtraction, multiplication, division, shifts, modulo operations. *)
@@ -82,19 +101,19 @@ Section Def.
 
   Definition uadd_overflow (x y: int_mod) : int_mod * bool :=
     let result := (as_unsigned x + as_unsigned y)%Z in
-    (mk_int_mod_truncated result, carry result).
+    (int_mod_of result, carry result).
 
   Definition uinc_overflow (x: int_mod) : int_mod * bool :=
-    uadd_overflow x (mk_int_mod_truncated 1).
+    uadd_overflow x (int_mod_of 1).
 
   Definition usub_overflow (x y: int_mod) : int_mod * bool :=
     let a := as_unsigned x in
     let b := as_unsigned y in
-    (mk_int_mod_truncated (a-b)%Z, if gt_dec b a then true else false).
+    (int_mod_of (a-b)%Z, if gt_dec b a then true else false).
 
 End Def.
 
 
 Definition resize (sz1 sz2:nat) (x: int_mod sz1) : int_mod sz2 :=
-  mk_int_mod_truncated sz2 (int_val sz1 x).
+  int_mod_of sz2 (int_val sz1 x).
 

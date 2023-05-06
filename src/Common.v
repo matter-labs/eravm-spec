@@ -2,7 +2,7 @@ Require ZArith lib.ZMod.
 
 Section Types.
   Import ZArith lib.ZMod.
-  Let mk n := mk_int_mod_truncated n.
+  Let mk n := int_mod_of n.
 
   Definition u8 := int_mod 8.
   Definition u8_of := mk 8.

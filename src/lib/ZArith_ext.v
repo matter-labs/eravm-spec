@@ -99,5 +99,30 @@ Section ModuloPowerOfTwo.
   Close Scope Z_scope.
 End ModuloPowerOfTwo.
 
+Section Range.
+Import ZArith.
+Definition in_range (x y z:Z) : bool :=
+  if Z_le_dec x y then
+    if Z_lt_dec y z then true
+    else false
+  else false.
+
+Theorem in_range_spec_l:
+  forall x y z, (x <= y < z)%Z -> in_range x y z = true.
+Proof.
+unfold in_range; intros x y z [H H'].
+destruct (Z_le_dec _ _); auto.
+destruct (Z_lt_dec _ _); auto.
+Qed.
+
+Theorem in_range_spec_r:
+  forall x y z, in_range x y z = true -> (x <= y < z)%Z.
+Proof.
+  unfold in_range.
+  intros x y z H.
+  destruct (Z_le_dec _ _); try destruct (Z_lt_dec _ _); auto; try discriminate.
+Qed.
+
+End Range.
 #[export]
   Hint Resolve  eq_dec gt_dec lt_dec: decidable_prop.
