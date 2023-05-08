@@ -31,43 +31,39 @@ Section Execution.
   | ac_Always: forall fs,
       flags_activated IfAlways fs
 
-  | ac_GT: forall fs,
-      GT fs = true ->
-      flags_activated IfGT fs
+  | ac_GT: forall of_lt eq,
+      flags_activated IfGT (mk_fs of_lt eq Set_GT)
 
-  | ac_EQ: forall fs,
-      EQ fs = true -> flags_activated IfEQ fs
+  | ac_EQ: forall of_lt gt,
+      flags_activated IfEQ (mk_fs of_lt Set_EQ gt)
 
-  | ac_LT: forall fs,
-      OF_LT fs = true ->
-      flags_activated IfLT fs
+  | ac_LT: forall eq gt,
+      flags_activated IfLT (mk_fs Set_OF_LT eq gt)
 
   | ac_GE1: forall fs,
-      EQ fs = true ->
+      flags_activated IfEQ fs ->
       flags_activated IfGE fs
 
   | ac_GE2: forall fs,
-      GT fs = true ->
+      flags_activated IfGT fs ->
       flags_activated IfGE fs
 
   | ac_LE1: forall fs,
-      OF_LT fs = true ->
+      flags_activated IfLT fs ->
       flags_activated IfLE fs
   | ac_LE2: forall fs,
-      EQ fs = true ->
+      flags_activated IfEQ fs ->
       flags_activated IfLE fs
 
-
-  | ac_NotEQ: forall fs,
-      EQ fs = false ->
-      flags_activated IfNotEQ fs
+  | ac_NotEQ: forall of_lt gt,
+      flags_activated IfNotEQ (mk_fs of_lt Clear_EQ gt)
 
   | ac_IfGTOrLT1: forall fs,
-      GT fs = true ->
+      flags_activated IfGT fs->
       flags_activated IfGTOrLT fs
 
   | ac_IfGTOrLT2: forall fs,
-      OF_LT fs = true ->
+      flags_activated IfLT fs->
       flags_activated IfGTOrLT fs
   .
 
@@ -115,19 +111,30 @@ Section Execution.
       fetch_loc gs (LocCodeAddr pc) (FetchIns ins) ->
       fetch_instr gs ins.
 
+  Inductive fetch_op: global_state -> opcode_specific -> common_mod -> exec_conditions_type -> Prop :=
+  | fo_fetch: forall gs op mods cond,
+      fetch_instr gs (Ins op mods cond) ->
+      fetch_op gs op mods cond.
+
   Inductive update_pc_regular : regs_state -> regs_state -> Prop :=
   | fp_update:
     forall pc sp gprs pc',
       (pc',false) = uinc_overflow _ pc ->
       update_pc_regular (mk_regs gprs sp pc) (mk_regs gprs sp pc').
 
+  Inductive overwrite_pc : code_address -> regs_state -> regs_state -> Prop :=
+  | op_overwrite:
+    forall pc sp gprs pc',
+      overwrite_pc pc' (mk_regs gprs sp pc) (mk_regs gprs sp pc').
 
-  Inductive mod_set_flags: bool -> flags_state -> flags_state -> Prop :=
+  (* TODO needs to accept  a list of flags to reset or to keep? *)
+  Inductive mod_set_flags: mod_clear_flags -> flags_state -> flags_state -> Prop :=
     | msf_set:
-      forall fs, mod_set_flags true fs (mk_fs false false false)
+      forall fs, mod_set_flags ClearFlags fs (mk_fs Clear_OF_LT Clear_EQ Clear_GT)
     | msf_clr:
-      forall fs, mod_set_flags false fs fs.
+      forall fs, mod_set_flags NoClearFlags fs fs.
 
+     
   Inductive step : global_state -> global_state -> Prop :=
   | step_NOOP:
     forall flags flags' mod_sf contracts mem_pages callstack context_u128 in1 in2
@@ -144,7 +151,7 @@ Section Execution.
 
       fetch_instr gs {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
-                    ins_mods := mk_cmod false mod_sf;
+                    ins_mods := mk_cmod NoSwap mod_sf;
                     ins_cond := exec_cond
                   |} ->
       flags_activated exec_cond flags ->

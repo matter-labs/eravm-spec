@@ -217,12 +217,16 @@ Section Memory.
         fetch_pc rs pc_value
     .
 
+    Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
+    Inductive EQ := Set_EQ | Clear_EQ.
+    Inductive GT := Set_GT | Clear_GT.
+ 
     Record flags_state := mk_fs {
-                              OF_LT: bool;
-                              EQ: bool;
-                              GT: bool;
+                              fs_OF_LT: OF_LT;
+                              fs_EQ: EQ;
+                              fs_GT: GT;
                             }.
-    Definition flags_clear : flags_state := mk_fs false false false.
+    Definition flags_clear : flags_state := mk_fs Clear_OF_LT Clear_EQ Clear_GT.
 
 
   End Regs.

@@ -35,9 +35,12 @@ TODO The exact binary encoding of instructions is different from the following d
 
  *)
 
+Inductive mod_swap := Swap | NoSwap.
+Inductive mod_clear_flags := ClearFlags | NoClearFlags.
+
 Record common_mod : Set := mk_cmod {
-                               cm_swap: bool;
-                               cm_set_flags: bool
+                               cm_swap: mod_swap;
+                               cm_set_flags: mod_clear_flags
                              }.
 (** - Condition of execution: instruction is executed only if the currently set
 flags are compatible with the condition. Each instruction has a condition
@@ -397,7 +400,7 @@ Usage:
   Definition ins_invalid : instruction :=
     {|
       ins_spec := OpInvalid;
-      ins_mods := mk_cmod false false;
+      ins_mods := mk_cmod NoSwap NoClearFlags;
       ins_cond:= IfAlways
     |}.
 
