@@ -107,18 +107,18 @@ Inductive resolve: regs_state -> any -> loc -> Prop :=
     resolve regs (AnyConst arg) loc
 .
 
-Inductive resolve_effect__in: regs_state -> in_any -> regs_state -> Prop :=
+Inductive resolve_effect__in: in_any -> regs_state -> regs_state -> Prop :=
 | rslv_stack_in_effect: forall gprs sp pc sp' reg ofs arg,
     loc_stack_in_only (mk_regs gprs sp pc) arg (LocStackAddress sp') ->
-    resolve_effect__in (mk_regs gprs sp pc) (InStack (StackInOnly (RelSpPop reg ofs))) (mk_regs gprs sp' pc).
+    resolve_effect__in (InStack (StackInOnly (RelSpPop reg ofs))) (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
 
-Inductive resolve_effect__out: regs_state -> out_any -> regs_state -> Prop :=
+Inductive resolve_effect__out: out_any -> regs_state -> regs_state -> Prop :=
 | rslv_stack_out_effect: forall gprs sp pc sp' reg ofs arg,
     loc_stack_out_only (mk_regs gprs sp pc) arg (LocStackAddress sp') ->
-    resolve_effect__out (mk_regs gprs sp pc) (OutStack (StackOutOnly (RelSpPush reg ofs))) (mk_regs gprs sp' pc).
+    resolve_effect__out (OutStack (StackOutOnly (RelSpPush reg ofs))) (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
 
 Inductive resolve_effect: in_any -> out_any -> regs_state -> regs_state -> Prop :=
 | rslv_effect_full: forall arg1 arg2 regs1 regs2 regs3,
-    resolve_effect__in regs1 arg1 regs2 ->
-    resolve_effect__out regs2 arg2 regs3 ->
+    resolve_effect__in arg1 regs1 regs2 ->
+    resolve_effect__out arg2 regs2 regs3 ->
     resolve_effect arg1 arg2 regs1 regs3.
