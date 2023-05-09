@@ -125,7 +125,7 @@ This section details these types.
   Inductive stack_io : Set :=
   | Absolute (reg:reg_name) (imm: stack_address)
 
-(**
+  (**
 §1.6. #<b>#Address on a stack page, relative to SP and GPR.#</b>#
 
 §1.6.1. Resolved to (SP - reg + imm).
@@ -136,7 +136,7 @@ This section details these types.
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
 
-(**
+  (**
 §1.7. #<b># Stack page, relative to GPR and SP, with decreasing SP (in) #</b>#.
 
 §1.7.1 Resolved to (SP - (reg + imm)).
@@ -145,7 +145,7 @@ This section details these types.
 
 §1.7.3. If used in [OpNoOp], the value of SP is modified even if there was no actual read performed. See [OpNoOp].
 
-*)
+   *)
 
   Inductive stack_in_only : Set :=
   | RelSpPop (reg:reg_name) (delta: stack_address)
@@ -335,9 +335,17 @@ semantics is described in a different place; see [step]. *)
   (** ** NoOp *)
   | OpNoOp: in_any -> in_reg -> out_any -> out_reg -> opcode_specific
   (**
+<<
 
-Usage:
+### Arguments
 
+- `in1` in any format; ignored.
+- `in2` only in regs; ignored.
+- `out1` in any format; ignored.
+- `in1` in any format; ignored.
+
+### Usage
+>>
 - Executed when an actual instruction is skipped. All instructions are predicated on [cond]. If current flags are not compatible with the condition, `noop` is executed instead.
 - Adjusting stack pointer. The arguments of [OpNoOp] are ignored but the effects of [RelativeSPWithPushPop] on SP still take place. For example, consider the following instruction:
 
@@ -364,10 +372,12 @@ sp += (r2 + 20);
 
 >>
    *)
-  (** ** Jump *)
-  | OpJump : in_any -> opcode_specific
+  (** ** Jump
+See [step_Jump].
+   *)
+  | OpJump (in1:in_any)
   (** ** BinOp *)
-  | OpBinOp : in_any -> in_reg -> out_any -> binop_mod -> opcode_specific
+  | OpBinOp (in1:in_any) (in2: in_reg) (out1:out_any) (mod:binop_mod)
   (**
 Usage:
 

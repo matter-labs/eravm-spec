@@ -192,6 +192,32 @@ We use a following naming convention:
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
+  (** ** Jump
+<<
+
+```
+| OpJump (in1:in_any)
+```
+Assigns a value from `in1` to PC.
+
+### Arguments
+>>
+- `in1` : any format (see [in_any])
+<<
+
+### Modifiers
+
+#### Set Flags
+
+Clears all flags.
+
+### Concerns
+
+- The 'swap' prefix is allowed. It would swap `in1` and `in2`, therefore we would take an address from `in2` (which is regonly). Do we want to explicitly forbid it?
+- Currently, `out1` argument is unsupported by assembler but allowed by zkEVM.
+>>
+
+   *)
   | step_Jump:
     forall flags0 flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 
       regs cond word jump_dest,
