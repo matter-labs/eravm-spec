@@ -213,7 +213,22 @@ Section Memory.
     Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
     Inductive EQ := Set_EQ | Clear_EQ.
     Inductive GT := Set_GT | Clear_GT.
- 
+
+    Definition OF_LT_to_bool (f:OF_LT) := if f then true else false.
+    Definition EQ_to_bool (f:EQ) := if f then true else false.
+    Definition GT_to_bool (f:GT) := if f then true else false.
+
+    #[reversible]
+    Coercion OF_LT_to_bool : OF_LT >-> bool.
+    #[reversible]
+    Coercion EQ_to_bool : EQ >-> bool.
+    #[reversible]
+    Coercion GT_to_bool : GT >-> bool.
+
+    Definition EQ_of_bool (f:bool) := if f then Set_EQ else Clear_EQ.
+    Definition OF_LT_of_bool (f:bool) := if f then Set_OF_LT else Clear_OF_LT.
+    Definition GT_of_bool (f:bool) := if f then Set_GT else Clear_GT.
+
     Record flags_state := mk_fs {
                               fs_OF_LT: OF_LT;
                               fs_EQ: EQ;
