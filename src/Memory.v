@@ -189,8 +189,6 @@ Section Memory.
 
     Record regs_state :=  mk_regs {
                               rs_gprs: list primitive_value;
-                              rs_sp: stack_address;
-                              rs_pc: code_address;
                             }.
 
     (** Fetching value from general purpose register. *)
@@ -202,20 +200,6 @@ Section Memory.
         fetch_gpr rs regname val.
 
 
-    (** Fetching value of the stack pointer itself. *)
-    Inductive fetch_sp : regs_state -> stack_address -> Prop :=
-    | fsp_fetch:
-      forall rs (sp_value:stack_address),
-        rs_sp rs = sp_value ->
-        fetch_sp rs sp_value
-    .
-    (** Fetching value of the program counter itself. *)
-    Inductive fetch_pc : regs_state -> code_address -> Prop :=
-    | fpc_fetch:
-      forall rs (pc_value: code_address) ,
-        rs_pc rs = pc_value ->
-        fetch_pc rs pc_value
-    .
 
     Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
     Inductive EQ := Set_EQ | Clear_EQ.

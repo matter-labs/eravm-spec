@@ -1,4 +1,5 @@
-
+From RecordUpdate Require Import RecordSet.
+Import RecordSetNotations.
 Require Common Memory Instruction.
 
 Import ZArith Common MemoryBase Memory Instruction ZMod.
@@ -10,9 +11,11 @@ Definition exception_handler := code_address.
 
 Record callframe_common := mk_cf {
                                cf_exception_handler_location: exception_handler;
-                               cf_sp_stored: stack_address;
-                               cf_pc_stored: code_address;
+                               cf_sp: stack_address;
+                               cf_pc: code_address;
                              }.
+#[export] Instance etaCFC : Settable _ :=
+  settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc >.
 
 Record callframe_external :=
   mk_extcf {
@@ -26,9 +29,103 @@ Record callframe_external :=
       ecx_common :> callframe_common
     }.
 
+#[export] Instance etaCFE : Settable _ :=
+  settable! mk_extcf <
+      ecf_this_address;
+      ecf_msg_sender;
+      ecf_code_address;
+      ecf_mem_context;
+      ecf_is_static;
+      ecf_context_u128_value;
+      ecf_saved_storage_state;
+      ecx_common>.
+
 Inductive execution_frame :=
 | InternalCall (_: callframe_common) (tail: execution_frame): execution_frame
 | ExternalCall (_: callframe_external) (tail: option execution_frame): execution_frame.
+
+
+(** Fetching value of the stack pointer itself. *)
+Inductive fetch_sp : execution_frame -> stack_address -> Prop :=
+| fsp_fetch_ext:
+  forall (cf:callframe_external) tail (sp_value:stack_address),
+    cf_sp cf = sp_value ->
+    fetch_sp (ExternalCall cf tail) sp_value
+| fsp_fetch_int:
+  forall (cf:callframe_common) tail (sp_value:stack_address),
+    cf_sp cf = sp_value ->
+    fetch_sp (InternalCall cf tail) sp_value
+.
+
+Inductive update_sp_cfc : stack_address -> callframe_common -> callframe_common
+                          -> Prop :=
+  | usc_update:
+    forall ehl sp pc sp',
+      update_sp_cfc sp' (mk_cf ehl sp pc) (mk_cf ehl sp' pc).
+
+Inductive update_sp_extcall: stack_address -> callframe_external -> callframe_external
+                          -> Prop :=
+  | usce_update:
+    forall sp' cf cf' this_address msg_sender code_address mem_context is_static context_u128_value saved_storage_state cfc,
+      update_sp_cfc sp' cf cf' ->
+      update_sp_extcall sp'
+        (mk_extcf this_address msg_sender code_address mem_context is_static
+           context_u128_value saved_storage_state cfc)
+        (mk_extcf this_address msg_sender code_address mem_context is_static
+           context_u128_value saved_storage_state cf')
+       .
+
+Inductive update_sp : stack_address -> execution_frame -> execution_frame -> Prop :=
+| usp_ext:
+  forall ecf ecf' tail sp',
+    update_sp_extcall sp' ecf ecf' ->
+    update_sp sp' (ExternalCall ecf tail) (ExternalCall ecf' tail)
+| usp_int:
+  forall sp' cf cf' tail,
+    update_sp_cfc sp' cf cf' ->
+    update_sp sp' (InternalCall cf tail) (InternalCall cf' tail).
+
+
+(** Fetching value of the program counter itself. *)
+Inductive fetch_pc : execution_frame -> code_address -> Prop :=
+| fpc_fetch_ext:
+  forall (cf:callframe_external) tail (pc_value:stack_address),
+    cf_pc cf = pc_value ->
+    fetch_pc (ExternalCall cf tail) pc_value
+| fpc_fetch_int:
+  forall (cf:callframe_common) tail (pc_value:stack_address),
+    cf_pc cf = pc_value ->
+    fetch_pc (InternalCall cf tail) pc_value
+.
+
+Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
+                          -> Prop :=
+  | upc_update:
+    forall ehl sp pc pc',
+      update_pc_cfc pc' (mk_cf ehl sp pc) (mk_cf ehl sp pc').
+
+Inductive update_pc_extcall: stack_address -> callframe_external -> callframe_external
+                          -> Prop :=
+  | upe_update:
+    forall pc' cf cf' this_address msg_sender code_address mem_context is_static context_u128_value saved_storage_state cfc,
+      update_pc_cfc pc' cf cf' ->
+      update_pc_extcall pc'
+        (mk_extcf this_address msg_sender code_address mem_context is_static
+           context_u128_value saved_storage_state cfc)
+        (mk_extcf this_address msg_sender code_address mem_context is_static
+           context_u128_value saved_storage_state cf')
+       .
+
+Inductive update_pc : stack_address -> execution_frame -> execution_frame -> Prop :=
+| upc_ext:
+  forall ecf ecf' tail pc',
+    update_pc_extcall pc' ecf ecf' ->
+    update_pc pc' (ExternalCall ecf tail) (ExternalCall ecf' tail)
+| upc_int:
+  forall pc' cf cf' tail,
+    update_pc_cfc pc' cf cf' ->
+    update_pc pc' (InternalCall cf tail) (InternalCall cf' tail).
+
 
 Inductive topmost_extframe : execution_frame -> execution_frame -> Prop :=
 | te_Top: forall x t, topmost_extframe (ExternalCall x t) (ExternalCall x t)
@@ -46,6 +143,8 @@ Record global_state := {
     gs_callstack: execution_frame;
     gs_context_u128: u128;
   }.
+
+
 
 (* Inductive active_mem_ctx : global_state -> ctx_mem_pages -> Prop := *)
 (* | amc_Extract: forall gs cf ctx tail, *)

@@ -9,9 +9,6 @@ Import RecordSetNotations.
   settable! Build_global_state <gs_flags
   ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
 
-#[export] Instance etaXRS : Settable _ :=
-  settable! mk_regs < rs_gprs; rs_sp; rs_pc>.
-
 (** TODO contract that manages code *)
 Definition code_managing_contract_address : contract_address
   := ZMod.int_mod_of 160 32770%Z.
@@ -109,7 +106,7 @@ Section Execution.
 
   Inductive fetch_instr : global_state -> instruction -> Prop :=
   | fi_fetch: forall gs pc ins,
-      fetch_pc (gs_regs gs) pc ->
+      fetch_pc (gs_callstack gs) pc ->
       fetch_loc gs (LocCodeAddr pc) (FetchIns ins) ->
       fetch_instr gs ins.
 
@@ -118,16 +115,13 @@ Section Execution.
       fetch_instr gs (Ins op mods cond) ->
       fetch_op gs op mods cond.
 
-  Inductive update_pc_regular : regs_state -> regs_state -> Prop :=
+  Inductive update_pc_regular : execution_frame -> execution_frame -> Prop :=
   | fp_update:
-    forall pc sp gprs pc',
+    forall pc pc' ef ef',
+      fetch_pc ef pc ->
       (pc',false) = uinc_overflow _ pc ->
-      update_pc_regular (mk_regs gprs sp pc) (mk_regs gprs sp pc').
-
-  Inductive overwrite_pc : code_address -> regs_state -> regs_state -> Prop :=
-  | op_overwrite:
-    forall pc sp gprs pc',
-      overwrite_pc pc' (mk_regs gprs sp pc) (mk_regs gprs sp pc').
+      update_pc pc ef ef' ->
+      update_pc_regular ef ef'.
 
   (* TODO needs to accept  a list of flags to reset or to keep? *)
   Inductive mod_set_flags: mod_clear_flags -> flags_state -> flags_state -> Prop :=
@@ -136,32 +130,40 @@ Section Execution.
     | msf_clr:
       forall fs, mod_set_flags NoClearFlags fs fs.
 
-     
+
   Inductive step : global_state -> global_state -> Prop :=
   | step_NOOP:
-    forall flags flags' mod_sf contracts mem_pages callstack context_u128 in1 in2
-      out1 out2 regs0 regs1 regs2
-      exec_cond,
+    forall flags flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
+      out1 out2 regs exec_cond,
       let gs := {|
                  gs_flags := flags;
-                 gs_regs := regs0;
+                 gs_regs := regs;
                  gs_mem_pages := mem_pages;
                  gs_contracts := contracts;
-                 gs_callstack := callstack;
+                 gs_callstack := xstack0;
                  gs_context_u128 := context_u128;
                |} in
 
       fetch_instr gs {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
-                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := exec_cond
                   |} ->
       flags_activated exec_cond flags ->
       mod_set_flags mod_sf flags flags' ->
-      update_pc_regular regs0 regs1 ->
-      resolve_effect in1 out1 regs1 regs2 ->
+      update_pc_regular xstack0 xstack1 ->
+      resolve_effect in1 out1 xstack1 xstack' ->
 
-      step gs (gs <| gs_flags := flags' |> <| gs_regs := regs2 |>).
+      step gs
+           {|
+             gs_flags := flags;
+             gs_regs := regs;
+             gs_mem_pages := mem_pages;
+             gs_contracts := contracts;
+             gs_callstack := xstack';
+             gs_context_u128 := context_u128;
+           |}
+.
 (* TODO think about other modifiers *)
 
 

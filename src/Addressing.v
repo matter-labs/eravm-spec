@@ -57,68 +57,70 @@ Inductive loc_const: regs_state -> const_in -> loc -> Prop :=
     reg_rel_const_addressing regs reg abs_imm addr ->
     loc_const regs (ConstAddr reg abs_imm) (LocConstAddr addr).
 
-Inductive loc_stack_io: regs_state -> stack_io -> loc -> Prop :=
-| rslv_stack_rel_aux: forall regs reg base offset_imm dlt_sp sp_rel OF_ignore,
-    fetch_sp regs base ->
+Inductive loc_stack_io: execution_frame -> regs_state -> stack_io -> loc -> Prop :=
+| rslv_stack_rel_aux: forall ef regs reg base offset_imm dlt_sp sp_rel OF_ignore,
+    fetch_sp ef base ->
     sp_delta_abs regs reg offset_imm dlt_sp ->
     (sp_rel, OF_ignore) = usub_overflow _ base dlt_sp->
-    loc_stack_io regs (RelSP reg offset_imm) (LocStackAddress sp_rel)
-| rslv_stack_abs_aux: forall regs reg imm abs,
+    loc_stack_io ef regs (RelSP reg offset_imm) (LocStackAddress sp_rel)
+| rslv_stack_abs_aux: forall ef regs reg imm abs,
     reg_rel_stack_addressing regs reg imm abs ->
-    loc_stack_io regs (Absolute reg imm) (LocStackAddress imm).
+    loc_stack_io ef regs (Absolute reg imm) (LocStackAddress imm).
 
-Inductive loc_stack_in_only: regs_state -> stack_in_only -> loc -> Prop :=
-| rslv_stack_gpop_aux: forall regs reg sp ofs dlt_sp new_sp OF_ignore,
-    fetch_sp regs sp ->
+Inductive loc_stack_in_only: execution_frame -> regs_state -> stack_in_only -> loc -> Prop :=
+| rslv_stack_gpop_aux: forall ef regs reg sp ofs dlt_sp new_sp OF_ignore,
+    fetch_sp ef sp ->
     sp_delta_abs regs reg ofs dlt_sp ->
     (new_sp, OF_ignore) = usub_overflow _ sp dlt_sp ->
-    loc_stack_in_only regs (RelSpPop reg ofs) (LocStackAddress new_sp)
+    loc_stack_in_only ef regs (RelSpPop reg ofs) (LocStackAddress new_sp)
 .
 
-Inductive loc_stack_out_only: regs_state -> stack_out_only -> loc -> Prop :=
-| rslv_stack_gpush_aux: forall regs reg sp ofs dlt_sp new_sp OF_ignore,
-    fetch_sp regs sp ->
+Inductive loc_stack_out_only: execution_frame -> regs_state -> stack_out_only -> loc -> Prop :=
+| rslv_stack_gpush_aux: forall ef regs reg sp ofs dlt_sp new_sp OF_ignore,
+    fetch_sp ef sp ->
     sp_delta_abs regs reg ofs dlt_sp ->
     (new_sp, OF_ignore) = uadd_overflow _ sp dlt_sp ->
-    loc_stack_out_only regs (RelSpPush reg ofs) (LocStackAddress new_sp)
+    loc_stack_out_only ef regs (RelSpPush reg ofs) (LocStackAddress new_sp)
 .
 
-Inductive resolve: regs_state -> any -> loc -> Prop :=
-| rslv_reg : forall rs r loc,
+Inductive resolve: execution_frame -> regs_state -> any -> loc -> Prop :=
+| rslv_reg : forall ef rs r loc,
     loc_reg r loc ->
-    resolve rs (AnyReg r) loc
-| rslv_imm: forall rs imm loc,
+    resolve ef rs (AnyReg r) loc
+| rslv_imm: forall ef rs imm loc,
     loc_imm imm loc ->
-    resolve rs (AnyImm imm) loc
-| rslv_stack_io: forall regs arg loc,
-    loc_stack_io regs arg loc ->
-    resolve regs (AnyStack (StackAnyIO arg)) loc
-| rslv_stack_in: forall regs arg loc,
-    loc_stack_in_only regs arg loc ->
-    resolve regs (AnyStack (StackAnyIn arg)) loc
-| rslv_stack_out: forall regs arg loc,
-    loc_stack_out_only regs arg loc ->
-    resolve regs (AnyStack (StackAnyOut arg)) loc
-| rslv_code: forall regs arg loc,
+    resolve ef rs (AnyImm imm) loc
+| rslv_stack_io: forall ef regs arg loc,
+    loc_stack_io ef regs arg loc ->
+    resolve ef regs (AnyStack (StackAnyIO arg)) loc
+| rslv_stack_in: forall ef regs arg loc,
+    loc_stack_in_only ef regs arg loc ->
+    resolve ef regs (AnyStack (StackAnyIn arg)) loc
+| rslv_stack_out: forall ef regs arg loc,
+    loc_stack_out_only ef regs arg loc ->
+    resolve ef regs (AnyStack (StackAnyOut arg)) loc
+| rslv_code: forall ef regs arg loc,
     loc_code regs arg loc ->
-    resolve regs (AnyCode arg) loc
-| rslv_const: forall regs arg loc,
+    resolve ef regs (AnyCode arg) loc
+| rslv_const: forall ef regs arg loc,
     loc_const regs arg loc ->
-    resolve regs (AnyConst arg) loc
+    resolve ef regs (AnyConst arg) loc
 .
 
-Inductive resolve_effect__in: in_any -> regs_state -> regs_state -> Prop :=
-| rslv_stack_in_effect: forall gprs sp pc sp' reg ofs arg,
-    loc_stack_in_only (mk_regs gprs sp pc) arg (LocStackAddress sp') ->
-    resolve_effect__in (InStack (StackInOnly (RelSpPop reg ofs))) (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
+Inductive resolve_effect__in: in_any -> execution_frame -> execution_frame -> Prop :=
+| rslv_stack_in_effect: forall ef ef' regs sp' reg ofs arg,
+    loc_stack_in_only ef regs  arg (LocStackAddress sp') ->
+    update_sp sp' ef ef' ->
+    resolve_effect__in  (InStack (StackInOnly (RelSpPop reg ofs)))  ef ef'.
 
-Inductive resolve_effect__out: out_any -> regs_state -> regs_state -> Prop :=
-| rslv_stack_out_effect: forall gprs sp pc sp' reg ofs arg,
-    loc_stack_out_only (mk_regs gprs sp pc) arg (LocStackAddress sp') ->
-    resolve_effect__out (OutStack (StackOutOnly (RelSpPush reg ofs))) (mk_regs gprs sp pc) (mk_regs gprs sp' pc).
+Inductive resolve_effect__out: out_any -> execution_frame -> execution_frame -> Prop :=
+| rslv_stack_out_effect: forall ef ef' regs sp' reg ofs arg,
+    loc_stack_out_only ef regs  arg (LocStackAddress sp') ->
+    update_sp sp' ef ef' ->
+    resolve_effect__out  (OutStack (StackOutOnly (RelSpPush reg ofs)))  ef ef'.
 
-Inductive resolve_effect: in_any -> out_any -> regs_state -> regs_state -> Prop :=
-| rslv_effect_full: forall arg1 arg2 regs1 regs2 regs3,
-    resolve_effect__in arg1 regs1 regs2 ->
-    resolve_effect__out arg2 regs2 regs3 ->
-    resolve_effect arg1 arg2 regs1 regs3.
+Inductive resolve_effect: in_any -> out_any -> execution_frame -> execution_frame -> Prop :=
+| rslv_effect_full: forall arg1 arg2 ef1 ef2 ef3,
+    resolve_effect__in arg1 ef1 ef2 ->
+    resolve_effect__out arg2 ef2 ef3 ->
+    resolve_effect arg1 arg2 ef1 ef3.
