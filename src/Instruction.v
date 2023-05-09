@@ -249,7 +249,7 @@ Consult [opcode_specific] to see a precise instruction format and its allowed ar
     | InConst x => AnyConst x
     end.
 
-  (* end details: *)
+  (* end details *)
 
   Inductive regonly : Set :=
   | RegOnly  : reg_io -> regonly
