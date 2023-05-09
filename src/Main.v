@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require Common Memory Instruction State Addressing.
 
-Import ZArith Addressing Common MemoryBase Memory Instruction State ZMod.
+Import Bool ZArith Addressing Common MemoryBase Memory Instruction State ZMod.
 
 (* Experimental: lens-like notations to set individual fields of records. *)
 Import RecordSetNotations.
@@ -269,7 +269,104 @@ Clears all flags.
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
-.
+(** ** Add
+
+
+ *)
+  | step_Add:
+    forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
+      context_u128 in1 in2 out1
+      regs regs' cond op1 op2 result new_OF loc_out,
+      let gs := {|
+                 gs_flags := flags0;
+                 gs_regs := regs;
+                 gs_mem_pages := mem_pages;
+                 gs_contracts := contracts;
+                 gs_callstack := xstack0;
+                 gs_context_u128 := context_u128;
+               |} in
+
+      fetch_instr regs xstack0 mem_pages {|
+                    ins_spec := OpAdd in1 in2 out1;
+                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_cond := cond
+                  |} ->
+
+      cond_activated cond flags0  ->
+      resolve_effect in1 out1 xstack0 xstack1 ->
+
+
+      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) op1 ->
+      resolve_fetch_word regs xstack1 mem_pages (in_regonly_incl in2) op2 ->
+
+      uadd_overflow word_bits op1 op2 = (result, new_OF) ->
+
+      let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
+      let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
+      let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
+      let flags1 := mk_fs new_OF_LT new_EQ new_GT in
+      select_flags mod_sf flags0 flags1 flags' ->
+
+      resolve xstack1 regs (out_any_incl out1) loc_out ->
+      store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
+      update_pc_regular xstack1 xstack' ->
+      step gs
+           {|
+             gs_flags := flags';
+             gs_regs := regs';
+             gs_mem_pages := mem_pages';
+             gs_contracts := contracts;
+             gs_callstack := xstack';
+             gs_context_u128 := context_u128;
+           |}
+           
+  | step_Sub:
+    forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
+      context_u128 in1 in2 out1
+      regs regs' cond op1 op2 result new_OF loc_out,
+      let gs := {|
+                 gs_flags := flags0;
+                 gs_regs := regs;
+                 gs_mem_pages := mem_pages;
+                 gs_contracts := contracts;
+                 gs_callstack := xstack0;
+                 gs_context_u128 := context_u128;
+               |} in
+
+      fetch_instr regs xstack0 mem_pages {|
+                    ins_spec := OpAdd in1 in2 out1;
+                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_cond := cond
+                  |} ->
+
+      cond_activated cond flags0  ->
+      resolve_effect in1 out1 xstack0 xstack1 ->
+
+
+      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) op1 ->
+      resolve_fetch_word regs xstack1 mem_pages (in_regonly_incl in2) op2 ->
+
+      usub_overflow word_bits op1 op2 = (result, new_OF) ->
+
+      let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
+      let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
+      let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
+      let flags1 := mk_fs new_OF_LT new_EQ new_GT in
+      select_flags mod_sf flags0 flags1 flags' ->
+
+      resolve xstack1 regs (out_any_incl out1) loc_out ->
+      store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
+      update_pc_regular xstack1 xstack' ->
+      step gs
+           {|
+             gs_flags := flags';
+             gs_regs := regs';
+             gs_mem_pages := mem_pages';
+             gs_contracts := contracts;
+             gs_callstack := xstack';
+             gs_context_u128 := context_u128;
+           |}
+  .
 (* TODO think about other modifiers *)
 
 
