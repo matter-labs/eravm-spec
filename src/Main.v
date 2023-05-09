@@ -125,6 +125,25 @@ Section Execution.
       fetch_op regs ef mm op mods cond.
 
 
+
+  Inductive store_loc: regs_state -> execution_frame -> mem_manager
+                       -> primitive_value -> loc -> (regs_state * mem_manager ) -> Prop :=
+  | store_reg:
+    forall regs regs' ef mm reg_name value,
+      store_gpr regs reg_name value regs' ->
+      store_loc regs ef mm value (LocReg reg_name) (regs', mm)
+
+  | store_stackaddr:
+    forall regs ef mm mm' stackpage addr value pid stackpage',
+      active_stackpage_id ef pid ->
+      active_stackpage mm ef (StackPage _ _ stackpage) ->
+      store_result _ addr stackpage value stackpage' ->
+      mem_page_replace mm pid (StackPage _ _ stackpage') mm' ->
+      store_loc regs ef mm value (LocStackAddress addr) (regs, mm')
+  .
+  (* TODO UMA related *)
+
+
   Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> any -> word_type -> Prop :=
   | rf_resfetch: forall ef mm regs arg loc res,
       resolve ef regs arg loc ->
