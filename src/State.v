@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
 Require Common Memory Instruction.
 
-Import ZArith Common MemoryBase Memory Instruction ZMod.
+Import ZArith Common MemoryBase Memory Instruction ZMod List ListNotations.
 
 
 Definition mem_page := mem_page instruction ins_invalid.
@@ -134,6 +134,13 @@ Inductive topmost_extframe : execution_frame -> execution_frame -> Prop :=
 .
 
 Definition mem_manager := list (mem_page_id * mem_page).
+
+Inductive mem_page_replace: mem_manager -> mem_page_id -> mem_page -> mem_manager -> Prop :=
+ | mm_replace: forall mm h t id page mm' oldpage,
+     mm = h ++ (id, oldpage) :: t ->
+     mm' = h ++ (id, page)::t ->
+     mem_page_replace mm id page mm'.
+
 Record global_state := {
     gs_flags : flags_state;
     gs_regs: regs_state;
