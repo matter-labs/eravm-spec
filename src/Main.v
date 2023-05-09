@@ -82,47 +82,55 @@ Section Execution.
   | FetchPV (pv: primitive_value) .
 
   (* Address resolution *)
-  Inductive fetch_loc: global_state -> loc -> fetch_result -> Prop :=
+  Inductive fetch_loc: regs_state -> execution_frame -> mem_manager -> loc -> fetch_result -> Prop :=
   | fetch_reg:
-    forall gs reg_name value,
-      fetch_gpr (gs_regs gs) reg_name value ->
-      fetch_loc gs (LocReg reg_name) (FetchPV value)
+    forall regs ef mm reg_name value,
+      fetch_gpr regs reg_name value ->
+      fetch_loc regs ef mm (LocReg reg_name) (FetchPV value)
 
   | fetch_imm:
-    forall gs imm imm',
+    forall regs ef mm imm imm',
       imm' = resize _ word_bits imm ->
-      fetch_loc gs (LocImm imm) (FetchPV (IntValue imm'))
+      fetch_loc regs ef mm (LocImm imm) (FetchPV (IntValue imm'))
 
   | fetch_stackaddr:
-    forall gs stackpage addr value,
-      active_stackpage gs.(gs_mem_pages) gs.(gs_callstack) (StackPage _ _ stackpage) ->
+    forall regs ef mm stackpage addr value,
+      active_stackpage mm ef (StackPage _ _ stackpage) ->
       load_result _ addr stackpage value ->
-      fetch_loc gs (LocStackAddress addr) (FetchPV value)
+      fetch_loc regs ef mm (LocStackAddress addr) (FetchPV value)
   | fetch_codeaddr:
-    forall gs codepage addr ins,
-      active_codepage gs.(gs_mem_pages) gs.(gs_callstack) (CodePage _ _ codepage) ->
+    forall regs ef mm codepage addr ins,
+      active_codepage mm ef (CodePage _ _ codepage) ->
       load_result _ addr codepage ins ->
-      fetch_loc gs (LocCodeAddr addr) (FetchIns ins)
+      fetch_loc regs ef mm (LocCodeAddr addr) (FetchIns ins)
   | fetch_constaddr:
-    forall gs constpage addr value,
-      active_constpage gs.(gs_mem_pages) gs.(gs_callstack) (ConstPage _ _ constpage) ->
+    forall regs ef mm constpage addr value,
+      active_constpage mm ef (ConstPage _ _ constpage) ->
       load_result _ addr constpage value ->
-      fetch_loc gs (LocConstAddr addr) (FetchPV (IntValue value))
+      fetch_loc regs ef mm (LocConstAddr addr) (FetchPV (IntValue value))
 
   .
   (* TODO UMA; reading byte sequences is already implemented, see
   tests in MemoryBase.v *)
 
-  Inductive fetch_instr : global_state -> instruction -> Prop :=
-  | fi_fetch: forall gs pc ins,
-      fetch_pc (gs_callstack gs) pc ->
-      fetch_loc gs (LocCodeAddr pc) (FetchIns ins) ->
-      fetch_instr gs ins.
+  Inductive fetch_instr : regs_state -> execution_frame -> mem_manager -> instruction -> Prop :=
+  | fi_fetch: forall regs ef mm pc ins,
+      fetch_pc ef pc ->
+      fetch_loc regs ef mm (LocCodeAddr pc) (FetchIns ins) ->
+      fetch_instr regs ef mm ins.
 
-  Inductive fetch_op: global_state -> opcode_specific -> common_mod -> cond -> Prop :=
-  | fo_fetch: forall gs op mods cond,
-      fetch_instr gs (Ins op mods cond) ->
-      fetch_op gs op mods cond.
+  Inductive fetch_op: regs_state -> execution_frame -> mem_manager -> opcode_specific -> common_mod -> cond -> Prop :=
+  | fo_fetch: forall regs ef mm op mods cond,
+      fetch_instr regs ef mm (Ins op mods cond) ->
+      fetch_op regs ef mm op mods cond.
+
+
+  Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> any -> word_type -> Prop :=
+  | rf_resfetch: forall ef mm regs arg loc res,
+      resolve ef regs arg loc ->
+      fetch_loc regs ef mm loc (FetchPV (IntValue res)) ->
+      resolve_fetch_word regs ef mm arg res.
+
 
   Inductive update_pc_regular : execution_frame -> execution_frame -> Prop :=
   | fp_update:
@@ -140,6 +148,19 @@ Section Execution.
       forall fs, mod_set_flags NoClearFlags fs fs.
 
 
+  (**
+<<
+# Small-step operational instruction semantics
+
+We use a following naming convention:
+
+- when an part of the state is transformed by [step], we version it like that:
+  + `name0` for the initial state
+  + `name1`, `name2`... for the following states
+  + `name'` for the final state.
+
+>>
+   *)
   Inductive step : global_state -> global_state -> Prop :=
   | step_NOOP:
     forall flags flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
@@ -152,8 +173,7 @@ Section Execution.
                  gs_callstack := xstack0;
                  gs_context_u128 := context_u128;
                |} in
-
-      fetch_instr gs {|
+      fetch_instr regs xstack0 mem_pages {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
                     ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
@@ -163,6 +183,40 @@ Section Execution.
       update_pc_regular xstack0 xstack1 ->
       resolve_effect in1 out1 xstack1 xstack' ->
 
+      step gs
+           {|
+             gs_flags := flags';
+             gs_regs := regs;
+             gs_mem_pages := mem_pages;
+             gs_contracts := contracts;
+             gs_callstack := xstack';
+             gs_context_u128 := context_u128;
+           |}
+  | step_Jump:
+    forall flags0 flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 
+      regs cond word jump_dest,
+      let gs := {|
+                 gs_flags := flags0;
+                 gs_regs := regs;
+                 gs_mem_pages := mem_pages;
+                 gs_contracts := contracts;
+                 gs_callstack := xstack0;
+                 gs_context_u128 := context_u128;
+               |} in
+
+      fetch_instr regs xstack0 mem_pages {|
+                    ins_spec := OpJump in1 ;
+                    ins_mods := mk_cmod mod_swap mod_sf;
+                    ins_cond := cond
+                  |} ->
+
+      cond_activated cond flags0  ->
+      mod_set_flags mod_sf flags0 flags' ->
+      resolve_effect__in in1 xstack0 xstack1 ->
+
+      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) word ->
+      extract_code_address word jump_dest ->
+      update_pc jump_dest xstack1 xstack' ->
       step gs
            {|
              gs_flags := flags';

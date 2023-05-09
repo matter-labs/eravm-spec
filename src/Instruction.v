@@ -364,7 +364,8 @@ sp += (r2 + 20);
 
 >>
    *)
-
+  (** ** Jump *)
+  | OpJump : in_any -> opcode_specific
   (** ** BinOp *)
   | OpBinOp : in_any -> in_reg -> out_any -> binop_mod -> opcode_specific
   (**
