@@ -1,5 +1,6 @@
 Require Common MemoryBase.
-Import Common MemoryBase BinInt.
+Import Common MemoryBase BinInt List.
+Import ListNotations.
 
 (** * Storage *)
 (**  §1. A _word_ is a 256-bit unsigned number. *)
@@ -199,6 +200,14 @@ Section Memory.
         List.nth_error (rs_gprs rs) n = Some val ->
         fetch_gpr rs regname val.
 
+    (** Storing value to general purpose registers. *)
+    Inductive store_gpr : regs_state -> reg_name -> primitive_value -> regs_state -> Prop :=
+    | fr_store:
+      forall rs n regname elem head tail val,
+        reg_n n regname ->
+        rs_gprs rs = head ++ elem::tail ->
+        length head = n ->
+        store_gpr rs regname val (mk_regs (head ++ val::tail)).
 
 
     Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
