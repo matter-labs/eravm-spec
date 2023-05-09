@@ -41,7 +41,6 @@ Record global_state := {
     gs_flags : flags_state;
     gs_regs: regs_state;
     gs_contracts: contract_collection_type;
-    (* gs_call_or_ret_recently: bool; do we need it? *)
     (* gs_pending_exception: bool; we can probably store optional here *)
     gs_mem_pages: mem_manager ;
     gs_callstack: execution_frame;
