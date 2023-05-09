@@ -36,7 +36,7 @@ TODO The exact binary encoding of instructions is different from the following d
  *)
 
 Inductive mod_swap := Swap | NoSwap.
-Inductive mod_clear_flags := ClearFlags | NoClearFlags.
+Inductive mod_clear_flags := SetFlags | PreserveFlags.
 
 Record common_mod : Set := mk_cmod {
                                cm_swap: mod_swap;
@@ -411,7 +411,7 @@ Usage:
   Definition ins_invalid : instruction :=
     {|
       ins_spec := OpInvalid;
-      ins_mods := mk_cmod NoSwap NoClearFlags;
+      ins_mods := mk_cmod NoSwap PreserveFlags;
       ins_cond:= IfAlways
     |}.
 

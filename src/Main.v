@@ -141,11 +141,11 @@ Section Execution.
       update_pc_regular ef ef'.
 
   (* TODO needs to accept  a list of flags to reset or to keep? *)
-  Inductive mod_set_flags: mod_clear_flags -> flags_state -> flags_state -> Prop :=
+  Inductive select_flags: mod_clear_flags -> flags_state -> flags_state -> flags_state -> Prop :=
     | msf_set:
-      forall fs, mod_set_flags ClearFlags fs (mk_fs Clear_OF_LT Clear_EQ Clear_GT)
+      forall fs fs', select_flags SetFlags fs fs' fs'
     | msf_clr:
-      forall fs, mod_set_flags NoClearFlags fs fs.
+      forall fs fs', select_flags PreserveFlags fs fs' fs.
 
 
   (**
@@ -179,7 +179,6 @@ We use a following naming convention:
                     ins_cond := cond
                   |} ->
       cond_activated cond flags ->
-      mod_set_flags mod_sf flags flags' ->
       update_pc_regular xstack0 xstack1 ->
       resolve_effect in1 out1 xstack1 xstack' ->
 
@@ -237,7 +236,6 @@ Clears all flags.
                   |} ->
 
       cond_activated cond flags0  ->
-      mod_set_flags mod_sf flags0 flags' ->
       resolve_effect__in in1 xstack0 xstack1 ->
 
       resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) word ->
