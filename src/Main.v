@@ -5,10 +5,12 @@ Import ZArith Addressing Common MemoryBase Memory Instruction State ZMod.
 
 (* Experimental: lens-like notations to set individual fields of records. *)
 Import RecordSetNotations.
-#[export] Instance etaX : Settable _ :=
+#[export] Instance etaXGS : Settable _ :=
   settable! Build_global_state <gs_flags
   ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
 
+#[export] Instance etaXRS : Settable _ :=
+  settable! mk_regs < rs_gprs; rs_sp; rs_pc>.
 
 (** TODO contract that manages code *)
 Definition code_managing_contract_address : contract_address
