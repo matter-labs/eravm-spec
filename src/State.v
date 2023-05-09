@@ -104,7 +104,7 @@ Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
     forall ehl sp pc pc',
       update_pc_cfc pc' (mk_cf ehl sp pc) (mk_cf ehl sp pc').
 
-Inductive update_pc_extcall: stack_address -> callframe_external -> callframe_external
+Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
                           -> Prop :=
   | upe_update:
     forall pc' cf cf' this_address msg_sender code_address mem_context is_static context_u128_value saved_storage_state cfc,
@@ -116,7 +116,7 @@ Inductive update_pc_extcall: stack_address -> callframe_external -> callframe_ex
            context_u128_value saved_storage_state cf')
        .
 
-Inductive update_pc : stack_address -> execution_frame -> execution_frame -> Prop :=
+Inductive update_pc : code_address -> execution_frame -> execution_frame -> Prop :=
 | upc_ext:
   forall ecf ecf' tail pc',
     update_pc_extcall pc' ecf ecf' ->
