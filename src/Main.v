@@ -25,47 +25,56 @@ Definition shard_id_type := u8.
 Section Execution.
   Import Arg.
 
-  Inductive flags_activated:  exec_conditions_type -> flags_state -> Prop
+  Inductive cond_activated:  cond -> flags_state -> Prop
     :=
   | ac_Always: forall fs,
-      flags_activated IfAlways fs
+      cond_activated IfAlways fs
 
   | ac_GT: forall of_lt eq,
-      flags_activated IfGT (mk_fs of_lt eq Set_GT)
+      cond_activated IfGT (mk_fs of_lt eq Set_GT)
 
   | ac_EQ: forall of_lt gt,
-      flags_activated IfEQ (mk_fs of_lt Set_EQ gt)
+      cond_activated IfEQ (mk_fs of_lt Set_EQ gt)
 
   | ac_LT: forall eq gt,
-      flags_activated IfLT (mk_fs Set_OF_LT eq gt)
+      cond_activated IfLT (mk_fs Set_OF_LT eq gt)
 
   | ac_GE1: forall fs,
-      flags_activated IfEQ fs ->
-      flags_activated IfGE fs
+      cond_activated IfEQ fs ->
+      cond_activated IfGE fs
 
   | ac_GE2: forall fs,
-      flags_activated IfGT fs ->
-      flags_activated IfGE fs
+      cond_activated IfGT fs ->
+      cond_activated IfGE fs
 
   | ac_LE1: forall fs,
-      flags_activated IfLT fs ->
-      flags_activated IfLE fs
+      cond_activated IfLT fs ->
+      cond_activated IfLE fs
   | ac_LE2: forall fs,
-      flags_activated IfEQ fs ->
-      flags_activated IfLE fs
+      cond_activated IfEQ fs ->
+      cond_activated IfLE fs
 
   | ac_NotEQ: forall of_lt gt,
-      flags_activated IfNotEQ (mk_fs of_lt Clear_EQ gt)
+      cond_activated IfNotEQ (mk_fs of_lt Clear_EQ gt)
 
   | ac_IfGTOrLT1: forall fs,
-      flags_activated IfGT fs->
-      flags_activated IfGTOrLT fs
+      cond_activated IfGT fs->
+      cond_activated IfGTOrLT fs
 
   | ac_IfGTOrLT2: forall fs,
-      flags_activated IfLT fs->
-      flags_activated IfGTOrLT fs
+      cond_activated IfLT fs->
+      cond_activated IfGTOrLT fs
   .
 
+  Hint Constructors cond_activated :flags.
+
+  Theorem cond_activated_dec: forall ec flags, Decidability.dec (cond_activated ec flags).
+  Proof.
+    intros ec flags.
+    unfold Decidability.dec.
+    destruct ec, flags; destruct fs_OF_LT, fs_EQ, fs_GT;
+      solve [left;constructor| right;inversion 1 | auto with flags | right; inversion 1; subst; inversion H0].
+  Defined.
 
 
   Inductive fetch_result : Set :=
@@ -110,7 +119,7 @@ Section Execution.
       fetch_loc gs (LocCodeAddr pc) (FetchIns ins) ->
       fetch_instr gs ins.
 
-  Inductive fetch_op: global_state -> opcode_specific -> common_mod -> exec_conditions_type -> Prop :=
+  Inductive fetch_op: global_state -> opcode_specific -> common_mod -> cond -> Prop :=
   | fo_fetch: forall gs op mods cond,
       fetch_instr gs (Ins op mods cond) ->
       fetch_op gs op mods cond.
@@ -134,7 +143,7 @@ Section Execution.
   Inductive step : global_state -> global_state -> Prop :=
   | step_NOOP:
     forall flags flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
-      out1 out2 regs exec_cond,
+      out1 out2 regs cond,
       let gs := {|
                  gs_flags := flags;
                  gs_regs := regs;
@@ -147,16 +156,16 @@ Section Execution.
       fetch_instr gs {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
                     ins_mods := mk_cmod mod_swap mod_sf;
-                    ins_cond := exec_cond
+                    ins_cond := cond
                   |} ->
-      flags_activated exec_cond flags ->
+      cond_activated cond flags ->
       mod_set_flags mod_sf flags flags' ->
       update_pc_regular xstack0 xstack1 ->
       resolve_effect in1 out1 xstack1 xstack' ->
 
       step gs
            {|
-             gs_flags := flags;
+             gs_flags := flags';
              gs_regs := regs;
              gs_mem_pages := mem_pages;
              gs_contracts := contracts;
@@ -194,7 +203,7 @@ Section Execution.
 
   (*                                                             (*TODO set GT, *)
   (*     implement SET_FLAGS *) *)
-  (*     flags_activated exec_cond (mk_fs -> *)
+  (*     cond_activated exec_cond (mk_fs -> *)
   (*     update_pc_regular regs0 regs1 -> *)
   (*     update_sp_addressing_full in1 out1 regs1 regs2 -> *)
   (*     step gs (gs <| gs_regs := regs2 |> <| gs_flags := mk_fs new_OF new_EQ|>). *)

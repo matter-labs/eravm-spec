@@ -46,7 +46,7 @@ Record common_mod : Set := mk_cmod {
 flags are compatible with the condition. Each instruction has a condition
 encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]. *)
 
-Inductive exec_conditions_type :=
+Inductive cond :=
 | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
 (** §1.2. Additionally, depending on [opcode_specific], an instruction may have:
@@ -338,7 +338,7 @@ semantics is described in a different place; see [step]. *)
 
 Usage:
 
-- Executed when an actual instruction is skipped. All instructions are predicated on [exec_conditions_type]. If current flags are not compatible with the condition, `noop` is executed instead.
+- Executed when an actual instruction is skipped. All instructions are predicated on [cond]. If current flags are not compatible with the condition, `noop` is executed instead.
 - Adjusting stack pointer. The arguments of [OpNoOp] are ignored but the effects of [RelativeSPWithPushPop] on SP still take place. For example, consider the following instruction:
 
 <<
@@ -389,7 +389,7 @@ Usage:
     Ins {
         ins_spec: opcode_specific ;
         ins_mods: common_mod ;
-        ins_cond: exec_conditions_type;
+        ins_cond: cond;
       }.
 
   (**
