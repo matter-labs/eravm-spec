@@ -6,11 +6,10 @@ Import ZArith Common MemoryBase Memory Instruction ZMod.
 
 Definition mem_page := mem_page instruction ins_invalid.
 
-(* FIXME *)
-Definition exception_handler_location_type := u16.
+Definition exception_handler := code_address.
 
 Record callframe_common := mk_cf {
-                               cf_exception_handler_location: exception_handler_location_type;
+                               cf_exception_handler_location: exception_handler;
                                cf_sp_stored: stack_address;
                                cf_pc_stored: code_address;
                              }.
