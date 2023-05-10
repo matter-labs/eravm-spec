@@ -76,7 +76,7 @@ Section Execution.
       update_pc_regular ef ef'.
 
   (* TODO needs to accept  a list of flags to reset or to keep? *)
-  Inductive select_flags: mod_clear_flags -> flags_state -> flags_state -> flags_state -> Prop :=
+  Inductive select_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
     | msf_set:
       forall fs fs', select_flags SetFlags fs fs' fs'
     | msf_clr:

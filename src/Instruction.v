@@ -83,7 +83,7 @@ This section details these types.
 
   Inductive reg_io : Set := Reg (reg:reg_name).
 
-  (** §1.1.1. See [reg], [ArgReg], [global_state], [gs_regs]. *)
+  (** §1.1.1. See [global_state], [gs_regs]. *)
 
   (** §1.2. #<b>#Immediate 16-bit #</b># value. *)
 
@@ -91,7 +91,7 @@ This section details these types.
   (**
 §1.2.1. Only for input operands.
 
-§1.2.2. See [imm], [ArgImm].
+§1.2.2. See [imm_in], [in_regimm].
    *)
 
   (** §1.3. #<b>#Address on a code page, relative to a GPR.#</b># *)
@@ -102,8 +102,6 @@ This section details these types.
 
 §1.3.2. Code and const pages may coincide.
 
-§1.3.3. See [code], [ArgCode].
-
 §1.4. #<b>#Address on a const page, relative to a GPR.#</b># *)
   Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
@@ -112,13 +110,11 @@ This section details these types.
 
 §1.4.2. Code and const pages may coincide.
 
-§1.4.3. See [const], [ArgConst].
 
 §1.5. #<b># Address on a stack page, relative to a GPR. #</b>#
 
 §1.5.1. Resolved to (reg + imm).
 
-§1.5.2. See [Absolute], [ArgStack].
    *)
   Inductive stack_io : Set :=
   | Absolute (reg:reg_name) (imm: stack_address)
@@ -130,7 +126,7 @@ This section details these types.
 
 §1.6.2. Unlike [RelativeSPWithPushPop], the direction of offset does not change depending on read/write.
 
-§1.6.3. See [RelativeSP], [ArgStack]. *)
+   *)
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
 
@@ -326,26 +322,12 @@ Section Def.
   (** This section describes the syntax of instructions. The instruction
 semantics is described in a different place; see [step]. *)
   Inductive opcode_specific : Set :=
-  (** ** Invalid operation*)
   | OpInvalid
-
-  (** TODO short description. *)
-  (** ** NoOp *)
-  | OpNoOp (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
-  
-  (** ** Jump
-See [step_Jump].
-   *)
-  | OpJump (in1:in_any)
-  (** ** BinOp *)
-  | OpBinOp (in1:in_any) (in2: in_reg) (out1:out_any) (mod:binop_mod)
-  (**
-Usage:
-
-- Depending on the exclusive modifier,
-   *)
-  (** ** Add *)
-  | OpAdd: in_any -> in_reg -> out_any -> opcode_specific
+  | OpNoOp  (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+  | OpJump  (in1: in_any)
+  | OpBinOp (in1: in_any) (in2: in_reg) (out1: out_any)                 (mod:binop_mod)
+  | OpAdd   (in1: in_any) (in2: in_reg) (out1: out_any)
+  | OpSub   (in1: in_any) (in2: in_reg) (out1: out_any)
   .
 
 
