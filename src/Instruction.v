@@ -320,11 +320,16 @@ End Arg.
 
 (** * Exclusive modifiers *)
 Section ModifiersExclusive.
+  Import ZMod.
   (** This section describes all exclusive modifiers of instructions. *)
-  Inductive binop_mod: Set :=
-  | BinOpAnd
-  | BinOpOr
-  | BinOpXor.
+  Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
+
+  Definition binop_func bits (m:binop_mod) : int_mod bits -> int_mod bits -> int_mod bits :=
+    match m with
+    | BinOpAnd => bitwise_and bits
+    | BinOpOr  => bitwise_or bits
+    | BinOpXor => bitwise_xor bits
+    end.
 
 End ModifiersExclusive.
 
