@@ -1,6 +1,6 @@
-Require ZArith ZArith_ext.
+Require ZArith ZArith_ext ZBits.
 
-Import BinInt ZArith ZArith_ext.
+Import BinInt ZArith ZArith_ext BinIntDef.Z.
 
 
 
@@ -112,6 +112,14 @@ Section Def.
     (int_mod_of (a-b)%Z, if gt_dec b a then true else false).
 
 End Def.
+
+
+Definition bitwise_op (f:Z->Z->Z) (bits:nat) (x y: int_mod bits) : int_mod bits :=
+  int_mod_of _ (f (int_val _ x) (int_val _ y)).
+
+Definition bitwise_xor := bitwise_op lxor.
+Definition bitwise_or  := bitwise_op lor.
+Definition bitwise_and := bitwise_op land.
 
 
 Definition resize (sz1 sz2:nat) (x: int_mod sz1) : int_mod sz2 :=
