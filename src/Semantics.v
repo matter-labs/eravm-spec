@@ -1,24 +1,12 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Memory Instruction State Addressing.
+Require Common Memory Instruction State MemoryOps.
 
-Import Bool ZArith Addressing Common MemoryBase Memory Instruction State ZMod.
+Import Bool ZArith Common MemoryBase Memory MemoryOps Instruction State ZMod.
 
-(* Experimental: lens-like notations to set individual fields of records. *)
 Import RecordSetNotations.
 #[export] Instance etaXGS : Settable _ :=
   settable! Build_global_state <gs_flags
   ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
-
-(** TODO contract that manages code *)
-Definition code_managing_contract_address : contract_address
-  := ZMod.int_mod_of 160 32770%Z.
-
-(* TODO *)
-Definition ergs_counter_type := u32.
-
-(* TODO *)
-Definition shard_id_type := u8.
-
 
 (** * Execution *)
 
@@ -77,78 +65,6 @@ Section Execution.
   Defined.
 
 
-  Inductive fetch_result : Set :=
-  | FetchIns (ins :instruction)
-  | FetchPV (pv: primitive_value) .
-
-  (* Address resolution *)
-  Inductive fetch_loc: regs_state -> execution_frame -> mem_manager -> loc -> fetch_result -> Prop :=
-  | fetch_reg:
-    forall regs ef mm reg_name value,
-      fetch_gpr regs reg_name value ->
-      fetch_loc regs ef mm (LocReg reg_name) (FetchPV value)
-
-  | fetch_imm:
-    forall regs ef mm imm imm',
-      imm' = resize _ word_bits imm ->
-      fetch_loc regs ef mm (LocImm imm) (FetchPV (IntValue imm'))
-
-  | fetch_stackaddr:
-    forall regs ef mm stackpage addr value,
-      active_stackpage mm ef (StackPage _ _ stackpage) ->
-      load_result _ addr stackpage value ->
-      fetch_loc regs ef mm (LocStackAddress addr) (FetchPV value)
-  | fetch_codeaddr:
-    forall regs ef mm codepage addr ins,
-      active_codepage mm ef (CodePage _ _ codepage) ->
-      load_result _ addr codepage ins ->
-      fetch_loc regs ef mm (LocCodeAddr addr) (FetchIns ins)
-  | fetch_constaddr:
-    forall regs ef mm constpage addr value,
-      active_constpage mm ef (ConstPage _ _ constpage) ->
-      load_result _ addr constpage value ->
-      fetch_loc regs ef mm (LocConstAddr addr) (FetchPV (IntValue value))
-
-  .
-  (* TODO UMA; reading byte sequences is already implemented, see
-  tests in MemoryBase.v *)
-
-  Inductive fetch_instr : regs_state -> execution_frame -> mem_manager -> instruction -> Prop :=
-  | fi_fetch: forall regs ef mm pc ins,
-      fetch_pc ef pc ->
-      fetch_loc regs ef mm (LocCodeAddr pc) (FetchIns ins) ->
-      fetch_instr regs ef mm ins.
-
-  Inductive fetch_op: regs_state -> execution_frame -> mem_manager -> opcode_specific -> common_mod -> cond -> Prop :=
-  | fo_fetch: forall regs ef mm op mods cond,
-      fetch_instr regs ef mm (Ins op mods cond) ->
-      fetch_op regs ef mm op mods cond.
-
-
-
-  Inductive store_loc: regs_state -> execution_frame -> mem_manager
-                       -> primitive_value -> loc -> (regs_state * mem_manager ) -> Prop :=
-  | store_reg:
-    forall regs regs' ef mm reg_name value,
-      store_gpr regs reg_name value regs' ->
-      store_loc regs ef mm value (LocReg reg_name) (regs', mm)
-
-  | store_stackaddr:
-    forall regs ef mm mm' stackpage addr value pid stackpage',
-      active_stackpage_id ef pid ->
-      active_stackpage mm ef (StackPage _ _ stackpage) ->
-      store_result _ addr stackpage value stackpage' ->
-      mem_page_replace mm pid (StackPage _ _ stackpage') mm' ->
-      store_loc regs ef mm value (LocStackAddress addr) (regs, mm')
-  .
-  (* TODO UMA related *)
-
-
-  Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> any -> word_type -> Prop :=
-  | rf_resfetch: forall ef mm regs arg loc res,
-      resolve ef regs arg loc ->
-      fetch_loc regs ef mm loc (FetchPV (IntValue res)) ->
-      resolve_fetch_word regs ef mm arg res.
 
 
   Inductive update_pc_regular : execution_frame -> execution_frame -> Prop :=
@@ -181,7 +97,61 @@ We use a following naming convention:
 >>
    *)
   Inductive step : global_state -> global_state -> Prop :=
-  | step_NOOP:
+    (**
+<<
+## NoOp
+```
+| OpNoOp (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+```
+
+Performs no action.
+
+
+### Arguments
+
+- `in1` in any format; ignored. May affect SP, see Usage.
+- `in2` only in regs; ignored.
+- `out1` in any format; ignored. May affect SP, see Usage.
+- `in1` in any format; ignored.
+
+### Usage
+>>
+- Executed when an actual instruction is skipped.
+
+  All instructions are predicated on [cond]. If current flags are not compatible
+  with the condition, `noop` is executed instead.
+
+- Adjusting stack pointer.
+
+  The arguments of [OpNoOp] are ignored but the effects of
+  [RelativeSPWithPushPop] on SP still take place. For example, consider the
+  following instruction:
+
+<<
+
+```coq
+Check OpNoOp
+(InStack (RelativeSPWithPushPop R1 (u16_of 10%Z)))  (* in1 *)
+(RegOnly (Reg R0))                                  (* in2 *)
+(OutStack (RelativeSPWithPushPop R2 (u16_of 20%Z))) (* out1 *)
+(RegOnly (Reg R0)).                                 (* out2 *)
+```
+
+It can be represented as: `NoOp stack-=[10], r0, stack+=20, r0`.
+
+
+Here, operands `in1` and `out1` are using [RelativeSPWithPushPop] addressing mode.
+Therefore, executing this instruction will modify SP like that:
+
+```
+sp -= (r1 + 10);
+sp += (r2 + 20);
+```
+
+TODO: account for Swap modifier
+>>
+*)
+  | step_NoOp:
     forall flags flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
       out1 out2 regs cond,
       let gs := {|
@@ -210,24 +180,26 @@ We use a following naming convention:
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
-  (** ** Jump
-<<
 
+  (** -----
+<<
+## Jump
 ```
 | OpJump (in1:in_any)
 ```
-Assigns a value from `in1` to PC.
 
-### Arguments
 >>
-- `in1` : any format (see [in_any])
+
+Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
+
 <<
+### Arguments
 
-### Modifiers
+>>
 
-#### Set Flags
+- `in1` : any format (see [in_any])
 
-Clears all flags.
+<<
 
 ### Concerns
 
@@ -269,9 +241,11 @@ Clears all flags.
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
-(** ** Add
-
-
+(** -----
+<<
+## Add
+TODO
+>>
  *)
   | step_Add:
     forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
@@ -319,7 +293,12 @@ Clears all flags.
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
-           
+(** -----
+<<
+## Sub
+TODO
+>>
+*)
   | step_Sub:
     forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
@@ -367,38 +346,5 @@ Clears all flags.
              gs_context_u128 := context_u128;
            |}
   .
-(* TODO think about other modifiers *)
 
-
-  (* | step_ADD: *)
-  (*   forall OF_LT EQ GT contracts mem_pages callstack context_u128 in1 in2 *)
-  (*     out1 out2 regs0 regs1 regs2 *)
-  (*     loc1 loc2 arg1 arg2 new_OF new_EQ res *)
-  (*     exec_cond, *)
-  (*     let gs := {| *)
-  (*                gs_flags := mk_fs OF_LT EQ GT; *)
-  (*                gs_regs := regs0; *)
-  (*                gs_mem_pages := mem_pages; *)
-  (*                gs_contracts := contracts; *)
-  (*                gs_callstack := callstack; *)
-  (*                gs_context_u128 := context_u128; *)
-  (*              |} in *)
-  (*     fetch_instr gs {| *)
-  (*                   ins_spec := OpAdd in1 in2 out1 ; *)
-  (*                   ins_mods := ModEmpty; *)
-  (*                   ins_cond := exec_cond *)
-  (*                 |} -> *)
-  (*     resolve_loc gs in1 loc1 -> *)
-  (*     resolve_loc gs in2 loc2 -> *)
-  (*     fetch_loc gs loc1 (FetchPV (IntValue arg1)) -> *)
-  (*     fetch_loc gs loc2 (FetchPV (IntValue arg2)) -> *)
-  (*     uadd_overflow _ arg1 arg2 = (res, new_OF) -> *)
-  (*     new_EQ = if Z.eq_dec (int_val _ res) 0%Z then true else false -> *)
-
-  (*                                                             (*TODO set GT, *)
-  (*     implement SET_FLAGS *) *)
-  (*     cond_activated exec_cond (mk_fs -> *)
-  (*     update_pc_regular regs0 regs1 -> *)
-  (*     update_sp_addressing_full in1 out1 regs1 regs2 -> *)
-  (*     step gs (gs <| gs_regs := regs2 |> <| gs_flags := mk_fs new_OF new_EQ|>). *)
 End Execution.

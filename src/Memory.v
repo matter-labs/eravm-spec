@@ -192,23 +192,6 @@ Section Memory.
                               rs_gprs: list primitive_value;
                             }.
 
-    (** Fetching value from general purpose register. *)
-    Inductive fetch_gpr : regs_state -> reg_name -> primitive_value -> Prop :=
-    | fr_fetch:
-      forall rs n regname val,
-        reg_n n regname ->
-        List.nth_error (rs_gprs rs) n = Some val ->
-        fetch_gpr rs regname val.
-
-    (** Storing value to general purpose registers. *)
-    Inductive store_gpr : regs_state -> reg_name -> primitive_value -> regs_state -> Prop :=
-    | fr_store:
-      forall rs n regname elem head tail val,
-        reg_n n regname ->
-        rs_gprs rs = head ++ elem::tail ->
-        length head = n ->
-        store_gpr rs regname val (mk_regs (head ++ val::tail)).
-
 
     Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
     Inductive EQ := Set_EQ | Clear_EQ.

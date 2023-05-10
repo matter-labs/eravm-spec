@@ -333,45 +333,8 @@ semantics is described in a different place; see [step]. *)
 
   (** TODO short description. *)
   (** ** NoOp *)
-  | OpNoOp: in_any -> in_reg -> out_any -> out_reg -> opcode_specific
-  (**
-<<
-
-### Arguments
-
-- `in1` in any format; ignored.
-- `in2` only in regs; ignored.
-- `out1` in any format; ignored.
-- `in1` in any format; ignored.
-
-### Usage
->>
-- Executed when an actual instruction is skipped. All instructions are predicated on [cond]. If current flags are not compatible with the condition, `noop` is executed instead.
-- Adjusting stack pointer. The arguments of [OpNoOp] are ignored but the effects of [RelativeSPWithPushPop] on SP still take place. For example, consider the following instruction:
-
-<<
-
-```coq
-Check OpNoOp
-(InStack (RelativeSPWithPushPop R1 (u16_of 10%Z)))  (* in1 *)
-(RegOnly (Reg R0))                                  (* in2 *)
-(OutStack (RelativeSPWithPushPop R2 (u16_of 20%Z))) (* out1 *)
-(RegOnly (Reg R0)).                                 (* out2 *)
-```
-
-It can be represented as: `NoOp stack-=[10], r0, stack+=20, r0`.
-
-
-Here, operands `in1` and `out1` are using [RelativeSPWithPushPop] addressing mode.
-Therefore, executing this instruction will modify SP like that:
-
-```
-sp -= (r1 + 10);
-sp += (r2 + 20);
-```
-
->>
-   *)
+  | OpNoOp (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+  
   (** ** Jump
 See [step_Jump].
    *)
