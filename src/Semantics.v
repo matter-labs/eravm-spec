@@ -342,6 +342,46 @@ TODO
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
-  .
+(** -----
+<<
+## Near call
 
+TODO
+>>
+*)
+
+  | step_NearCall:
+    forall flags0 flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 context_u128 sp
+      regs cond abi_params call_addr expt_handler,
+      let gs := {|
+                 gs_flags := flags0;
+                 gs_regs := regs;
+                 gs_mem_pages := mem_pages;
+                 gs_contracts := contracts;
+                 gs_callstack := xstack0;
+                 gs_context_u128 := context_u128;
+               |} in
+
+      fetch_instr regs xstack0 mem_pages {|
+                    ins_spec := OpNearCall abi_params (Imm call_addr) (Imm expt_handler);
+                    ins_mods := mk_cmod mod_swap mod_sf;
+                    ins_cond := cond
+                  |} ->
+
+      cond_activated cond flags0  ->
+
+      update_pc_regular xstack0 xstack1 ->
+      fetch_sp xstack1 sp -> (* sp is copied as is*)
+
+      let xstack' := InternalCall (mk_cf expt_handler sp call_addr) xstack1 in
+      step gs
+           {|
+             gs_flags := flags';
+             gs_regs := regs;
+             gs_mem_pages := mem_pages;
+             gs_contracts := contracts;
+             gs_callstack := xstack';
+             gs_context_u128 := context_u128;
+           |}
+.
 End Execution.
