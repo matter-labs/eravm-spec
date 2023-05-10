@@ -323,11 +323,12 @@ Section Def.
 semantics is described in a different place; see [step]. *)
   Inductive opcode_specific : Set :=
   | OpInvalid
-  | OpNoOp  (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
-  | OpJump  (in1: in_any)
-  | OpBinOp (in1: in_any) (in2: in_reg) (out1: out_any)                 (mod:binop_mod)
-  | OpAdd   (in1: in_any) (in2: in_reg) (out1: out_any)
-  | OpSub   (in1: in_any) (in2: in_reg) (out1: out_any)
+  | OpNoOp     (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+  | OpJump     (in1: in_any)
+  | OpBinOp    (in1: in_any) (in2: in_reg)  (out1: out_any) (mod:binop_mod)
+  | OpAdd      (in1: in_any) (in2: in_reg)  (out1: out_any)
+  | OpSub      (in1: in_any) (in2: in_reg)  (out1: out_any)
+  | OpNearCall (in1: in_reg) (dest: imm_in) (handler: imm_in)
   .
 
 
