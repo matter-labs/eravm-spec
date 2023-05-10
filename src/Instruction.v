@@ -28,19 +28,17 @@ TODO The exact binary encoding of instructions is different from the following d
     richer address modes: it can be e.g. fetched from stack, whereas `in2` can
     only be fetched from a register.
 
-  2. `set_flags`: after its operation, instruction clears the flags that it
-    has not set. For example, the instruction `binop` sets the flag EQ if the
-    result is equal to zero. When `set_flags` is applied, `binop` additionally
-    clears all other flags after that.
+  2. `set_flags`: if set, instruction is allowed to change the flags. If
+    cleared, the instruction will not touch the flags.
 
  *)
 
 Inductive mod_swap := Swap | NoSwap.
-Inductive mod_clear_flags := SetFlags | PreserveFlags.
+Inductive mod_set_flags := SetFlags | PreserveFlags.
 
 Record common_mod : Set := mk_cmod {
                                cm_swap: mod_swap;
-                               cm_set_flags: mod_clear_flags
+                               cm_set_flags: mod_set_flags
                              }.
 (** - Condition of execution: instruction is executed only if the currently set
 flags are compatible with the condition. Each instruction has a condition
