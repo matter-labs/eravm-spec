@@ -129,13 +129,19 @@ Inductive resolve_effect__in: in_any -> execution_frame -> execution_frame -> Pr
 | rslv_stack_in_effect: forall ef ef' regs sp' reg ofs arg,
     loc_stack_in_only ef regs  arg (LocStackAddress sp') ->
     update_sp sp' ef ef' ->
-    resolve_effect__in  (InStack (StackInOnly (RelSpPop reg ofs)))  ef ef'.
+    resolve_effect__in  (InStack (StackInOnly (RelSpPop reg ofs)))  ef ef'
+| rslv_stack_in_effect_none: forall ef arg,
+    (forall reg ofs, arg <> InStack (StackInOnly (RelSpPop reg ofs))) ->
+    resolve_effect__in  arg  ef ef.
 
 Inductive resolve_effect__out: out_any -> execution_frame -> execution_frame -> Prop :=
 | rslv_stack_out_effect: forall ef ef' regs sp' reg ofs arg,
     loc_stack_out_only ef regs  arg (LocStackAddress sp') ->
     update_sp sp' ef ef' ->
-    resolve_effect__out  (OutStack (StackOutOnly (RelSpPush reg ofs)))  ef ef'.
+    resolve_effect__out  (OutStack (StackOutOnly (RelSpPush reg ofs)))  ef ef'
+| rslv_stack_out_effect_none: forall ef arg,
+    (forall reg ofs, arg <> OutStack (StackOutOnly (RelSpPush reg ofs))) ->
+    resolve_effect__out  arg  ef ef.
 
 Inductive resolve_effect: in_any -> out_any -> execution_frame -> execution_frame -> Prop :=
 | rslv_effect_full: forall arg1 arg2 ef1 ef2 ef3,
