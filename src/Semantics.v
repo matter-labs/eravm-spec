@@ -330,7 +330,7 @@ TODO
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
       select_flags mod_sf flags0 flags1 flags' ->
 
-      resolve xstack1 regs (out_any_incl out1) loc_out ->
+      resolve xstack1 regs out1 loc_out ->
       store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
       update_pc_regular xstack1 xstack' ->
       step gs
