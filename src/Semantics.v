@@ -268,7 +268,7 @@ TODO
 
 
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
-      resolve_fetch_word regs xstack1 mem_pages (in_regonly_incl in2) op2 ->
+      resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
       uadd_overflow word_bits op1 op2 = (result, new_OF) ->
 
@@ -278,7 +278,7 @@ TODO
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
       select_flags mod_sf flags0 flags1 flags' ->
 
-      resolve xstack1 regs (out_any_incl out1) loc_out ->
+      resolve xstack1 regs out1 loc_out ->
       store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
       update_pc_regular xstack1 xstack' ->
       step gs
@@ -319,8 +319,8 @@ TODO
       resolve_effect in1 out1 xstack0 xstack1 ->
 
 
-      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) op1 ->
-      resolve_fetch_word regs xstack1 mem_pages (in_regonly_incl in2) op2 ->
+      resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
+      resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
       usub_overflow word_bits op1 op2 = (result, new_OF) ->
 

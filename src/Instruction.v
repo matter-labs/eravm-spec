@@ -298,7 +298,7 @@ input argument. *)
   Definition out_reg : Set := regonly.
 
   (* begin details : Inclusion function *)
-  Definition out_reg_incl (ro: regonly) : any :=
+  Definition out_regonly_incl (ro: regonly) : any :=
     match ro with | RegOnly r => AnyReg r end.
   (* end details *)
   (** §2.7. Therefore, we do not define [out_regimm], because out arguments can not be immediate values. *)
@@ -312,6 +312,8 @@ input argument. *)
   Coercion InConst:  const_in >-> in_any.
   Coercion in_any_incl: in_any >-> any.
   Coercion in_regonly_incl : regonly >-> any.
+  Coercion out_regonly_incl : regonly >-> any.
+  Coercion out_any_incl : out_any >-> any.
 
   End Coercions.
 End Arg.
