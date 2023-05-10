@@ -11,7 +11,7 @@ Import RecordSetNotations.
 (** * Execution *)
 
 Section Execution.
-  Import Arg.
+  Import Arg Arg.Coercions.
 
   Inductive cond_activated:  cond -> flags_state -> Prop
     :=
@@ -65,8 +65,6 @@ Section Execution.
   Defined.
 
 
-
-
   Inductive update_pc_regular : execution_frame -> execution_frame -> Prop :=
   | fp_update:
     forall pc pc' ef ef',
@@ -75,7 +73,6 @@ Section Execution.
       update_pc pc ef ef' ->
       update_pc_regular ef ef'.
 
-  (* TODO needs to accept  a list of flags to reset or to keep? *)
   Inductive select_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
     | msf_set:
       forall fs fs', select_flags SetFlags fs fs' fs'
@@ -229,7 +226,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
       cond_activated cond flags0  ->
       resolve_effect__in in1 xstack0 xstack1 ->
 
-      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) word ->
+      resolve_fetch_word regs xstack1 mem_pages in1 word ->
       extract_code_address word jump_dest ->
       update_pc jump_dest xstack1 xstack' ->
       step gs
@@ -270,7 +267,7 @@ TODO
       resolve_effect in1 out1 xstack0 xstack1 ->
 
 
-      resolve_fetch_word regs xstack1 mem_pages (in_any_incl in1) op1 ->
+      resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages (in_regonly_incl in2) op2 ->
 
       uadd_overflow word_bits op1 op2 = (result, new_OF) ->

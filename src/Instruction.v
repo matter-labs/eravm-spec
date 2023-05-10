@@ -303,6 +303,17 @@ input argument. *)
   (* end details *)
   (** §2.7. Therefore, we do not define [out_regimm], because out arguments can not be immediate values. *)
 
+  Module Coercions.
+
+  Coercion InReg :  reg_io >-> in_any.
+  Coercion InImm :  imm_in >-> in_any.
+  Coercion InStack: stack_in >-> in_any.
+  Coercion InCode:  code_in >-> in_any.
+  Coercion InConst:  const_in >-> in_any.
+  Coercion in_any_incl: in_any >-> any.
+  Coercion in_regonly_incl : regonly >-> any.
+
+  End Coercions.
 End Arg.
 
 (** * Exclusive modifiers *)
