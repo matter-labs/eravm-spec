@@ -313,7 +313,7 @@ TODO
                |} in
 
       fetch_instr regs xstack0 mem_pages {|
-                    ins_spec := OpAdd in1 in2 out1;
+                    ins_spec := OpSub in1 in2 out1;
                     ins_mods := mk_cmod NoSwap mod_sf;
                     ins_cond := cond
                   |} ->
