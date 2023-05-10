@@ -5,8 +5,7 @@ Import Bool ZArith Common MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits.
 
 Import RecordSetNotations.
-#[export] Instance etaXGS : Settable _ :=
-  settable! Build_global_state <gs_flags
+#[export] Instance etaXGS : Settable _ := settable! Build_global_state <gs_flags
   ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
 
 (** * Execution *)
@@ -80,6 +79,8 @@ Section Execution.
     | msf_clr:
       forall fs fs', select_flags PreserveFlags fs fs' fs.
 
+  Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
+    if md then (a,b) else (b,a).
 
   (**
 <<
@@ -207,7 +208,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
    *)
   | step_Jump:
-    forall flags0 flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 
+    forall flags0 flags' mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 
       regs cond word jump_dest,
       let gs := {|
                  gs_flags := flags0;
@@ -220,7 +221,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
       fetch_instr regs xstack0 mem_pages {|
                     ins_spec := OpJump in1 ;
-                    ins_mods := mk_cmod mod_swap mod_sf;
+                    ins_mods := mk_cmod NoSwap mod_sf;
                     ins_cond := cond
                   |} ->
 
@@ -246,9 +247,9 @@ TODO
 >>
  *)
   | step_Add:
-    forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
+    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 result new_OF loc_out,
+      regs regs' cond op1 op2 op1' op2' result new_OF loc_out,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -260,7 +261,7 @@ TODO
 
       fetch_instr regs xstack0 mem_pages {|
                     ins_spec := OpAdd in1 in2 out1;
-                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
@@ -271,7 +272,8 @@ TODO
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
-      uadd_overflow word_bits op1 op2 = (result, new_OF) ->
+      apply_swap mod_swap op1 op2 = (op1', op2') ->
+      uadd_overflow word_bits op1' op2' = (result, new_OF) ->
 
       let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
       let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
@@ -298,9 +300,9 @@ TODO
 >>
 *)
   | step_Sub:
-    forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
+    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 result new_OF loc_out,
+      regs regs' cond op1 op2 op1' op2' result new_OF loc_out,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -312,7 +314,7 @@ TODO
 
       fetch_instr regs xstack0 mem_pages {|
                     ins_spec := OpSub in1 in2 out1;
-                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
@@ -323,7 +325,8 @@ TODO
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
-      usub_overflow word_bits op1 op2 = (result, new_OF) ->
+      apply_swap mod_swap op1 op2 = (op1', op2') ->
+      usub_overflow word_bits op1' op2' = (result, new_OF) ->
 
       let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
       let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
@@ -393,9 +396,9 @@ TODO
 *)
 
   | step_BinOp:
-    forall flags0 flags' mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
+    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 result loc_out opmod,
+      regs regs' cond op1 op2 op1' op2' result loc_out opmod,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -407,7 +410,7 @@ TODO
 
       fetch_instr regs xstack0 mem_pages {|
                     ins_spec := OpBinOp in1 in2 out1 opmod;
-                    ins_mods := mk_cmod NoSwap mod_sf;
+                    ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
@@ -417,8 +420,9 @@ TODO
 
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
-      
-      binop_func _ opmod op1 op2 = result ->
+
+      apply_swap mod_swap op1 op2 = (op1', op2') ->
+      binop_func _ opmod op1' op2' = result ->
 
       let new_EQ := EQ_of_bool (ZMod.beq _ result zero256) in
       select_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) flags' ->
