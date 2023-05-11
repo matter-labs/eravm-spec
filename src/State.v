@@ -89,13 +89,11 @@ Inductive update_sp : stack_address -> execution_frame -> execution_frame -> Pro
 (** Fetching value of the program counter itself. *)
 Inductive fetch_pc : execution_frame -> code_address -> Prop :=
 | fpc_fetch_ext:
-  forall (cf:callframe_external) tail (pc_value:stack_address),
-    cf_pc cf = pc_value ->
-    fetch_pc (ExternalCall cf tail) pc_value
+  forall addr sender ca mc st ctx ss eh sa tail (pc_value:code_address),
+    fetch_pc (ExternalCall (mk_extcf addr sender ca mc st ctx ss (mk_cf eh sa pc_value) ) tail) pc_value
 | fpc_fetch_int:
-  forall (cf:callframe_common) tail (pc_value:stack_address),
-    cf_pc cf = pc_value ->
-    fetch_pc (InternalCall cf tail) pc_value
+  forall eh sa tail (pc_value:code_address),
+    fetch_pc (InternalCall (mk_cf eh sa pc_value) tail) pc_value
 .
 
 Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
@@ -107,11 +105,11 @@ Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
 Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
                           -> Prop :=
   | upe_update:
-    forall pc' cf cf' this_address msg_sender code_address mem_context is_static context_u128_value saved_storage_state cfc,
+    forall pc' cf cf' this_address msg_sender code_address mem_context is_static context_u128_value saved_storage_state,
       update_pc_cfc pc' cf cf' ->
       update_pc_extcall pc'
         (mk_extcf this_address msg_sender code_address mem_context is_static
-           context_u128_value saved_storage_state cfc)
+           context_u128_value saved_storage_state cf)
         (mk_extcf this_address msg_sender code_address mem_context is_static
            context_u128_value saved_storage_state cf')
        .
