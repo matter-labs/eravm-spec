@@ -216,10 +216,11 @@ Inductive mem_page_by_id : mem_manager -> mem_page_id
 
 
 Inductive active_codepage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_code_id: forall ef memctx,
-    active_mem_ctx ef memctx ->
-    active_codepage_id ef memctx.(ctx_code_page_id).
-
+| api_active_code_id:
+  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
+    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
+    active_codepage_id ef code_page_id
+.
 
 Inductive active_codepage : mem_manager -> execution_frame -> mem_page -> Prop :=
 | ap_active_code: forall mm ef id codepage,
@@ -228,9 +229,11 @@ Inductive active_codepage : mem_manager -> execution_frame -> mem_page -> Prop :
     active_codepage mm ef codepage.
 
 Inductive active_constpage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_const_id: forall ef memctx,
-    active_mem_ctx ef memctx ->
-    active_constpage_id ef memctx.(ctx_const_page_id).
+| api_active_const_id:
+  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
+    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
+    active_constpage_id ef const_page_id
+.
 
 Inductive active_constpage : mem_manager -> execution_frame -> mem_page -> Prop :=
 | ap_active_const: forall mm ef id constpage,
@@ -239,9 +242,11 @@ Inductive active_constpage : mem_manager -> execution_frame -> mem_page -> Prop 
     active_constpage mm ef constpage.
 
 Inductive active_stackpage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_stack_id: forall ef memctx,
-    active_mem_ctx ef memctx ->
-    active_stackpage_id ef memctx.(ctx_stack_page_id).
+| api_active_stack_id:
+  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
+    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
+    active_stackpage_id ef stack_page_id
+.
 
 
 Inductive active_stackpage : mem_manager -> execution_frame -> mem_page -> Prop :=
