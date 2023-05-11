@@ -301,7 +301,7 @@ TODO
   | step_Sub:
     forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result new_OF loc_out,
+      regs regs' cond op1 op2 op1' op2' result new_OF,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -353,10 +353,10 @@ TODO
 *)
 
   | step_NearCall:
-    forall flags0 flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 context_u128 sp
+    forall flags mod_swap mod_sf contracts mem_pages xstack0 xstack1 context_u128 sp
       regs cond abi_params call_addr expt_handler,
       let gs := {|
-                 gs_flags := flags0;
+                 gs_flags := flags;
                  gs_regs := regs;
                  gs_mem_pages := mem_pages;
                  gs_contracts := contracts;
@@ -370,7 +370,7 @@ TODO
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags0  ->
+      cond_activated cond flags  ->
 
       update_pc_regular xstack0 xstack1 ->
       fetch_sp xstack1 sp -> (* sp is copied as is*)
@@ -378,7 +378,7 @@ TODO
       let xstack' := InternalCall (mk_cf expt_handler sp call_addr) xstack1 in
       step gs
            {|
-             gs_flags := flags';
+             gs_flags := flags_clear;
              gs_regs := regs;
              gs_mem_pages := mem_pages;
              gs_contracts := contracts;
