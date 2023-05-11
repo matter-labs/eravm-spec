@@ -249,7 +249,7 @@ TODO
   | step_Add:
     forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result new_OF loc_out,
+      regs regs' cond op1 op2 op1' op2' result new_OF,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -281,8 +281,7 @@ TODO
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
       select_flags mod_sf flags0 flags1 flags' ->
 
-      resolve xstack1 regs out1 loc_out ->
-      store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
+      resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
       step gs
            {|
@@ -334,8 +333,7 @@ TODO
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
       select_flags mod_sf flags0 flags1 flags' ->
 
-      resolve xstack1 regs out1 loc_out ->
-      store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
+      resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
       step gs
            {|
@@ -398,7 +396,7 @@ TODO
   | step_BinOp:
     forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
       context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result loc_out opmod,
+      regs regs' cond op1 op2 op1' op2' result opmod,
       let gs := {|
                  gs_flags := flags0;
                  gs_regs := regs;
@@ -427,8 +425,7 @@ TODO
       let new_EQ := EQ_of_bool (ZMod.beq _ result zero256) in
       select_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) flags' ->
 
-      resolve xstack1 regs out1 loc_out ->
-      store_loc regs xstack1 mem_pages (IntValue result) loc_out (regs' , mem_pages') ->
+      resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
       step gs
            {|

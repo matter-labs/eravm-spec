@@ -226,4 +226,13 @@ Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> Ar
     fetch_loc regs ef mm loc (FetchPV (IntValue res)) ->
     resolve_fetch_word regs ef mm arg res.
 
+
+Inductive resolve_store: regs_state -> execution_frame -> mem_manager
+                         -> Arg.out_any -> primitive_value -> regs_state * mem_manager
+                         -> Prop :=
+  | rs_resstore: forall ef mm regs arg loc_out res pv regs' mm',
+      resolve ef regs (out_any_incl arg) loc_out ->
+      store_loc regs ef mm pv loc_out (regs', mm') ->
+      resolve_store res ef mm arg pv (regs', mm').
+
 End FetchStore.
