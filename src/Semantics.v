@@ -208,7 +208,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
    *)
   | step_Jump:
-    forall flags0 flags' mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 
+    forall flags0 flags' mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1
       regs cond word jump_dest,
       let gs := {|
                  gs_flags := flags0;
