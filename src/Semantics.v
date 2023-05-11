@@ -73,11 +73,11 @@ Section Execution.
       update_pc pc ef ef' ->
       update_pc_regular ef ef'.
 
-  Inductive select_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
+  Inductive apply_set_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
     | msf_set:
-      forall fs fs', select_flags SetFlags fs fs' fs'
+      forall fs fs', apply_set_flags SetFlags fs fs' fs'
     | msf_clr:
-      forall fs fs', select_flags PreserveFlags fs fs' fs.
+      forall fs fs', apply_set_flags PreserveFlags fs fs' fs.
 
   Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
     if md then (a,b) else (b,a).
@@ -273,13 +273,13 @@ TODO
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
       apply_swap mod_swap op1 op2 = (op1', op2') ->
-      uadd_overflow word_bits op1' op2' = (result, new_OF) ->
+      op1' + op2' = (result, new_OF) ->
 
-      let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
-      let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
-      let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
+      let new_OF_LT := OF_LT_of_bool new_OF in
+      let new_EQ := EQ_of_bool (result == zero256) in
+      let new_GT := GT_of_bool ((negb new_EQ) && (negb new_OF_LT) ) in
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
-      select_flags mod_sf flags0 flags1 flags' ->
+      apply_set_flags mod_sf flags0 flags1 flags' ->
 
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
@@ -325,13 +325,13 @@ TODO
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
       apply_swap mod_swap op1 op2 = (op1', op2') ->
-      usub_overflow word_bits op1' op2' = (result, new_OF) ->
+      op1' - op2' = (result, new_OF) ->
 
-      let new_OF_LT := if new_OF then Set_OF_LT else Clear_OF_LT in
-      let new_EQ := if ZMod.beq _ result zero256 then Set_EQ else Clear_EQ in
+      let new_OF_LT := OF_LT_of_bool new_OF in
+      let new_EQ := EQ_of_bool (result == zero256) in
       let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
-      select_flags mod_sf flags0 flags1 flags' ->
+      apply_set_flags mod_sf flags0 flags1 flags' ->
 
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
@@ -422,8 +422,8 @@ TODO
       apply_swap mod_swap op1 op2 = (op1', op2') ->
       binop_func _ opmod op1' op2' = result ->
 
-      let new_EQ := EQ_of_bool (ZMod.beq _ result zero256) in
-      select_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) flags' ->
+      let new_EQ := EQ_of_bool (result == zero256) in
+      apply_set_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) flags' ->
 
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
