@@ -2,9 +2,6 @@ Require BinNums FMapPositive ZArith.
 Require Common.
 
 Section Mem.
-  (* FIXME we probably could operate on pairs of integers/bits rather than
-  dependent types. Remember that dependent types are an antipattern in Coq
-  (sic!) *)
   Import lib.ZMod.
   Import BinNums ZArith FMapPositive.
 
