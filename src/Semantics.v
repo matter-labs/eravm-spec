@@ -69,8 +69,8 @@ Section Execution.
   | fp_update:
     forall pc pc' ef ef',
       fetch_pc ef pc ->
-      (pc',false) = uinc_overflow _ pc ->
-      update_pc pc ef ef' ->
+      uinc_overflow _ pc = (pc',false) ->
+      update_pc pc' ef ef' ->
       update_pc_regular ef ef'.
 
   Inductive apply_set_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
@@ -151,7 +151,7 @@ TODO: account for Swap modifier
 >>
 *)
   | step_NoOp:
-    forall flags flags' mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
+    forall flags mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
       out1 out2 regs cond,
       let gs := {|
                  gs_flags := flags;
@@ -172,7 +172,7 @@ TODO: account for Swap modifier
 
       step gs
            {|
-             gs_flags := flags';
+             gs_flags := flags;
              gs_regs := regs;
              gs_mem_pages := mem_pages;
              gs_contracts := contracts;
