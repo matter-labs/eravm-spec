@@ -314,6 +314,9 @@ input argument. *)
   Coercion in_regonly_incl : regonly >-> any.
   Coercion out_regonly_incl : regonly >-> any.
   Coercion out_any_incl : out_any >-> any.
+  Coercion RegOnly: reg_io >-> regonly.
+  Coercion OutReg : reg_io >-> out_any.
+  Coercion OutStack: stack_out >-> out_any.
 
   End Coercions.
 End Arg.
