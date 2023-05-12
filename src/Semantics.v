@@ -208,10 +208,10 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
    *)
   | step_Jump:
-    forall flags0 flags' mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1
+    forall flags mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1
       regs cond word jump_dest,
       let gs := {|
-                 gs_flags := flags0;
+                 gs_flags := flags;
                  gs_regs := regs;
                  gs_mem_pages := mem_pages;
                  gs_contracts := contracts;
@@ -225,7 +225,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags0  ->
+      cond_activated cond flags  ->
       resolve_effect__in in1 xstack0 xstack1 ->
 
       resolve_fetch_word regs xstack1 mem_pages in1 word ->
@@ -233,7 +233,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
       update_pc jump_dest xstack1 xstack' ->
       step gs
            {|
-             gs_flags := flags';
+             gs_flags := flags;
              gs_regs := regs;
              gs_mem_pages := mem_pages;
              gs_contracts := contracts;
