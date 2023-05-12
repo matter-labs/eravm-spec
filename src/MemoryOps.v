@@ -16,20 +16,165 @@ Inductive loc : Set :=
 Section GPR.
 (** Fetching value from general purpose register. *)
 Inductive fetch_gpr : regs_state -> reg_name -> primitive_value -> Prop :=
-| fr_fetch:
-  forall rs n regname val,
-    reg_n n regname ->
-    List.nth_error (rs_gprs rs) n = Some val ->
-    fetch_gpr rs regname val.
+| fr_fetch0:
+  forall regs,
+    fetch_gpr regs R0 (IntValue zero256)
+| fr_fetch1:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R1 r1
+| fr_fetch2:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R2 r2
+| fr_fetch3:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R3 r3
+| fr_fetch4:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R4 r4
+| fr_fetch5:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R5 r5
+| fr_fetch6:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R6 r6
+| fr_fetch7:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R7 r7
+| fr_fetch8:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R8 r8
+| fr_fetch9:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R9 r9
+| fr_fetch10:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R10 r10
+| fr_fetch11:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R11 r11
+| fr_fetch12:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R12 r12
+| fr_fetch13:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R13 r13
+| fr_fetch14:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R14 r14
+| fr_fetch15:
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15,
+    fetch_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10 ; r11; r12
+                        ; r13; r14; r15])
+      R15 r15
+.
 
 (** Storing value to general purpose registers. *)
 Inductive store_gpr : regs_state -> reg_name -> primitive_value -> regs_state -> Prop :=
-| fr_store:
-  forall rs n regname elem head tail val,
-    reg_n n regname ->
-    rs_gprs rs = head ++ elem::tail ->
-    length head = n ->
-    store_gpr rs regname val (mk_regs (head ++ val::tail)).
+| fr_store1 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R1 pv (mk_regs [r0; pv; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store2 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R2 pv (mk_regs [r0; r1; pv; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store3 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R3 pv (mk_regs [r0; r1; r2; pv; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store4 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R4 pv (mk_regs [r0; r1; r2; r3; pv; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store5 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R5 pv (mk_regs [r0; r1; r2; r3; r4; pv; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store6 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R6 pv (mk_regs [r0; r1; r2; r3; r4; r5; pv; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store7 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R7 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; pv; r8; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store8 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R8 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; pv; r9; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store9 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R9 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; pv; r10
+                      ; r11; r12; r13; r14; r15])
+| fr_store10 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R10 pv
+    (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; pv 
+                      ; r11; r12; r13; r14; r15])
+| fr_store11 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R11 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; pv; r12; r13; r14; r15])
+| fr_store12 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R12 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; pv; r13; r14; r15])
+| fr_store13 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R13 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; pv; r14; r15])
+| fr_store14 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R14 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; pv; r15])
+| fr_store15 :
+  forall r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
+  store_gpr (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; r15]) R15 pv (mk_regs [r0; r1; r2; r3; r4; r5; r6; r7; r8; r9; r10
+                      ; r11; r12; r13; r14; pv])
+.
 
 End GPR.
 
@@ -230,9 +375,9 @@ Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> Ar
 Inductive resolve_store: regs_state -> execution_frame -> mem_manager
                          -> Arg.out_any -> primitive_value -> regs_state * mem_manager
                          -> Prop :=
-  | rs_resstore: forall ef mm regs arg loc_out res pv regs' mm',
+  | rs_resstore: forall ef mm regs arg loc_out pv regs' mm',
       resolve ef regs (out_any_incl arg) loc_out ->
       store_loc regs ef mm pv loc_out (regs', mm') ->
-      resolve_store res ef mm arg pv (regs', mm').
+      resolve_store regs ef mm arg pv (regs', mm').
 
 End FetchStore.
