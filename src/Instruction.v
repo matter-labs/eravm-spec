@@ -249,13 +249,16 @@ Consult [opcode_specific] to see a precise instruction format and its allowed ar
   | RegOnly  : reg_io -> regonly
   .
 
+  (* begin details : Inclusion function *)
+  Definition in_regonly_incl (ro: regonly) : in_any :=
+    match ro with
+    | RegOnly x => InReg x
+    end.
+  (* end details *)
+  
   (** §2.3. `in2` only supports arguments in registers. *)
   Definition in_reg : Set := regonly.
 
-  (* begin details : Inclusion function *)
-  Definition in_regonly_incl (ro: regonly) : any :=
-    match ro with | RegOnly r => AnyReg r end.
-  (* end details *)
 
   (** §2.4. In exotic cases, an input argument may either be a register, or an
 immediate value, but not anything else. Currently, only `uma` requires such an
@@ -311,8 +314,7 @@ input argument. *)
   Coercion InCode:  code_in >-> in_any.
   Coercion InConst:  const_in >-> in_any.
   Coercion in_any_incl: in_any >-> any.
-  Coercion in_regonly_incl : regonly >-> any.
-  Coercion out_regonly_incl : regonly >-> any.
+  Coercion in_regonly_incl : regonly >-> in_any. 
   Coercion out_any_incl : out_any >-> any.
   Coercion RegOnly: reg_io >-> regonly.
   Coercion OutReg : reg_io >-> out_any.
