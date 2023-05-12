@@ -177,3 +177,27 @@ Proof.
                                 (xstack1 := ef0);
    subst; try solve [repeat econstructor; discriminate].
 Qed.
+
+Definition jmp_prog1 mods :=  [Ins (OpJump (Reg R0) ) mods IfAlways].
+Theorem jmp_reduces:
+  forall sf_mod,
+  exists s',
+    step (init_state_from (jmp_prog1 (mk_cmod NoSwap sf_mod))) s'.
+Proof.
+  intros sf_mod.
+  destruct sf_mod eqn:Hswap;
+  unfold sub_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl;
+  eexists; econstructor 2; repeat econstructor; discriminate.
+Qed.
+
+Definition call_prog1 mods :=  [Ins (OpNearCall (Reg R0) (Imm zero16) (Imm zero16)) mods IfAlways].
+Theorem call_reduces:
+  forall mods,
+  exists s',
+    step (init_state_from (call_prog1 mods)) s'.
+Proof.
+  intros [swap sflags].
+  unfold add_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl.
+  destruct swap  eqn:Hsw, sflags eqn:Hsf; eexists; eapply step_NearCall
+  ; try solve [repeat econstructor].
+Qed.
