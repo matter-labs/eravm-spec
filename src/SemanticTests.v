@@ -5,6 +5,11 @@ Import ZMod Common MemoryBase Memory MemoryOps Instruction State Semantics.
 
 Definition regs_zero := List.repeat (IntValue zero256) 16.
 
+Definition regs_init_five_tens := List.repeat (IntValue zero256) 1 ++
+                                    List.repeat (IntValue (int_mod_of 256 10%Z)) 5
+                                    ++
+                                    List.repeat (IntValue zero256) 10.
+
 Fixpoint add_all_insns (insns: list instruction) (startaddr: code_address)
   (m: code_page) :=
   match insns with
@@ -24,16 +29,15 @@ Definition mem_ctx0 := {|
               ctx_code_page_id := 0; ctx_const_page_id := 0; ctx_stack_page_id := 0; ctx_heap_page_id := 0; ctx_heap_aux_page_id := 0; ctx_heap_bound := zero32; ctx_aux_heap_bound := zero32
             |}.
 
-Definition inc_pc_cf cf :=
+Definition mod_pc_cf f cf :=
 match cf with
  | mk_cf cf_exception_handler_location cf_sp cf_pc =>
-     let (pc', _) := uinc_overflow _ cf_pc in
-     mk_cf cf_exception_handler_location cf_sp pc'
+     mk_cf cf_exception_handler_location cf_sp (f cf_pc)
  end .
 
-Definition inc_pc ef :=
+Definition mod_pc f ef :=
   match ef with
-  | InternalCall x tail => InternalCall (inc_pc_cf x) tail
+  | InternalCall x tail => InternalCall (mod_pc_cf f x) tail
   | ExternalCall x tail => match x with
                           | mk_extcf ecf_this_address ecf_msg_sender
                               ecf_code_address ecf_mem_context ecf_is_static
@@ -42,7 +46,29 @@ Definition inc_pc ef :=
                               ExternalCall (mk_extcf ecf_this_address ecf_msg_sender
                                 ecf_code_address ecf_mem_context ecf_is_static
                                 ecf_context_u128_value ecf_saved_storage_state
-                                (inc_pc_cf ecx_common)) tail
+                                (mod_pc_cf f ecx_common)) tail
+                          end
+ end.
+Definition inc_pc := mod_pc (fun oldpc => fst (uinc_overflow _ oldpc)).
+
+Definition mod_sp_cf f cf :=
+match cf with
+ | mk_cf cf_exception_handler_location cf_sp cf_pc =>
+     mk_cf cf_exception_handler_location (f cf_sp) cf_pc
+ end .
+
+Definition mod_sp f ef :=
+  match ef with
+  | InternalCall x tail => InternalCall (mod_sp_cf f x) tail
+  | ExternalCall x tail => match x with
+                          | mk_extcf ecf_this_address ecf_msg_sender
+                              ecf_code_address ecf_mem_context ecf_is_static
+                              ecf_context_u128_value ecf_saved_storage_state
+                              ecx_common =>
+                              ExternalCall (mk_extcf ecf_this_address ecf_msg_sender
+                                ecf_code_address ecf_mem_context ecf_is_static
+                                ecf_context_u128_value ecf_saved_storage_state
+                                (mod_sp_cf f ecx_common)) tail
                           end
  end.
 
@@ -71,9 +97,6 @@ Definition init_state_from (from: list instruction) :=
 .
 
 
-(**
-Proof that [OpNoOp] reduces.
- *)
 Theorem noop_reduces:
   forall mods,
   exists s',
@@ -84,3 +107,73 @@ Proof.
   econstructor; eauto; repeat econstructor; eauto; discriminate.
 Qed.
 
+
+Definition add_prog1 mods :=  [Ins (OpAdd  (Imm (int_mod_of 16 42%Z)) (Reg R1)
+                                  (Reg R1)) mods
+                 IfAlways].
+Theorem add_reduces:
+  forall mods,
+  exists s',
+    step (init_state_from (add_prog1 mods)) s'.
+Proof.
+  intros [swap sflags].
+  unfold add_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl.
+  destruct swap  eqn:Hsw, sflags eqn:Hsf;
+  eexists (Build_global_state
+             (if sflags then {| fs_OF_LT := Clear_OF_LT; fs_EQ
+                               := Clear_EQ; fs_GT := Set_GT |} else flags_clear)
+             (let z := IntValue zero256 in mk_regs [z; IntValue (int_mod_of 256 42%Z); z; z; z; z
+                                           ;z; z; z; z; z; z; z; z; z; z])
+             (empty contracts_params)
+             (gs_mem_pages (init_state_from (add_prog1 (mk_cmod swap sflags))))
+             (mod_pc (fun pc => fst (uinc_overflow _ pc)) ef0)
+             zero128
+          ) ;
+  apply step_Add with (in1 := (Imm (int_mod_of 16 42%Z)))
+                                (in2 := Reg R1) (out1:=Reg R1) (cond :=IfAlways)
+                                (mod_swap := swap) (mod_sf := sflags)
+                                (op1 := (int_mod_of 256 42%Z))
+                                (op2 := zero256)
+                                (op1' := if swap then zero256 else
+                                           (int_mod_of 256 42%Z))
+                                (op2' := if swap then (int_mod_of 256 42%Z) else
+                                           zero256)
+                                (result := (int_mod_of 256 42%Z))
+                                (new_OF := false)
+                                (xstack1 := ef0);
+   subst; try solve [repeat econstructor; discriminate].
+Qed.
+
+Definition sub_prog1 mods :=  [Ins (OpSub (Imm (int_mod_of 16 42%Z)) (Reg R1)
+                                  (Reg R1)) mods
+                 IfAlways].
+Theorem sub_reduces:
+  forall mods,
+  exists s',
+    step (init_state_from (sub_prog1 mods)) s'.
+Proof.
+  intros [swap sflags].
+  unfold sub_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl.
+  destruct swap  eqn:Hsw, sflags eqn:Hsf;
+  eexists (Build_global_state
+             _
+             _
+             (empty contracts_params)
+             (gs_mem_pages (init_state_from (sub_prog1 (mk_cmod swap sflags))))
+             (mod_pc (fun pc => fst (uinc_overflow _ pc)) ef0)
+             zero128
+          ) ;
+  apply step_Sub with (in1 := (Imm (int_mod_of 16 42%Z)))
+                                (in2 := Reg R1) (out1:=Reg R1) (cond :=IfAlways)
+                                (mod_swap := swap) (mod_sf := sflags)
+                                (op1 := int_mod_of 256 42%Z)
+                                (op2 := zero256)
+                                (op1' := if swap then zero256 else (int_mod_of 256 42%Z))
+                                (op2' := if swap then (int_mod_of 256 42%Z) else zero256)
+                                (result := if swap then
+                                             fst (zero256 - int_mod_of 256 42%Z)
+                                           else (int_mod_of 256 42%Z))
+                                (new_OF := if swap then true else false)
+                                (xstack1 := ef0);
+   subst; try solve [repeat econstructor; discriminate].
+Qed.
