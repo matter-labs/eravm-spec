@@ -80,7 +80,10 @@ Section Execution.
       forall fs fs', apply_set_flags PreserveFlags fs fs' fs.
 
   Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
-    if md then (b,a) else (a,b).
+    match md with
+    | NoSwap => (a,b)
+    | Swap => (b,a)
+    end.
 
   (**
 <<
