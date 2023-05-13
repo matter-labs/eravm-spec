@@ -255,7 +255,7 @@ Consult [opcode_specific] to see a precise instruction format and its allowed ar
     | RegOnly x => InReg x
     end.
   (* end details *)
-  
+
   (** §2.3. `in2` only supports arguments in registers. *)
   Definition in_reg : Set := regonly.
 
@@ -314,7 +314,7 @@ input argument. *)
   Coercion InCode:  code_in >-> in_any.
   Coercion InConst:  const_in >-> in_any.
   Coercion in_any_incl: in_any >-> any.
-  Coercion in_regonly_incl : regonly >-> in_any. 
+  Coercion in_regonly_incl : regonly >-> in_any.
   Coercion out_any_incl : out_any >-> any.
   Coercion RegOnly: reg_io >-> regonly.
   Coercion OutReg : reg_io >-> out_any.
@@ -346,12 +346,18 @@ Section Def.
 semantics is described in a different place; see [step]. *)
   Inductive opcode_specific : Set :=
   | OpInvalid
-  | OpNoOp     (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
-  | OpJump     (in1: in_any)
-  | OpBinOp    (in1: in_any) (in2: in_reg)  (out1: out_any) (mod:binop_mod)
-  | OpAdd      (in1: in_any) (in2: in_reg)  (out1: out_any)
-  | OpSub      (in1: in_any) (in2: in_reg)  (out1: out_any)
-  | OpNearCall (in1: in_reg) (dest: imm_in) (handler: imm_in)
+  | OpNoOp        (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+  | OpJump        (dest: in_any)
+  | OpBinOp       (in1: in_any) (in2: in_reg)  (out1: out_any) (mod:binop_mod)
+  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)
+  | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)
+  | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
+
+                  (* quasi fat pointer + forwarding mode *)
+  | OpRetOK       (args: in_reg) (label: option code_address)
+                  (* quasi fat pointer + forwarding mode *)
+  | OpRetRevert   (args: in_reg) (label: option code_address)
+  | OpRetPanic    (label: option code_address)
   .
 
 

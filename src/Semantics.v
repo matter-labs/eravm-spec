@@ -436,7 +436,180 @@ TODO
              gs_callstack := xstack';
              gs_context_u128 := context_u128;
            |}
+(** -----
+<<
+## Returns
 
+TODO
+>>
+ *)
+  | step_RetLocalOk_nolabel:
+    forall flags mods contracts mem_pages cf caller_stack context_u128
+      regs cond ignored,
+      fetch_instr regs (InternalCall cf caller_stack) mem_pages {|
+                    ins_spec := OpRetOK ignored None;
+                    ins_mods := mods;
+                    ins_cond := cond
+                  |} ->
 
+      cond_activated cond flags  ->
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+ 
+  | step_RetLocalOk_label:
+    forall flags contracts mem_pages cf caller_stack context_u128
+      regs cond mods ignored label caller_stack',
+
+      fetch_op regs (InternalCall cf caller_stack) mem_pages
+        (OpRetOK ignored (Some label)) mods cond ->
+
+      cond_activated cond flags  ->
+      update_pc label caller_stack caller_stack' ->
+
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := context_u128;
+        |}
+
+  | step_RetLocalRevert_nolabel:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond ignored except_handler sp pc,
+
+      cond_activated cond flags  ->
+      fetch_op regs (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
+        (OpRetRevert ignored None) mods cond ->
+
+      update_pc except_handler caller_stack caller_stack' ->
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := context_u128;
+        |}
+
+  | step_RetLocalRevert_label:
+    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods ignored label caller_stack',
+
+      cond_activated cond flags  ->
+
+      fetch_op regs (InternalCall cf caller_stack) mem_pages
+        (OpRetRevert ignored (Some label)) mods cond ->
+
+      update_pc label caller_stack caller_stack' ->
+
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := context_u128;
+        |}
+  | step_RetLocalPanic_nolabel:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond except_handler sp pc,
+
+      cond_activated cond flags  ->
+      fetch_op regs (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
+        (OpRetPanic None) mods cond ->
+
+      update_pc except_handler caller_stack caller_stack' ->
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := mk_fs Set_OF_LT Clear_EQ Clear_GT;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := context_u128;
+        |}
+
+  | step_RetLocalPanic_label:
+    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods label caller_stack',
+
+      cond_activated cond flags  ->
+
+      fetch_op regs (InternalCall cf caller_stack) mem_pages
+        (OpRetPanic (Some label)) mods cond ->
+
+      update_pc label caller_stack caller_stack' ->
+
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := InternalCall cf caller_stack;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := mk_fs Set_OF_LT Clear_EQ Clear_GT;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := context_u128;
+        |}
   .
  End Execution.
+(*
+Can be functions:
+- update PC/SP
+- read PC/SP
+- fetch operation
+ *)
