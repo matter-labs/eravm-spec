@@ -96,6 +96,27 @@ Inductive fetch_pc : execution_frame -> code_address -> Prop :=
     fetch_pc (InternalCall (mk_cf eh sa pc_value) tail) pc_value
 .
 
+Definition pc_get (ef: execution_frame) : code_address :=
+  match ef with
+  | InternalCall cf _ => cf.(cf_pc)
+  | ExternalCall ef tail => ef.(ecx_common).(cf_pc)
+  end.
+
+Definition pc_mod f ef :=
+  match ef with
+  | InternalCall x tail => InternalCall (x <| cf_pc ::=  f |>) tail
+  | ExternalCall x tail => ExternalCall (x <| ecx_common ::= fun cf => cf <| cf_pc ::=  f |> |>) tail
+  end.
+
+Definition pc_inc := pc_mod (fun oldpc => fst (uinc_overflow _ oldpc)).
+Definition pc_set new := pc_mod (fun _ => new).
+
+Theorem pc_get_correct:
+  forall ef, fetch_pc ef (pc_get ef).
+Proof.
+  intros [ []|[] ]; simpl; [|destruct ecx_common0]; constructor.
+Qed.
+
 Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
                           -> Prop :=
   | upc_update:
@@ -123,6 +144,14 @@ Inductive update_pc : code_address -> execution_frame -> execution_frame -> Prop
   forall pc' cf cf' tail,
     update_pc_cfc pc' cf cf' ->
     update_pc pc' (InternalCall cf tail) (InternalCall cf' tail).
+
+Theorem update_pc_correct:
+  forall ef pc, update_pc pc ef (pc_set pc ef).
+Proof.
+  intros [ []|[] ] pc; simpl; [|destruct ecx_common0]; repeat constructor.
+Qed.
+
+
 
 
 Inductive topmost_extframe : execution_frame -> execution_frame -> Prop :=
