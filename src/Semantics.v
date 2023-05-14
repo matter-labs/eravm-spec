@@ -73,16 +73,16 @@ Section Execution.
       update_pc pc' ef ef' ->
       update_pc_regular ef ef'.
 
-  Inductive apply_set_flags: mod_set_flags -> flags_state -> flags_state -> flags_state -> Prop :=
-    | msf_set:
-      forall fs fs', apply_set_flags SetFlags fs fs' fs'
-    | msf_clr:
-      forall fs fs', apply_set_flags PreserveFlags fs fs' fs.
-
   Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
     match md with
     | NoSwap => (a,b)
     | Swap => (b,a)
+    end.
+
+  Definition apply_set_flags (md: mod_set_flags) (f f':flags_state) : flags_state :=
+    match md with
+    | SetFlags => f'
+    | PreserveFlags => f
     end.
 
   (**
@@ -154,34 +154,37 @@ TODO: account for Swap modifier
 >>
 *)
   | step_NoOp:
-    forall flags mod_swap mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2
-      out1 out2 regs cond,
-      let gs := {|
-                 gs_flags := flags;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
-      fetch_instr regs xstack0 mem_pages {|
+    forall flags mods contracts mem_pages xstack0 xstack1 xstack' context_u128 in1 in2 out1 out2 regs cond,
+
+      cond_activated cond flags ->
+
+      fetch_instr regs xstack0 mem_pages
+                  {|
                     ins_spec := OpNoOp in1 in2 out1 out2;
-                    ins_mods := mk_cmod mod_swap mod_sf;
+                    ins_mods := mods;
                     ins_cond := cond
                   |} ->
-      cond_activated cond flags ->
+
       update_pc_regular xstack0 xstack1 ->
       resolve_effect in1 out1 xstack1 xstack' ->
 
-      step gs
-           {|
-             gs_flags := flags;
-             gs_regs := regs;
-             gs_mem_pages := mem_pages;
-             gs_contracts := contracts;
-             gs_callstack := xstack';
-             gs_context_u128 := context_u128;
-           |}
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack';
+          gs_context_u128 := context_u128;
+        |}
 
   (** -----
 <<
@@ -211,37 +214,39 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
    *)
   | step_Jump:
-    forall flags mod_sf contracts mem_pages xstack0 xstack1 context_u128 in1
+    forall flags mod_sf contracts mem_pages xstack0 xstack1 context_u128 dest
       regs cond word jump_dest,
-      let gs := {|
-                 gs_flags := flags;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
 
-      fetch_instr regs xstack0 mem_pages {|
-                    ins_spec := OpJump in1 ;
+      cond_activated cond flags  ->
+
+      fetch_instr regs xstack0 mem_pages
+                  {|
+                    ins_spec := OpJump dest;
                     ins_mods := mk_cmod NoSwap mod_sf;
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags  ->
-      resolve_effect__in in1 xstack0 xstack1 ->
+      resolve_effect__in dest xstack0 xstack1 ->
 
-      resolve_fetch_word regs xstack1 mem_pages in1 word ->
+      resolve_fetch_word regs xstack1 mem_pages dest word ->
       extract_code_address word jump_dest ->
-      step gs
-           {|
-             gs_flags := flags;
-             gs_regs := regs;
-             gs_mem_pages := mem_pages;
-             gs_contracts := contracts;
-             gs_callstack := pc_set jump_dest xstack1;
-             gs_context_u128 := context_u128;
-           |}
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := pc_set jump_dest xstack1;
+          gs_context_u128 := context_u128;
+        |}
 (** -----
 <<
 ## Add
@@ -249,27 +254,18 @@ TODO
 >>
  *)
   | step_Add:
-    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
-      context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result new_OF,
-      let gs := {|
-                 gs_flags := flags0;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
+    forall flags0 mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack' context_u128 in1 in2 out1 regs regs' cond op1 op2 op1' op2' result new_OF,
 
-      fetch_instr regs xstack0 mem_pages {|
+      cond_activated cond flags0  ->
+
+      fetch_instr regs xstack0 mem_pages
+                  {|
                     ins_spec := OpAdd in1 in2 out1;
                     ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags0  ->
       resolve_effect in1 out1 xstack0 xstack1 ->
-
 
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
@@ -277,23 +273,31 @@ TODO
       apply_swap mod_swap op1 op2 = (op1', op2') ->
       op1' + op2' = (result, new_OF) ->
 
-      let new_OF_LT := OF_LT_of_bool new_OF in
-      let new_EQ := EQ_of_bool (result == zero256) in
-      let new_GT := GT_of_bool ((negb new_EQ) && (negb new_OF_LT) ) in
-      let flags1 := mk_fs new_OF_LT new_EQ new_GT in
-      apply_set_flags mod_sf flags0 flags1 flags' ->
 
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
-      step gs
-           {|
-             gs_flags := flags';
-             gs_regs := regs';
-             gs_mem_pages := mem_pages';
-             gs_contracts := contracts;
-             gs_callstack := xstack';
-             gs_context_u128 := context_u128;
-           |}
+
+      let new_OF_LT := OF_LT_of_bool new_OF in
+      let new_EQ := EQ_of_bool (result == zero256) in
+      let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
+      let flags1 := mk_fs new_OF_LT new_EQ new_GT in
+      step
+        {|
+          gs_flags        := flags0;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags := apply_set_flags mod_sf flags0 flags1;
+          gs_regs := regs';
+          gs_mem_pages := mem_pages';
+          gs_contracts := contracts;
+          gs_callstack := xstack';
+          gs_context_u128 := context_u128;
+        |}
 (** -----
 <<
 ## Sub
@@ -301,27 +305,18 @@ TODO
 >>
 *)
   | step_Sub:
-    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
-      context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result new_OF,
-      let gs := {|
-                 gs_flags := flags0;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
+    forall flags0 mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack' context_u128 in1 in2 out1 regs regs' cond op1 op2 op1' op2' result new_OF,
 
-      fetch_instr regs xstack0 mem_pages {|
+      cond_activated cond flags0  ->
+
+      fetch_instr regs xstack0 mem_pages
+                  {|
                     ins_spec := OpSub in1 in2 out1;
                     ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags0  ->
       resolve_effect in1 out1 xstack0 xstack1 ->
-
 
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
@@ -329,23 +324,31 @@ TODO
       apply_swap mod_swap op1 op2 = (op1', op2') ->
       op1' - op2' = (result, new_OF) ->
 
+
+      resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
+      update_pc_regular xstack1 xstack' ->
+
       let new_OF_LT := OF_LT_of_bool new_OF in
       let new_EQ := EQ_of_bool (result == zero256) in
       let new_GT := GT_of_bool ( (negb new_EQ) && (negb new_OF_LT) ) in
       let flags1 := mk_fs new_OF_LT new_EQ new_GT in
-      apply_set_flags mod_sf flags0 flags1 flags' ->
-
-      resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
-      update_pc_regular xstack1 xstack' ->
-      step gs
-           {|
-             gs_flags := flags';
-             gs_regs := regs';
-             gs_mem_pages := mem_pages';
-             gs_contracts := contracts;
-             gs_callstack := xstack';
-             gs_context_u128 := context_u128;
-           |}
+      step
+        {|
+          gs_flags := flags0;
+          gs_regs := regs;
+          gs_mem_pages := mem_pages;
+          gs_contracts := contracts;
+          gs_callstack := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags := apply_set_flags mod_sf flags0 flags1;
+          gs_regs := regs';
+          gs_mem_pages := mem_pages';
+          gs_contracts := contracts;
+          gs_callstack := xstack';
+          gs_context_u128 := context_u128;
+        |}
 (** -----
 <<
 ## Near call
@@ -355,38 +358,37 @@ TODO
 *)
 
   | step_NearCall:
-    forall flags mod_swap mod_sf contracts mem_pages xstack0 xstack1 context_u128 sp
-      regs cond abi_params call_addr expt_handler,
-      let gs := {|
-                 gs_flags := flags;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
-
-      fetch_instr regs xstack0 mem_pages {|
-                    ins_spec := OpNearCall abi_params (Imm call_addr) (Imm expt_handler);
-                    ins_mods := mk_cmod mod_swap mod_sf;
-                    ins_cond := cond
-                  |} ->
+    forall flags mods contracts mem_pages xstack0 xstack1 context_u128 sp regs cond abi_params call_addr expt_handler,
 
       cond_activated cond flags  ->
 
-      update_pc_regular xstack0 xstack1 ->
-      fetch_sp xstack1 sp -> (* sp is copied as is*)
+      fetch_instr regs xstack0 mem_pages
+                  {|
+                    ins_spec := OpNearCall abi_params (Imm call_addr) (Imm expt_handler);
+                    ins_mods := mods;
+                    ins_cond := cond
+                  |} ->
 
-      let xstack' := InternalCall (mk_cf expt_handler sp call_addr) xstack1 in
-      step gs
-           {|
-             gs_flags := flags_clear;
-             gs_regs := regs;
-             gs_mem_pages := mem_pages;
-             gs_contracts := contracts;
-             gs_callstack := xstack';
-             gs_context_u128 := context_u128;
-           |}
+      fetch_sp xstack0 sp -> (* sp is copied as is*)
+      update_pc_regular xstack0 xstack1 ->
+
+      step
+        {|
+          gs_flags := flags;
+          gs_regs := regs;
+          gs_mem_pages := mem_pages;
+          gs_contracts := contracts;
+          gs_callstack := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags := flags_clear;
+          gs_regs := regs;
+          gs_mem_pages := mem_pages;
+          gs_contracts := contracts;
+          gs_callstack := InternalCall (mk_cf expt_handler sp call_addr) xstack1;
+          gs_context_u128 := context_u128;
+        |}
 (** -----
 <<
 ## BinOp (bitwise operations)
@@ -396,27 +398,17 @@ TODO
 *)
 
   | step_BinOp:
-    forall flags0 flags' mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack'
-      context_u128 in1 in2 out1
-      regs regs' cond op1 op2 op1' op2' result opmod,
-      let gs := {|
-                 gs_flags := flags0;
-                 gs_regs := regs;
-                 gs_mem_pages := mem_pages;
-                 gs_contracts := contracts;
-                 gs_callstack := xstack0;
-                 gs_context_u128 := context_u128;
-               |} in
+    forall flags0 mod_swap mod_sf contracts mem_pages mem_pages' xstack0 xstack1 xstack' context_u128 in1 in2 out1 regs regs' cond op1 op2 op1' op2' result opmod,
+      cond_activated cond flags0  ->
 
-      fetch_instr regs xstack0 mem_pages {|
+      fetch_instr regs xstack0 mem_pages
+                  {|
                     ins_spec := OpBinOp in1 in2 out1 opmod;
                     ins_mods := mk_cmod mod_swap mod_sf;
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags0  ->
       resolve_effect in1 out1 xstack0 xstack1 ->
-
 
       resolve_fetch_word regs xstack1 mem_pages in1 op1 ->
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
@@ -424,20 +416,28 @@ TODO
       apply_swap mod_swap op1 op2 = (op1', op2') ->
       binop_func _ opmod op1' op2' = result ->
 
-      let new_EQ := EQ_of_bool (result == zero256) in
-      apply_set_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) flags' ->
-
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
-      step gs
-           {|
-             gs_flags := flags';
-             gs_regs := regs';
-             gs_mem_pages := mem_pages';
-             gs_contracts := contracts;
-             gs_callstack := xstack';
-             gs_context_u128 := context_u128;
-           |}
+
+      let new_EQ := EQ_of_bool (result == zero256) in
+      let flags' := apply_set_flags mod_sf flags0 (mk_fs Clear_OF_LT new_EQ Clear_GT) in
+      step
+        {|
+          gs_flags := flags0;
+          gs_regs := regs;
+          gs_mem_pages := mem_pages;
+          gs_contracts := contracts;
+          gs_callstack := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags := flags';
+          gs_regs := regs';
+          gs_mem_pages := mem_pages';
+          gs_contracts := contracts;
+          gs_callstack := xstack';
+          gs_context_u128 := context_u128;
+        |}
 (** -----
 <<
 ## Returns
@@ -446,15 +446,17 @@ TODO
 >>
  *)
   | step_RetLocalOk_nolabel:
-    forall flags mods contracts mem_pages cf caller_stack context_u128
-      regs cond ignored,
-      fetch_instr regs (InternalCall cf caller_stack) mem_pages {|
+    forall flags mods contracts mem_pages cf caller_stack context_u128 regs cond ignored,
+
+      cond_activated cond flags  ->
+
+      fetch_instr regs (InternalCall cf caller_stack) mem_pages
+                  {|
                     ins_spec := OpRetOK ignored None;
                     ins_mods := mods;
                     ins_cond := cond
                   |} ->
 
-      cond_activated cond flags  ->
       step
         {|
           gs_flags        := flags;
@@ -472,15 +474,14 @@ TODO
           gs_callstack    := caller_stack;
           gs_context_u128 := context_u128;
         |}
- 
+
   | step_RetLocalOk_label:
-    forall flags contracts mem_pages cf caller_stack context_u128
-      regs cond mods ignored label,
+    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods ignored label,
+
+      cond_activated cond flags  ->
 
       fetch_op regs (InternalCall cf caller_stack) mem_pages
         (OpRetOK ignored (Some label)) mods cond ->
-
-      cond_activated cond flags  ->
 
       step
         {|
@@ -501,20 +502,22 @@ TODO
         |}
 
   | step_RetLocalRevert_nolabel:
-    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond ignored except_handler sp pc,
+    forall flags mods contracts mem_pages caller_stack context_u128 regs cond ignored except_handler sp pc,
 
       cond_activated cond flags  ->
-      fetch_op regs (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
+
+      fetch_op regs
+        (InternalCall (mk_cf except_handler sp pc) caller_stack)
+        mem_pages
         (OpRetRevert ignored None) mods cond ->
 
-      update_pc except_handler caller_stack caller_stack' ->
       step
         {|
           gs_flags        := flags;
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := InternalCall cf caller_stack;
+          gs_callstack    := InternalCall (mk_cf except_handler sp pc) caller_stack;
           gs_context_u128 := context_u128;
         |}
         {|
@@ -522,7 +525,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := caller_stack';
+          gs_callstack    := pc_set except_handler caller_stack;
           gs_context_u128 := context_u128;
         |}
 
@@ -551,11 +554,14 @@ TODO
           gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
+
   | step_RetLocalPanic_nolabel:
-    forall flags mods contracts mem_pages cf caller_stack context_u128 regs cond except_handler sp pc,
+    forall flags mods contracts mem_pages caller_stack context_u128 regs cond except_handler sp pc,
 
       cond_activated cond flags  ->
-      fetch_op regs (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
+
+      fetch_op regs
+        (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
         (OpRetPanic None) mods cond ->
 
       step
@@ -564,7 +570,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := InternalCall cf caller_stack;
+          gs_callstack    := InternalCall (mk_cf except_handler sp pc) caller_stack;
           gs_context_u128 := context_u128;
         |}
         {|
@@ -601,6 +607,9 @@ TODO
           gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
+
+
+
   .
  End Execution.
 (*
