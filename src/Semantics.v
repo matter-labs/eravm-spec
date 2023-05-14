@@ -211,7 +211,7 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
    *)
   | step_Jump:
-    forall flags mod_sf contracts mem_pages xstack0 xstack1 xstack' context_u128 in1
+    forall flags mod_sf contracts mem_pages xstack0 xstack1 context_u128 in1
       regs cond word jump_dest,
       let gs := {|
                  gs_flags := flags;
@@ -233,14 +233,13 @@ Assigns a value from `in1` to PC. The value is truncated to [code_address_bits].
 
       resolve_fetch_word regs xstack1 mem_pages in1 word ->
       extract_code_address word jump_dest ->
-      update_pc jump_dest xstack1 xstack' ->
       step gs
            {|
              gs_flags := flags;
              gs_regs := regs;
              gs_mem_pages := mem_pages;
              gs_contracts := contracts;
-             gs_callstack := xstack';
+             gs_callstack := pc_set jump_dest xstack1;
              gs_context_u128 := context_u128;
            |}
 (** -----
@@ -476,13 +475,12 @@ TODO
  
   | step_RetLocalOk_label:
     forall flags contracts mem_pages cf caller_stack context_u128
-      regs cond mods ignored label caller_stack',
+      regs cond mods ignored label,
 
       fetch_op regs (InternalCall cf caller_stack) mem_pages
         (OpRetOK ignored (Some label)) mods cond ->
 
       cond_activated cond flags  ->
-      update_pc label caller_stack caller_stack' ->
 
       step
         {|
@@ -498,7 +496,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := caller_stack';
+          gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
 
@@ -529,14 +527,12 @@ TODO
         |}
 
   | step_RetLocalRevert_label:
-    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods ignored label caller_stack',
+    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods ignored label,
 
       cond_activated cond flags  ->
 
       fetch_op regs (InternalCall cf caller_stack) mem_pages
         (OpRetRevert ignored (Some label)) mods cond ->
-
-      update_pc label caller_stack caller_stack' ->
 
       step
         {|
@@ -552,17 +548,16 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := caller_stack';
+          gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
   | step_RetLocalPanic_nolabel:
-    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond except_handler sp pc,
+    forall flags mods contracts mem_pages cf caller_stack context_u128 regs cond except_handler sp pc,
 
       cond_activated cond flags  ->
       fetch_op regs (InternalCall (mk_cf except_handler sp pc) caller_stack) mem_pages
         (OpRetPanic None) mods cond ->
 
-      update_pc except_handler caller_stack caller_stack' ->
       step
         {|
           gs_flags        := flags;
@@ -577,20 +572,18 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := caller_stack';
+          gs_callstack    := pc_set except_handler caller_stack;
           gs_context_u128 := context_u128;
         |}
 
   | step_RetLocalPanic_label:
-    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods label caller_stack',
+    forall flags contracts mem_pages cf caller_stack context_u128 regs cond mods label,
 
       cond_activated cond flags  ->
 
       fetch_op regs (InternalCall cf caller_stack) mem_pages
         (OpRetPanic (Some label)) mods cond ->
 
-      update_pc label caller_stack caller_stack' ->
-
       step
         {|
           gs_flags        := flags;
@@ -605,7 +598,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := caller_stack';
+          gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
   .
