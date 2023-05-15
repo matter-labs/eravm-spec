@@ -77,16 +77,20 @@ Module NearCall.
 End NearCall.
 
 (** * Far call *)
-Inductive far_call_forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
+Module FarCall.
 
-Record far_call := {
-    fc_memory_quasi_fat_ptr: fat_ptr;
-    fc_ergs_passed: u32;
-    fc_shard_id: u8;
-    fc_forwarding_mode: far_call_forward_page_type;
-    fc_constructor_call: bool;
-    fc_consider_new_tx: bool;
-  }.
+  Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
+
+  Record far_call := {
+      fc_memory_quasi_fat_ptr: fat_ptr;
+      fc_ergs_passed: u32;
+      fc_shard_id: u8;
+      fc_forwarding_mode: forward_page_type;
+      fc_constructor_call: bool;
+      fc_consider_new_tx: bool;
+    }.
 
 
-Axiom ABI_far_call: coder far_call.
+  Axiom ABI: coder far_call.
+
+End FarCall.

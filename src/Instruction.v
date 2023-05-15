@@ -340,6 +340,18 @@ Section ModifiersExclusive.
     | BinOpXor => bitwise_xor bits
     end.
 
+  Inductive far_call_mod: Set := | Normal | Mimic | Delegate.
+
+  Record far_call_exception : Set := mk_far_call_exception {
+        fce_input_is_not_pointer_when_expected : bool;
+        fce_invalid_code_hash_format : bool;
+        fce_not_enough_ergs_to_decommit : bool;
+        fce_not_enough_ergs_to_grow_memory : bool;
+        fce_malformed_abi_quasi_pointer : bool;
+        fce_call_in_now_constructed_system_contract : bool;
+        fce_note_enough_ergs_for_extra_far_call_costs : bool;
+    }.
+
 End ModifiersExclusive.
 
 (** * Instructions *)
@@ -356,6 +368,7 @@ semantics is described in a different place; see [step]. *)
   | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)
   | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (mod: far_call_mod)
 
                   (* quasi fat pointer + forwarding mode *)
   | OpRetOK       (args: in_reg) (label: option code_address)
