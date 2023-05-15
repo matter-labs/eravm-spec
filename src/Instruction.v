@@ -124,7 +124,7 @@ This section details these types.
 
 §1.6.1. Resolved to (SP - reg + imm).
 
-§1.6.2. Unlike [RelativeSPWithPushPop], the direction of offset does not change depending on read/write.
+§1.6.2. Unlike [RelSpPop], the direction of offset does not change depending on read/write.
 
    *)
   | RelSP    (reg:reg_name) (offset: stack_address)
