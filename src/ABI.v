@@ -15,7 +15,9 @@ Record coder (ABIParams:Type) := {
 
 (** * Fat Pointers *)
 Module FatPointer.
-  Axiom ABI : coder fat_pointer.
+  Axiom ABI : coder fat_ptr.
+
+
 End FatPointer.
 
 
@@ -23,7 +25,7 @@ End FatPointer.
 Module Ret.
   Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
   Record params := {
-      memory_quasi_fat_pointer: fat_pointer;
+      memory_quasi_fat_ptr: fat_ptr;
       page_forwarding_mode: forward_page_type;
     }.
 
@@ -45,7 +47,7 @@ End NearCall.
 Inductive far_call_forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
 
 Record far_call := {
-    fc_memory_quasi_fat_pointer: fat_pointer;
+    fc_memory_quasi_fat_ptr: fat_ptr;
     fc_ergs_passed: u32;
     fc_shard_id: u8;
     fc_forwarding_mode: far_call_forward_page_type;

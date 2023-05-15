@@ -82,16 +82,16 @@ Section Memory.
       }.
 
     Definition mem_page_id := nat.
-    (** TODO change u32 to something useful? *)
-    Record fat_pointer := {
-        fp_offset: u32; (* TODO what is this?*)
+
+    Record fat_ptr := mk_fat_ptr {
         fp_mem_page: mem_page_id;
         fp_start: mem_address;
         fp_length: mem_address;
+        fp_offset: mem_address;
       }.
 
     Inductive primitive_value :=
-      FatPointerTag: fat_pointer -> primitive_value
+      FatPtr: fat_ptr -> primitive_value
     | IntValue: word_type -> primitive_value.
 
 
