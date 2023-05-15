@@ -42,19 +42,19 @@ div + br {
 div:empty{ display: none;}
 
 #main h1 {
-	font-size: 2em;
+	font-size: 4em;
 }
 
 #main h2 {
-	font-size: 1.667rem;
+	font-size: 3em;
 }
 
 #main h3 {
-	font-size: 1.333em;
+	font-size: 2em;
 }
 
 #main h4, #main h5, #main h6 {
-	font-size: 1em;
+	font-size: 1.7em;
 }
 
 #toc h2 {
@@ -63,7 +63,8 @@ div:empty{ display: none;}
 
 #main .doc {
     margin: 0;
-    text-align: justify;
+    text-align: left;
+    background-color: rgba(0,0,0,0.08);
 }
 
 .inlinecode, .code, #main pre {
