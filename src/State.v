@@ -9,13 +9,16 @@ Definition mem_page := mem_page instruction ins_invalid.
 
 Definition exception_handler := code_address.
 
+Definition ergs := u32.
+
 Record callframe_common := mk_cf {
                                cf_exception_handler_location: exception_handler;
                                cf_sp: stack_address;
                                cf_pc: code_address;
+                               cf_ergs_remaining: ergs;
                              }.
 #[export] Instance etaCFC : Settable _ :=
-  settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc >.
+  settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
 
 Record callframe_external :=
   mk_extcf {
@@ -44,6 +47,31 @@ Inductive execution_frame :=
 | InternalCall (_: callframe_common) (tail: execution_frame): execution_frame
 | ExternalCall (_: callframe_external) (tail: option execution_frame): execution_frame.
 
+Definition cfc (ef: execution_frame) : callframe_common :=
+  match ef with
+  | InternalCall x _ => x
+  | ExternalCall x _ => x
+  end.
+
+Definition cfc_map (f:callframe_common->callframe_common) (ef: execution_frame) : execution_frame :=
+  match ef with
+  | InternalCall x tail => InternalCall (f x) tail
+  | ExternalCall x tail => ExternalCall (x <| ecx_common ::= f |>) tail
+  end.
+
+Definition ergs_remaining (ef:execution_frame) : ergs := (cfc ef).(cf_ergs_remaining).
+Definition ergs_map (f: ergs->ergs) (ef:execution_frame) : execution_frame
+  := cfc_map (fun x => x <| cf_ergs_remaining ::= f |>) ef.
+
+Definition ergs_set newergs := ergs_map (fun _ => newergs).
+
+Inductive ergs_reimburse : ergs -> execution_frame -> execution_frame -> Prop :=
+  | er_reimburse: forall delta new_ergs ef ef',
+      delta + ergs_remaining ef = (new_ergs, false) ->
+      ef' = ergs_set new_ergs ef ->
+      ergs_reimburse delta ef ef'.
+
+Definition ergs_zero := ergs_set zero32.
 
 (** Fetching value of the stack pointer itself. *)
 Inductive fetch_sp : execution_frame -> stack_address -> Prop :=
@@ -60,8 +88,8 @@ Inductive fetch_sp : execution_frame -> stack_address -> Prop :=
 Inductive update_sp_cfc : stack_address -> callframe_common -> callframe_common
                           -> Prop :=
   | usc_update:
-    forall ehl sp pc sp',
-      update_sp_cfc sp' (mk_cf ehl sp pc) (mk_cf ehl sp' pc).
+    forall ehl sp pc ergs sp',
+      update_sp_cfc sp' (mk_cf ehl sp pc ergs) (mk_cf ehl sp' pc ergs).
 
 Inductive update_sp_extcall: stack_address -> callframe_external -> callframe_external
                           -> Prop :=
@@ -89,11 +117,12 @@ Inductive update_sp : stack_address -> execution_frame -> execution_frame -> Pro
 (** Fetching value of the program counter itself. *)
 Inductive fetch_pc : execution_frame -> code_address -> Prop :=
 | fpc_fetch_ext:
-  forall addr sender ca mc st ctx ss eh sa tail (pc_value:code_address),
-    fetch_pc (ExternalCall (mk_extcf addr sender ca mc st ctx ss (mk_cf eh sa pc_value) ) tail) pc_value
+  forall addr sender ca mc st ctx ss eh sa tail ergs (pc_value:code_address),
+    fetch_pc (ExternalCall (mk_extcf addr sender ca mc st ctx ss
+                              (mk_cf eh sa pc_value ergs) ) tail) pc_value
 | fpc_fetch_int:
-  forall eh sa tail (pc_value:code_address),
-    fetch_pc (InternalCall (mk_cf eh sa pc_value) tail) pc_value
+  forall eh sa ergs tail (pc_value:code_address),
+    fetch_pc (InternalCall (mk_cf eh sa pc_value ergs) tail) pc_value
 .
 
 Definition pc_get (ef: execution_frame) : code_address :=
@@ -120,8 +149,8 @@ Qed.
 Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
                           -> Prop :=
   | upc_update:
-    forall ehl sp pc pc',
-      update_pc_cfc pc' (mk_cf ehl sp pc) (mk_cf ehl sp pc').
+    forall ehl sp ergs pc pc',
+      update_pc_cfc pc' (mk_cf ehl sp pc ergs) (mk_cf ehl sp pc' ergs).
 
 Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
                           -> Prop :=

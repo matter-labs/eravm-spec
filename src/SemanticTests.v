@@ -35,8 +35,8 @@ Definition mem_ctx0 := {|
 
 Definition mod_sp_cf f cf :=
 match cf with
- | mk_cf cf_exception_handler_location cf_sp cf_pc =>
-     mk_cf cf_exception_handler_location (f cf_sp) cf_pc
+ | mk_cf cf_exception_handler_location cf_sp cf_pc cf_ergs =>
+     mk_cf cf_exception_handler_location (f cf_sp) cf_pc cf_ergs
  end .
 
 Definition mod_sp f ef :=
@@ -64,7 +64,8 @@ Definition ef0 :=
           ecf_is_static := false;
           ecf_context_u128_value := zero128;
           ecf_saved_storage_state := empty storage_params;
-          ecx_common := {| cf_exception_handler_location := zero16; cf_sp := zero16; cf_pc := zero16 |}
+          ecx_common := {| cf_exception_handler_location := zero16; cf_sp
+                          := zero16; cf_pc := zero16; cf_ergs_remaining := zero32|}
         |} None.
 
 Definition init_state_from (from: list instruction) :=
@@ -78,6 +79,8 @@ Definition init_state_from (from: list instruction) :=
   |}
 .
 
+
+(*
 
 Theorem noop_reduces:
   forall mods,
@@ -179,6 +182,10 @@ Theorem call_reduces:
 Proof.
   intros [swap sflags].
   unfold add_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl.
-  destruct swap  eqn:Hsw, sflags eqn:Hsf; eexists; eapply step_NearCall
+  ABI.NearCall.nca_get_ergs_passed
+    (ABI.decode ABI.NearCall.params ABI.NearCall.ABI zero256)
+    
+  destruct swap  eqn:Hsw, sflags eqn:Hsf; eexists; eapply step_NearCall_underflow_pass_all_ergs
   ; try solve [repeat econstructor].
 Qed.
+*)

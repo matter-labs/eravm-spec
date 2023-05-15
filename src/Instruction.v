@@ -1,6 +1,6 @@
-Require Common Memory.
+Require Common Memory Ergs.
 
-Import Common Memory.
+Import Common Memory Ergs.
 
 (** In this file we describe:
 
@@ -397,6 +397,32 @@ End Def.
 (** §2.2. A helper definition to specialize a code page with a (just defined) instruction type. *)
 Definition code_page : Type := code_page instruction ins_invalid.
 
+
+(** * Costs *)
+Section Costs.
+  Import ZMod ZArith.
+  Definition base_cost (ins:opcode_specific) :=
+    match ins with
+    | OpInvalid => INVALID_OPCODE_ERGS
+    | OpNoOp _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpBinOp _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpAdd _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpSub _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpNearCall _ _ _ => fst (AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST)
+    | OpFarCall _ _ _ => ZMod.int_mod_of 32 (
+           2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
+            + RAM_PERMUTATION_COST_IN_ERGS.(int_val _)
+            + STORAGE_READ_IO_PRICE.(int_val _)
+            + CALL_LIKE_ERGS_COST.(int_val _)
+            + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
+            + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
+
+    | OpRetOK _ _
+    | OpRetRevert _ _ | OpRetPanic _ => AVERAGE_OPCODE_ERGS
+    end.
+
+End Costs.
 (* Inner Operation
 
 §1. The _code execution_ in zkEVM is a process of sequential execution of _instructions_.
