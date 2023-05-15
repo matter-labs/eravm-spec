@@ -111,6 +111,8 @@ Section Def.
     let b := as_unsigned y in
     (int_mod_of (a-b)%Z, if gt_dec b a then true else false).
 
+  Definition is_overflowing (res: int_mod * bool) := snd res.
+
 End Def.
 
 
