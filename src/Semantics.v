@@ -111,38 +111,48 @@ Performs no action.
 
 ### Arguments
 
-- `in1` in any format; ignored. May affect SP, see Usage.
-- `in2` only in regs; ignored.
-- `out1` in any format; ignored. May affect SP, see Usage.
-- `in1` in any format; ignored.
+- `in1`, any format; ignored. May affect SP, see Usage.
+- `in2`, reg only; ignored.
+- `out1`, any format; ignored. May affect SP, see Usage.
+- `out2`, reg only; ignored.
+
+### Modifiers
+- `swap` has no effect
+- `set_flags` has no effect
+
 
 ### Usage
 >>
 - Executed when an actual instruction is skipped.
 
-  All instructions are predicated on [cond]. If current flags are not compatible
-  with the condition, `noop` is executed instead.
+  All instructions are executed conditionally; this is formalized by [cond].
+  If current flags are not compatible with the condition, [OpNoOp] is executed instead.
 
 - Adjusting stack pointer.
 
   The arguments of [OpNoOp] are ignored but the effects of
-  [RelativeSPWithPushPop] on SP still take place. For example, consider the
-  following instruction:
+  [RelSpPush]/[RelSpPop] on SP still take place.
+
+
 
 <<
+#### Example of adjusting SP using [OpNoOp]
+
+Consider the instruction `NoOp stack-=[10], r0, stack+=20, r0`.
+It can be constructed as follows:
 
 ```coq
-Check OpNoOp
-(InStack (RelativeSPWithPushPop R1 (u16_of 10%Z)))  (* in1 *)
-(RegOnly (Reg R0))                                  (* in2 *)
-(OutStack (RelativeSPWithPushPop R2 (u16_of 20%Z))) (* out1 *)
-(RegOnly (Reg R0)).                                 (* out2 *)
+Check OpNoOp (RelSpPop R1 (u16_of 10%Z))  (* in1 *)
+(Reg R0)                                  (* in2 *)
+(RelSpPush R2 (u16_of 20%Z))              (* out1 *)
+(Reg R0).                                 (* out2 *)
 ```
 
-It can be represented as: `NoOp stack-=[10], r0, stack+=20, r0`.
+In this instruction:
 
+- the operand `in1` is using the [RelSpPop] addressing mode
+- the operand `out1` is using [RelSpPush] addressing mode.
 
-Here, operands `in1` and `out1` are using [RelativeSPWithPushPop] addressing mode.
 Therefore, executing this instruction will modify SP like that:
 
 ```
@@ -150,7 +160,6 @@ sp -= (r1 + 10);
 sp += (r2 + 20);
 ```
 
-TODO: account for Swap modifier
 >>
 *)
   | step_NoOp:
@@ -608,13 +617,6 @@ TODO
           gs_context_u128 := context_u128;
         |}
 
-
-
   .
+
  End Execution.
-(*
-Can be functions:
-- update PC/SP
-- read PC/SP
-- fetch operation
- *)
