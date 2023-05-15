@@ -313,12 +313,16 @@ input argument. *)
   Coercion InStack: stack_in >-> in_any.
   Coercion InCode:  code_in >-> in_any.
   Coercion InConst:  const_in >-> in_any.
+  Coercion StackInOnly: stack_in_only >-> stack_in.
+  Coercion stack_in_to_any: stack_in >-> stack_any.
   Coercion in_any_incl: in_any >-> any.
   Coercion in_regonly_incl : regonly >-> in_any.
   Coercion out_any_incl : out_any >-> any.
   Coercion RegOnly: reg_io >-> regonly.
   Coercion OutReg : reg_io >-> out_any.
   Coercion OutStack: stack_out >-> out_any.
+  Coercion AnyStack: stack_any >-> any.
+  Coercion StackOutOnly: stack_out_only >-> stack_out. 
 
   End Coercions.
 End Arg.
