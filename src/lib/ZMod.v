@@ -96,6 +96,10 @@ Section Def.
   Definition beq (x y: int_mod) : bool := if eq_dec (int_val x) (int_val y) then true else false.
   Definition lt_signed (x y: int_mod) : bool := if lt_dec (as_signed x) (as_signed y) then true else false.
   Definition lt_unsigned (x y: int_mod) : bool := if lt_dec (as_unsigned x) (as_unsigned y) then true else false.
+  Definition gt_unsigned := Basics.flip lt_unsigned.
+
+  Definition le_unsigned (x y: int_mod) : bool := (lt_unsigned x y) || beq x y.
+  Definition ge_unsigned := Basics.flip le_unsigned.
 
   Definition carry (z:Z) : bool := if gt_dec z unsigned_max then true else false.
 
