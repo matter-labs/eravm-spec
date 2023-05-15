@@ -616,7 +616,7 @@ TODO
           gs_callstack    := pc_set label caller_stack;
           gs_context_u128 := context_u128;
         |}
-
+(* TODO returns from far calls *)
   .
 
  End Execution.

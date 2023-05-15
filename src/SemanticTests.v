@@ -1,14 +1,17 @@
+From RecordUpdate Require Import RecordSet.
 Require Semantics.
 
 Import List ListNotations ZArith.
 Import ZMod Common MemoryBase Memory MemoryOps Instruction State Semantics.
+Import RecordSetNotations.
 
-Definition regs_zero := List.repeat (IntValue zero256) 16.
+Definition regs_zero := let z := IntValue zero256 in mk_regs z z z z z z z z z z z z z z z.
 
-Definition regs_init_five_tens := List.repeat (IntValue zero256) 1 ++
-                                    List.repeat (IntValue (int_mod_of 256 10%Z)) 5
-                                    ++
-                                    List.repeat (IntValue zero256) 10.
+Definition regs_init_five_tens :=
+let z := IntValue zero256 in
+let ten := IntValue (int_mod_of 256 10%Z) in
+mk_regs ten ten ten ten ten  z z z z z z z z z z.
+
 
 Fixpoint add_all_insns (insns: list instruction) (startaddr: code_address)
   (m: code_page) :=
@@ -29,27 +32,6 @@ Definition mem_ctx0 := {|
               ctx_code_page_id := 0; ctx_const_page_id := 0; ctx_stack_page_id := 0; ctx_heap_page_id := 0; ctx_heap_aux_page_id := 0; ctx_heap_bound := zero32; ctx_aux_heap_bound := zero32
             |}.
 
-Definition mod_pc_cf f cf :=
-match cf with
- | mk_cf cf_exception_handler_location cf_sp cf_pc =>
-     mk_cf cf_exception_handler_location cf_sp (f cf_pc)
- end .
-
-Definition mod_pc f ef :=
-  match ef with
-  | InternalCall x tail => InternalCall (mod_pc_cf f x) tail
-  | ExternalCall x tail => match x with
-                          | mk_extcf ecf_this_address ecf_msg_sender
-                              ecf_code_address ecf_mem_context ecf_is_static
-                              ecf_context_u128_value ecf_saved_storage_state
-                              ecx_common =>
-                              ExternalCall (mk_extcf ecf_this_address ecf_msg_sender
-                                ecf_code_address ecf_mem_context ecf_is_static
-                                ecf_context_u128_value ecf_saved_storage_state
-                                (mod_pc_cf f ecx_common)) tail
-                          end
- end.
-Definition inc_pc := mod_pc (fun oldpc => fst (uinc_overflow _ oldpc)).
 
 Definition mod_sp_cf f cf :=
 match cf with
@@ -88,7 +70,7 @@ Definition ef0 :=
 Definition init_state_from (from: list instruction) :=
   {|
     gs_flags := flags_clear;
-    gs_regs := {| rs_gprs := regs_zero |};
+    gs_regs := regs_zero;
     gs_contracts := empty contracts_params;
     gs_mem_pages := [ (0, mk_program_page from)];
     gs_callstack := ef0;
@@ -122,11 +104,10 @@ Proof.
   eexists (Build_global_state
              (if sflags then {| fs_OF_LT := Clear_OF_LT; fs_EQ
                                := Clear_EQ; fs_GT := Set_GT |} else flags_clear)
-             (let z := IntValue zero256 in mk_regs [z; IntValue (int_mod_of 256 42%Z); z; z; z; z
-                                           ;z; z; z; z; z; z; z; z; z; z])
+             (regs_zero <| gprs_r1 := IntValue (int_mod_of 256 42%Z)|>)
              (empty contracts_params)
              (gs_mem_pages (init_state_from (add_prog1 (mk_cmod swap sflags))))
-             (mod_pc (fun pc => fst (uinc_overflow _ pc)) ef0)
+             (pc_mod (fun pc => fst (uinc_overflow _ pc)) ef0)
              zero128
           ) ;
   apply step_Add with (in1 := (Imm (int_mod_of 16 42%Z)))
@@ -160,7 +141,7 @@ Proof.
              _
              (empty contracts_params)
              (gs_mem_pages (init_state_from (sub_prog1 (mk_cmod swap sflags))))
-             (mod_pc (fun pc => fst (uinc_overflow _ pc)) ef0)
+             (pc_mod (fun pc => fst (uinc_overflow _ pc)) ef0)
              zero128
           ) ;
   apply step_Sub with (in1 := (Imm (int_mod_of 16 42%Z)))

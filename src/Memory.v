@@ -1,6 +1,8 @@
+From RecordUpdate Require Import RecordSet.
 Require Common MemoryBase.
 Import Common MemoryBase BinInt List.
 Import ListNotations.
+Import RecordSetNotations.
 
 (** * Storage *)
 (**  §1. A _word_ is a 256-bit unsigned number. *)
@@ -204,9 +206,26 @@ Section Memory.
     End GPR.
 
     Record regs_state :=  mk_regs {
-                              rs_gprs: list primitive_value;
+                              gprs_r1  : primitive_value;
+                              gprs_r2  : primitive_value;
+                              gprs_r3  : primitive_value;
+                              gprs_r4  : primitive_value;
+                              gprs_r5  : primitive_value;
+                              gprs_r6  : primitive_value;
+                              gprs_r7  : primitive_value;
+                              gprs_r8  : primitive_value;
+                              gprs_r9  : primitive_value;
+                              gprs_r10  : primitive_value;
+                              gprs_r11  : primitive_value;
+                              gprs_r12  : primitive_value;
+                              gprs_r13  : primitive_value;
+                              gprs_r14  : primitive_value;
+                              gprs_r15  : primitive_value;
                             }.
 
+    (* begin hide *)
+    #[export] Instance etaGPRs : Settable _ := settable! mk_regs < gprs_r1  ; gprs_r2  ; gprs_r3  ; gprs_r4  ; gprs_r5  ; gprs_r6  ; gprs_r7  ; gprs_r8  ; gprs_r9  ; gprs_r10  ; gprs_r11  ; gprs_r12  ; gprs_r13  ; gprs_r14  ; gprs_r15  >.
+    (* end hide *)
 
     Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
     Inductive EQ := Set_EQ | Clear_EQ.
