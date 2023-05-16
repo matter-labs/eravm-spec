@@ -47,13 +47,10 @@ Module FatPointer.
 
   Definition validate (p:fat_ptr) (fresh:bool) : validation_exception :=
     {|
-      ptr_expected_zero_offset    := fresh && (p.(fp_offset) == zero32);
+      ptr_expected_zero_offset    := fresh && negb (p.(fp_offset) == zero32);
       ptr_deref_beyond_heap_range := is_overflowing (p.(fp_start) + p.(fp_length))
     |}.
 
-  (* FIXME the comment in Rust code mentions that the empty slice should be
-  accepted. Maybe we should rewrite it as: "length == 0 OR ofs < length" rather
-  than "offset <= length"? *)
   Definition validate_as_slice (p:fat_ptr) : bool
     := (le_unsigned _ p.(fp_offset) p.(fp_length) ).
 
