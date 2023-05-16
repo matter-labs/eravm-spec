@@ -860,6 +860,36 @@ TODO
           gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack';
           gs_context_u128 := zero128;
         |}
+  | step_RetExtPanic_ForwardFatPointer:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored ergs_left,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetPanic label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      ergs_remaining xstack0 - base_cost ins = (ergs_left, false) ->
+      ergs_reimburse ergs_left caller_stack caller_stack' ->
+
+      let encoded_res_ptr := FatPointer.ABI.(encode) fat_ptr_empty in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := mk_fs Set_OF_LT Clear_EQ Clear_GT;
+          gs_regs         := regs_state_zero <| gprs_r1 := PtrValue encoded_res_ptr |> <| gprs_r2 := reg_reserved |> <| gprs_r3 := reg_reserved |> <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack';
+          gs_context_u128 := zero128;
+        |}
 .
- 
+
 End Execution.
