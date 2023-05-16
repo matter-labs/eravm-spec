@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 Require Common Memory Instruction State MemoryOps ABI.
 
 Import Bool ZArith Common MemoryBase Memory MemoryOps Instruction State ZMod
-  ZBits ABI.
+  ZBits ABI ABI.FarCall ABI.Ret ABI.NearCall ABI.FatPointer.
 
 Import RecordSetNotations.
 #[export] Instance etaXGS : Settable _ := settable! Build_global_state <gs_flags
@@ -118,6 +118,9 @@ We use a following naming convention:
 
 >>
    *)
+
+  Definition reg_reserved := pv0.
+
   Inductive step : global_state -> global_state -> Prop :=
     (**
 <<
@@ -755,7 +758,58 @@ TODO
           gs_callstack    := pc_set label caller_stack';
           gs_context_u128 := context_u128;
         |}
-(* TODO returns from far calls *)
-  .
 
+  | step_RetExtOK_ForwardFatPointer:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored ergs_left arg in_ptr_encoded in_ptr_page_id in_ptr_start in_ptr_length in_ptr_ofs new_start new_length,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetOK arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      (* Panic if not a pointer*)
+      resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+
+      let in_ptr := mk_fat_ptr in_ptr_page_id in_ptr_start in_ptr_length in_ptr_ofs in
+
+      Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr ForwardFatPointer ->
+
+      (* Panic if either of three does not hold *)
+      active_page xstack0 in_ptr_page_id ->
+      validate_as_slice in_ptr = true ->
+      validate in_ptr false = no_exceptions ->
+
+      in_ptr_start + in_ptr_ofs = (new_start, false) ->
+      in_ptr_length - in_ptr_ofs = (new_length, false) ->
+
+      ergs_remaining xstack0 - base_cost ins = (ergs_left, false) ->
+      ergs_reimburse ergs_left caller_stack caller_stack' ->
+
+      let encoded_res_ptr := FatPointer.ABI.(encode) {|
+                          fp_mem_page := in_ptr_page_id;
+                          fp_start := new_start;
+                          fp_length := new_length;
+                          fp_offset := zero32;
+                        |} in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero <| gprs_r1 := PtrValue encoded_res_ptr |> <| gprs_r2 := reg_reserved |> <| gprs_r3 := reg_reserved |> <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := zero128;
+        |}
+
+.
+ 
 End Execution.
