@@ -395,16 +395,6 @@ TODO
 TODO
 >>
 *)
-(*
-        let remaining_ergs = current_callstack_entry.ergs_remaining;
-        let (passed_ergs, remaining_ergs_for_this_context) = 
-            let (remaining_for_this_context, uf) =
-                remaining_ergs.overflowing_sub(near_call_abi.ergs_passed);
-            if uf {
-            } else {
-                (near_call_abi.ergs_passed, remaining_for_this_context)
-            }
-    *)
   | step_NearCall_pass_some_ergs:
     forall flags mods contracts mem_pages xstack0 xstack1 context_u128 sp regs cond abi_params_op abi_params_value call_addr expt_handler ergs_left ergs_left_ins_paid,
 
