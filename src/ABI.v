@@ -57,7 +57,7 @@ End FatPointer.
 (** * Ret *)
 Module Ret.
   Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
-  Record params := {
+  Record params := mk_params {
       memory_quasi_fat_ptr: fat_ptr;
       page_forwarding_mode: forward_page_type;
     }.
@@ -68,7 +68,7 @@ End Ret.
 (** * Near call *)
 Module NearCall.
 
-  Record params: Type := {
+  Record params: Type := mk_params {
       nca_get_ergs_passed: u32;
     }.
 
@@ -81,7 +81,7 @@ Module FarCall.
 
   Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
 
-  Record far_call := {
+  Record far_call := mk_params {
       fc_memory_quasi_fat_ptr: fat_ptr;
       fc_ergs_passed: u32;
       fc_shard_id: u8;
