@@ -85,15 +85,9 @@ Section Memory.
 
     Definition mem_page_id := nat.
 
-    Record fat_ptr := mk_fat_ptr {
-        fp_mem_page: mem_page_id;
-        fp_start: mem_address;
-        fp_length: mem_address;
-        fp_offset: mem_address;
-      }.
 
     Inductive primitive_value :=
-      FatPtr: fat_ptr -> primitive_value
+      PtrValue: word_type -> primitive_value
     | IntValue: word_type -> primitive_value.
 
 

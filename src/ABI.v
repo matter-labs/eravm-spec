@@ -15,6 +15,14 @@ Record coder {ABIParams:Type} := {
 
 (** * Fat Pointers *)
 Module FatPointer.
+  Record fat_ptr :=
+    mk_fat_ptr {
+        fp_mem_page: mem_page_id;
+        fp_start: mem_address;
+        fp_length: mem_address;
+        fp_offset: mem_address;
+      }.
+
   Axiom ABI : @coder fat_ptr.
 
   Record validation_exception :=
@@ -59,7 +67,9 @@ End FatPointer.
 
 (** * Ret *)
 Module Ret.
+  Import FatPointer.
   Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
+
   Record params := mk_params {
       memory_quasi_fat_ptr: fat_ptr;
       page_forwarding_mode: forward_page_type;
@@ -81,9 +91,7 @@ End NearCall.
 
 (** * Far call *)
 Module FarCall.
-
-  Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
-
+  Import FatPointer Ret.
   Record far_call := mk_params {
       fc_memory_quasi_fat_ptr: fat_ptr;
       fc_ergs_passed: u32;
