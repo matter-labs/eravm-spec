@@ -5,8 +5,29 @@ import sys
 import pypandoc
 import os
 
+KATEX_SUPPORT_HEADER = """
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+"""
+
 def process_region(text:str)->str:
-    return pypandoc.convert_text(text, to='html', format='markdown')
+    return pypandoc.convert_text(text, to='html', format='markdown', extra_args=['--katex'])
 
 def process_file(file_name_in:str, file_name_out:str, processor) -> None:
     with open(file_name_in, 'r') as file:
@@ -18,6 +39,10 @@ def process_file(file_name_in:str, file_name_out:str, processor) -> None:
         data,
         flags=re.DOTALL
     )
+    modified_data = re.sub(
+        r'</head>',
+        KATEX_SUPPORT_HEADER + "</head>",
+        modified_data)
 
     with open(file_name_out, 'w') as file:
         file.write(modified_data)
