@@ -37,6 +37,10 @@ As `int` is a type of an object corresponding to any integer number, `int->int` 
 1. install [Opam](https://opam.ocaml.org/) (your packet manager probably has it).
 2. install Coq using `opam pin add coq 8.17.0`. This will install Coq version 8.17.0 instead of the latest available version; if a newer version of Coq appears, it will be skipped.
 3. install https://github.com/tchajed/coq-record-update
+4. to generate docs:
+    - install Pandoc
+    - install Python 3.6+
+    - install `pypandoc` by executing `python3 -m pip install pypandoc`
 
 ## Build
 
@@ -45,8 +49,4 @@ Navigate there and execute:
 
 1. `coq_makefile -f _CoqProject -o CoqMakefile` will create a file `CoqMakefile` for `make`. This should be done once.
 2. To build specs and proofs: `make -f CoqMakefile -j<number of threads> all`
-3. To generate docs: `./build-docs.sh`.
-   - Requires `pandoc` to be installed; thanks to it, we can process arbitrary Markdown in verbatim blocks of CoqDoc.
-   - Docs in HTML format will be placed to `doc/`.
-   - Generating docs requires the previous step to succeed for the link
-     resolution, otherwise the definitions will not be clickable.
+3. To generate docs: `./build-docs.sh`. Recreates `doc` directory on each invokation.
