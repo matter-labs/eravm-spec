@@ -359,3 +359,21 @@ Inductive active_auxheappage : mem_manager -> execution_frame -> mem_page -> Pro
 (*     active_auxheappage_id gs id-> *)
 (*     mem_page_by_id gs id heap -> *)
 (*     active_auxheappage gs heap. *)
+
+
+Inductive active_page : execution_frame -> mem_page_id -> Prop :=
+| api_stack : forall ef id,
+    active_stackpage_id ef id ->
+    active_page  ef id
+| api_code : forall ef id,
+    active_codepage_id ef id ->
+    active_page  ef id
+| api_const : forall ef id,
+    active_constpage_id ef id ->
+    active_page  ef id
+| api_heap : forall ef id,
+    active_heappage_id ef id ->
+    active_page  ef id
+| api_auxheap : forall ef id,
+    active_auxheappage_id ef id ->
+    active_page  ef id.
