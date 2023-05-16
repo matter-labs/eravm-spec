@@ -90,6 +90,7 @@ Section Memory.
       PtrValue: word_type -> primitive_value
     | IntValue: word_type -> primitive_value.
 
+    Definition pv0 := IntValue word_zero_value.
 
     Definition stack_page_params := {|
                                      addressable_block := primitive_value;
@@ -216,6 +217,9 @@ Section Memory.
                               gprs_r14  : primitive_value;
                               gprs_r15  : primitive_value;
                             }.
+
+    Definition regs_state_zero := let z := IntValue zero256
+                                  in mk_regs z z z z z z z z z z z z z z z.
 
     (* begin hide *)
     #[export] Instance etaGPRs : Settable _ := settable! mk_regs < gprs_r1  ; gprs_r2  ; gprs_r3  ; gprs_r4  ; gprs_r5  ; gprs_r6  ; gprs_r7  ; gprs_r8  ; gprs_r9  ; gprs_r10  ; gprs_r11  ; gprs_r12  ; gprs_r13  ; gprs_r14  ; gprs_r15  >.
