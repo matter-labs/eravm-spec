@@ -307,11 +307,16 @@ Inductive store_loc: regs_state -> execution_frame -> mem_manager
 .
 (* TODO UMA related *)
 
+Inductive resolve_fetch_value: regs_state -> execution_frame -> mem_manager
+                               -> Arg.any -> primitive_value -> Prop :=
+| rf_resfetch_pv: forall ef mm regs arg loc res,
+    resolve ef regs arg loc ->
+    fetch_loc regs ef mm loc (FetchPV res) ->
+    resolve_fetch_value regs ef mm arg res.
 
 Inductive resolve_fetch_word: regs_state -> execution_frame -> mem_manager -> Arg.any -> word_type -> Prop :=
-| rf_resfetch: forall ef mm regs arg loc res,
-    resolve ef regs arg loc ->
-    fetch_loc regs ef mm loc (FetchPV (IntValue res)) ->
+| rf_resfetch_w: forall ef mm regs arg res,
+    resolve_fetch_value regs ef mm arg (IntValue res) ->
     resolve_fetch_word regs ef mm arg res.
 
 
