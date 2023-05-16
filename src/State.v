@@ -59,6 +59,9 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: execution_frame) 
   | ExternalCall x tail => ExternalCall (x <| ecx_common ::= f |>) tail
   end.
 
+Definition active_exception_handler (ef: execution_frame) : exception_handler :=
+  (cfc ef).(cf_exception_handler_location).
+
 Definition ergs_remaining (ef:execution_frame) : ergs := (cfc ef).(cf_ergs_remaining).
 Definition ergs_map (f: ergs->ergs) (ef:execution_frame) : execution_frame
   := cfc_map (fun x => x <| cf_ergs_remaining ::= f |>) ef.
