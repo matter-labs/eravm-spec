@@ -152,10 +152,8 @@ Section Memory.
 
     Definition mem_pages := list (prod nat mem_page).
 
-    Inductive page_alloc (p:mem_page) : mem_pages -> mem_pages -> Prop :=
-    | PageAlloc :
-      forall m, page_alloc p m (cons (length m, p) m).
-
+    Definition page_alloc (p:mem_page) (m: mem_pages) : mem_pages :=
+             cons (length m, p) m.
   End Pages.
 
   (** * Registers*)
