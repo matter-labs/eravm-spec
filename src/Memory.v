@@ -154,6 +154,19 @@ Section Memory.
 
     Definition page_alloc (p:mem_page) (m: mem_pages) : mem_pages :=
              cons (length m, p) m.
+
+    Import Nat.
+    Definition page_older (id: mem_page_id) (mps: ctx_mem_pages) : bool :=
+      match mps with
+      | Build_ctx_mem_pages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
+          ctx_heap_page_id ctx_heap_aux_page_id ctx_heap_bound
+          ctx_aux_heap_bound =>
+          ltb id ctx_code_page_id &&
+            ltb id ctx_const_page_id &&
+            ltb id ctx_stack_page_id &&
+            ltb id ctx_heap_page_id &&
+            ltb id ctx_heap_aux_page_id
+      end.
   End Pages.
 
   (** * Registers*)
