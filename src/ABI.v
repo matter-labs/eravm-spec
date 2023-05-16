@@ -6,7 +6,7 @@ Import Bool ZMod Common Memory.
 https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
  *)
 
-Record coder (ABIParams:Type) := {
+Record coder {ABIParams:Type} := {
     decode: u256 -> ABIParams ;
     encode:  ABIParams -> u256 ;
     revertible1: forall params, decode (encode params) = params;
@@ -15,7 +15,7 @@ Record coder (ABIParams:Type) := {
 
 (** * Fat Pointers *)
 Module FatPointer.
-  Axiom ABI : coder fat_ptr.
+  Axiom ABI : @coder fat_ptr.
 
   Record validation_exception :=
     mk_ptr_validation_exception
@@ -62,7 +62,7 @@ Module Ret.
       page_forwarding_mode: forward_page_type;
     }.
 
-  Axiom ABI: coder params.
+  Axiom ABI: @coder params.
 End Ret.
 
 (** * Near call *)
@@ -72,7 +72,7 @@ Module NearCall.
       nca_get_ergs_passed: u32;
     }.
 
-  Axiom ABI: coder params.
+  Axiom ABI: @coder params.
 
 End NearCall.
 
@@ -91,6 +91,6 @@ Module FarCall.
     }.
 
 
-  Axiom ABI: coder far_call.
+  Axiom ABI: @coder far_call.
 
 End FarCall.

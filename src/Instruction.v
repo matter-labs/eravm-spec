@@ -333,7 +333,7 @@ Section ModifiersExclusive.
   (** This section describes all exclusive modifiers of instructions. *)
   Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
 
-  Definition binop_func bits (m:binop_mod) : int_mod bits -> int_mod bits -> int_mod bits :=
+  Definition binop_func {bits} (m:binop_mod) : int_mod bits -> int_mod bits -> int_mod bits :=
     match m with
     | BinOpAnd => bitwise_and bits
     | BinOpOr  => bitwise_or bits

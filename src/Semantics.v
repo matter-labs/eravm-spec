@@ -424,7 +424,7 @@ TODO
       update_pc_regular xstack0 xstack1 ->
 
       ergs_remaining xstack0 - base_cost ins = (ergs_left_ins_paid, false) ->
-      let passed_ergs := (NearCall.ABI.(decode _) abi_params_value).(NearCall.nca_get_ergs_passed) in
+      let passed_ergs := (NearCall.ABI.(decode) abi_params_value).(NearCall.nca_get_ergs_passed) in
       passed_ergs <> zero32 ->
 
       (ergs_left, false) = ergs_left_ins_paid - passed_ergs  ->
@@ -468,7 +468,7 @@ TODO
 
       ergs_remaining xstack0 - base_cost ins = (ergs_left, false) ->
 
-      let passed_ergs := (NearCall.ABI.(decode _) abi_params_value).(NearCall.nca_get_ergs_passed) in
+      let passed_ergs := (NearCall.ABI.(decode) abi_params_value).(NearCall.nca_get_ergs_passed) in
       passed_ergs <> zero32 ->
       (remaining, true) = ergs_remaining xstack0 - passed_ergs ->
 
@@ -510,7 +510,7 @@ TODO
       update_pc_regular xstack0 xstack1 ->
 
       ergs_remaining xstack0 - base_cost ins = (ergs_left, false) ->
-      (NearCall.ABI.(decode _) abi_params_value).(NearCall.nca_get_ergs_passed) = zero32 ->
+      (NearCall.ABI.(decode) abi_params_value).(NearCall.nca_get_ergs_passed) = zero32 ->
 
       let new_frame := mk_cf expt_handler sp call_addr ergs_left in
       step
@@ -556,7 +556,7 @@ TODO
       resolve_fetch_word regs xstack1 mem_pages in2 op2 ->
 
       apply_swap mod_swap op1 op2 = (op1', op2') ->
-      binop_func _ opmod op1' op2' = result ->
+      binop_func opmod op1' op2' = result ->
 
       resolve_store regs xstack1 mem_pages out1 (IntValue result) (regs', mem_pages') ->
       update_pc_regular xstack1 xstack' ->
