@@ -24,6 +24,9 @@ Module FatPointer.
         ptr_deref_beyond_heap_range : bool;
       }.
 
+  Definition no_exceptions : validation_exception
+    := mk_ptr_validation_exception false false.
+
   Definition fat_ptr_empty :=
     {|
       fp_mem_page := 0;
