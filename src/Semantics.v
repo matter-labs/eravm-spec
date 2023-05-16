@@ -595,7 +595,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := InternalCall cf caller_stack;
+          gs_callstack    := xstack0;
           gs_context_u128 := context_u128;
         |}
         {|
@@ -625,7 +625,7 @@ TODO
           gs_regs         := regs;
           gs_mem_pages    := mem_pages;
           gs_contracts    := contracts;
-          gs_callstack    := InternalCall cf caller_stack;
+          gs_callstack    := xstack0;
           gs_context_u128 := context_u128;
         |}
         {|
