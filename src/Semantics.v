@@ -776,7 +776,7 @@ TODO
       Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr ForwardFatPointer ->
 
       (* Panic if either of three does not hold *)
-      active_page xstack0 in_ptr_page_id ->
+      page_older in_ptr_page_id cf.(ecf_mem_context)  = false ->
       validate_as_slice in_ptr = true ->
       validate in_ptr false = no_exceptions ->
 
