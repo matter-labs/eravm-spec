@@ -134,10 +134,22 @@ Definition pc_get (ef: execution_frame) : code_address :=
   | ExternalCall ef tail => ef.(ecx_common).(cf_pc)
   end.
 
+Definition sp_get (ef: execution_frame) : stack_address :=
+  match ef with
+  | InternalCall cf _ => cf.(cf_sp)
+  | ExternalCall ef tail => ef.(ecx_common).(cf_sp)
+  end.
+
 Definition pc_mod f ef :=
   match ef with
   | InternalCall x tail => InternalCall (x <| cf_pc ::=  f |>) tail
   | ExternalCall x tail => ExternalCall (x <| ecx_common ::= fun cf => cf <| cf_pc ::=  f |> |>) tail
+  end.
+
+Definition sp_mod (f:stack_address->stack_address) ef :=
+  match ef with
+  | InternalCall x tail => InternalCall (x <| cf_sp ::=  f |>) tail
+  | ExternalCall x tail => ExternalCall (x <| ecx_common ::= fun cf => cf <| cf_sp ::=  f |> |>) tail
   end.
 
 Definition pc_inc := pc_mod (fun oldpc => fst (uinc_overflow _ oldpc)).
