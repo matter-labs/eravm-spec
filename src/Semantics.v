@@ -202,7 +202,7 @@ sp += (r2 + 20);
 
       cond_activated cond flags ->
 
-      let ins := OpSPManip in1 out1 in
+      let ins := OpModSP in1 out1 in
       fetch_instr regs xstack0 mem_pages
                   {|
                     ins_spec := ins;

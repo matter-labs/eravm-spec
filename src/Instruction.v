@@ -363,7 +363,7 @@ semantics is described in a different place; see [step]. *)
   Inductive instruction: Set :=
   | OpInvalid
   | OpNoOp
-  | OpSPManip     (in1: in_any) (out1: out_any)
+  | OpModSP       (in1: in_any) (out1: out_any)
   | OpJump        (dest: in_any)
   | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
@@ -418,7 +418,7 @@ Section Costs.
   Definition base_cost (ins:instruction) :=
     match ins with
     | OpInvalid => INVALID_OPCODE_ERGS
-    | OpNoOp | OpSPManip _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpNoOp | OpModSP _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpAnd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpOr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
