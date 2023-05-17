@@ -13,16 +13,16 @@ let ten := IntValue (int_mod_of 256 10%Z) in
 mk_regs ten ten ten ten ten  z z z z z z z z z z.
 
 
-Fixpoint add_all_insns (insns: list instruction) (startaddr: code_address)
+Fixpoint add_all_insns (insns: list instruction_predicated) (startaddr: code_address)
   (m: code_page) :=
   match insns with
-  | ins :: tail => let m' := store (code_page_params instruction ins_invalid) ins startaddr m in
+  | ins :: tail => let m' := store (code_page_params instruction_predicated instruction_invalid) ins startaddr m in
                  let (addr', _) := uinc_overflow _ startaddr in
                  add_all_insns tail addr' m'
   | [] => m
   end.
 
-Definition mk_program_page (insns: list instruction) :=
+Definition mk_program_page (insns: list instruction_predicated) :=
   CodePage _ _ (add_all_insns insns zero16 (empty _ )).
 
 Notation no_mods := (mk_cmod NoSwap PreserveFlags).
@@ -68,7 +68,7 @@ Definition ef0 :=
                           := zero16; cf_pc := zero16; cf_ergs_remaining := zero32|}
         |} None.
 
-Definition init_state_from (from: list instruction) :=
+Definition init_state_from (from: list instruction_predicated) :=
   {|
     gs_flags := flags_clear;
     gs_regs := regs_zero;

@@ -242,7 +242,7 @@ End AddressResolution.
 Section FetchStore.
 
 Inductive fetch_result : Set :=
-| FetchIns (ins :instruction)
+| FetchIns (ins :instruction_predicated)
 | FetchPV (pv: primitive_value) .
 
 (* Address resolution *)
@@ -277,16 +277,16 @@ Inductive fetch_loc: regs_state -> execution_frame -> mem_manager -> loc -> fetc
 (* TODO UMA; reading byte sequences is already implemented, see
   tests in MemoryBase.v *)
 
-Inductive fetch_instr : regs_state -> execution_frame -> mem_manager -> instruction -> Prop :=
+Inductive fetch_instr : regs_state -> execution_frame -> mem_manager -> instruction_predicated -> Prop :=
 | fi_fetch: forall regs ef mm pc ins,
     fetch_pc ef pc ->
     fetch_loc regs ef mm (LocCodeAddr pc) (FetchIns ins) ->
     fetch_instr regs ef mm ins.
 
-Inductive fetch_op: regs_state -> execution_frame -> mem_manager -> opcode_specific -> common_mod -> cond -> Prop :=
-| fo_fetch: forall regs ef mm op mods cond,
-    fetch_instr regs ef mm (Ins op mods cond) ->
-    fetch_op regs ef mm op mods cond.
+Inductive fetch_op: regs_state -> execution_frame -> mem_manager -> instruction -> cond -> Prop :=
+| fo_fetch: forall regs ef mm op cond,
+    fetch_instr regs ef mm (Ins op cond) ->
+    fetch_op regs ef mm op cond.
 
 
 

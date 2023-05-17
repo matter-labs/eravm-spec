@@ -360,21 +360,24 @@ Section Def.
 
   (** This section describes the syntax of instructions. The instruction
 semantics is described in a different place; see [step]. *)
-  Inductive opcode_specific : Set :=
+  Inductive instruction: Set :=
   | OpInvalid
-  | OpNoOp        (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_reg)
+  | OpNoOp
+  | OpSPManip     (in1: in_any) (out1: out_any)
   | OpJump        (dest: in_any)
-  | OpBinOp       (in1: in_any) (in2: in_reg)  (out1: out_any) (mod:binop_mod)
-  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)
-  | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)
+  | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
   | OpFarCall     (enc: in_reg) (dest: in_reg) (mod: far_call_mod)
 
                   (* quasi fat pointer + forwarding mode *)
-  | OpRetOK       (args: in_reg) (label: option code_address)
+  | OpRet         (args: in_reg) (label: option code_address)
                   (* quasi fat pointer + forwarding mode *)
-  | OpRetRevert   (args: in_reg) (label: option code_address)
-  | OpRetPanic    (label: option code_address)
+  | OpRevert      (args: in_reg) (label: option code_address)
+  | OpPanic       (label: option code_address)
   .
 
 
@@ -386,10 +389,9 @@ semantics is described in a different place; see [step]. *)
 - common modifiers allowed to any instruction type;
 - execution conditions, describing under which conditions (flags) the instruction will be executed.
    *)
-  Record instruction : Set :=
+  Record instruction_predicated: Set :=
     Ins {
-        ins_spec: opcode_specific ;
-        ins_mods: common_mod ;
+        ins_spec: instruction;
         ins_cond: cond;
       }.
 
@@ -398,30 +400,31 @@ semantics is described in a different place; see [step]. *)
 
 §2.1. See [code_page]. It is parameterized by an instruction type for convenience of defining it.
    *)
-  Definition ins_invalid : instruction :=
+  Definition instruction_invalid : instruction_predicated :=
     {|
       ins_spec := OpInvalid;
-      ins_mods := mk_cmod NoSwap PreserveFlags;
       ins_cond:= IfAlways
     |}.
 
 End Def.
 
 (** §2.2. A helper definition to specialize a code page with a (just defined) instruction type. *)
-Definition code_page : Type := code_page instruction ins_invalid.
+Definition code_page : Type := code_page instruction_predicated instruction_invalid.
 
 
 (** * Costs *)
 Section Costs.
   Import ZMod ZArith.
-  Definition base_cost (ins:opcode_specific) :=
+  Definition base_cost (ins:instruction) :=
     match ins with
     | OpInvalid => INVALID_OPCODE_ERGS
-    | OpNoOp _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpNoOp | OpSPManip _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
-    | OpBinOp _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-    | OpAdd _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-    | OpSub _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpAnd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpOr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+    | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpNearCall _ _ _ => fst (AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST)
     | OpFarCall _ _ _ => ZMod.int_mod_of 32 (
            2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
@@ -431,8 +434,7 @@ Section Costs.
             + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
             + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
 
-    | OpRetOK _ _
-    | OpRetRevert _ _ | OpRetPanic _ => AVERAGE_OPCODE_ERGS
+    | OpRet _ _ | OpRevert _ _ | OpPanic _ => AVERAGE_OPCODE_ERGS
     end.
 
 End Costs.

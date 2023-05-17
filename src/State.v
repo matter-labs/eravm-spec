@@ -5,7 +5,7 @@ Require Common Memory Instruction.
 Import ZArith Common MemoryBase Memory Instruction ZMod List ListNotations.
 
 
-Definition mem_page := mem_page instruction ins_invalid.
+Definition mem_page := mem_page instruction_predicated instruction_invalid.
 
 Definition exception_handler := code_address.
 
