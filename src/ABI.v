@@ -1,6 +1,7 @@
-Require Memory.
+From RecordUpdate Require Import RecordSet.
+Require Ergs Memory.
 
-Import Bool ZMod Common Memory.
+Import Bool ZMod Common Ergs Memory RecordSetNotations.
 
 (** ABIs are described here:
 https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
@@ -23,6 +24,9 @@ Module FatPointer.
         fp_offset: mem_address;
       }.
 
+  #[export] Instance etaFatPointer: Settable _
+    := settable! mk_fat_ptr < fp_mem_page; fp_start; fp_length; fp_offset>.
+
   Axiom ABI : @coder fat_ptr.
 
   Record validation_exception :=
@@ -30,10 +34,11 @@ Module FatPointer.
       {
         ptr_expected_zero_offset : bool;
         ptr_deref_beyond_heap_range : bool;
+        ptr_bad_slice: bool;
       }.
 
   Definition no_exceptions : validation_exception
-    := mk_ptr_validation_exception false false.
+    := mk_ptr_validation_exception false false false.
 
   Definition fat_ptr_empty :=
     {|
@@ -48,16 +53,35 @@ Module FatPointer.
   Definition validate (p:fat_ptr) (fresh:bool) : validation_exception :=
     {|
       ptr_expected_zero_offset    := fresh && negb (p.(fp_offset) == zero32);
-      ptr_deref_beyond_heap_range := is_overflowing (p.(fp_start) + p.(fp_length))
+      ptr_deref_beyond_heap_range := is_overflowing (p.(fp_start) + p.(fp_length));
+      ptr_bad_slice := gt_unsigned _ p.(fp_offset) p.(fp_length);
     |}.
-
-  Definition validate_as_slice (p:fat_ptr) : bool
-    := (le_unsigned _ p.(fp_offset) p.(fp_length) ).
 
   Definition validate_in_bounds (p:fat_ptr) : bool := (lt_unsigned _ p.(fp_offset) p.(fp_length) ).
 
   Definition is_trivial (p:fat_ptr) := (p.(fp_length) == zero32) && (p.(fp_offset)
                                        == zero32).
+
+  Inductive fat_ptr_shrink : fat_ptr -> fat_ptr -> Prop :=
+  | fps_shrink : forall p start start' length length' ofs,
+    validate (mk_fat_ptr p start length ofs) false = no_exceptions ->
+    start + ofs = (start', false) ->
+    length - ofs = (length', false) ->
+    fat_ptr_shrink (mk_fat_ptr p start length ofs) (mk_fat_ptr p start' length' zero32).
+
+  Inductive growth_bytes: fat_ptr -> forall current_bound: mem_address, ergs -> Prop :=
+  | gb_nogrow: forall fp_mem_page fp_start fp_length fp_offset upper_bound current_bound,
+      fp_start + fp_length = (upper_bound, false) ->
+      le_unsigned _ upper_bound current_bound = true ->
+      growth_bytes  (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset)
+        current_bound zero32
+  | gb_grow: forall fp_mem_page fp_start fp_length fp_offset upper_bound
+               current_bound diff,
+      fp_start + fp_length = (upper_bound, false) ->
+      le_unsigned _ upper_bound current_bound = false ->
+      (diff, false) = upper_bound - current_bound ->
+      growth_bytes  (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset)
+        current_bound diff.
 
 End FatPointer.
 
