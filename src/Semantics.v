@@ -85,26 +85,6 @@ Section Execution.
     | PreserveFlags => f
     end.
 
-(*
-    let mut ergs_cost =
-        zkevm_opcode_defs::OPCODES_PRICES[opcode_raw_variant_idx.into_usize()] as u32;
-    if skip_cycle {
-        // we have already paid for it
-        ergs_cost = 0;
-    }
-
-    let (mut ergs_remaining, not_enough_power) = local_state
-        .callstack
-        .get_current_stack()
-        .ergs_remaining
-        .overflowing_sub(ergs_cost);
-    if not_enough_power {
-        ergs_remaining = 0;
-        error_flags.set(ErrorFlags::NOT_ENOUGH_ERGS, true);
-    }
-
-    delayed_changes.new_ergs_remaining = Some(ergs_remaining);
-*)
   (**
 <<
 # Small-step operational instruction semantics
@@ -775,9 +755,8 @@ TODO
 
       Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr ForwardFatPointer ->
 
-      (* Panic if either of three does not hold *)
+      (* Panic if either of two does not hold *)
       page_older in_ptr_page_id cf.(ecf_mem_context)  = false ->
-      validate_as_slice in_ptr = true ->
       validate in_ptr false = no_exceptions ->
 
       in_ptr_start + in_ptr_ofs = (new_start, false) ->
@@ -826,9 +805,8 @@ TODO
 
       Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr ForwardFatPointer ->
 
-      (* Panic if either of three does not hold *)
+      (* Panic if either of two does not hold *)
       page_older in_ptr_page_id cf.(ecf_mem_context)  = false ->
-      validate_as_slice in_ptr = true ->
       validate in_ptr false = no_exceptions ->
 
       in_ptr_start + in_ptr_ofs = (new_start, false) ->
@@ -890,6 +868,239 @@ TODO
           gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack';
           gs_context_u128 := zero128;
         |}
-.
+
+
+
+(* ----- *)
+   | step_RetExtOK_UseHeap:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored arg in_ptr_encoded in_ptr in_ptr_shrunk paid_ins paid_growth bytes_grown heap_page_id,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetOK arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      (* Panic if not a pointer*)
+      resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+
+      Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr UseHeap->
+
+      (* Panic if either of two does not hold *)
+      page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+      validate in_ptr true = no_exceptions ->
+
+      growth_bytes in_ptr cf.(ecf_mem_context).(ctx_heap_bound) bytes_grown ->
+
+      ergs_remaining xstack0 - base_cost ins = (paid_ins, false) ->
+      paid_ins - Ergs.growth_cost bytes_grown = (paid_growth, false) ->
+
+      ergs_reimburse paid_growth caller_stack caller_stack' ->
+      active_heappage_id xstack0 heap_page_id ->
+
+      fat_ptr_shrink in_ptr in_ptr_shrunk ->
+      let out_ptr := in_ptr_shrunk <| fp_mem_page := heap_page_id |> in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                               <| gprs_r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                               <| gprs_r2 := reg_reserved |>
+                               <| gprs_r3 := reg_reserved |>
+                               <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := caller_stack';
+          gs_context_u128 := zero128;
+        |}
+   | step_RetExtRevert_UseHeap:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored arg in_ptr_encoded in_ptr in_ptr_shrunk paid_ins paid_growth bytes_grown heap_page_id,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetRevert arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      (* Panic if not a pointer*)
+      resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+
+      Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr UseHeap->
+
+      (* Panic if either of two does not hold *)
+      page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+      validate in_ptr true = no_exceptions ->
+
+      growth_bytes in_ptr cf.(ecf_mem_context).(ctx_heap_bound) bytes_grown ->
+
+      ergs_remaining xstack0 - base_cost ins = (paid_ins, false) ->
+      paid_ins - Ergs.growth_cost bytes_grown = (paid_growth, false) ->
+
+      ergs_reimburse paid_growth caller_stack caller_stack' ->
+      active_heappage_id xstack0 heap_page_id ->
+
+      fat_ptr_shrink in_ptr in_ptr_shrunk ->
+      let out_ptr := in_ptr_shrunk <| fp_mem_page := heap_page_id |> in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                               <| gprs_r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                               <| gprs_r2 := reg_reserved |>
+                               <| gprs_r3 := reg_reserved |>
+                               <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack';
+          gs_context_u128 := zero128;
+        |}
+ | step_RetExtPanic:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored arg in_ptr_encoded in_ptr in_ptr_shrunk paid_ins paid_growth bytes_grown heap_page_id,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetPanic arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := mk_fs Set_OF_LT Clear_EQ Clear_GT;
+          gs_regs         := regs_state_zero;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack';
+          gs_context_u128 := zero128;
+        |}
+
+  | step_RetExtOK_UseAuxHeap:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored arg in_ptr_encoded in_ptr in_ptr_shrunk paid_ins paid_growth bytes_grown auxheap_page_id,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetOK arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      (* Panic if not a pointer*)
+      resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+
+      Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr UseAuxHeap->
+
+      (* Panic if either of two does not hold *)
+      page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+      validate in_ptr true = no_exceptions ->
+
+
+      growth_bytes in_ptr cf.(ecf_mem_context).(ctx_aux_heap_bound) bytes_grown ->
+
+      ergs_remaining xstack0 - base_cost ins = (paid_ins, false) ->
+      paid_ins - Ergs.growth_cost bytes_grown = (paid_growth, false) ->
+
+      ergs_reimburse paid_growth caller_stack caller_stack' ->
+      active_auxheappage_id xstack0 auxheap_page_id ->
+
+      fat_ptr_shrink in_ptr in_ptr_shrunk ->
+      let out_ptr := in_ptr_shrunk <| fp_mem_page := auxheap_page_id |> in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                               <| gprs_r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                               <| gprs_r2 := reg_reserved |>
+                               <| gprs_r3 := reg_reserved |>
+                               <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0) caller_stack';
+          gs_context_u128 := zero128;
+        |}
+ | step_RetExtRevert_UseAuxHeap:
+    forall flags mods contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored arg in_ptr_encoded in_ptr in_ptr_shrunk paid_ins paid_growth bytes_grown auxheap_page_id,
+
+      cond_activated cond flags  ->
+
+      let ins := OpRetRevert arg label_ignored in
+      let xstack0 := ExternalCall cf (Some caller_stack) in
+      fetch_instr regs xstack0 mem_pages (Ins ins mods cond) ->
+
+      (* Panic if not a pointer*)
+      resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+
+      Ret.ABI.(decode) in_ptr_encoded = Ret.mk_params in_ptr UseAuxHeap->
+
+      (* Panic if either of two does not hold *)
+      page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+      validate in_ptr true = no_exceptions ->
+
+
+      growth_bytes in_ptr cf.(ecf_mem_context).(ctx_aux_heap_bound) bytes_grown ->
+
+      ergs_remaining xstack0 - base_cost ins = (paid_ins, false) ->
+      paid_ins - Ergs.growth_cost bytes_grown = (paid_growth, false) ->
+
+      ergs_reimburse paid_growth caller_stack caller_stack' ->
+      active_auxheappage_id xstack0 auxheap_page_id ->
+
+      fat_ptr_shrink in_ptr in_ptr_shrunk ->
+      let out_ptr := in_ptr_shrunk <| fp_mem_page := auxheap_page_id |> in
+      step
+        {|
+          gs_flags        := flags;
+          gs_regs         := regs;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := xstack0;
+          gs_context_u128 := context_u128;
+        |}
+        {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                               <| gprs_r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                               <| gprs_r2 := reg_reserved |>
+                               <| gprs_r3 := reg_reserved |>
+                               <| gprs_r4 := reg_reserved |>;
+          gs_mem_pages    := mem_pages;
+          gs_contracts    := contracts;
+          gs_callstack    := set (active_exception_handler xstack0) caller_stack';
+          gs_context_u128 := zero128;
+        |}
+
+
+
+  .
 
 End Execution.
