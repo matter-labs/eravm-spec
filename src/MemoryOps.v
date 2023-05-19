@@ -259,17 +259,17 @@ Inductive fetch_loc: regs_state -> execution_frame -> mem_manager -> loc -> fetc
 
 | fetch_stackaddr:
   forall regs ef mm stackpage addr value,
-    active_stackpage mm ef (StackPage _ _ stackpage) ->
+    mem_page_by_id mm (active_stack_id ef) (StackPage _ _ stackpage) ->
     load_result _ addr stackpage value ->
     fetch_loc regs ef mm (LocStackAddress addr) (FetchPV value)
 | fetch_codeaddr:
   forall regs ef mm codepage addr ins,
-    active_codepage mm ef (CodePage _ _ codepage) ->
+    mem_page_by_id mm (active_stack_id ef) (CodePage _ _ codepage) ->
     load_result _ addr codepage ins ->
     fetch_loc regs ef mm (LocCodeAddr addr) (FetchIns ins)
 | fetch_constaddr:
   forall regs ef mm constpage addr value,
-    active_constpage mm ef (ConstPage _ _ constpage) ->
+    mem_page_by_id mm (active_stack_id ef) (ConstPage _ _ constpage) ->
     load_result _ addr constpage value ->
     fetch_loc regs ef mm (LocConstAddr addr) (FetchPV (IntValue value))
 
@@ -299,7 +299,6 @@ Inductive store_loc: regs_state -> execution_frame -> mem_manager
 
 | store_stackaddr:
   forall regs ef mm mm' stackpage addr value pid stackpage',
-    active_stackpage_id ef pid ->
     active_stackpage mm ef (StackPage _ _ stackpage) ->
     store_result _ addr stackpage value stackpage' ->
     mem_page_replace mm pid (StackPage _ _ stackpage') mm' ->

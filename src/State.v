@@ -74,6 +74,18 @@ Inductive ergs_reimburse : ergs -> execution_frame -> execution_frame -> Prop :=
       ef' = ergs_set new_ergs ef ->
       ergs_reimburse delta ef ef'.
 
+
+Inductive ergs_reimburse_caller : execution_frame -> execution_frame -> Prop
+  :=
+  |erc_internal: forall caller new_caller cf,
+      ergs_reimburse (ergs_remaining (InternalCall cf caller)) caller
+        new_caller ->
+      ergs_reimburse_caller (InternalCall cf caller) new_caller
+  |erc_external: forall caller new_caller cf,
+      ergs_reimburse (ergs_remaining (ExternalCall cf (Some caller))) caller
+        new_caller ->
+      ergs_reimburse_caller (ExternalCall cf (Some caller)) new_caller.
+
 Definition ergs_zero := ergs_set zero32.
 
 (** Fetching value of the stack pointer itself. *)
@@ -196,13 +208,17 @@ Proof.
 Qed.
 
 
+Fixpoint topmost_extframe (ef : execution_frame) : callframe_external :=
+  match ef with
+  | InternalCall _ tail => topmost_extframe tail
+  | ExternalCall x tail => x
+  end.
 
-
-Inductive topmost_extframe : execution_frame -> execution_frame -> Prop :=
-| te_Top: forall x t, topmost_extframe (ExternalCall x t) (ExternalCall x t)
-| te_Deeper: forall c t f,
-    topmost_extframe t f -> topmost_extframe (InternalCall c t) f
-.
+(* Inductive topmost_extframe : execution_frame -> execution_frame -> Prop := *)
+(* | te_Top: forall x t, topmost_extframe (ExternalCall x t) (ExternalCall x t) *)
+(* | te_Deeper: forall c t f, *)
+(*     topmost_extframe t f -> topmost_extframe (InternalCall c t) f *)
+(* . *)
 
 Definition mem_manager := list (mem_page_id * mem_page).
 
@@ -224,25 +240,9 @@ Record global_state := {
 
 
 
-(* Inductive active_mem_ctx : global_state -> ctx_mem_pages -> Prop := *)
-(* | amc_Extract: forall gs cf ctx tail, *)
-(*     topmost_extframe (gs_callstack gs) (ExternalCall cf  tail)  -> *)
-(*     ctx = ecf_mem_context cf -> *)
-(*     active_mem_ctx gs ctx *)
-(* . *)
-Inductive active_mem_ctx : execution_frame -> ctx_mem_pages -> Prop :=
-| amc_Extract: forall ef cf ctx tail,
-    topmost_extframe ef (ExternalCall cf  tail)  ->
-    ctx = ecf_mem_context cf ->
-    active_mem_ctx ef ctx
-.
+Definition active_mem_ctx (ef: execution_frame) : ctx_mem_pages :=
+  (topmost_extframe ef).(ecf_mem_context).
 
-(* Inductive mem_page_by_id : global_state -> mem_page_id *)
-(*                            -> mem_page -> Prop := *)
-(* | mpid_select : forall gs id page, *)
-(*     List.In (id, page) gs.(gs_mem_pages) -> *)
-(*     mem_page_by_id gs id page *)
-(* . *)
 Inductive mem_page_by_id : mem_manager -> mem_page_id
                            -> mem_page -> Prop :=
 | mpid_select : forall mm id page,
@@ -251,144 +251,53 @@ Inductive mem_page_by_id : mem_manager -> mem_page_id
 .
 
 
-(* Inductive active_codepage_id : global_state -> mem_page_id -> Prop := *)
-(* | api_active_code_id: forall gs memctx, *)
-(*     active_mem_ctx gs memctx -> *)
-(*     active_codepage_id gs memctx.(ctx_code_page_id). *)
+
+Definition active_code_id (ef: execution_frame) : mem_page_id :=
+  (active_mem_ctx ef).(ctx_code_page_id).
+
+Definition active_stack_id (ef: execution_frame) : mem_page_id :=
+  (active_mem_ctx ef).(ctx_stack_page_id).
+
+Definition active_const_id (ef: execution_frame) : mem_page_id :=
+  (active_mem_ctx ef).(ctx_const_page_id).
+
+Definition active_heap_id (ef: execution_frame) : mem_page_id :=
+  (active_mem_ctx ef).(ctx_heap_page_id).
+
+Definition active_auxheap_id (ef: execution_frame) : mem_page_id :=
+  (active_mem_ctx ef).(ctx_heap_aux_page_id).
 
 
-(* Inductive active_codepage : global_state -> mem_page -> Prop := *)
-(* | ap_active_code: forall gs id codepage, *)
-(*     active_codepage_id gs id -> *)
-(*     mem_page_by_id gs id codepage -> *)
-(*     active_codepage gs codepage. *)
+Import Bool Nat.
 
-(* Inductive active_constpage_id : global_state -> mem_page_id -> Prop := *)
-(* | api_active_const_id: forall gs memctx, *)
-(*     active_mem_ctx gs memctx -> *)
-(*     active_constpage_id gs memctx.(ctx_const_page_id). *)
+Definition active_page (ef:execution_frame) (id: mem_page_id) : bool :=
+  eqb (active_code_id ef) id ||
+    eqb (active_stack_id ef) id ||
+    eqb (active_const_id ef) id ||
+    eqb (active_heap_id ef) id ||
+    eqb (active_auxheap_id ef) id .
 
-(* Inductive active_constpage : global_state -> mem_page -> Prop := *)
-(* | ap_active_const: forall gs id constpage, *)
-(*     active_constpage_id gs id -> *)
-(*     mem_page_by_id gs id constpage -> *)
-(*     active_constpage gs constpage. *)
+ Inductive active_codepage : mem_manager -> execution_frame -> mem_page -> Prop :=
+ | ap_active_code: forall mm ef codepage,
+     mem_page_by_id mm (active_code_id ef) codepage ->
+     active_codepage mm ef codepage.
 
-(* Inductive active_stackpage_id : global_state -> mem_page_id -> Prop := *)
-(* | api_active_stack_id: forall gs memctx, *)
-(*     active_mem_ctx gs memctx -> *)
-(*     active_stackpage_id gs memctx.(ctx_stack_page_id). *)
+ Inductive active_constpage : mem_manager -> execution_frame -> mem_page -> Prop :=
+ | ap_active_const: forall mm ef constpage,
+     mem_page_by_id mm (active_const_id ef) constpage ->
+     active_constpage mm ef constpage.
 
+ Inductive active_stackpage : mem_manager -> execution_frame -> mem_page -> Prop :=
+ | ap_active_stack: forall mm ef stackpage,
+     mem_page_by_id mm (active_stack_id ef) stackpage ->
+     active_stackpage mm ef stackpage.
 
-(* Inductive active_stackpage : global_state -> mem_page -> Prop := *)
-(* | ap_active_stack_page: forall gs id stack, *)
-(*     active_stackpage_id gs id -> *)
-(*     mem_page_by_id gs id stack -> *)
-(*     active_stackpage gs stack. *)
+ Inductive active_heappage : mem_manager -> execution_frame -> mem_page -> Prop :=
+ | ap_active_heap: forall mm ef heappage,
+     mem_page_by_id mm (active_heap_id ef) heappage ->
+     active_heappage mm ef heappage.
 
-
-
-Inductive active_codepage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_code_id:
-  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
-    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
-    active_codepage_id ef code_page_id
-.
-
-Inductive active_codepage : mem_manager -> execution_frame -> mem_page -> Prop :=
-| ap_active_code: forall mm ef id codepage,
-    active_codepage_id ef id ->
-    mem_page_by_id mm id codepage ->
-    active_codepage mm ef codepage.
-
-Inductive active_constpage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_const_id:
-  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
-    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
-    active_constpage_id ef const_page_id
-.
-
-Inductive active_constpage : mem_manager -> execution_frame -> mem_page -> Prop :=
-| ap_active_const: forall mm ef id constpage,
-    active_constpage_id ef id ->
-    mem_page_by_id mm id constpage ->
-    active_constpage mm ef constpage.
-
-Inductive active_stackpage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_stack_id:
-  forall ef code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound ,
-    active_mem_ctx ef (Build_ctx_mem_pages code_page_id const_page_id stack_page_id heap_page_id heap_aux_page_id heap_bound aux_heap_bound) ->
-    active_stackpage_id ef stack_page_id
-.
-
-
-Inductive active_stackpage : mem_manager -> execution_frame -> mem_page -> Prop :=
-| ap_active_stack_page: forall ef mm id stack,
-    active_stackpage_id ef id ->
-    mem_page_by_id mm id stack ->
-    active_stackpage mm ef stack.
-
-Inductive active_heappage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_heap_id: forall ef memctx,
-    active_mem_ctx ef memctx ->
-    active_heappage_id ef memctx.(ctx_heap_page_id).
-
-
-Inductive active_heappage : mem_manager -> execution_frame -> mem_page -> Prop :=
-| ap_active_heap_page: forall ef mm id heap,
-    active_heappage_id ef id ->
-    mem_page_by_id mm id heap ->
-    active_heappage mm ef heap.
-
-Inductive active_auxheappage_id : execution_frame -> mem_page_id -> Prop :=
-| api_active_auxheap_id: forall ef memctx,
-    active_mem_ctx ef memctx ->
-    active_auxheappage_id ef memctx.(ctx_heap_aux_page_id).
-
-
-Inductive active_auxheappage : mem_manager -> execution_frame -> mem_page -> Prop :=
-| ap_active_auxheap_page: forall ef mm id auxheap,
-    active_auxheappage_id ef id ->
-    mem_page_by_id mm id auxheap ->
-    active_auxheappage mm ef auxheap.
-
-
-(* Inductive active_heappage_id : global_state -> mem_page_id -> Prop := *)
-(* | api_active_heap_id: forall gs memctx, *)
-(*     active_mem_ctx gs memctx -> *)
-(*     active_heappage_id gs memctx.(ctx_heap_page_id). *)
-
-(* Inductive active_heappage : global_state -> mem_page -> Prop := *)
-(* | ap_active_heap: forall gs id heap, *)
-(*     active_heappage_id gs id-> *)
-(*     mem_page_by_id gs id heap -> *)
-(*     active_heappage gs heap. *)
-
-(* Inductive active_auxheappage_id : global_state -> mem_page_id -> Prop := *)
-(* | api_active_auxheap_id: forall gs memctx, *)
-(*     active_mem_ctx gs memctx -> *)
-(*     active_auxheappage_id gs memctx.(ctx_heap_aux_page_id). *)
-
-(* Inductive active_auxheappage : global_state -> mem_page -> Prop := *)
-(* | ap_active_auxheap: forall gs id heap, *)
-(*     active_auxheappage_id gs id-> *)
-(*     mem_page_by_id gs id heap -> *)
-(*     active_auxheappage gs heap. *)
-
-
-Inductive active_page : execution_frame -> mem_page_id -> Prop :=
-| api_stack : forall ef id,
-    active_stackpage_id ef id ->
-    active_page  ef id
-| api_code : forall ef id,
-    active_codepage_id ef id ->
-    active_page  ef id
-| api_const : forall ef id,
-    active_constpage_id ef id ->
-    active_page  ef id
-| api_heap : forall ef id,
-    active_heappage_id ef id ->
-    active_page  ef id
-| api_auxheap : forall ef id,
-    active_auxheappage_id ef id ->
-    active_page  ef id.
+ Inductive active_auxheappage : mem_manager -> execution_frame -> mem_page -> Prop :=
+ | ap_active_auxheap: forall mm ef auxheappage,
+     mem_page_by_id mm (active_auxheap_id ef) auxheappage ->
+     active_auxheappage mm ef auxheappage.

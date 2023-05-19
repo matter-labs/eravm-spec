@@ -97,6 +97,7 @@ Module Ret.
     }.
 
   Axiom ABI: @coder params.
+  Axiom ABI_decode_zero: ABI.(decode) zero256 = mk_params fat_ptr_empty UseHeap.
 End Ret.
 
 (** * Near call *)
