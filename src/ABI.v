@@ -116,7 +116,7 @@ Module FarCall.
   Import FatPointer Ret.
   Record far_call := mk_params {
       fc_memory_quasi_fat_ptr: fat_ptr;
-      fc_ergs_passed: u32;
+      fc_ergs_passed: ergs;
       fc_shard_id: u8;
       fc_forwarding_mode: forward_page_type;
       fc_constructor_call: bool;
