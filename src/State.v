@@ -220,6 +220,13 @@ Fixpoint topmost_extframe (ef : execution_frame) : callframe_external :=
 (*     topmost_extframe t f -> topmost_extframe (InternalCall c t) f *)
 (* . *)
 
+Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
+
+Definition is_kernel (ef:execution_frame) : bool :=
+  let ef := topmost_extframe ef in
+  lt_unsigned _ ef.(ecf_this_address) KERNEL_MODE_MAXADDR.
+
+
 Definition mem_manager := list (mem_page_id * mem_page).
 
 Inductive mem_page_replace: mem_manager -> mem_page_id -> mem_page -> mem_manager -> Prop :=

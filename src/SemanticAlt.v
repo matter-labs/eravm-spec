@@ -725,6 +725,9 @@ let gs1 := {|
           gs_context_u128 := context_u128;
         |} in
       cond_activated cond flags ->
+
+      check_requires_kernel ins (is_kernel xstack0) = true ->
+      check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = true ->
       fetch_instr regs xstack0 mem_pages (Ins ins cond) ->
 
       update_pc_regular xstack0 xstack1 ->
