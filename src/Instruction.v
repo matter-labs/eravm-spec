@@ -340,7 +340,6 @@ Section ModifiersExclusive.
     | BinOpXor => bitwise_xor bits
     end.
 
-  Inductive far_call_mod: Set := | Normal | Mimic | Delegate.
 
   Record far_call_exception : Set := mk_far_call_exception {
         fce_input_is_not_pointer_when_expected : bool;
@@ -371,7 +370,9 @@ semantics is described in a different place; see [step]. *)
   | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: in_reg) (dest: in_reg) (mod: far_call_mod)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in)
+  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in)
+  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in)
 
                   (* quasi fat pointer + forwarding mode *)
   | OpRet         (args: in_reg) (label: option code_address)
@@ -426,18 +427,38 @@ Section Costs.
     | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpNearCall _ _ _ => fst (AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST)
-    | OpFarCall _ _ _ => ZMod.int_mod_of 32 (
-           2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
-            + RAM_PERMUTATION_COST_IN_ERGS.(int_val _)
-            + STORAGE_READ_IO_PRICE.(int_val _)
-            + CALL_LIKE_ERGS_COST.(int_val _)
-            + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
-            + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
-
+    | OpFarCall _ _ _
+    | OpDelegateCall _ _ _
+    | OpMimicCall _ _ _ => ZMod.int_mod_of 32 (
+                              2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
+                              + RAM_PERMUTATION_COST_IN_ERGS.(int_val _)
+                              + STORAGE_READ_IO_PRICE.(int_val _)
+                              + CALL_LIKE_ERGS_COST.(int_val _)
+                              + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
+                              + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
     | OpRet _ _ | OpRevert _ _ | OpPanic _ => AVERAGE_OPCODE_ERGS
     end.
-
 End Costs.
+
+
+Definition allowed_static_ctx (ins:instruction) : bool :=
+  match ins with
+  | _ => true
+  end.
+
+Definition check_allowed_static_ctx (ins: instruction) (current_ctx_is_static: bool) : bool :=
+  if current_ctx_is_static then allowed_static_ctx ins else true.
+
+Definition requires_kernel (ins: instruction) : bool :=
+  match ins with
+  | OpMimicCall _ _ _ => true
+  | _ => false
+  end.
+
+Definition check_requires_kernel (ins: instruction) (in_kernel: bool) : bool :=
+  if negb in_kernel then negb (requires_kernel ins) else true.
+
+
 (* Inner Operation
 
 §1. The _code execution_ in zkEVM is a process of sequential execution of _instructions_.
