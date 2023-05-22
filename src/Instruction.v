@@ -1,6 +1,6 @@
-Require Common Memory Ergs.
+Require Common Memory Ergs CodeStorage.
 
-Import Common Memory Ergs.
+Import Common Memory Ergs CodeStorage.
 
 (** In this file we describe:
 
@@ -411,6 +411,7 @@ End Def.
 
 (** §2.2. A helper definition to specialize a code page with a (just defined) instruction type. *)
 Definition code_page : Type := code_page instruction_predicated instruction_invalid.
+Definition code_storage_type: Type := code_storage instruction_predicated instruction_invalid.
 
 
 (** * Costs *)
