@@ -129,6 +129,10 @@ Section Memory.
 
     Definition code_page := mem_parameterized code_page_params.
 
+
+    Definition code_length := code_address.
+
+
     Record ctx_mem_pages:=
       {
         ctx_code_page_id:  mem_page_id;
