@@ -117,6 +117,10 @@ Section Def.
 
   Definition is_overflowing (res: int_mod * bool) := snd res.
 
+  Definition umul_overflow (x y: int_mod) : int_mod * bool :=
+    let result := (as_unsigned x * as_unsigned y)%Z in
+    (int_mod_of result, carry result).
+  
 End Def.
 
 
@@ -126,6 +130,7 @@ Declare Scope ZMod_scope.
 Infix "==" := beq_op (at level 70, no associativity): ZMod_scope.
 Infix "+" := (uadd_overflow _) : ZMod_scope.
 Infix "-" := (usub_overflow _) : ZMod_scope.
+Infix "*" := (umul_overflow _) : ZMod_scope.
 
 Open Scope ZMod_scope.
 
