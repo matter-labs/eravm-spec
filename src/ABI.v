@@ -8,10 +8,10 @@ https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi
  *)
 
 Record coder {ABIParams:Type} := {
-    decode: u256 -> ABIParams ;
+    decode: u256 -> option ABIParams ;
     encode:  ABIParams -> u256 ;
-    revertible1: forall params, decode (encode params) = params;
-    revertible2: forall params encoded, decode encoded = params -> encode params = encoded;
+    revertible1: forall params, decode (encode params) = Some params;
+    revertible2: forall params encoded, decode encoded = Some params -> encode params = encoded;
   }.
 
 (** * Fat Pointers *)
@@ -97,7 +97,7 @@ Module Ret.
     }.
 
   Axiom ABI: @coder params.
-  Axiom ABI_decode_zero: ABI.(decode) zero256 = mk_params fat_ptr_empty UseHeap.
+  Axiom ABI_decode_zero: ABI.(decode) zero256 = Some (mk_params fat_ptr_empty UseHeap).
 End Ret.
 
 (** * Near call *)
