@@ -78,10 +78,7 @@ Section Memory.
     Definition mem_address := address data_page_params.
     (* Definition mem_address_zeroval := zero24. *)
 
-    Record data_page := {
-        mem_page_content :> mem_parameterized data_page_params;
-        mem_page_accessed_bound: mem_address
-      }.
+    Definition data_page := mem_parameterized data_page_params.
 
     Definition mem_page_id := nat.
 
