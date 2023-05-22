@@ -63,7 +63,7 @@ Definition contract_collection_type := mem_parameterized contracts_params.
 (** * Mem page *)
 Section Memory.
 
-  Variable ins_type: Set.
+  Variable ins_type: Type.
   Variable invalid_ins: ins_type.
   Section Pages.
 
