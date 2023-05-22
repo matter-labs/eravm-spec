@@ -370,9 +370,9 @@ semantics is described in a different place; see [step]. *)
   | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in)
-  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in)
-  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
+  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
+  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
 
                   (* quasi fat pointer + forwarding mode *)
   | OpRet         (args: in_reg) (label: option code_address)
@@ -427,9 +427,9 @@ Section Costs.
     | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpNearCall _ _ _ => fst (AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST)
-    | OpFarCall _ _ _
-    | OpDelegateCall _ _ _
-    | OpMimicCall _ _ _ => ZMod.int_mod_of 32 (
+    | OpFarCall _ _ _ _
+    | OpDelegateCall _ _ _ _
+    | OpMimicCall _ _ _ _ => ZMod.int_mod_of 32 (
                               2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
                               + RAM_PERMUTATION_COST_IN_ERGS.(int_val _)
                               + STORAGE_READ_IO_PRICE.(int_val _)
@@ -451,7 +451,7 @@ Definition check_allowed_static_ctx (ins: instruction) (current_ctx_is_static: b
 
 Definition requires_kernel (ins: instruction) : bool :=
   match ins with
-  | OpMimicCall _ _ _ => true
+  | OpMimicCall _ _ _ _ => true
   | _ => false
   end.
 
