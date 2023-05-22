@@ -110,6 +110,11 @@ Section Def.
   Definition le_unsigned (x y: int_mod) : bool := (lt_unsigned x y) || beq x y.
   Definition ge_unsigned := Basics.flip le_unsigned.
 
+  Definition liftZ  (f:Z->Z->Z) x y := int_mod_of (f x.(int_val) y.(int_val)).
+
+  Definition min := liftZ BinIntDef.Z.min.
+  Definition max := liftZ BinIntDef.Z.max.
+  
   Definition carry (z:Z) : bool := if gt_dec z unsigned_max then true else false.
 
   Definition uadd_overflow (x y: int_mod) : int_mod * bool :=
