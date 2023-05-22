@@ -49,12 +49,21 @@ Section Def.
       reflexivity.
   Qed.
 
-
+  Theorem eq_dec : Decidability.eq_dec int_mod.
+  Proof.
+    intros [x xp] [y yp].
+    destruct (Z.eq_dec x y); subst.
+    - left.
+      apply eq_values. reflexivity.
+    - right.
+      intro H. subst. apply eq_values in H. contradiction.
+  Qed.
+    
   (** ** Conversions *)
 
   (** Interpreting [int_mod] as an unsigned integer modulo 2^N. *)
   Definition as_unsigned (n: int_mod) : Z := int_val n.
-
+ 
   (** Interpreting [int_mod] as a signed [Z], where the leftmost bit encodes the
   sign. *)
   Definition as_signed (n: int_mod) : Z :=
@@ -93,7 +102,7 @@ Section Def.
   (** Addition, subtraction, multiplication, division, shifts, modulo operations. *)
 
   (** *** Comparison *)
-  Definition beq (x y: int_mod) : bool := if eq_dec (int_val x) (int_val y) then true else false.
+  Definition beq (x y: int_mod) : bool := if eq_dec x y then true else false.
   Definition lt_signed (x y: int_mod) : bool := if lt_dec (as_signed x) (as_signed y) then true else false.
   Definition lt_unsigned (x y: int_mod) : bool := if lt_dec (as_unsigned x) (as_unsigned y) then true else false.
   Definition gt_unsigned := Basics.flip lt_unsigned.
