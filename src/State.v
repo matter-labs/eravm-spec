@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Memory Instruction.
+Require Common Memory Instruction CodeStorage.
 
-Import ZArith Common MemoryBase Memory Instruction ZMod List ListNotations.
+Import ZArith Common MemoryBase Memory CodeStorage Instruction ZMod List ListNotations.
 
 
 Definition mem_page := mem_page instruction_predicated instruction_invalid.
@@ -239,6 +239,7 @@ Record global_state := {
     gs_flags : flags_state;
     gs_regs: regs_state;
     gs_contracts: contract_collection_type;
+    gs_contract_code: code_manager instruction_predicated instruction_invalid;
     (* gs_pending_exception: bool; we can probably store optional here *)
     gs_mem_pages: mem_manager ;
     gs_callstack: execution_frame;
