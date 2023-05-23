@@ -56,6 +56,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 |step_FarCall_NonKernel_Forward: forall flags regs mem_pages xstack0 xstack1 xstack2 (handler:imm_in) handler_location contracts codes context_u128 (abi dest:in_reg) is_static new_mem_pages new_xstack new_code_page code_length dest_val abi_val new_mem_ctx in_ptr shrunk_ptr shard_id pass_ergs_query cost__decomm vhash,
 
     let old_frame := topmost_extframe xstack0 in
+    addr_is_kernel dest_val = false ->
     resolve_fetch_value regs xstack0 mem_pages dest (IntValue dest_val) -> (* Fixme: also allow pointers *)
     resolve_fetch_value regs xstack0 mem_pages abi (PtrValue abi_val) ->
     resolve_fetch_value regs xstack0 mem_pages handler (IntValue handler_location) ->
