@@ -125,6 +125,21 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_flags        := flags_clear;
                gs_regs         := new_regs;
                gs_mem_pages    := new_mem_pages;
+               gs_callstack    := ExternalCall new_frame (Some xstack2);
+               gs_context_u128 := zero128;
+
+
+               gs_contracts    := contracts;
+               gs_contract_code:= codes;
+             |}
+.
+               gs_contracts    := contracts;
+               gs_contract_code:= codes;
+             |}
+             {|
+               gs_flags        := flags_clear;
+               gs_regs         := new_regs;
+               gs_mem_pages    := new_mem_pages;
                gs_callstack    := new_xstack;
                gs_context_u128 := zero128;
 
