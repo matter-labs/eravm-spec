@@ -57,6 +57,9 @@ Module FatPointer.
       ptr_bad_slice := gt_unsigned _ p.(fp_offset) p.(fp_length);
     |}.
 
+  Definition validate_fresh p := validate p true.
+  Definition validate_non_fresh p := validate p false.
+
   Definition validate_in_bounds (p:fat_ptr) : bool := (lt_unsigned _ p.(fp_offset) p.(fp_length) ).
 
   Definition is_trivial (p:fat_ptr) := (p.(fp_length) == zero32) && (p.(fp_offset)

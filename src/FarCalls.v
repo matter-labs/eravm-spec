@@ -19,10 +19,10 @@ Record FarCallExceptions : Set := {
     fce_note_enough_ergs_for_extra_far_call_costs : bool;
   }.
 
-Definition max_passable (remaining:ergs) : ergs :=
-    int_mod_of _(((int_val _ remaining) / 64 ) * 63)%Z.
+Definition code_storage := code_storage _ instruction_invalid.
+Definition code_manager := code_manager _ instruction_invalid.
 
-Inductive decommitment_cost (cm:code_manager _ instruction_invalid) vhash (code_length_in_words: code_length): ergs -> Prop :=
+Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
   |dc_fresh: forall cost,
     is_fresh _ _ cm vhash = true->
     (cost, false) = Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
@@ -104,21 +104,41 @@ Inductive change_topmost_extframe f : execution_frame -> execution_frame -> Prop
     change_topmost_extframe f t t' ->
     change_topmost_extframe f (InternalCall cf t) (InternalCall cf t')
 .
+Inductive code_fetch_and_pay : contract_collection_type -> code_manager -> contract_address
+                               -> execution_frame -> execution_frame * code_page
+                               ->Prop :=
+| cfp_apply:
+  forall storages codes (dest_addr: contract_address) vhash dest_addr new_code_page code_length
+    cost__decomm xstack0 xstack1,
+    code_fetch _ _ storages codes.(cm_storage _ _) dest_addr (vhash, new_code_page, code_length) ->
+    decommitment_cost codes vhash code_length cost__decomm ->
+    pay cost__decomm xstack0 xstack1 ->
+    code_fetch_and_pay storages codes dest_addr xstack0 (xstack1, new_code_page).
 
-Definition code_storage := code_storage _ instruction_invalid.
-Definition code_manager := code_manager _ instruction_invalid.
+Definition max_passable (remaining:ergs) : ergs :=
+    int_mod_of _(((int_val _ remaining) / 64 ) * 63)%Z.
+
+Inductive pass_allowed_ergs : ergs -> ergs -> execution_frame -> execution_frame -> Prop :=
+  | pae_apply: forall xstack1 xstack2 pass_ergs_query,
+  let pass_ergs_actual := ZMod.min _ (max_passable (ergs_remaining xstack1)) pass_ergs_query in
+  pay pass_ergs_actual xstack1 xstack2 ->
+  pass_allowed_ergs pass_ergs_query pass_ergs_actual xstack1 xstack2.
+
 Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 
 |step_FarCall_NonKernel_Forward: forall flags regs mem_pages xstack0 xstack1 xstack2
                                    (handler:imm_in) handler_location storages
                                    codes context_u128 (abi dest:in_reg)
                                    is_static new_mem_pages
-                                   new_code_page code_length (dest_val:word_type)
+                                   new_code_page (dest_val:word_type)
                                    abi_val
                                    new_mem_ctx in_ptr shrunk_ptr shard_id
-                                   pass_ergs_query cost__decomm vhash vtag,
+                                   pass_ergs_query pass_ergs_actual vtag,
 
-    let old_frame := topmost_extframe xstack0 in
+    let old_extframe := topmost_extframe xstack0 in
+    let old_mem_ctx  := old_extframe.(ecf_mem_context) in
+    let current_contract := old_extframe.(ecf_this_address) in
+
     resolve_fetch_value regs xstack0 mem_pages dest (mk_pv vtag dest_val) ->
     resolve_fetch_value regs xstack0 mem_pages abi (PtrValue abi_val) ->
     resolve_fetch_value regs xstack0 mem_pages handler (IntValue handler_location) ->
@@ -137,34 +157,30 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 
     fat_ptr_shrink in_ptr shrunk_ptr ->
 
-    code_fetch _ _ contracts codes.(cm_storage _ _) (resize 256 _ dest_val) (vhash, new_code_page, code_length) ->
-    alloc_pages_extframe mem_pages old_frame.(ecf_mem_context) new_code_page (new_mem_pages, new_mem_ctx) ->
+    code_fetch_and_pay storages codes dest_addr xstack0 (xstack1, new_code_page) ->
 
-    decommitment_cost codes vhash code_length cost__decomm ->
-    pay cost__decomm xstack0 xstack1 ->
+    alloc_pages_extframe mem_pages old_mem_ctx new_code_page (new_mem_pages, new_mem_ctx) ->
 
-    let actual_pass_ergs := ZMod.min _ (max_passable (ergs_remaining xstack1)) pass_ergs_query in
-    pay actual_pass_ergs xstack1 xstack2 ->
+    pass_allowed_ergs pass_ergs_query pass_ergs_actual xstack1 xstack2 ->
 
-    let active_storage := load contracts_params old_frame.(ecf_this_address) contracts in
     let encoded_shrunk_ptr := FatPointer.ABI.(encode) shrunk_ptr in
     let new_regs := regs_state_zero <| gprs_r1 := PtrValue encoded_shrunk_ptr |> in
-    let new_frame := {|
-                      ecf_this_address := resize _ _ dest_val;
-                      ecf_msg_sender := old_frame.(ecf_this_address);
-                      ecf_code_address := resize _ _ dest_val;
-                      ecf_mem_context := new_mem_ctx;
-                      ecf_is_static :=  ecf_is_static old_frame || is_static;
-                      ecf_context_u128_value := context_u128;
-                      ecf_saved_storage_state := active_storage;
-                      ecx_common := {|
-                                     cf_exception_handler_location := resize _ _ handler_location;
-                                     cf_sp := INITIAL_SP_ON_FAR_CALL;
-                                     cf_pc := zero16;
-                                     cf_ergs_remaining := actual_pass_ergs;
-                                   |};
-
-                    |} in
+    let new_stack := ExternalCall {|
+                         ecf_this_address := dest_addr;
+                         ecf_msg_sender := current_contract;
+                         ecf_code_address := zero16;
+                         ecf_mem_context := new_mem_ctx;
+                         ecf_is_static :=  ecf_is_static old_extframe || is_static;
+                         ecf_context_u128_value := context_u128;
+                         ecf_saved_storage_state := load _ current_contract storages;
+                         ecx_common := {|
+                                        cf_exception_handler_location
+                                        := resize _ code_address_bits handler_location;
+                                        cf_sp := INITIAL_SP_ON_FAR_CALL;
+                                        cf_pc := zero16;
+                                        cf_ergs_remaining := pass_ergs_actual;
+                                      |};
+                       |} (Some xstack2) in
     step_farcall (OpFarCall abi dest handler is_static)
              {|
                gs_flags        := flags;
@@ -174,7 +190,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_context_u128 := context_u128;
 
 
-               gs_storages    := storages;
+               gs_storages     := storages;
                gs_contract_code:= codes;
              |}
              {|
@@ -185,7 +201,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_context_u128 := zero128;
 
 
-               gs_storages    := storages;
+               gs_storages     := storages;
                gs_contract_code:= codes;
              |}
 
@@ -195,17 +211,22 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                                    (handler:imm_in) handler_location storages
                                    codes context_u128 (abi dest:in_reg)
                                    is_static new_mem_pages
-                                   new_code_page code_length (dest_val:word_type)
+                                   new_code_page (dest_val:word_type)
                                    abi_val
-                                   new_mem_ctx in_ptr shrunk_ptr shard_id
-                                   pass_ergs_query cost__decomm vhash vtag
-                                   fwd_mode page_id current_bound diff new_caller_mem_ctx new_caller_stack,
+                                   new_mem_ctx in_ptr shard_id
+                                   pass_ergs_query vtag
+                                   fwd_mode page_id current_bound diff
+                                   new_caller_mem_ctx new_caller_stack
+                                   pass_ergs_actual ,
 
-    let old_frame := topmost_extframe xstack0 in
+    let old_extframe := topmost_extframe xstack0 in
+    let old_mem_ctx  := old_extframe.(ecf_mem_context) in
+    let current_contract := old_extframe.(ecf_this_address) in
     resolve_fetch_value regs xstack0 mem_pages dest (mk_pv vtag dest_val) ->
     resolve_fetch_value regs xstack0 mem_pages abi (PtrValue abi_val) ->
     resolve_fetch_value regs xstack0 mem_pages handler (IntValue handler_location) ->
     let dest_addr := resize _ 160 dest_val in
+
     addr_is_kernel dest_addr = false ->
 
     FarCall.ABI.(decode) abi_val = Some
@@ -218,46 +239,38 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                                        fc_consider_new_tx := false;
                                      |} ->
     (fwd_mode = UseHeap \/ fwd_mode = UseAuxHeap) ->
-    validate in_ptr true  = no_exceptions ->
+    validate_fresh in_ptr = no_exceptions ->
     select_page_bound xstack0 fwd_mode (page_id, current_bound) ->
+    code_fetch_and_pay storages codes dest_addr xstack0 (xstack1, new_code_page) ->
 
-    code_fetch _ _ contracts codes.(cm_storage _ _) (resize 256 _ dest_val) (vhash, new_code_page, code_length) ->
+    alloc_pages_extframe mem_pages old_extframe.(ecf_mem_context) new_code_page (new_mem_pages, new_mem_ctx) ->
 
-    decommitment_cost codes vhash code_length cost__decomm ->
-    pay cost__decomm xstack0 xstack1 ->
-
-    alloc_pages_extframe mem_pages old_frame
-    .(ecf_mem_context) new_code_page (new_mem_pages, new_mem_ctx) ->
- 
     fat_ptr_induced_growth in_ptr current_bound diff ->
     pay (Ergs.growth_cost diff) xstack1 xstack2 ->
-    grow_page fwd_mode diff old_frame.(ecf_mem_context) new_caller_mem_ctx ->
+
+    grow_page fwd_mode diff old_mem_ctx new_caller_mem_ctx ->
     change_topmost_extframe (fun x => x<| ecf_mem_context := new_caller_mem_ctx|>) xstack2 xstack3 ->
 
-
-    let actual_pass_ergs := ZMod.min _ (max_passable (ergs_remaining xstack2)) pass_ergs_query in
-    pay actual_pass_ergs xstack3 new_caller_stack ->
+    pass_allowed_ergs pass_ergs_query pass_ergs_actual xstack3 new_caller_stack ->
 
     let out_ptr := in_ptr <| fp_mem_page := page_id |> in
-    let active_storage := load _ old_frame.(ecf_this_address) storages in
-    let encoded_shrunk_ptr := FatPointer.ABI.(encode) shrunk_ptr in
-    let new_regs := regs_state_zero <| gprs_r1 := PtrValue encoded_shrunk_ptr |> in
-    let new_frame := {|
-                      ecf_this_address := resize _ _ dest_val;
-                      ecf_msg_sender := old_frame.(ecf_this_address);
+    let new_regs := regs_state_zero <| gprs_r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |> in
+    let new_xstack := ExternalCall {|
+                      ecf_this_address := dest_addr;
+                      ecf_msg_sender := current_contract;
                       ecf_code_address := zero16;
                       ecf_mem_context := new_mem_ctx;
-                      ecf_is_static :=  ecf_is_static old_frame || is_static;
+                      ecf_is_static :=  ecf_is_static old_extframe || is_static;
                       ecf_context_u128_value := context_u128;
-                      ecf_saved_storage_state := active_storage;
+                      ecf_saved_storage_state := load _ current_contract storages;
                       ecx_common := {|
                                      cf_exception_handler_location := resize _ _ handler_location;
                                      cf_sp := INITIAL_SP_ON_FAR_CALL;
                                      cf_pc := zero16;
-                                     cf_ergs_remaining := actual_pass_ergs;
+                                     cf_ergs_remaining := pass_ergs_actual;
                                    |};
 
-                    |} in
+                    |} (Some new_caller_stack) in
     step_farcall (OpFarCall abi dest handler is_static)
              {|
                gs_flags        := flags;
@@ -274,11 +287,11 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_flags        := flags_clear;
                gs_regs         := new_regs;
                gs_mem_pages    := new_mem_pages;
-               gs_callstack    := ExternalCall new_frame (Some new_caller_stack);
+               gs_callstack    := new_xstack;
                gs_context_u128 := zero128;
 
 
-               gs_storages    := storages;
+               gs_storages     := storages;
                gs_contract_code:= codes;
              |}
 
