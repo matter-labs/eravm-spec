@@ -1,6 +1,6 @@
-Require Common Memory Instruction State.
+Require Common Condition Memory Instruction State.
 
-Import ZArith ZMod Common MemoryBase Memory Instruction State Arg List ListNotations.
+Import ZArith ZMod Common Condition MemoryBase Memory Instruction State Arg List ListNotations.
 
 (** Location from where a value can be fetched. *)
 Inductive loc : Set :=

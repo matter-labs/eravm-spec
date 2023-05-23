@@ -48,6 +48,5 @@ Definition L1_MESSAGE_IO_PRICE: ergs := 100.
 Definition CALL_LIKE_ERGS_COST: ergs := 20.
 Definition ERGS_PER_CODE_WORD_DECOMMITTMENT: ergs := CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS.
 
-Definition growth_cost (diff: mem_address) : ergs := diff.
-
+Definition growth_cost (diff:mem_address) : ergs := diff.
 End Ergs.

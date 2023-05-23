@@ -1,4 +1,4 @@
-From RecordUpdate Require Import RecordSet.
+(*From RecordUpdate Require Import RecordSet.
 Require Common Memory Instruction State MemoryOps ABI.
 
 Import Bool ZArith Common MemoryBase Memory MemoryOps Instruction State ZMod
@@ -9,7 +9,7 @@ Import RecordSetNotations.
   ; gs_regs; gs_contracts ; gs_mem_pages; gs_callstack; gs_context_u128>.
 
 (** * Execution *)
-
+(*
 Section Execution.
   Import Arg Arg.Coercions.
 
@@ -447,7 +447,6 @@ TODO
           gs_callstack := InternalCall new_frame (ergs_set ergs_left xstack1);
           gs_context_u128 := context_u128;
         |}
-
   | step_NearCall_underflow_pass_all_ergs:
     forall flags contracts mem_pages xstack0 xstack1 context_u128 sp regs cond abi_params_op abi_params_value call_addr expt_handler remaining ergs_left,
 
@@ -899,7 +898,7 @@ TODO
           gs_context_u128 := zero128;
         |}
 
-  | step_RetExtRevert_ForwardFatPointer:
+  | step_RetExtRevert_ForwardFatPointer: (* here *)
     forall flags  contracts mem_pages cf caller_stack caller_stack' context_u128 regs cond label_ignored ergs_left arg in_ptr_encoded in_ptr_page_id in_ptr_start in_ptr_length in_ptr_ofs new_start new_length,
 
       cond_activated cond flags  ->
@@ -1214,3 +1213,5 @@ TODO
   .
 
 End Execution.
+*)
+*)

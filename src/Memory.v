@@ -237,31 +237,7 @@ Section Memory.
     #[export] Instance etaGPRs : Settable _ := settable! mk_regs < gprs_r1  ; gprs_r2  ; gprs_r3  ; gprs_r4  ; gprs_r5  ; gprs_r6  ; gprs_r7  ; gprs_r8  ; gprs_r9  ; gprs_r10  ; gprs_r11  ; gprs_r12  ; gprs_r13  ; gprs_r14  ; gprs_r15  >.
     (* end hide *)
 
-    Inductive OF_LT := Set_OF_LT | Clear_OF_LT.
-    Inductive EQ := Set_EQ | Clear_EQ.
-    Inductive GT := Set_GT | Clear_GT.
 
-    Definition OF_LT_to_bool (f:OF_LT) := if f then true else false.
-    Definition EQ_to_bool (f:EQ) := if f then true else false.
-    Definition GT_to_bool (f:GT) := if f then true else false.
-
-    #[reversible]
-    Coercion OF_LT_to_bool : OF_LT >-> bool.
-    #[reversible]
-    Coercion EQ_to_bool : EQ >-> bool.
-    #[reversible]
-    Coercion GT_to_bool : GT >-> bool.
-
-    Definition EQ_of_bool (f:bool) := if f then Set_EQ else Clear_EQ.
-    Definition OF_LT_of_bool (f:bool) := if f then Set_OF_LT else Clear_OF_LT.
-    Definition GT_of_bool (f:bool) := if f then Set_GT else Clear_GT.
-
-    Record flags_state := mk_fs {
-                              fs_OF_LT: OF_LT;
-                              fs_EQ: EQ;
-                              fs_GT: GT;
-                            }.
-    Definition flags_clear : flags_state := mk_fs Clear_OF_LT Clear_EQ Clear_GT.
 
 
   End Regs.

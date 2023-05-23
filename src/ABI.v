@@ -69,19 +69,17 @@ Module FatPointer.
     length - ofs = (length', false) ->
     fat_ptr_shrink (mk_fat_ptr p start length ofs) (mk_fat_ptr p start' length' zero32).
 
-  Inductive growth_bytes: fat_ptr -> forall current_bound: mem_address, ergs -> Prop :=
-  | gb_nogrow: forall fp_mem_page fp_start fp_length fp_offset upper_bound current_bound,
-      fp_start + fp_length = (upper_bound, false) ->
-      le_unsigned _ upper_bound current_bound = true ->
-      growth_bytes  (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset)
-        current_bound zero32
-  | gb_grow: forall fp_mem_page fp_start fp_length fp_offset upper_bound
-               current_bound diff,
-      fp_start + fp_length = (upper_bound, false) ->
-      le_unsigned _ upper_bound current_bound = false ->
-      (diff, false) = upper_bound - current_bound ->
-      growth_bytes  (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset)
-        current_bound diff.
+
+  Definition growth (current_bound: mem_address) (query_bound: mem_address)
+    : mem_address :=
+    if le_unsigned _ query_bound current_bound then zero32 else
+      fst (usub_overflow _ query_bound current_bound).
+
+  Inductive fat_ptr_induced_growth: fat_ptr -> forall current_bound: mem_address, mem_address -> Prop :=
+  | gb_bytes: forall fp_mem_page fp_start fp_length fp_offset query_bound current_bound,
+      fp_start + fp_length = (query_bound, false) ->
+      let diff := growth current_bound query_bound in
+      fat_ptr_induced_growth (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset) current_bound diff.
 
 End FatPointer.
 

@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Memory Instruction CodeStorage.
+Require Common Condition Memory Instruction CodeStorage.
 
-Import ZArith Common MemoryBase Memory CodeStorage Instruction ZMod List ListNotations.
+Import ZArith Condition Common MemoryBase Memory CodeStorage Instruction ZMod List ListNotations.
 
 
 Definition mem_page := mem_page instruction_predicated instruction_invalid.
@@ -245,6 +245,7 @@ Record global_state := {
     gs_callstack: execution_frame;
     gs_context_u128: u128;
   }.
+#[export] Instance etaXGS : Settable _ := settable! Build_global_state <gs_flags ; gs_regs; gs_contracts; gs_contract_code; gs_mem_pages; gs_callstack; gs_context_u128>.
 
 
 

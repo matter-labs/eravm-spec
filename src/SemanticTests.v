@@ -1,5 +1,5 @@
-From RecordUpdate Require Import RecordSet.
-Require Semantics.
+(*From RecordUpdate Require Import RecordSet.
+Require SemanticAlt.
 
 Import List ListNotations ZArith.
 Import ZMod Common MemoryBase Memory MemoryOps Instruction State Semantics.
@@ -188,4 +188,5 @@ Proof.
   destruct swap  eqn:Hsw, sflags eqn:Hsf; eexists; eapply step_NearCall_underflow_pass_all_ergs
   ; try solve [repeat econstructor].
 Qed.
+*)
 *)

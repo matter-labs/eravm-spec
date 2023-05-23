@@ -1,6 +1,6 @@
-Require Common Memory Ergs CodeStorage.
+Require Common Condition Memory Ergs CodeStorage.
 
-Import Common Memory Ergs CodeStorage.
+Import Common Condition Memory Ergs CodeStorage.
 
 (** In this file we describe:
 
@@ -34,7 +34,20 @@ TODO The exact binary encoding of instructions is different from the following d
  *)
 
 Inductive mod_swap := Swap | NoSwap.
+
+Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
+  match md with
+  | NoSwap => (a,b)
+  | Swap => (b,a)
+  end.
+
 Inductive mod_set_flags := SetFlags | PreserveFlags.
+
+Definition apply_set_flags (md: mod_set_flags) (f f':flags_state) : flags_state :=
+  match md with
+  | SetFlags => f'
+  | PreserveFlags => f
+  end.
 
 Record common_mod : Set := mk_cmod {
                                cm_swap: mod_swap;
@@ -44,8 +57,6 @@ Record common_mod : Set := mk_cmod {
 flags are compatible with the condition. Each instruction has a condition
 encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]. *)
 
-Inductive cond :=
-| IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
 (** §1.2. Additionally, depending on [opcode_specific], an instruction may have:
 
