@@ -239,13 +239,13 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
     pay actual_pass_ergs xstack3 new_caller_stack ->
 
     let out_ptr := in_ptr <| fp_mem_page := page_id |> in
-    let active_storage := load contracts_params old_frame.(ecf_this_address) contracts in
+    let active_storage := load _ old_frame.(ecf_this_address) storages in
     let encoded_shrunk_ptr := FatPointer.ABI.(encode) shrunk_ptr in
     let new_regs := regs_state_zero <| gprs_r1 := PtrValue encoded_shrunk_ptr |> in
     let new_frame := {|
                       ecf_this_address := resize _ _ dest_val;
                       ecf_msg_sender := old_frame.(ecf_this_address);
-                      ecf_code_address := resize _ _ dest_val;
+                      ecf_code_address := zero16;
                       ecf_mem_context := new_mem_ctx;
                       ecf_is_static :=  ecf_is_static old_frame || is_static;
                       ecf_context_u128_value := context_u128;
