@@ -259,7 +259,7 @@ Calls the code inside the current contract space.
 
 >>
          *)
- | step_NearCall_pass_some_regs:
+ | step_NearCall_pass_some_ergs:
     forall codes flags contracts mem_pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_left passed_ergs,
 
       resolve_fetch_word regs xstack0 mem_pages abi_params_op abi_params_value ->
@@ -295,7 +295,7 @@ Calls the code inside the current contract space.
           gs_contract_code:= codes;
         |}
 
- | step_NearCall_underflow_pass_all_regs:
+ | step_NearCall_underflow_pass_all_ergs:
     forall codes flags contracts mem_pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_underflown passed_ergs,
       resolve_fetch_word regs xstack0 mem_pages abi_params_op abi_params_value ->
       Some passed_ergs = option_map NearCall.nca_get_ergs_passed (NearCall.ABI.(decode) abi_params_value) ->
