@@ -240,14 +240,14 @@ Inductive mem_page_replace: mem_manager -> mem_page_id -> mem_page -> mem_manage
 Record global_state := {
     gs_flags : flags_state;
     gs_regs: regs_state;
-    gs_contracts: contract_collection_type;
+    gs_storages: contract_collection_type;
     gs_contract_code: code_manager instruction_predicated instruction_invalid;
     (* gs_pending_exception: bool; we can probably store optional here *)
     gs_mem_pages: mem_manager ;
     gs_callstack: execution_frame;
     gs_context_u128: u128;
   }.
-#[export] Instance etaXGS : Settable _ := settable! Build_global_state <gs_flags ; gs_regs; gs_contracts; gs_contract_code; gs_mem_pages; gs_callstack; gs_context_u128>.
+#[export] Instance etaXGS : Settable _ := settable! Build_global_state <gs_flags ; gs_regs; gs_storages; gs_contract_code; gs_mem_pages; gs_callstack; gs_context_u128>.
 
 
 

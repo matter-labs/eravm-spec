@@ -105,10 +105,12 @@ Inductive change_topmost_extframe f : execution_frame -> execution_frame -> Prop
     change_topmost_extframe f (InternalCall cf t) (InternalCall cf t')
 .
 
+Definition code_storage := code_storage _ instruction_invalid.
+Definition code_manager := code_manager _ instruction_invalid.
 Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 
 |step_FarCall_NonKernel_Forward: forall flags regs mem_pages xstack0 xstack1 xstack2
-                                   (handler:imm_in) handler_location contracts
+                                   (handler:imm_in) handler_location storages
                                    codes context_u128 (abi dest:in_reg)
                                    is_static new_mem_pages
                                    new_code_page code_length (dest_val:word_type)
@@ -172,25 +174,25 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_context_u128 := context_u128;
 
 
-               gs_contracts    := contracts;
+               gs_storages    := storages;
                gs_contract_code:= codes;
              |}
              {|
                gs_flags        := flags_clear;
                gs_regs         := new_regs;
                gs_mem_pages    := new_mem_pages;
-               gs_callstack    := ExternalCall new_frame (Some xstack2);
+               gs_callstack    := new_stack;
                gs_context_u128 := zero128;
 
 
-               gs_contracts    := contracts;
+               gs_storages    := storages;
                gs_contract_code:= codes;
              |}
 
 
 |step_FarCall_NonKernel_HeapOrAuxHeap:
   forall flags regs mem_pages xstack0 xstack1 xstack2 xstack3
-                                   (handler:imm_in) handler_location contracts
+                                   (handler:imm_in) handler_location storages
                                    codes context_u128 (abi dest:in_reg)
                                    is_static new_mem_pages
                                    new_code_page code_length (dest_val:word_type)
@@ -265,7 +267,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_context_u128 := context_u128;
 
 
-               gs_contracts    := contracts;
+               gs_storages    := storages;
                gs_contract_code:= codes;
              |}
              {|
@@ -276,7 +278,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                gs_context_u128 := zero128;
 
 
-               gs_contracts    := contracts;
+               gs_storages    := storages;
                gs_contract_code:= codes;
              |}
 
