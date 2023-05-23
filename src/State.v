@@ -222,10 +222,12 @@ Fixpoint topmost_extframe (ef : execution_frame) : callframe_external :=
 
 Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
 
+Definition addr_is_kernel (addr:contract_address) : bool :=
+  lt_unsigned _ addr KERNEL_MODE_MAXADDR.
+
 Definition is_kernel (ef:execution_frame) : bool :=
   let ef := topmost_extframe ef in
-  lt_unsigned _ ef.(ecf_this_address) KERNEL_MODE_MAXADDR.
-
+  addr_is_kernel ef.(ecf_this_address).
 
 Definition mem_manager := list (mem_page_id * mem_page).
 
