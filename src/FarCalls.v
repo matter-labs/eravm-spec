@@ -53,19 +53,33 @@ Inductive alloc_pages_extframe:  mem_manager -> ctx_mem_pages -> code_page -> me
 
 Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 
-|step_FarCall_NonKernel_Forward: forall flags regs mem_pages xstack0 xstack1 xstack2 (handler:imm_in) handler_location contracts codes context_u128 (abi dest:in_reg) is_static new_mem_pages new_xstack new_code_page code_length dest_val abi_val new_mem_ctx in_ptr shrunk_ptr shard_id pass_ergs_query cost__decomm vhash,
+|step_FarCall_NonKernel_Forward: forall flags regs mem_pages xstack0 xstack1 xstack2
+                                   (handler:imm_in) handler_location contracts
+                                   codes context_u128 (abi dest:in_reg)
+                                   is_static new_mem_pages
+                                   new_code_page code_length (dest_val:word_type)
+                                   abi_val
+                                   new_mem_ctx in_ptr shrunk_ptr shard_id
+                                   pass_ergs_query cost__decomm vhash vtag,
 
     let old_frame := topmost_extframe xstack0 in
-    addr_is_kernel dest_val = false ->
-    resolve_fetch_value regs xstack0 mem_pages dest (IntValue dest_val) -> (* Fixme: also allow pointers *)
+    resolve_fetch_value regs xstack0 mem_pages dest (mk_pv vtag dest_val) ->
     resolve_fetch_value regs xstack0 mem_pages abi (PtrValue abi_val) ->
     resolve_fetch_value regs xstack0 mem_pages handler (IntValue handler_location) ->
+    let dest_addr := resize _ 160 dest_val in
+    addr_is_kernel dest_addr = false ->
 
-    (* any shard ID is accepted atm; consider_new_tx is ignored. *)
-    FarCall.ABI.(decode) abi_val = Some (FarCall.mk_params in_ptr pass_ergs_query shard_id ForwardFatPointer false false) ->
+    FarCall.ABI.(decode) abi_val = Some
+                                     {|
+                                       fc_memory_quasi_fat_ptr := in_ptr;
+                                       fc_ergs_passed := pass_ergs_query;
+                                       fc_shard_id := shard_id;
+                                       fc_forwarding_mode := ForwardFatPointer;
+                                       fc_constructor_call := false;
+                                       fc_consider_new_tx := false;
+                                     |} ->
 
     fat_ptr_shrink in_ptr shrunk_ptr ->
-
 
     code_fetch _ _ contracts codes.(cm_storage _ _) (resize 256 _ dest_val) (vhash, new_code_page, code_length) ->
     alloc_pages_extframe mem_pages old_frame.(ecf_mem_context) new_code_page (new_mem_pages, new_mem_ctx) ->

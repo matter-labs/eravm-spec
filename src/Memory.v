@@ -84,8 +84,13 @@ Section Memory.
 
 
     Inductive primitive_value :=
-      PtrValue: word_type -> primitive_value
-    | IntValue: word_type -> primitive_value.
+      mk_pv
+        {
+          is_ptr: bool;
+          value: word_type;
+        }.
+    Definition IntValue := mk_pv false.
+    Definition PtrValue := mk_pv true.
 
     Definition pv0 := IntValue word_zero_value.
 
