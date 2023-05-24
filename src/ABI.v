@@ -121,7 +121,7 @@ Module FarCall.
       fc_shard_id: u8;
       fc_forwarding_mode: forward_page_type;
       fc_constructor_call: bool;
-      fc_consider_new_tx: bool;
+      fc_to_system: bool;
     }.
 
 

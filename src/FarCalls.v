@@ -148,11 +148,11 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
     FarCall.ABI.(decode) abi_val = Some
                                      {|
                                        fc_memory_quasi_fat_ptr := in_ptr;
-                                       fc_ergs_passed := pass_ergs_query;
-                                       fc_shard_id := shard_id;
-                                       fc_forwarding_mode := ForwardFatPointer;
-                                       fc_constructor_call := false;
-                                       fc_consider_new_tx := false;
+                                       fc_ergs_passed          := pass_ergs_query;
+                                       fc_shard_id             := shard_id;
+                                       fc_forwarding_mode      := ForwardFatPointer;
+                                       fc_constructor_call     := false;
+                                       fc_to_system            := false;
                                      |} ->
 
     fat_ptr_shrink in_ptr shrunk_ptr ->
@@ -174,8 +174,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
                          ecf_context_u128_value := context_u128;
                          ecf_saved_storage_state := load _ current_contract storages;
                          ecx_common := {|
-                                        cf_exception_handler_location
-                                        := resize _ code_address_bits handler_location;
+                                        cf_exception_handler_location := resize _ code_address_bits handler_location;
                                         cf_sp := INITIAL_SP_ON_FAR_CALL;
                                         cf_pc := zero16;
                                         cf_ergs_remaining := pass_ergs_actual;
@@ -232,11 +231,11 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
     FarCall.ABI.(decode) abi_val = Some
                                      {|
                                        fc_memory_quasi_fat_ptr := in_ptr;
-                                       fc_ergs_passed := pass_ergs_query;
-                                       fc_shard_id := shard_id;
-                                       fc_forwarding_mode := fwd_mode;
-                                       fc_constructor_call := false;
-                                       fc_consider_new_tx := false;
+                                       fc_ergs_passed          := pass_ergs_query;
+                                       fc_shard_id             := shard_id;
+                                       fc_forwarding_mode      := fwd_mode;
+                                       fc_constructor_call     := false;
+                                       fc_to_system            := false;
                                      |} ->
     (fwd_mode = UseHeap \/ fwd_mode = UseAuxHeap) ->
     validate_fresh in_ptr = no_exceptions ->
