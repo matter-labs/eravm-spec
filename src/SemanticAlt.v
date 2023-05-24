@@ -1,10 +1,10 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon FarCalls.
 
-Import Bool ZArith Common CodeStorage Condition FarCalls MemoryBase Memory MemoryOps Instruction State ZMod
+Import Bool ZArith Common CodeStorage Condition ExecutionStack FarCalls MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits ABI ABI.FarCall ABI.Ret ABI.NearCall ABI.FatPointer Arg Arg.Coercions RecordSetNotations SemanticCommon.
 
-Inductive step_ins: instruction -> global_state -> global_state -> Prop :=
+Inductive step_ins: instruction -> state -> state -> Prop :=
 (**
 <<
 ## Far calls
@@ -34,7 +34,7 @@ Performs no operations with memory, but may adjust SP using address modes
 [RelSpPop] and [RelSPPush].
 *)
 | step_ModSP:
-  forall codes flags storages mem_pages xstack0 xstack1 new_xstack context_u128 in1 out1 regs,
+  forall codes flags depot pages xstack0 xstack1 new_xstack context_u128 in1 out1 regs,
     resolve_effect__in in1 xstack0 xstack1 ->
     resolve_effect__out out1 xstack1 new_xstack ->
     step_ins (OpModSP in1 out1)
@@ -44,10 +44,10 @@ Performs no operations with memory, but may adjust SP using address modes
 
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
           |}
           {|
           gs_callstack    := new_xstack;
@@ -55,10 +55,10 @@ Performs no operations with memory, but may adjust SP using address modes
 
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
           |}
 (**
 <<
@@ -67,38 +67,38 @@ Unsigned addition of two numbers.
 >>
 *)
   | step_Add:
-    forall codes flags new_flags mod_swap mod_sf storages mem_pages new_mem_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
 
-      binop_effect xstack regs mem_pages flags in1 in2 out mod_swap mod_sf
+      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
         (fun x y =>
           let (result, NEW_OF) := x + y in
           let NEW_EQ := EQ_of_bool (result == zero256) in
           let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
           (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
-        (new_xstack, new_regs, new_mem_pages, new_flags) ->
+        (new_xstack, new_regs, new_pages, new_flags) ->
 
       step_ins (OpAdd in1 in2 out mod_swap mod_sf)
         {|
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
+          gs_pages    := pages;
           gs_callstack    := xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := new_flags;
           gs_regs         := new_regs;
-          gs_mem_pages    := new_mem_pages;
+          gs_pages    := new_pages;
           gs_callstack    := new_xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 (**
 <<
@@ -108,38 +108,38 @@ Unsigned subtraction of two numbers.
 *)
 
 | step_Sub:
-    forall codes flags new_flags mod_swap mod_sf storages mem_pages new_mem_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
 
-      binop_effect xstack regs mem_pages flags in1 in2 out mod_swap mod_sf
+      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
         (fun x y =>
           let (result, NEW_OF) := x - y in
           let NEW_EQ := EQ_of_bool (result == zero256) in
           let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
           (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
-        (new_xstack, new_regs, new_mem_pages, new_flags) ->
+        (new_xstack, new_regs, new_pages, new_flags) ->
 
       step_ins (OpSub in1 in2 out mod_swap mod_sf)
         {|
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
+          gs_pages    := pages;
           gs_callstack    := xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := new_flags;
           gs_regs         := new_regs;
-          gs_mem_pages    := new_mem_pages;
+          gs_pages    := new_pages;
           gs_callstack    := new_xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 (**
 <<
@@ -149,34 +149,34 @@ Bitwise AND of two numbers.
 *)
 
 | step_And:
-    forall codes flags new_flags mod_swap mod_sf storages mem_pages new_mem_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
 
-      binop_effect xstack regs mem_pages flags in1 in2 out mod_swap mod_sf
+      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
         (fun x y => let result := bitwise_and _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_mem_pages, new_flags) ->
+        (new_xstack, new_regs, new_pages, new_flags) ->
 
       step_ins (OpAnd in1 in2 out mod_swap mod_sf)
         {|
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
+          gs_pages    := pages;
           gs_callstack    := xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := new_flags;
           gs_regs         := new_regs;
-          gs_mem_pages    := new_mem_pages;
+          gs_pages    := new_pages;
           gs_callstack    := new_xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 (**
 <<
@@ -185,34 +185,34 @@ Bitwise OR of two numbers.
 >>
 *)
 | step_Or:
-    forall codes flags new_flags mod_swap mod_sf storages mem_pages new_mem_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
 
-      binop_effect xstack regs mem_pages flags in1 in2 out mod_swap mod_sf
+      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
         (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_mem_pages, new_flags) ->
+        (new_xstack, new_regs, new_pages, new_flags) ->
 
       step_ins (OpOr in1 in2 out mod_swap mod_sf)
         {|
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
+          gs_pages    := pages;
           gs_callstack    := xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := new_flags;
           gs_regs         := new_regs;
-          gs_mem_pages    := new_mem_pages;
+          gs_pages    := new_pages;
           gs_callstack    := new_xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
 (**
@@ -222,34 +222,34 @@ Bitwise XOR of two numbers.
 >>
 *)
 | step_Xor:
-    forall codes flags new_flags mod_swap mod_sf storages mem_pages new_mem_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
 
-      binop_effect xstack regs mem_pages flags in1 in2 out mod_swap mod_sf
+      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
         (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_mem_pages, new_flags) ->
+        (new_xstack, new_regs, new_pages, new_flags) ->
 
       step_ins (OpXor in1 in2 out mod_swap mod_sf)
         {|
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
+          gs_pages    := pages;
           gs_callstack    := xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := new_flags;
           gs_regs         := new_regs;
-          gs_mem_pages    := new_mem_pages;
+          gs_pages    := new_pages;
           gs_callstack    := new_xstack;
 
 
-          gs_storages     := storages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 (**
 <<
@@ -260,9 +260,9 @@ Calls the code inside the current contract space.
 >>
          *)
  | step_NearCall_pass_some_ergs:
-    forall codes flags storages mem_pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_left passed_ergs,
+    forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_left passed_ergs,
 
-      resolve_fetch_word regs xstack0 mem_pages abi_params_op abi_params_value ->
+      resolve_fetch_word regs xstack0 pages abi_params_op abi_params_value ->
 
       Some passed_ergs = option_map NearCall.nca_get_ergs_passed (NearCall.ABI.(decode) abi_params_value) ->
 
@@ -278,10 +278,10 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := flags_clear;
@@ -289,15 +289,15 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
  | step_NearCall_underflow_pass_all_ergs:
-    forall codes flags storages mem_pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_underflown passed_ergs,
-      resolve_fetch_word regs xstack0 mem_pages abi_params_op abi_params_value ->
+    forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler ergs_underflown passed_ergs,
+      resolve_fetch_word regs xstack0 pages abi_params_op abi_params_value ->
       Some passed_ergs = option_map NearCall.nca_get_ergs_passed (NearCall.ABI.(decode) abi_params_value) ->
       passed_ergs <> zero32 ->
 
@@ -311,26 +311,26 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := flags_clear;
-          gs_callstack    := InternalCall new_frame (ergs_zero xstack0);
+          gs_callstack    := InternalCall new_frame (ergs_reset xstack0);
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
   | step_NearCall_pass_all_ergs:
-    forall codes flags storages mem_pages xstack0 xstack1 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler,
-      resolve_fetch_word regs xstack0 mem_pages abi_params_op abi_params_value ->
+    forall codes flags depot pages xstack0 xstack1 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler,
+      resolve_fetch_word regs xstack0 pages abi_params_op abi_params_value ->
 
       option_map NearCall.nca_get_ergs_passed  (NearCall.ABI.(decode) abi_params_value)= Some zero32 ->
 
@@ -342,22 +342,22 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
         {|
           gs_flags        := flags_clear;
-          gs_callstack    := InternalCall new_frame (ergs_zero xstack1);
+          gs_callstack    := InternalCall new_frame (ergs_reset xstack1);
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
  (**
@@ -367,7 +367,7 @@ Calls the code inside the current contract space.
 >>
   *)
 | step_RetLocal_nolabel:
-    forall codes flags storages mem_pages cf caller_stack new_caller_stack context_u128 regs _ignored,
+    forall codes flags depot pages cf caller_stack new_caller_stack context_u128 regs _ignored,
 
       let xstack := InternalCall cf caller_stack in
 
@@ -379,10 +379,10 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := flags_clear;
@@ -390,10 +390,10 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
         |}
 
 | step_RetLocal_label:
@@ -404,17 +404,17 @@ Calls the code inside the current contract space.
 
 
 | step_RetExt_ForwardFatPointer:
-  forall codes flags storages mem_pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
+  forall codes flags depot pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
     let xstack0 := ExternalCall cf (Some caller_stack) in
     (* Panic if not a pointer *)
-    resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+    resolve_fetch_value regs xstack0 pages arg (PtrValue in_ptr_encoded) ->
 
     Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr ForwardFatPointer) ->
 
     (* Panic if either [page_older] or [validate] do not hold *)
-    page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+    page_older in_ptr.(fp_page) (get_active_pages xstack0) = false ->
 
-    ergs_reimburse_caller xstack0 new_caller_stack ->
+    ergs_reimburse_caller_and_drop xstack0 new_caller_stack ->
     fat_ptr_shrink in_ptr shrunk_ptr ->
 
     let encoded_shrunk_ptr := FatPointer.ABI.(encode) shrunk_ptr in
@@ -426,9 +426,9 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages    := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot    := depot;
+          gs_contracts    := codes;
           |}
           {|
           gs_flags        := flags_clear;
@@ -441,13 +441,13 @@ Calls the code inside the current contract space.
           gs_context_u128 := zero128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
           |}
 (* ------ *)
 | step_RetExt_ForwardFatPointer':
-  forall codes flags storages mem_pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
+  forall codes flags depot pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
     let xstack0 := ExternalCall cf (Some caller_stack) in
     let gs := {|
           gs_flags        := flags;
@@ -456,19 +456,19 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
           |}  in
     (* Panic if not a pointer *)
-    resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+    resolve_fetch_value regs xstack0 pages arg (PtrValue in_ptr_encoded) ->
 
     Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr ForwardFatPointer) ->
 
     (* Panic if either [page_older] or [validate] do not hold *)
-    page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+    page_older in_ptr.(fp_page) (get_active_pages xstack0) = false ->
 
-    ergs_reimburse_caller xstack0 new_caller_stack ->
+    ergs_reimburse_caller_and_drop xstack0 new_caller_stack ->
     fat_ptr_shrink in_ptr shrunk_ptr ->
 
     let encoded_shrunk_ptr := FatPointer.ABI.(encode) shrunk_ptr in
@@ -486,25 +486,25 @@ Calls the code inside the current contract space.
 (* ------ *)
 
 | step_RetExt_UseHeapOrAuxHeap:
-    forall codes flags storages mem_pages cf xstack1 caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr page_id mode current_bound diff,
+    forall codes flags depot pages cf xstack1 caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr page_id mode current_bound diff,
 
       let xstack0 := ExternalCall cf (Some caller_stack) in
 
       (* Panic if not a pointer*)
-      resolve_fetch_value regs xstack0 mem_pages arg (IntValue in_ptr_encoded) \/ resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+      resolve_fetch_value regs xstack0 pages arg (IntValue in_ptr_encoded) \/ resolve_fetch_value regs xstack0 pages arg (PtrValue in_ptr_encoded) ->
 
       Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr mode) ->
       (mode = UseHeap \/ mode = UseAuxHeap) ->
 
       (* Panic if either [page_older] or [validate] does not hold *)
-      page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+      page_older in_ptr.(fp_page) (get_active_pages xstack0) = false ->
       select_page_bound xstack0 mode (page_id, current_bound) ->
       fat_ptr_induced_growth in_ptr current_bound diff ->
       pay (Ergs.growth_cost diff) xstack0 xstack1 ->
 
-      ergs_reimburse_caller xstack1 new_caller_stack ->
+      ergs_reimburse_caller_and_drop xstack1 new_caller_stack ->
 
-      let out_ptr := in_ptr <| fp_mem_page := page_id |> in
+      let out_ptr := in_ptr <| fp_page := page_id |> in
       let out_ptr_encoded := FatPointer.ABI.(encode) out_ptr in
       step_ins (OpRet arg label_ignored)
         {|
@@ -514,9 +514,9 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
         |}
         {|
           gs_flags        := flags_clear;
@@ -529,9 +529,9 @@ Calls the code inside the current contract space.
           gs_context_u128 := zero128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
         |}
 
 (**
@@ -551,15 +551,15 @@ Calls the code inside the current contract space.
     step_ins (OpRevert _ignored None) gs (gs1 <| gs_callstack ::= pc_set dest |> )
 
 | step_RevertExt_ForwardFatPointer:
-  forall codes flags storages mem_pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
+  forall codes flags depot pages cf caller_stack new_caller_stack context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr shrunk_ptr,
     let xstack0 := ExternalCall cf (Some caller_stack) in
     (* Panic if not ptr *)
-    resolve_fetch_value regs xstack0 mem_pages arg (PtrValue in_ptr_encoded) ->
+    resolve_fetch_value regs xstack0 pages arg (PtrValue in_ptr_encoded) ->
 
     Ret.ABI.(decode) in_ptr_encoded = Some( Ret.mk_params in_ptr ForwardFatPointer) ->
 
     (* Panic if either [page_older] or [validate] do not hold *)
-    page_older in_ptr.(fp_mem_page) cf.(ecf_mem_context)  = false ->
+    page_older in_ptr.(fp_page) (get_active_pages xstack0) = false ->
 
     fat_ptr_shrink in_ptr shrunk_ptr ->
     ergs_reimburse (ergs_remaining xstack0) caller_stack new_caller_stack ->
@@ -579,9 +579,9 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
          |}
          {|
           gs_flags        := flags_clear;
@@ -590,9 +590,9 @@ Calls the code inside the current contract space.
           gs_context_u128 := zero128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
          |}
 (**
 <<
@@ -607,7 +607,7 @@ Calls the code inside the current contract space.
 
 
  | step_PanicExt:
-   forall codes flags storages mem_pages cf caller_stack context_u128 regs label_ignored,
+   forall codes flags depot pages cf caller_stack context_u128 regs label_ignored,
 
      let xstack0 := ExternalCall cf (Some caller_stack) in
 
@@ -625,9 +625,9 @@ Calls the code inside the current contract space.
           gs_callstack    := xstack0;
           gs_context_u128 := context_u128;
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
           |}
           {|
           gs_flags        := set_overflow flags_clear;
@@ -636,40 +636,40 @@ Calls the code inside the current contract space.
           gs_context_u128 := zero128;
 
 
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
-          gs_contract_code:= codes;
+          gs_pages    := pages;
+          gs_depot     := depot;
+          gs_contracts    := codes;
           |}
 .
 
-Inductive step: global_state -> global_state -> Prop :=
+Inductive step: state -> state -> Prop :=
    | step_correct:
-    forall codes flags storages mem_pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
+    forall codes flags depot pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages    := storages;
+          gs_pages    := pages;
+          gs_depot    := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
           |} in
       let gs1 := {|
           gs_callstack    := new_xstack;
 
           gs_flags        := flags;
           gs_regs         := regs;
-          gs_mem_pages    := mem_pages;
-          gs_storages     := storages;
+          gs_pages    := pages;
+          gs_depot     := depot;
           gs_context_u128 := context_u128;
-          gs_contract_code:= codes;
+          gs_contracts    := codes;
           |} in
       cond_holds cond flags = true ->
 
       check_requires_kernel ins (is_kernel xstack0) = true ->
       check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = true ->
-      fetch_instr regs xstack0 mem_pages (Ins ins cond) ->
+      fetch_instr regs xstack0 pages (Ins ins cond) ->
 
       update_pc_regular xstack0 xstack1 ->
       pay (base_cost ins) xstack1 new_xstack ->

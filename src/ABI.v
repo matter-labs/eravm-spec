@@ -18,14 +18,14 @@ Record coder {ABIParams:Type} := {
 Module FatPointer.
   Record fat_ptr :=
     mk_fat_ptr {
-        fp_mem_page: mem_page_id;
+        fp_page: page_id;
         fp_start: mem_address;
         fp_length: mem_address;
         fp_offset: mem_address;
       }.
 
   #[export] Instance etaFatPointer: Settable _
-    := settable! mk_fat_ptr < fp_mem_page; fp_start; fp_length; fp_offset>.
+    := settable! mk_fat_ptr < fp_page; fp_start; fp_length; fp_offset>.
 
   Axiom ABI : @coder fat_ptr.
 
@@ -42,7 +42,7 @@ Module FatPointer.
 
   Definition fat_ptr_empty :=
     {|
-      fp_mem_page := 0;
+      fp_page := 0;
       fp_start := zero32;
       fp_length:= zero32;
       fp_offset:= zero32;
@@ -79,10 +79,10 @@ Module FatPointer.
       fst (usub_overflow _ query_bound current_bound).
 
   Inductive fat_ptr_induced_growth: fat_ptr -> forall current_bound: mem_address, mem_address -> Prop :=
-  | gb_bytes: forall fp_mem_page fp_start fp_length fp_offset query_bound current_bound,
+  | gb_bytes: forall fp_page fp_start fp_length fp_offset query_bound current_bound,
       fp_start + fp_length = (query_bound, false) ->
       let diff := growth current_bound query_bound in
-      fat_ptr_induced_growth (mk_fat_ptr fp_mem_page fp_start fp_length fp_offset) current_bound diff.
+      fat_ptr_induced_growth (mk_fat_ptr fp_page fp_start fp_length fp_offset) current_bound diff.
 
 End FatPointer.
 

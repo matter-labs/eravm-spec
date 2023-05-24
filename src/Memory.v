@@ -49,14 +49,14 @@ Definition storage_empty : storage_type := empty storage_params.
 
 (** §2. Every contract has a storage. *)
 
-Definition contracts_params := {|
+Definition depot_params := {|
                                 addressable_block := storage_type;
                                 address_bits := 160;
                                 default_value := storage_empty;
                                 writable := true
                               |}.
-Definition contract_address := address contracts_params.
-Definition contract_collection_type := mem_parameterized contracts_params.
+Definition contract_address := address depot_params.
+Definition depot := mem_parameterized depot_params.
 
 
 
@@ -80,7 +80,7 @@ Section Memory.
 
     Definition data_page := mem_parameterized data_page_params.
 
-    Definition mem_page_id := nat.
+    Definition page_id := nat.
 
 
     Inductive primitive_value :=
@@ -138,40 +138,40 @@ Section Memory.
     Definition code_length := code_address.
 
 
-    Record ctx_mem_pages:=
+    Record active_pages :=
       {
-        ctx_code_page_id:  mem_page_id;
-        ctx_const_page_id:  mem_page_id;
-        ctx_stack_page_id:  mem_page_id;
-        ctx_heap_page_id:  mem_page_id;
-        ctx_heap_aux_page_id:  mem_page_id;
-        ctx_heap_bound: u32;  (* FIXME type, provenanc, value *)
-        ctx_aux_heap_bound: u32;  (* FIXME type, provenance, value*)
+        ctx_code_page_id:  page_id;
+        ctx_const_page_id:  page_id;
+        ctx_stack_page_id:  page_id;
+        ctx_heap_page_id:  page_id;
+        ctx_auxheap_page_id:  page_id;
+        ctx_heap_bound: mem_address;
+        ctx_aux_heap_bound: mem_address;
       }.
 
-    Inductive mem_page :=
+    Inductive page :=
     (** Heap or auxheap *)
-    | DataPage : data_page -> mem_page
-    | StackPage : stack_page -> mem_page
-    | ConstPage : const_page -> mem_page
-    | CodePage : code_page -> mem_page.
+    | DataPage : data_page -> page
+    | StackPage : stack_page -> page
+    | ConstPage : const_page -> page
+    | CodePage : code_page -> page.
 
-    Definition mem_pages := list (prod nat mem_page).
+    Definition pages := list (prod nat page).
 
-    Definition page_alloc (p:mem_page) (m: mem_pages) : mem_pages :=
+    Definition page_alloc (p:page) (m: pages) : pages :=
              cons (length m, p) m.
 
     Import Nat.
-    Definition page_older (id: mem_page_id) (mps: ctx_mem_pages) : bool :=
+    Definition page_older (id: page_id) (mps: active_pages) : bool :=
       match mps with
-      | Build_ctx_mem_pages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
-          ctx_heap_page_id ctx_heap_aux_page_id ctx_heap_bound
+      | Build_active_pages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
+          ctx_heap_page_id ctx_auxheap_page_id ctx_heap_bound
           ctx_aux_heap_bound =>
           ltb id ctx_code_page_id &&
             ltb id ctx_const_page_id &&
             ltb id ctx_stack_page_id &&
             ltb id ctx_heap_page_id &&
-            ltb id ctx_heap_aux_page_id
+            ltb id ctx_auxheap_page_id
       end.
   End Pages.
 

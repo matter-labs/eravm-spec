@@ -1,25 +1,25 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Condition Memory Instruction State MemoryOps ABI.
+Require Common Condition ExecutionStack Memory Instruction State MemoryOps ABI.
 
-Import Bool ZArith Common CodeStorage Condition MemoryBase Memory MemoryOps Instruction State ZMod
+Import Bool ZArith Common CodeStorage Condition ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits ABI ABI.FarCall ABI.Ret ABI.NearCall ABI.FatPointer Arg Arg.Coercions.
 
 
 Definition reg_reserved := pv0.
 
-Inductive update_pc_regular : execution_frame -> execution_frame -> Prop :=
+Inductive update_pc_regular : execution_stack -> execution_stack -> Prop :=
 | fp_update:
-  forall pc pc' ef ef',
-    fetch_pc ef pc ->
+  forall pc' ef,
+    let pc := pc_get ef in
     uinc_overflow _ pc = (pc',false) ->
-    update_pc pc' ef ef' ->
+    let ef' := pc_set pc' ef in
     update_pc_regular ef ef'.
 
-Inductive binop_effect: execution_frame -> regs_state -> mem_manager -> flags_state ->
+Inductive binop_effect: execution_stack -> regs_state -> pages -> flags_state ->
                         in_any -> in_any -> out_any ->
                         mod_swap -> mod_set_flags ->
                         (word_type -> word_type -> (word_type * flags_state)) ->
-                        (execution_frame * regs_state * mem_manager * flags_state) -> Prop :=
+                        (execution_stack * regs_state * pages * flags_state) -> Prop :=
 | be_apply:
   forall f ef0 ef1 ef' regs regs' mm mm' (in1 in2: in_any) (out: out_any) loc1 loc2
     op1 op2 op1' op2' swap set_flags out_loc result flags_candidate flags0 new_flags,
@@ -36,40 +36,37 @@ Inductive binop_effect: execution_frame -> regs_state -> mem_manager -> flags_st
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
     binop_effect ef0 regs mm flags0 in1 in2 out swap set_flags f (ef', regs', mm', new_flags).
 
-Definition affordable ef (e:ergs): bool :=
- match ergs_remaining ef - e with
-   | (paid, false) => true
-   | (overflowed, true) => false
- end.
-
-Inductive pay : ergs -> execution_frame -> execution_frame -> Prop :=
-  | pay_ergs : forall e ef paid,
-      ergs_remaining ef - e = (paid, false) ->
-      pay e ef (ergs_set paid ef).
-
-    (* growth_bytes ptr current_bound bytes_grown ->  *)
-
-Inductive pay_growth_or_bankrupt : mem_address -> execution_frame -> execution_frame -> Prop  :=
+Inductive pay_growth_or_burn: mem_address -> execution_stack -> execution_stack -> Prop  :=
 | phg_affordable: forall ef ef' diff,
     let cost := Ergs.growth_cost diff in
     affordable ef cost = true ->
     pay cost ef ef' ->
-    pay_growth_or_bankrupt diff ef ef'
-| phg_too_expensive: forall ef ef' diff, 
+    pay_growth_or_burn diff ef ef'
+| phg_too_expensive: forall ef diff,
     let cost := Ergs.growth_cost diff in
     affordable ef cost = false ->
-    ef' = ergs_zero ef ->
-    pay_growth_or_bankrupt diff ef ef'.
+    pay_growth_or_burn diff ef (ergs_reset ef).
 
-
-Inductive pay_growth_or_bankrupt_ptr : mem_address -> fat_ptr -> execution_frame -> execution_frame -> Prop  :=
+Inductive pay_growth_or_burn_ptr : mem_address -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
 | pgb_ptr:forall current_bound ptr diff ef ef',
     fat_ptr_induced_growth ptr current_bound diff ->
-    pay_growth_or_bankrupt diff ef ef' -> 
-    pay_growth_or_bankrupt_ptr current_bound ptr ef ef'.
+    pay_growth_or_burn diff ef ef' -> 
+    pay_growth_or_burn_ptr current_bound ptr ef ef'.
 
-Inductive select_page_bound : execution_frame -> Ret.forward_page_type -> mem_page_id * mem_address -> Prop :=
+
+Inductive select_page_bound : execution_stack -> Ret.forward_page_type -> page_id * mem_address -> Prop :=
 | fpmspb_heap: forall ef,
-    select_page_bound ef UseHeap (active_heap_id ef, (active_mem_ctx ef).(ctx_heap_bound))
+    select_page_bound ef UseHeap
+      (active_heap_id ef, (get_active_pages ef).(ctx_heap_bound))
 | fpmspb_auxheap: forall ef,
-    select_page_bound ef UseAuxHeap (active_auxheap_id ef, (active_mem_ctx ef).(ctx_aux_heap_bound)).
+    select_page_bound ef UseAuxHeap
+      (active_auxheap_id ef, (get_active_pages ef).(ctx_aux_heap_bound)).
+
+Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
+
+Definition addr_is_kernel (addr:contract_address) : bool :=
+  lt_unsigned _ addr KERNEL_MODE_MAXADDR.
+
+Definition in_kernel_mode (ef:callframe) : bool :=
+  let ef := topmost_extframe ef in
+  addr_is_kernel ef.(ecf_this_address).
