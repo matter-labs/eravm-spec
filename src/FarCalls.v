@@ -97,13 +97,6 @@ Inductive grow_page: forward_page_type -> mem_address -> ctx_mem_pages -> ctx_me
          ctx_aux_heap_bound := new_bound;
        |}.
 
-Inductive change_topmost_extframe f : execution_frame -> execution_frame -> Prop :=
-  | ct_base: forall cf t,
-    change_topmost_extframe f (ExternalCall cf t) (ExternalCall (f cf) t)
-  | ct_ind: forall cf t t',
-    change_topmost_extframe f t t' ->
-    change_topmost_extframe f (InternalCall cf t) (InternalCall cf t')
-.
 Inductive code_fetch_and_pay : contract_collection_type -> code_manager -> contract_address
                                -> execution_frame -> execution_frame * code_page
                                ->Prop :=
@@ -206,7 +199,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
 
 
 |step_FarCall_NonKernel_HeapOrAuxHeap:
-  forall flags regs mem_pages xstack0 xstack1 xstack2 xstack3
+  forall flags regs mem_pages xstack0 xstack1 xstack2 
                                    (handler:imm_in) handler_location storages
                                    codes context_u128 (abi dest:in_reg)
                                    is_static new_mem_pages
@@ -248,7 +241,7 @@ Inductive step_farcall: instruction -> global_state -> global_state -> Prop :=
     pay (Ergs.growth_cost diff) xstack1 xstack2 ->
 
     grow_page fwd_mode diff old_mem_ctx new_caller_mem_ctx ->
-    change_topmost_extframe (fun x => x<| ecf_mem_context := new_caller_mem_ctx|>) xstack2 xstack3 ->
+    let xstack3 := update_memory_context new_caller_mem_ctx xstack2 in
 
     pass_allowed_ergs pass_ergs_query pass_ergs_actual xstack3 new_caller_stack ->
 
