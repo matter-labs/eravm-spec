@@ -1,8 +1,29 @@
 From RecordUpdate Require Import RecordSet.
 Require Common Condition ExecutionStack Memory Instruction State MemoryOps ABI.
 
-Import Bool ZArith Common CodeStorage Condition ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
-  ZBits ABI ABI.FarCall ABI.Ret ABI.NearCall ABI.FatPointer Arg Arg.Coercions.
+Import
+ABI
+ABI.FarCall
+ABI.FatPointer
+ABI.NearCall
+ABI.Ret
+Bool
+CodeStorage
+Common
+Condition
+ExecutionStack
+Instruction
+Instruction
+Memory
+MemoryBase
+MemoryOps
+RecordSetNotations
+State
+ZArith
+ZBits
+ZMod.
+
+Import Arg Arg.Coercions.
 
 
 Definition reg_reserved := pv0.
@@ -50,8 +71,18 @@ Inductive pay_growth_or_burn: mem_address -> execution_stack -> execution_stack 
 Inductive pay_growth_or_burn_ptr : mem_address -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
 | pgb_ptr:forall current_bound ptr diff ef ef',
     fat_ptr_induced_growth ptr current_bound diff ->
-    pay_growth_or_burn diff ef ef' -> 
+    pay_growth_or_burn diff ef ef' ->
     pay_growth_or_burn_ptr current_bound ptr ef ef'.
+
+Inductive grow_heap_page: mem_address -> active_pages -> active_pages -> Prop :=
+| gp_heap: forall ap new_bound diff,
+    ap.(ctx_heap_bound) + diff = (new_bound, false) ->
+    grow_heap_page diff ap (ap <| ctx_heap_bound := new_bound |>).
+
+Inductive grow_auxheap_page : mem_address -> active_pages -> active_pages -> Prop :=
+| gp_auxheap: forall ap new_bound diff,
+    ap.(ctx_auxheap_bound) + diff = (new_bound, false) ->
+    grow_auxheap_page diff ap (ap <| ctx_auxheap_bound := new_bound |>).
 
 
 Inductive select_page_bound : execution_stack -> Ret.forward_page_type -> page_id * mem_address -> Prop :=
@@ -70,3 +101,6 @@ Definition addr_is_kernel (addr:contract_address) : bool :=
 Definition in_kernel_mode (ef:callframe) : bool :=
   let ef := topmost_extframe ef in
   addr_is_kernel ef.(ecf_this_address).
+
+Definition code_storage := code_storage _ instruction_invalid.
+Definition code_manager := code_manager.

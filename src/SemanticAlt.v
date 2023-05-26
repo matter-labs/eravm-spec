@@ -7,16 +7,6 @@ Import Bool ZArith Common CodeStorage Condition ExecutionStack FarCalls MemoryBa
 Inductive step_ins: instruction -> state -> state -> Prop :=
 (**
 <<
-## Far calls
->>
-*)
-
-|step_FarCall: forall gs gs' abi dest handler is_static,
-    step_farcall (OpFarCall abi dest handler is_static) gs gs' ->
-    step_ins (OpFarCall abi dest handler is_static) gs gs'
-
-(**
-<<
 ## NoOp
 
 Performs no operations.
@@ -640,6 +630,30 @@ Calls the code inside the current contract space.
           gs_depot     := depot;
           gs_contracts    := codes;
           |}
+(**
+<<
+## Far calls
+>>
+*)
+| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step_ins (OpFarCall abi dest handler call_as_static) gs gs'
+
+| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step_ins (OpMimicCall abi dest handler call_as_static) gs gs'
+| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step_ins (OpDelegateCall abi dest handler call_as_static) gs gs'
 .
 
 Inductive step: state -> state -> Prop :=
