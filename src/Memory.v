@@ -83,8 +83,7 @@ Section Memory.
     Definition page_id := nat.
 
 
-    Inductive primitive_value :=
-      mk_pv
+    Inductive primitive_value := mk_pv
         {
           is_ptr: bool;
           value: word_type;
@@ -93,6 +92,9 @@ Section Memory.
     Definition PtrValue := mk_pv true.
 
     Definition pv0 := IntValue word_zero_value.
+
+    Definition clear_pointer_tag (pv:primitive_value): primitive_value :=
+      match pv with | mk_pv _ value => mk_pv false value end.
 
     Definition stack_page_params := {|
                                      addressable_block := primitive_value;
@@ -244,8 +246,11 @@ Section Memory.
     #[export] Instance etaGPRs : Settable _ := settable! mk_regs < gprs_r1  ; gprs_r2  ; gprs_r3  ; gprs_r4  ; gprs_r5  ; gprs_r6  ; gprs_r7  ; gprs_r8  ; gprs_r9  ; gprs_r10  ; gprs_r11  ; gprs_r12  ; gprs_r13  ; gprs_r14  ; gprs_r15  >.
     (* end hide *)
 
-
-
+    Definition reg_map f (rs:regs_state) : regs_state :=
+      match rs with
+      | mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 =>
+          ( mk_regs (f r1) (f r2) (f r3) (f r4) (f r5) (f r6) (f r7) (f r8) (f r9) (f r10) (f r11) (f r12) (f r13) (f r14) (f r15))
+      end.
 
   End Regs.
 
