@@ -115,7 +115,7 @@ End NearCall.
 (** * Far call *)
 Module FarCall.
   Import FatPointer Ret.
-  Record far_call := mk_params {
+  Record params := mk_params {
       fc_memory_quasi_fat_ptr: fat_ptr;
       fc_ergs_passed: ergs;
       fc_shard_id: u8;
@@ -125,6 +125,6 @@ Module FarCall.
     }.
 
 
-  Axiom ABI: @coder far_call.
+  Axiom ABI: @coder params.
 
 End FarCall.
