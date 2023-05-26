@@ -33,16 +33,6 @@ Definition NEW_FRAME_MEMORY_STIPEND : mem_address := ZMod.int_mod_of _ 1024.
 Definition max_passable (remaining:ergs) : ergs :=
   int_mod_of _(((int_val _ remaining) / 64 ) * 63)%Z.
 
-Record FarCallExceptions : Set := {
-    fce_input_is_not_pointer_when_expected : bool;
-    fce_invalid_code_hash_format : bool;
-    fce_not_enough_ergs_to_decommit : bool;
-    fce_not_enough_ergs_to_grow_memory : bool;
-    fce_malformed_abi_quasi_pointer : bool;
-    fce_call_in_now_constructed_system_contract : bool;
-    fce_note_enough_ergs_for_extra_far_call_costs : bool;
-  }.
-
 
 Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
 |dc_fresh: forall cost,
@@ -272,4 +262,17 @@ Inductive fetch_operands abi dest handler:
 
 
 
-Inductive step_farcall: instruction -> state -> state -> Prop :=
+(**
+<<
+# Possible exceptions
+>>
+ *)
+Record FarCallExceptions : Set := {
+    fce_input_is_not_pointer_when_expected : bool;
+    fce_invalid_code_hash_format : bool;
+    fce_not_enough_ergs_to_decommit : bool;
+    fce_not_enough_ergs_to_grow_memory : bool;
+    fce_malformed_abi_quasi_pointer : bool;
+    fce_call_in_now_constructed_system_contract : bool;
+    fce_note_enough_ergs_for_extra_far_call_costs : bool;
+  }.
