@@ -266,4 +266,7 @@ Section ActivePages.
   Definition active_auxheap_id (ef: callframe) : page_id :=
     (get_active_pages ef).(ctx_auxheap_page_id).
 
+  Definition heap_bound xstack := (get_active_pages xstack).(ctx_heap_bound).
+  Definition auxheap_bound xstack := (get_active_pages xstack).(ctx_auxheap_bound).
+
 End ActivePages.
