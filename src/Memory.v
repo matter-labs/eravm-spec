@@ -138,7 +138,7 @@ Section Memory.
     Definition code_length := code_address.
 
 
-    Record active_pages :=
+    Record active_pages := mk_apages
       {
         ctx_code_page_id:  page_id;
         ctx_const_page_id:  page_id;
@@ -148,6 +148,8 @@ Section Memory.
         ctx_heap_bound: mem_address;
         ctx_auxheap_bound: mem_address;
       }.
+
+    #[export] Instance etaAP: Settable _ := settable! mk_apages< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
 
     Inductive page :=
     (** Heap or auxheap *)
@@ -164,7 +166,7 @@ Section Memory.
     Import Nat.
     Definition page_older (id: page_id) (mps: active_pages) : bool :=
       match mps with
-      | Build_active_pages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
+      | mk_apages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
           ctx_heap_page_id ctx_auxheap_page_id ctx_heap_bound
           ctx_aux_heap_bound =>
           ltb id ctx_code_page_id &&
