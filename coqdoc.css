@@ -1,7 +1,7 @@
 @import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700);
 
 body{
-    font-family: 'Open Sans', sans-serif;
+    font-family: ui-sans-serif, -apple-system, "system-ui", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"
     font-size: 14px;
     color: #2D2D2D
 }
@@ -31,7 +31,6 @@ h, h1, h2, h3, h4, h5 {
     color: black;
     text-rendering: optimizeLegibility;
     font-weight: normal;
-    letter-spacing: 0.1em;
     text-align: left;
 }
 
@@ -147,7 +146,6 @@ tr.infrulemiddle hr {
 /* TOC */
 
 #toc h2{
-  letter-spacing: 0;
   font-size: 1.333em;
 }
 
