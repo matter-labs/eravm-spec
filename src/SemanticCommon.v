@@ -60,7 +60,7 @@ Inductive select_page_bound : execution_stack -> Ret.forward_page_type -> page_i
       (active_heap_id ef, (get_active_pages ef).(ctx_heap_bound))
 | fpmspb_auxheap: forall ef,
     select_page_bound ef UseAuxHeap
-      (active_auxheap_id ef, (get_active_pages ef).(ctx_aux_heap_bound)).
+      (active_auxheap_id ef, (get_active_pages ef).(ctx_auxheap_bound)).
 
 Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
 

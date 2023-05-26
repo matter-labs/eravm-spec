@@ -146,7 +146,7 @@ Section Memory.
         ctx_heap_page_id:  page_id;
         ctx_auxheap_page_id:  page_id;
         ctx_heap_bound: mem_address;
-        ctx_aux_heap_bound: mem_address;
+        ctx_auxheap_bound: mem_address;
       }.
 
     Inductive page :=
