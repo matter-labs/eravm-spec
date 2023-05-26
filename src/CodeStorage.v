@@ -31,20 +31,25 @@ Section Defs.
 
   Definition is_fresh cm := contains _ VersionedHash.eq_dec (cm_fresh cm).
 
-  Inductive code_fetch: depot -> code_storage
-                        -> contract_address -> (versioned_hash *code_page * code_length) -> Prop :=
-  | cfh_load : forall (contracts:depot) (called_address:contract_address) deployer_storage hash_enc (code_storage:code_storage) code_length_in_words extra_marker partial_hash page_init,
+  Inductive code_fetch_no_masking: depot -> code_storage
+                        -> contract_address -> (versioned_hash * code_page * code_length) -> Prop :=
+  | cfnm_load : forall (contracts:depot) (called_address:contract_address) deployer_storage hash_enc (code_storage:code_storage) code_length_in_words extra_marker partial_hash page_init,
       load_result _ DEPLOYER_SYSTEM_CONTRACT_ADDRESS contracts deployer_storage ->
       load_result storage_params (@resize _ 256 called_address) deployer_storage hash_enc ->
       hash_enc <> zero256 ->
       hash_coder.(decode) hash_enc = Some (mk_vhash code_length_in_words extra_marker partial_hash) ->
       marker_valid extra_marker = true ->
       load_result (code_storage_params) (@resize _ 256 partial_hash) code_storage page_init ->
-      code_fetch contracts code_storage called_address ((mk_vhash code_length_in_words extra_marker partial_hash), page_init,code_length_in_words)
+      code_fetch_no_masking contracts code_storage called_address ((mk_vhash code_length_in_words extra_marker partial_hash), page_init,code_length_in_words).
+
+  Inductive code_fetch: bool -> depot -> code_storage -> contract_address -> (versioned_hash * code_page * code_length) -> Prop :=
+  | cfh_load is_masking_allowed: forall (contracts:depot) (called_address:contract_address) (code_storage:code_storage) code_length_in_words extra_marker partial_hash page_init,
+      code_fetch_no_masking contracts code_storage called_address ((mk_vhash code_length_in_words extra_marker partial_hash), page_init,code_length_in_words) ->
+      code_fetch is_masking_allowed contracts code_storage called_address ((mk_vhash code_length_in_words extra_marker partial_hash), page_init,code_length_in_words)
 
   | cfh_load_aa_default : forall (contracts:depot) (called_address:contract_address) deployer_storage (code_storage:code_storage),
       load_result _ DEPLOYER_SYSTEM_CONTRACT_ADDRESS contracts deployer_storage ->
       load_result storage_params (@resize _ 256 called_address) deployer_storage zero256->
-      code_fetch contracts code_storage called_address (DEFAULT_AA_VHASH, DEFAULT_AA_CODE _ invalid_ins,code_length_in_words DEFAULT_AA_VHASH).
+      code_fetch true contracts code_storage called_address (DEFAULT_AA_VHASH, DEFAULT_AA_CODE _ invalid_ins,code_length_in_words DEFAULT_AA_VHASH).
 
 End Defs.
