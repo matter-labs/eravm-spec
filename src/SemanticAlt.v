@@ -56,191 +56,81 @@ Performs no operations with memory, but may adjust SP using address modes
 Unsigned addition of two numbers.
 >>
 *)
-  | step_Add:
-    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+| step_Add:
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
-        (fun x y =>
-          let (result, NEW_OF) := x + y in
-          let NEW_EQ := EQ_of_bool (result == zero256) in
-          let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
-          (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
-        (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step in1 in2 out mod_swap mod_sf
+      (fun x y =>
+         let (result, NEW_OF) := x + y in
+         let NEW_EQ := EQ_of_bool (result == zero256) in
+         let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
+         (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
+      gs gs' ->
 
-      step_ins (OpAdd in1 in2 out mod_swap mod_sf)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages    := pages;
-          gs_callstack    := xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_pages    := new_pages;
-          gs_callstack    := new_xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
+    step_ins (OpAdd in1 in2 out mod_swap mod_sf) gs gs'
 (**
 <<
 ## Sub
 Unsigned subtraction of two numbers.
 >>
-*)
+ *)
 
 | step_Sub:
-    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
-        (fun x y =>
-          let (result, NEW_OF) := x - y in
-          let NEW_EQ := EQ_of_bool (result == zero256) in
-          let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
-          (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
-        (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step in1 in2 out mod_swap mod_sf
+      (fun x y =>
+         let (result, NEW_OF) := x - y in
+         let NEW_EQ := EQ_of_bool (result == zero256) in
+         let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
+         (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
+      gs gs' ->
 
-      step_ins (OpSub in1 in2 out mod_swap mod_sf)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages    := pages;
-          gs_callstack    := xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_pages    := new_pages;
-          gs_callstack    := new_xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
+    step_ins (OpSub in1 in2 out mod_swap mod_sf) gs gs'
 (**
 <<
 ## And
 Bitwise AND of two numbers.
 >>
-*)
+ *)
 
 | step_And:
-    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
-        (fun x y => let result := bitwise_and _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step in1 in2 out mod_swap mod_sf
+      (fun x y => let result := bitwise_and _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
+      gs gs' ->
 
-      step_ins (OpAnd in1 in2 out mod_swap mod_sf)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages    := pages;
-          gs_callstack    := xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_pages    := new_pages;
-          gs_callstack    := new_xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
+    step_ins (OpAnd in1 in2 out mod_swap mod_sf) gs gs'
 (**
 <<
 ## Or
 Bitwise OR of two numbers.
 >>
-*)
+ *)
 | step_Or:
-    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
-        (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step in1 in2 out mod_swap mod_sf
+      (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
+      gs gs' ->
 
-      step_ins (OpOr in1 in2 out mod_swap mod_sf)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages    := pages;
-          gs_callstack    := xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_pages    := new_pages;
-          gs_callstack    := new_xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
+    step_ins (OpOr in1 in2 out mod_swap mod_sf) gs gs'
 
 (**
 <<
 ## Xor
 Bitwise XOR of two numbers.
 >>
-*)
+ *)
 | step_Xor:
-    forall codes flags new_flags mod_swap mod_sf depot pages new_pages xstack new_xstack context_u128 (in1:in_any) (in2:in_reg) out regs new_regs,
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-      binop_effect xstack regs pages flags in1 in2 out mod_swap mod_sf
-        (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-        (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step in1 in2 out mod_swap mod_sf
+      (fun x y => let result := bitwise_xor _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
+      gs gs' ->
 
-      step_ins (OpXor in1 in2 out mod_swap mod_sf)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages    := pages;
-          gs_callstack    := xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_pages    := new_pages;
-          gs_callstack    := new_xstack;
-
-
-          gs_depot     := depot;
-          gs_context_u128 := context_u128;
-          gs_contracts    := codes;
-        |}
+    step_ins (OpXor in1 in2 out mod_swap mod_sf) gs gs'
 (**
 <<
 ## Near calls

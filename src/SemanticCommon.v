@@ -25,6 +25,7 @@ ZMod.
 
 Import Arg Arg.Coercions.
 
+Definition smallstep := state -> state -> Prop .
 
 Definition reg_reserved := pv0.
 
@@ -56,6 +57,34 @@ Inductive binop_effect: execution_stack -> regs_state -> pages -> flags_state ->
     store_loc regs ef' mm (IntValue result) out_loc (regs', mm') ->
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
     binop_effect ef0 regs mm flags0 in1 in2 out swap set_flags f (ef', regs', mm', new_flags).
+
+Inductive binop_step: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
+                      (word_type -> word_type -> (word_type * flags_state)) ->
+                      smallstep :=
+| be_apply_step:
+  forall f xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1 in2: in_any) (out: out_any) swap set_flags flags new_flags codes,
+    let gs := {|
+          gs_flags        := flags;
+          gs_callstack    := xstack;
+          gs_regs         := regs;
+          gs_context_u128 := context_u128;
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+          |}  in
+    binop_effect xstack regs pages flags in1 in2 out swap set_flags f (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_step
+      in1 in2 out swap set_flags f gs
+      {|
+        gs_flags        := new_flags;
+        gs_callstack    := new_xstack;
+        gs_regs         := new_regs;
+        gs_context_u128 := context_u128;
+        gs_pages        := new_pages;
+        gs_depot        := depot;
+        gs_contracts    := codes;
+      |}
+.
 
 Inductive pay_growth_or_burn: mem_address -> execution_stack -> execution_stack -> Prop  :=
 | phg_affordable: forall ef ef' diff,
@@ -104,3 +133,4 @@ Definition in_kernel_mode (ef:callframe) : bool :=
 
 Definition code_storage := code_storage _ instruction_invalid.
 Definition code_manager := code_manager.
+
