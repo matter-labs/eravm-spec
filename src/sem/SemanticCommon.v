@@ -37,54 +37,6 @@ Inductive update_pc_regular : execution_stack -> execution_stack -> Prop :=
     let ef' := pc_set pc' ef in
     update_pc_regular ef ef'.
 
-Inductive binop_effect: execution_stack -> regs_state -> pages -> flags_state ->
-                        in_any -> in_any -> out_any ->
-                        mod_swap -> mod_set_flags ->
-                        (word_type -> word_type -> (word_type * flags_state)) ->
-                        (execution_stack * regs_state * pages * flags_state) -> Prop :=
-| be_apply:
-  forall f ef0 ef1 ef' regs regs' mm mm' (in1 in2: in_any) (out: out_any) loc1 loc2
-    op1 op2 op1' op2' swap set_flags out_loc result flags_candidate flags0 new_flags,
-    resolve ef0 regs in1 loc1 ->
-    resolve_effect__in in1 ef0 ef1 ->
-    resolve ef1 regs in2 loc2 ->
-    resolve ef1 regs out out_loc ->
-    resolve_effect__out out ef1 ef' ->
-    fetch_loc regs ef' mm loc1 (FetchPV (IntValue op1)) ->
-    fetch_loc regs ef' mm loc2 (FetchPV (IntValue op2)) ->
-    apply_swap swap op1 op2 = (op1', op2') ->
-    f op1' op2' = (result, flags_candidate) ->
-    store_loc regs ef' mm (IntValue result) out_loc (regs', mm') ->
-    new_flags = apply_set_flags set_flags flags0 flags_candidate ->
-    binop_effect ef0 regs mm flags0 in1 in2 out swap set_flags f (ef', regs', mm', new_flags).
-
-Inductive binop_step: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                      (word_type -> word_type -> (word_type * flags_state)) ->
-                      smallstep :=
-| be_apply_step:
-  forall f xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1 in2: in_any) (out: out_any) swap set_flags flags new_flags codes,
-    let gs := {|
-          gs_flags        := flags;
-          gs_callstack    := xstack;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
-          gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
-          |}  in
-    binop_effect xstack regs pages flags in1 in2 out swap set_flags f (new_xstack, new_regs, new_pages, new_flags) ->
-    binop_step
-      in1 in2 out swap set_flags f gs
-      {|
-        gs_flags        := new_flags;
-        gs_callstack    := new_xstack;
-        gs_regs         := new_regs;
-        gs_context_u128 := context_u128;
-        gs_pages        := new_pages;
-        gs_depot        := depot;
-        gs_contracts    := codes;
-      |}
-.
 
 Inductive pay_growth_or_burn: mem_address -> execution_stack -> execution_stack -> Prop  :=
 | phg_affordable: forall ef ef' diff,
@@ -102,6 +54,18 @@ Inductive pay_growth_or_burn_ptr : mem_address -> fat_ptr -> execution_stack -> 
     fat_ptr_induced_growth ptr current_bound diff ->
     pay_growth_or_burn diff ef ef' ->
     pay_growth_or_burn_ptr current_bound ptr ef ef'.
+
+Inductive pay_heaps_growth_or_burn: forward_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
+| mpgb_forward p xstack:
+  pay_heaps_growth_or_burn ForwardFatPointer p xstack xstack
+
+| mpgb_heap in_ptr xstack0 xstack1:
+  pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 ->
+  pay_heaps_growth_or_burn UseHeap in_ptr xstack0 xstack1
+| mpgb_auxheap in_ptr xstack0 xstack1:
+  pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 ->
+  pay_heaps_growth_or_burn UseAuxHeap in_ptr xstack0 xstack1.
+
 
 Inductive grow_heap_page: mem_address -> active_pages -> active_pages -> Prop :=
 | gp_heap: forall ap new_bound diff,

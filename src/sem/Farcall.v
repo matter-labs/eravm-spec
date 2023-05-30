@@ -81,16 +81,6 @@ Inductive pass_allowed_ergs : (ergs * execution_stack )-> ergs * execution_stack
     pass_allowed_ergs (pass_ergs_query,xstack1) (pass_ergs_actual, xstack2).
 
 
-Inductive pay_heaps_growth_or_burn: forward_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
-| mpgb_forward p xstack:
-  pay_heaps_growth_or_burn ForwardFatPointer p xstack xstack
-
-| mpgb_heap in_ptr xstack0 xstack1:
-  pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn UseHeap in_ptr xstack0 xstack1
-| mpgb_auxheap in_ptr xstack0 xstack1:
-  pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn UseAuxHeap in_ptr xstack0 xstack1.
 
 Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack * active_pages  -> fat_ptr * execution_stack * active_pages -> Prop :=
 |fcf_useheap: forall diff in_ptr xstack0 xstack1 old_apages grown_apages,
@@ -262,6 +252,33 @@ Inductive fetch_operands abi dest handler:
 
 
 
+(**
+<<
+## Far calls
+>>
+*)
+Inductive step : instruction -> smallstep :=
+                                        
+| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step (OpFarCall abi dest handler call_as_static) gs gs'
+
+| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step (OpMimicCall abi dest handler call_as_static) gs gs'
+| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
+    farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
+
+    step (OpDelegateCall abi dest handler call_as_static) gs gs'
+.
 (**
 <<
 # Possible exceptions
