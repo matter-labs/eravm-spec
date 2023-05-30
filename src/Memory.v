@@ -56,6 +56,7 @@ Definition depot_params := {|
                                 writable := true
                               |}.
 Definition contract_address := address depot_params.
+Definition contract_address_bits := address_bits depot_params.
 Definition depot := mem_parameterized depot_params.
 
 
