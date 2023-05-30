@@ -4,6 +4,7 @@ Require SemanticCommon FarCalls.
 Import Bool ZArith Common CodeStorage Condition ExecutionStack FarCalls MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits ABI ABI.FarCall ABI.Ret ABI.NearCall ABI.FatPointer Arg Arg.Coercions RecordSetNotations SemanticCommon.
 
+
 Inductive step_ins: instruction -> state -> state -> Prop :=
 (**
 <<
@@ -234,8 +235,8 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_context_u128 := context_u128;
           gs_contracts    := codes;
         |}
@@ -259,8 +260,8 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_context_u128 := context_u128;
           gs_contracts    := codes;
         |}
@@ -270,8 +271,8 @@ Calls the code inside the current contract space.
 
 
           gs_regs         := regs;
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_context_u128 := context_u128;
           gs_contracts    := codes;
         |}
@@ -306,8 +307,8 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_pages    := pages;
-          gs_depot    := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_contracts    := codes;
           |}
           {|
@@ -321,8 +322,8 @@ Calls the code inside the current contract space.
           gs_context_u128 := zero128;
 
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_contracts    := codes;
           |}
 (* ------ *)
@@ -336,8 +337,8 @@ Calls the code inside the current contract space.
           gs_context_u128 := context_u128;
 
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
+          gs_depot        := depot;
           gs_contracts    := codes;
           |}  in
     (* Panic if not a pointer *)
@@ -457,10 +458,10 @@ Calls the code inside the current contract space.
           gs_callstack    := xstack0;
           gs_regs         := regs;
           gs_context_u128 := context_u128;
+          gs_depot        := depot;
 
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
           gs_contracts    := codes;
          |}
          {|
@@ -468,10 +469,10 @@ Calls the code inside the current contract space.
           gs_callstack    := pc_set exception_handler new_caller_stack;
           gs_regs         := new_regs;
           gs_context_u128 := zero128;
+          gs_depot        := revert_storage cf depot;
 
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
           gs_contracts    := codes;
          |}
 (**
@@ -504,9 +505,10 @@ Calls the code inside the current contract space.
           gs_regs         := regs;
           gs_callstack    := xstack0;
           gs_context_u128 := context_u128;
+          gs_depot        := depot;
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+
+          gs_pages        := pages;
           gs_contracts    := codes;
           |}
           {|
@@ -514,10 +516,10 @@ Calls the code inside the current contract space.
           gs_regs         := new_regs;
           gs_callstack    := pc_set exception_handler caller_stack;
           gs_context_u128 := zero128;
+          gs_depot        := revert_storage cf depot;
 
 
-          gs_pages    := pages;
-          gs_depot     := depot;
+          gs_pages        := pages;
           gs_contracts    := codes;
           |}
 (**
