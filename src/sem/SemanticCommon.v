@@ -99,7 +99,5 @@ Definition code_storage := code_storage _ instruction_invalid.
 Definition code_manager := code_manager.
 
 
-Definition revert_storage (ef:callframe_external) (d: depot) : depot :=
-  let saved_storage := ef.(ecf_saved_storage_state) in
-  let last_caller_address := resize _  contract_address_bits ef.(ecf_msg_sender) in
-  store depot_params saved_storage last_caller_address d.
+Definition revert_storage (ef:callframe_external) : depot :=
+  ef.(ecf_saved_depot).

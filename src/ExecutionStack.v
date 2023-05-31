@@ -26,12 +26,12 @@ Record callframe_external :=
       ecf_pages: active_pages;
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;
-      ecf_saved_storage_state: storage_type;
+      ecf_saved_depot: depot;
       ecf_common :> callframe_common
     }.
 
 #[export] Instance etaCFE : Settable _ :=
-  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_saved_storage_state; ecf_common>.
+  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_saved_depot; ecf_common>.
 
 Inductive callframe :=
 | InternalCall (_: callframe_common) (tail: callframe): callframe
