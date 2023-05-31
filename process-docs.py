@@ -34,11 +34,17 @@ def process_file(file_name_in:str, file_name_out:str, processor) -> None:
         data = file.read()
 
     modified_data = re.sub(
-        r'<pre>(.*?)</pre>',
+        r'%DOCSTART%(.*?)%DOCEND%',
         lambda match: processor(match.group(1)),
         data,
         flags=re.DOTALL
     )
+    # modified_data = re.sub(
+    #     r'<pre>(.*?)</pre>',
+    #     lambda match: processor(match.group(1)),
+    #     data,
+    #     flags=re.DOTALL
+    # )
     modified_data = re.sub(
         r'</head>',
         KATEX_SUPPORT_HEADER + "</head>",

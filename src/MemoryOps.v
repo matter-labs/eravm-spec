@@ -209,18 +209,18 @@ Section Addressing.
   .
 
   Inductive resolve_effect__in: in_any -> execution_stack -> execution_stack -> Prop :=
-  | rslv_stack_in_effect: forall ef regs sp' reg ofs arg,
+  | rslv_stack_in_effect: forall ef ef' regs sp' reg ofs arg,
       loc_stack_in_only ef regs  arg (LocStackAddress sp') ->
-      let ef' := sp_update sp' ef in
+      sp_mod_spec (fun _ => sp') ef ef' ->
       resolve_effect__in  (InStack (StackInOnly (RelSpPop reg ofs)))  ef ef'
   | rslv_stack_in_effect_none: forall ef arg,
       (forall reg ofs, arg <> InStack (StackInOnly (RelSpPop reg ofs))) ->
       resolve_effect__in  arg  ef ef.
 
   Inductive resolve_effect__out: out_any -> execution_stack -> execution_stack -> Prop :=
-  | rslv_stack_out_effect: forall ef regs sp' reg ofs arg,
+  | rslv_stack_out_effect: forall ef ef' regs sp' reg ofs arg,
       loc_stack_out_only ef regs  arg (LocStackAddress sp') ->
-      let ef' := sp_update sp' ef in
+      sp_mod_spec (fun _ => sp') ef ef' ->
       resolve_effect__out  (OutStack (StackOutOnly (RelSpPush reg ofs)))  ef ef'
   | rslv_stack_out_effect_none: forall ef arg,
       (forall reg ofs, arg <> OutStack (StackOutOnly (RelSpPush reg ofs))) ->

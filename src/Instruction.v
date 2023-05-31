@@ -10,9 +10,9 @@ Import Common Condition Memory Ergs CodeStorage.
 TODO The exact binary encoding of instructions is different from the following description and will be explored in a different section.
  *)
 
-(** * Structure of instructions *)
+(** # Structure of instructions *)
 
-(** ** Inner structure *)
+(** ## Inner structure *)
 
 (** This section presents a high-level description of how to construct a valid instruction.
 
@@ -69,11 +69,11 @@ encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]
 (* Create a namespace for argument format description. *)
 Module Arg.
 
-  (** ** Addressing modes *)
+  (** ## Addressing modes *)
 
   (** §1. There are 8 main types of addressing the instruction arguments. Some of them only support reading (indicated by "in"), or writing (indicated by "out").
 
-<<
+
 1. Register (in/out), see §1.1
 2. Imm (in), see §1.2
 3. Code page, relative to GPR (in), see §1.3
@@ -87,7 +87,7 @@ Note that other docs may merge the types (7) and (8) into a single addressing mo
 
 This section details these types.
 
->>
+
 
 §1.1. #<b>#Register#</b># addressing takes value from one of General Purpose Registers (GPR).
    *)
@@ -338,7 +338,7 @@ input argument. *)
   End Coercions.
 End Arg.
 
-(** * Exclusive modifiers *)
+(** # Exclusive modifiers *)
 Section ModifiersExclusive.
   Import ZMod.
   (** This section describes all exclusive modifiers of instructions. *)
@@ -364,7 +364,7 @@ Section ModifiersExclusive.
 
 End ModifiersExclusive.
 
-(** * Instructions *)
+(** # Instructions *)
 Section Def.
   Import Arg.
 
@@ -393,7 +393,7 @@ semantics is described in a different place; see [step]. *)
   .
 
 
-  (** ** Common definitions *)
+  (** ## Common definitions *)
 
   (**
 §1. An instruction type, including:
@@ -425,7 +425,7 @@ Definition code_page : Type := code_page instruction_predicated instruction_inva
 Definition code_storage_type: Type := code_storage instruction_predicated instruction_invalid.
 
 
-(** * Costs *)
+(** # Costs *)
 Section Costs.
   Import ZMod ZArith.
   Definition base_cost (ins:instruction) :=

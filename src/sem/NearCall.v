@@ -5,7 +5,7 @@ Import Common Condition ExecutionStack Ergs MemoryOps Memory Instruction State Z
   ABI ABI.NearCall Arg Arg.Coercions SemanticCommon.
 
 (**
-<<
+
 ## NearCall
 
 ### Syntax
@@ -49,7 +49,7 @@ Record params := {
    - The value of `nca_get_ergs_passed`.
 
    The decision procedure is given by:
->>
+
 *)
 
 Definition split_ergs_caller_callee (ergs_passed balance:ergs) : ergs * ergs :=
@@ -62,7 +62,7 @@ Definition split_ergs_caller_callee (ergs_passed balance:ergs) : ergs * ergs :=
 (**
 Explanation for [split_ergs_caller_callee]:
 
-<<
+
 
 - if `nca_get_ergs_passed` = 0, pass all available ergs to the callee and set
   the caller's balance to zero. Upon the callee's normal return, its unspent
@@ -81,7 +81,7 @@ Explanation for [split_ergs_caller_callee]:
    - new exception handler is assigned the instruction's `handler_address` argument.
    - new SP is copied from the old frame as is.
 5. Clear flags.
->>
+
 *)
 Inductive step_nearcall : instruction -> smallstep :=
 | step_NearCall_pass_some_ergs:
@@ -119,7 +119,7 @@ Inductive step_nearcall : instruction -> smallstep :=
                   |}
 .
 (**
-<<
+
 
 ### Affected parts of VM state
 
@@ -152,6 +152,6 @@ Inductive step_nearcall : instruction -> smallstep :=
 
 ### Similar instructions
 
->>
+
 - See [OpFarCall], [OpMimicCall], [OpDelegateCall]. They are used to call code of other contracts.
 *)

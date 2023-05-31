@@ -192,7 +192,7 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
                          ecf_code_address := zero16;
                          ecf_pages := new_mem_ctx;
                          ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
-                         ecf_saved_storage_state := load _ current_contract depot;
+                         ecf_saved_depot := depot;
                          ecf_common := {|
                                         cf_exception_handler_location := handler_addr;
                                         cf_sp := INITIAL_SP_ON_FAR_CALL;

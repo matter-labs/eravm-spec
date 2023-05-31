@@ -4,15 +4,17 @@ Require SemanticCommon.
 
 Import Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
   ABI ABI.Ret ABI.FatPointer Arg Arg.Coercions SemanticCommon RecordSetNotations.
-(** * Returns *)
 (**
+# Returns 
+
 These three instructions return control from a currently executing function:
 
-<<
+
+
 - `ret`
 - `revert`
 - `panic`
->>
+
 
 Their semantic changes semantics depending on whether the current frame is
 external or internal.
@@ -46,7 +48,7 @@ Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_pt
 
 Inductive step_ret: instruction -> smallstep :=
 (**
-<<
+
 ## `ret` (normal return, not panic/revert)
 
 ### Syntax
@@ -84,7 +86,7 @@ Inductive step_ret: instruction -> smallstep :=
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame. 
 3. Clear flags
->>
+
  *)
 | step_RetLocal_nolabel:
     forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
@@ -114,14 +116,14 @@ Inductive step_ret: instruction -> smallstep :=
           gs_contracts    := codes;
         |}
 (**
-<<
+
 #### Case 2: `ret label` from local call, label provided.
 
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame. 
 3. Clear flags
 4. Set PC to the label value.
->>
+
 *)
 | step_RetLocal_label:
   forall gs gs1 _ignored label,
@@ -129,7 +131,7 @@ Inductive step_ret: instruction -> smallstep :=
     step_ret (OpRet _ignored (Some label)) gs (gs1 <| gs_callstack ::= pc_set label |>)
 
 (**
-<<
+
 #### Case 3: `ret abi_reg` from external call
 
 1. Fetch the value from register `abi_reg` and decode the following structure `params` (see `Ret.ABI`):
@@ -173,7 +175,7 @@ Record params := {
 All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and may gain a special meaning in newer versions of zkEVM.
 6. Context register is zeroed.
 
->>
+
 *)
 | step_RetExt:
   forall codes flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
@@ -220,7 +222,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 .
 
 (**
-<<
+
 ### Affected parts of VM state
 
 - Flags are cleared.
@@ -245,12 +247,12 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 - `panic` executes the current frame's exception handler instead of returning to
   the caller, and sets overflow flag.
 
->>
+
 *)
 
 Inductive step_revert: instruction -> smallstep :=
 (**
-<<
+
 ## `revert` (recoverable error, not normal return/not panic)
 
 Return from a function signaling an error; execute exception handler, possibly return data like normal `ret`.
@@ -293,7 +295,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 2. Drop current frame. 
 3. Set PC to the exception handler of a dropped frame.
 4. Clear flags
->>
+
  *)
 | step_RevertLocal_nolabel:
     forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
@@ -324,14 +326,14 @@ Return from a function signaling an error; execute exception handler, possibly r
           gs_contracts    := codes;
         |}
         (**
-<< 
+ 
 #### Case 2: `revert label` from near call, label provided
 
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame. 
 3. Set PC to the label provided
 4. Clear flags
->>
+
 *)
 | step_RevertLocal_label:
     forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored label,
@@ -363,7 +365,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 
 
 (**
-<<
+
 #### Case 3: `revert abi_reg` from external call
 
 Effectively the same as `ret abi_reg`, but restores storage and executes the exception handler.
@@ -409,7 +411,7 @@ Record params := {
 All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and may gain a special meaning in newer versions of zkEVM.
 6. Context register is zeroed.
 7. All storages are reverted to the state prior to the current contract call.
->>
+
 *)
 | step_RevertExt:
   forall codes flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
@@ -457,7 +459,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 .
 (**
-<<
+
 ### Affected parts of VM state
 
 - Flags are cleared.
@@ -483,13 +485,13 @@ Use `panic` for irrecoverable errors.
 - `panic` acts similar to `revert` but does not let pass any data to the caller
   and sets an overflow flag, and burns ergs in current frame.
 
->>
+
 *)
 
 Inductive step_panic: instruction -> smallstep :=
 
   (**
-<<
+
 ## `panic` (irrecoverable error, not normal return/not return from recoverable error)
 
 Return from a function signaling an error; execute exception handler, burn all
@@ -533,7 +535,7 @@ regs in current frame, set OF flag, return no data.
 1. Drop current frame with its ergs.
 2. Set PC to the exception handler of a dropped frame.
 3. Clear flags, and set OF.
->>
+
  *)
 
 
@@ -567,13 +569,13 @@ regs in current frame, set OF flag, return no data.
         |}
 
         (**
-<<
+
 #### Case 2: `panic` from near call, label provided
 
 1. Drop current frame with its ergs.
 2. Set PC to label value.
 3. Clear flags, and set OF.
->>
+
  *)
 | step_PanicLocal_label:
     forall codes flags depot pages cf caller_stack context_u128 regs _ignored label,
@@ -602,7 +604,7 @@ regs in current frame, set OF flag, return no data.
           gs_contracts    := codes;
         |}
 (**
-<<
+
 #### Case 3: `revert` from external call
 
 1. Drop current frame and its ergs
@@ -615,7 +617,7 @@ regs in current frame, set OF flag, return no data.
 
    All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved
    and may gain a special meaning in newer versions of zkEVM.
->>
+
 *)
 | step_PanicExt:
   forall codes flags depot pages cf caller_stack context_u128 regs label_ignored (arg:in_reg),
@@ -652,7 +654,7 @@ regs in current frame, set OF flag, return no data.
 
 .
 (**
-<<
+
 ### Affected parts of VM state
 
 - Flags are cleared, then OF is set.
@@ -679,5 +681,5 @@ Use `revert` for recoverable errors.
 - `ret` returns to the caller instead of executing an exception handler, and does not burn ergs.
 - `revert` acts similar to `panic` but does not burn ergs and lets pass any data to the caller, and does not set an overflow flag.
 
->>
+
 *)

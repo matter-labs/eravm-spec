@@ -2,7 +2,7 @@ Require SemanticCommon.
 
 Import MemoryOps Instruction State SemanticCommon.
 (**  
-<<
+
 # ModSP
 
 ## Syntax
@@ -16,10 +16,10 @@ OpModSP in1, out1
 Ignores its operands but adjusts SP if `RelSpPop` and/or `RelSPPush` modes are
 used.
 
->>
+
 See [Arg.RelSpPush], [Arg.RelSpPop].
 
-<<
+
 ## Semantic
 
 - Advances PC
@@ -43,7 +43,7 @@ The primary use is adjusting SP.
 
 - `ModSP` and `NoOp` have the same encoding.
 
->>
+
 *)
 
 Inductive step : instruction -> smallstep :=
@@ -77,10 +77,10 @@ Inductive step : instruction -> smallstep :=
 .
 
 (**
-<<
+
 ## Examples
 
->>
+
 
  *)
 Section Examples.
@@ -90,9 +90,9 @@ Coercion int_mod_of : Z >-> int_mod.
 Set Printing Coercions.
 
 (**
-<<
+
 `modsp stack-=[23], stack+=[88]`
->>
+
 *)
 
 Section Ex1.

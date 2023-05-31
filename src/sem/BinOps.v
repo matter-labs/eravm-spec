@@ -3,14 +3,13 @@ Require  sem.SemanticCommon.
 
 Import Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
   ZBits Arg Arg.Coercions RecordSetNotations SemanticCommon.
-(** * Binary operations *)
-
 (**
-** Common binary operation semantic
+# Binary operations
+
+##  Common binary operation semantic
 
 The predicate [binop_effect] describes a scheme of operation shared by binary operations:
 
-<<
 - `add`
 - `sub`
 - `and`
@@ -34,7 +33,6 @@ The operation follows a similar scheme as described below. It is parameterized u
 8. **Commit or discard new flags** :: If `set_flags` modifier is set, flags are set according to `flags_candidate`; otherwise all flags are preserved and `flags_candidate` is discarded.
 9. **Store result**:: Write `result` to a location resolved on step 4.
 
->>
 
 See [RelSpPop], [RelSpPush], [step].
  *)
@@ -89,7 +87,6 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
 
 Inductive step: instruction -> smallstep :=
 (**
-<<
 ## Add
 
 ### Syntax
@@ -105,9 +102,8 @@ Unsigned overflowing addition of two numbers modulo $2^{256}$.
 
 ### Semantic
 
->>
 Follows the scheme described in [binop_effect].
-<<
+
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 - result is computed by unsigned addition of two numbers with overflow modulo $2^{256}$.
@@ -135,7 +131,7 @@ Arithmetic operations.
 ### Similar instructions
 
 Flags are computed exactly as in `sub`, but the meaning of overflow is different for addition and subtraction.
->>
+
 *)
 | step_Add:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
@@ -150,7 +146,7 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
     step (OpAdd in1 in2 out mod_swap mod_sf) gs gs'
 (**
-<<
+
 ## Sub
 
 ### Syntax
@@ -166,9 +162,8 @@ Unsigned overflowing subtraction of two numbers modulo $2^{256}$.
 
 ### Semantic
 
->>
 Follows the scheme described in [binop_effect].
-<<
+
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 - result is computed by unsigned subtraction of two numbers with overflow modulo $2^{256}$.
@@ -196,7 +191,7 @@ Arithmetic operations.
 ### Similar instructions
 
 Flags are computed exactly as in `sub`, but the meaning of overflow is different for addition and subtraction.
->>
+
 *)
 | step_Sub:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
@@ -212,7 +207,6 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
     step (OpSub in1 in2 out mod_swap mod_sf) gs gs'
 
 (**
-<<
 ## And
 
 ### Syntax
@@ -228,9 +222,8 @@ Bitwise AND of two 256-bit numbers.
 
 ### Semantic
 
->>
 Follows the scheme described in [binop_effect].
-<<
+
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 - result is computed as a bitwise AND of two operands. 
@@ -254,7 +247,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
 ### Similar instructions
 
 - `and`, `or` and `xor` are encoded as variants of the same instruction.
->>
+
 *)
 
 | step_And:
@@ -265,7 +258,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
       gs gs' ->
     step (OpAnd in1 in2 out mod_swap mod_sf) gs gs'
  (**
-<<
+
 ## OR
 
 ### Syntax
@@ -281,9 +274,9 @@ Bitwise OR of two 256-bit numbers.
 
 ### Semantic
 
->>
+
 Follows the scheme described in [binop_effect].
-<<
+
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 - result is computed as a bitwise OR of two operands. 
@@ -307,7 +300,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
 ### Similar instructions
 
 - `and`, `or` and `xor` are encoded as variants of the same instruction.
->>
+
 *)   
 | step_Or:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
@@ -319,7 +312,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
     step (OpOr in1 in2 out mod_swap mod_sf) gs gs'
 
 (**
-<<
+
 ## XOR
 
 ### Syntax
@@ -335,9 +328,9 @@ Bitwise XOR of two 256-bit numbers.
 
 ### Semantic
 
->>
+
 Follows the scheme described in [binop_effect].
-<<
+
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 - result is computed as a bitwise XOR of two operands. 
@@ -361,7 +354,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
 ### Similar instructions
 
 - `and`, `or` and `xor` are encoded as variants of the same instruction.
->>
+
 *)
          
 | step_Xor:

@@ -2,7 +2,7 @@ Require Common.
 
 Import Bool ZArith Common ZMod.
 
-(** * Execution *)
+(** # Execution *)
 
 Section Flags.
 
