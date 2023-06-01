@@ -45,6 +45,11 @@ Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_
 
 Inductive alloc_pages_extframe:  (pages * active_pages) -> code_page -> pages * active_pages -> Prop :=
 | ape_alloc: forall code mm ctx code_id const_id stack_id heap_id heap_aux_id,
+    code_id = length mm ->
+    (const_id = code_id + 1)%nat ->
+    (stack_id = code_id + 2)%nat ->
+    (heap_id = code_id + 3)%nat ->
+    (heap_aux_id = code_id + 4)%nat ->
     alloc_pages_extframe (mm,ctx) code
       ( (heap_aux_id, (DataPage _ _ (empty _)))::
           (heap_id, (DataPage _ _ (empty _)))::
