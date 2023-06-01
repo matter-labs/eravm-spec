@@ -35,18 +35,18 @@ Reminder: *callee* is the function that we call; the *caller* is the currently e
 Step-by-step explanation:
 
 1. Read the value of `abi_reg` and decode the following structure from it.
-   The `nca_get_ergs_passed` field indicates the amount of ergs we intend to pass, but
+   The `ergs_passed` field indicates the amount of ergs we intend to pass, but
    the actual amount of ergs passed gets decided at runtime (see step 2).
 
 ```
 Record params := {
-   nca_get_ergs_passed: u32;
+   ergs_passed: u32;
 }.
 ```
 
 2. The actual amount of ergs passed is determined by
    - The current balance of the caller frame.
-   - The value of `nca_get_ergs_passed`.
+   - The value of `ergs_passed`.
 
    The decision procedure is given by:
 
@@ -64,15 +64,15 @@ Explanation for [split_ergs_caller_callee]:
 
 
 
-- if `nca_get_ergs_passed` = 0, pass all available ergs to the callee and set
+- if `ergs_passed` = 0, pass all available ergs to the callee and set
   the caller's balance to zero. Upon the callee's normal return, its unspent
   ergs are returned back to the caller.
 
-- otherwise, if `balance` $\geq$ `nca_get_ergs_passed`, pass exactly
-  `nca_get_ergs_passed`. The caller's balance is set to the unspent amount
-  `nca_get_ergs_passed - balance`.
+- otherwise, if `balance` $\geq$ `ergs_passed`, pass exactly
+  `ergs_passed`. The caller's balance is set to the unspent amount
+  `ergs_passed - balance`.
 
-- otherwise, if the call is not affordable (`nca_get_ergs_passed` $\gt$
+- otherwise, if the call is not affordable (`ergs_passed` $\gt$
   `balance`), pass all available ergs to the callee.
 
 3. Decrease the balance of the caller frame.
@@ -85,11 +85,11 @@ Explanation for [split_ergs_caller_callee]:
 *)
 Inductive step_nearcall : instruction -> smallstep :=
 | step_NearCall_pass_some_ergs:
-  forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value call_addr expt_handler passed_ergs callee_ergs caller_ergs abi_tag,
+  forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value (expt_handler call_addr: code_address) passed_ergs callee_ergs caller_ergs abi_tag,
 
     resolve_fetch_value regs xstack0 pages abi_params_op (mk_pv abi_tag abi_params_value) ->
 
-    Some passed_ergs = option_map NearCall.nca_get_ergs_passed (NearCall.ABI.(decode) abi_params_value) ->
+    Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
 
     (callee_ergs, caller_ergs) = split_ergs_caller_callee passed_ergs (ergs_remaining xstack0) ->
     let new_caller := ergs_set caller_ergs xstack0 in
@@ -137,12 +137,12 @@ Inductive step_nearcall : instruction -> smallstep :=
 ### Usage
 
 
-- Set `nca_get_ergs_passed=0` to pass all available ergs to callee.
+- Set `ergs_passed=0` to pass all available ergs to callee.
 - If the first argument is omitted, all available ergs will be passed to callee.
 
   Explanation: if the first argument is omitted, the compiler implicitly puts
   `r0` in its place. The reserved register `r0` always holds zero, therefore
-  `nca_get_ergs_passed` will be decoded into zero as well.
+  `ergs_passed` will be decoded into zero as well.
 
 - No particular calling convention is enforced for near calls, so it can be decided by compiler.
 

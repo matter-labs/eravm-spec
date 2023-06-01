@@ -105,7 +105,7 @@ End Ret.
 Module NearCall.
 
   Record params: Type := mk_params {
-      nca_get_ergs_passed: u32;
+      ergs_passed: u32;
     }.
 
   Axiom ABI: @coder params.
