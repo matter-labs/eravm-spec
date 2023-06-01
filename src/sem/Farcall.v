@@ -11,7 +11,7 @@ ZMod.
 
 
 Import
-ABI ABI.FarCall ABI.FatPointer ABI.NearCall ABI.Ret
+ABI ABI.FarCall ABI.FatPointer
 CodeStorage
 Common
 Condition
@@ -27,22 +27,91 @@ State.
 Import Instruction Arg Arg.Coercions.
 
 Local Coercion Z.b2z: bool >-> Z.
-
-Definition INITIAL_SP_ON_FAR_CALL : stack_address := ZMod.int_mod_of _ 1024.
-Definition NEW_FRAME_MEMORY_STIPEND : mem_address := ZMod.int_mod_of _ 1024.
-Definition max_passable (remaining:ergs) : ergs :=
-  int_mod_of _(((int_val _ remaining) / 64 ) * 63)%Z.
+Local Coercion int_mod_of : Z >-> int_mod.
 
 
-Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
-|dc_fresh: forall cost,
-    is_fresh _ _ cm vhash = true->
-    (cost, false) = Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
-    decommitment_cost cm vhash code_length_in_words cost
-|dc_not_fresh:
-  is_fresh _ _ cm vhash = false ->
-  decommitment_cost cm vhash code_length_in_words zero32.
+(** # Far calls
 
+Far calls are calls to the code outside the current contract space.
+This file describes three instructions to perform far calls:
+
+- [OpFarCall]
+- [OpDelegateCall]
+- [OpMimicCall] (available only in kernel mode)
+
+These instructions differ in the way they construct new frame.
+
+The far call instructions have rich semantics; their full effect on the
+VM state is described through the following main predicates:
+
+- [Semantics.step]
+- [step]
+- [fetch_operands]
+- [farcall]
+
+If you know about fetching operands for instructions and the instruction fetching described in [Semantics.step], start investigating farcalls from the [farcall] predicate.
+*)
+Section Parameters.
+Open Scope Z.
+
+(**
+
+## Global farcall parameters
+
+1. Initial preallocated stack space.
+
+   A far call creates a new context with a new stack page (and other pages, see
+   [page_alloc]).
+   The initial SP value after a far call is set to [INITIAL_SP_ON_FAR_CALL].
+
+   Therefore, addresses in range from 0 inclusive to [INITIAL_SP_ON_FAR_CALL]
+   exclusive can be used as a scratch space.
+*)
+
+Definition INITIAL_SP_ON_FAR_CALL : stack_address := 1024.
+
+(**
+2. Initial heap and auxheap pages bound.
+
+   The heap and auxheap pages start with [NEW_FRAME_MEMORY_STIPEND] bound.
+   Growing them beyond this bound costs ergs.
+*)
+Definition NEW_FRAME_MEMORY_STIPEND : mem_address := 1024.
+
+End Parameters.
+
+(**
+3. Maximal fraction of ergs allowed to pass.
+
+   It is not allowed to pass more than 63/64th of your remaining ergs to a far call.
+*)
+Definition max_passable (remaining:ergs) : ergs := (((int_val _ remaining) / 64 ) * 63)%Z.
+Inductive pass_allowed_ergs : (ergs * execution_stack )-> ergs * execution_stack -> Prop :=
+| pae_apply: forall xstack1 xstack2 pass_ergs_query,
+    let pass_ergs_actual := ZMod.min _ (max_passable (ergs_remaining xstack1)) pass_ergs_query in
+    pay pass_ergs_actual xstack1 xstack2 ->
+    pass_ergs_query <> zero32 ->
+    pass_allowed_ergs (pass_ergs_query,xstack1) (pass_ergs_actual, xstack2)
+| pae_zero: forall xstack1 xstack2,
+    let pass_ergs_actual := max_passable (ergs_remaining xstack1) in
+    pay pass_ergs_actual xstack1 xstack2 ->
+    pass_allowed_ergs (zero32, xstack1) (pass_ergs_actual, xstack2).
+
+
+(**
+
+## Helpers
+
+Far call creates a new execution context with new pages for:
+
+- code
+- const (in the current implementation, const and code pages are the same page).
+- stack
+- heap
+- auxheap
+
+The initial bounds for the new heap and auxheap pages are set to [NEW_FRAME_MEMORY_STIPEND].
+*)
 Inductive alloc_pages_extframe:  (pages * active_pages) -> code_page -> pages * active_pages -> Prop :=
 | ape_alloc: forall code mm ctx code_id const_id stack_id heap_id heap_aux_id,
     code_id = length mm ->
@@ -66,55 +135,189 @@ Inductive alloc_pages_extframe:  (pages * active_pages) -> code_page -> pages * 
           ctx_auxheap_bound := NEW_FRAME_MEMORY_STIPEND;
         |} ).
 
+(**
+Far call to a contract decommits the contract's code to a fresh code page.
+If the code was already decommitted in the current block, this operation is free.
+Otherwise, it costs the amount of ergs proportionate to the code size (in words).
+ *)
+Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
+|dc_fresh: forall cost,
+    is_fresh _ _ cm vhash = true->
+    (cost, false) = Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
+    decommitment_cost cm vhash code_length_in_words cost
+|dc_not_fresh:
+  is_fresh _ _ cm vhash = false ->
+  decommitment_cost cm vhash code_length_in_words zero32.
+
+(** Fetch code and pay the associated cost. If [masking_allowed] is true and there is no code
+associated with a given contract address, then the default AA code will be
+fetched. See [code_fetch]. *)
 Inductive paid_code_fetch masking_allowed: depot -> code_manager -> contract_address
                                -> execution_stack -> execution_stack * code_page
                                ->Prop :=
 | cfp_apply:
-  forall depot codes (dest_addr: contract_address) vhash dest_addr new_code_page code_length
-    cost__decomm xstack0 xstack1,
+  forall depot codes (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
 
     code_fetch _ _ masking_allowed depot codes.(cm_storage _ _) dest_addr (vhash, new_code_page, code_length) ->
     decommitment_cost codes vhash code_length cost__decomm ->
     pay cost__decomm xstack0 xstack1 ->
     paid_code_fetch masking_allowed depot codes dest_addr xstack0 (xstack1, new_code_page).
 
+(** ## System calls
 
-Inductive pass_allowed_ergs : (ergs * execution_stack )-> ergs * execution_stack -> Prop :=
-| pae_apply: forall xstack1 xstack2 pass_ergs_query,
-    let pass_ergs_actual := ZMod.min _ (max_passable (ergs_remaining xstack1)) pass_ergs_query in
-    pay pass_ergs_actual xstack1 xstack2 ->
-    pass_allowed_ergs (pass_ergs_query,xstack1) (pass_ergs_actual, xstack2).
+A system call is a far call that satisfies the following conditions:
+
+- The destination is a kernel address.
+- The field `is_system` of [FarCall.params] passed through an operand is set to 1.
+*)
 
 
+(** # Far call instructions
 
-Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack * active_pages  -> fat_ptr * execution_stack * active_pages -> Prop :=
-|fcf_useheap: forall diff in_ptr xstack0 xstack1 old_apages grown_apages,
-    let bound := heap_bound xstack0 in
-    validate_fresh in_ptr = no_exceptions ->
-    fat_ptr_induced_growth in_ptr bound diff ->
-    pay_growth_or_burn diff xstack0 xstack1 ->
-    grow_heap_page diff old_apages grown_apages ->
-    paid_forward UseHeap (in_ptr, xstack0, old_apages) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1, grown_apages)
+## Summary
+ 
+- Far calls are calls to the code outside the current contract space.
 
-|fcf_useauxheap: forall diff in_ptr xstack0 xstack1 old_apages grown_apages,
-    let bound := auxheap_bound xstack0 in
-    validate_fresh in_ptr = no_exceptions ->
-    fat_ptr_induced_growth in_ptr bound diff ->
-    pay_growth_or_burn diff xstack0 xstack1 ->
-    grow_auxheap_page diff old_apages grown_apages ->
-    paid_forward UseAuxHeap (in_ptr, xstack0, old_apages) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1, grown_apages)
+- Mimic calls are a kernel-only variation of far calls allowing to mimic a call
+  from any contract by impersonating an arbitrary caller and putting an arbitrary
+  address into the new callframe's [ecf_msg_sender] field.
 
-|fcf_forwardfatpointer: forall in_ptr xstack pages out_ptr,
-    validate_non_fresh in_ptr = no_exceptions ->
-    fat_ptr_shrink in_ptr out_ptr ->
-    paid_forward ForwardFatPointer (in_ptr, xstack, pages) (out_ptr, xstack,pages)
-.
+- Delegate calls are a variation of far calls allowing to call a contract with the current storage space.
 
+  **Example**: Suppose we have contracts A,B,C. Contract A called contract B
+    normally, then contract B delegated to contract C. Then C's code will be
+    executed in a context of B's storage, as if contract A called contract C.
+    If contract C returns normally, the execution will proceed from the next
+    instruction of B after delegate call.
+    In case of `revert` or `panic` in C, all the usual rules apply.
+
+## Syntax
+
+- [OpFarCall] `abi_params address handler is_static`
+   + `farcall        abi_reg, dest_addr` 
+   + `farcall        abi_reg, dest_addr, handler ` 
+   + `farcall.static abi_reg, dest_addr` 
+   + `farcall.static abi_reg, dest_addr, handler` 
+   + `farcall.shard  abi_reg, dest_addr` 
+   + `farcall.shard  abi_reg, dest_addr, handler` 
+
+- [OpDelegateCall] abi_params address handler is_static`
+   + `delegatecall        abi_reg, dest_addr` 
+   + `delegatecall        abi_reg, dest_addr, handler` 
+   + `delegatecall.static abi_reg, dest_addr` 
+   + `delegatecall.static abi_reg, dest_addr, handler` 
+   + `delegatecall.shard  abi_reg, dest_addr` 
+   + `delegatecall.shard  abi_reg, dest_addr, handler` 
+
+- [OpMimicCall] `abi_params address handler is_static`
+   + `mimic        abi_reg, dest_addr` 
+   + `mimic        abi_reg, dest_addr, handler` 
+   + `mimic.static abi_reg, dest_addr` 
+   + `mimic.static abi_reg, dest_addr, handler` 
+   + `mimic.shard  abi_reg, dest_addr` 
+   + `mimic.shard  abi_reg, dest_addr, handler` 
+
+
+- **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.
+  Calls from a static calls are automatically marked static.
+
+- **shard** modifier allows calling code from other shards. The shard ID will be taken from `abi_reg`.
+
+## Semantic
+
+The semantics of all three 
+First two steps are formalized by predicates [Semantics.step] and [fetch_operands].
+
+1. Fetch the instruction, adjust PC and perform the usual checks (such as kernel
+   mode), pay static costs, and so on.
+
+   See [Semantics.step] for details.
+
+2. Retrieve the operands and decode the following structure from `abi_reg`:
+   
+```
+   Record params := {
+       memory_quasi_fat_ptr: fat_ptr;
+       ergs_passed: ergs;
+       shard_id: u8;
+       forwarding_mode: forward_page_type;
+       constructor_call: bool;
+       to_system: bool;
+     }.
+```
+
+   See [fetch_operands] for details.
+   
+   The [farcall] predicate encodes the important part of instruction semantics for
+   [OpFarCall], [OpDelegateCall], and [OpMimicCall].
+
+3. Decommit code of the callee contract (formalized by [paid_code_fetch]):
+
+   - load the [versioned_hash] of the called code from the storage of a
+     special contract located at [DEPLOYER_SYSTEM_CONTRACT_ADDRESS].
+
+```
+Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
+
+Record versioned_hash := {
+   code_length_in_words: u16;
+   extra_marker: marker;
+   partial_hash: int_mod (28*8)%nat
+}.
+```
+   - for non-system calls, if there is no code stored for a provided hash value,
+     mask it into [VersionedHash.DEFAULT_AA_VHASH] and execute
+     [VersionedHash.DEFAULT_AA_CODE].
+
+   - if the code with such hash has not been accessed in the current block, pay
+     for decommitment.
+
+4. Forward data to the new frame (formalized by [paid_forward_and_adjust_bounds]).
+
+   - use the forwarding mode from `abi_reg` -> [forwarding_mode]. Can be `ForwardFatPointer`, `UseHeap` or `UseAuxHeap`;
+   - take the fat pointer to the data slice is taken from `abi_reg` -> [memory_quasi_fat_ptr];
+   - for the forwarding mode `ForwardFatPointer`:
+     - check the pointer validity;
+     - shrink the pointer;
+     - ensure that `abi_reg` is tagged as a pointer.
+   - for the forwarding modes `UseHeap`/`UseAuxHeap`:
+     - check the pointer validity;
+     - overwrite the pointer's [page_id] with the ID of current (aux)heap's memory page;
+     - if the pointer bounds surpass current heap/auxheap bounds, pay for growth
+       and adjust the bounds of heap/auxheap in the current stack frame.
+
+5. Allocate new pages for code, constants, stack, heap and auxheap (formalized by [alloc_pages_extframe]).
+6. Reserve ergs for the new external frame (formalized by [pass_allowed_ergs]).
+
+   - Maximum amount of ergs passed to an external call is 63/64 of current balance.
+   - Attempting to pass more ergs will result in only passing the maximum amount allowed.
+   - Trying to pass 0 ergs will result in passing maximum amount of ergs allowed.
+
+7. Clear the context register.
+8. Clear flags.
+9. Modify GPRs depending on the call being system or not (formalized by [regs_effect]):
+
+  - Effect of a non-system call:
+    + All registers are cleared.
+    + Register `R1` is assigned a fat pointer to forward data to the far call.
+      See [paid_forward].
+
+  - Effect of a system call:
+    + Register `R1` is assigned a fat pointer to forward data to the far call.
+      See [paid_forward].
+    + Register `R2` is assigned a bit-value:
+      - bit 1 indicates "this is a system call"
+      - bit 0 indicates "this is a constructor call"
+    + Registers `r3`, `r4`, ..., `r15` are reserved; their pointer tags are
+      cleared, but their values are unchanged.
+    + Registers `r14` and `r15` are cleared.
+*)
 Definition regs_effect regs (is_system is_ctor:bool) ptr :=
   let far_call_r2 :=
     let is_system_bit := shiftl is_system 1 in
     let is_ctor_bit := shiftl is_ctor 0 in
-    IntValue (int_mod_of word_bits (Z.lor is_system_bit is_ctor_bit)) in
+    let bits := Z.lor is_system_bit is_ctor_bit in
+    IntValue (int_mod_of word_bits bits) in
   let enc_ptr := FatPointer.ABI.(encode) ptr in
      if is_system then
        regs
@@ -137,19 +340,38 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
        <| gprs_r15 := pv0 |>
      else
        regs_state_zero <| gprs_r1 := PtrValue enc_ptr |>.
+(*
+10. Form a new execution stack frame:
 
-Inductive farcall_type : Set := Normal | Mimic | Delegate.
+   - the call is static if the current call is static, or if `.is_static` modifier is applied to instruction;
+   - set exception handler to `handler` address provided in the instruction;
+   - it is a checkpoint that saves all storage states;
+   - start PC at 0;
+   - start SP at [INITIAL_SP_ON_FAR_CALL];
+   - `this_address`,`msg_sender` and `context` fields are affected by the [farcall_type] as follows:
+*)
+
 Definition CALL_IMPLICIT_PARAMETER_REG := R3.
+Inductive farcall_type : Set := Normal | Mimic | Delegate.
 
-Definition select type (callers_caller caller dest: contract_address) (frame_ctx reg_ctx: u128) regs : (contract_address * contract_address * u128) :=
-  match type with
-  | Normal => (dest, caller, reg_ctx)
-  | Delegate => (caller, callers_caller, frame_ctx)
-  | Mimic =>
-      let r3_value := (fetch_gpr regs CALL_IMPLICIT_PARAMETER_REG).(value) in
-      (dest, resize _ _ r3_value, reg_ctx)
-  end.
+(**
 
+- Normal far call sets:
+  + `this_address` <- destination address;
+  + `msg_sender` <- caller address;
+  + `context` <- [gs_context_u128] register value.
+
+- Delegate call sets:
+  + `this_address` <- [this_address] of the current frame;
+  + `msg_sender` <- [msg_sender] of the current frame;
+  + `context` <- [context_u128] of the current frame.
+
+- Mimic call sets:
+  + `this_address` <- destination address;
+  + `msg_sender` <- value of `r3`;
+  + `context` <- [gs_context_u128] register value.
+
+ *)
 Definition select_this_address type (caller dest: contract_address) :=
   match type with
   | Normal => dest
@@ -172,8 +394,7 @@ Definition select_ctx type (reg_ctx frame_ctx: u128) :=
   | Delegate => frame_ctx
   end.
 
-
-(* Not implemented: shards *)
+(* Not implemented yet: shards *)
 Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_ptr_tag: FarCall.params -> state -> state -> Prop :=
 | farcall_invoke: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page mem_ctx1 new_mem_ctx in_ptr __ ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
     let old_extframe := topmost_extframe xstack0 in
@@ -182,10 +403,10 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
     let is_system := addr_is_kernel dest_addr && is_syscall_query in
     let allow_masking := negb is_system in
 
-    (fwd_mode = ForwardFatPointer -> abi_ptr_tag = true) ->
+    (fwd_mode = Ret.ForwardFatPointer -> abi_ptr_tag = true) ->
 
     paid_code_fetch allow_masking depot codes dest_addr xstack0 (xstack1, new_code_page) ->
-    paid_forward fwd_mode (in_ptr, xstack1, mem_ctx0) (out_ptr, xstack2, mem_ctx1)->
+    paid_forward_and_adjust_bounds fwd_mode (in_ptr, xstack1, mem_ctx0) (out_ptr, xstack2, mem_ctx1)->
     alloc_pages_extframe (old_pages,mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
     pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
@@ -208,12 +429,12 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
 
     farcall type dest_addr handler_addr call_as_static abi_ptr_tag
             {|
-              fc_memory_quasi_fat_ptr := in_ptr;
-              fc_ergs_passed          := ergs_query;
-              fc_shard_id             := __;
-              fc_forwarding_mode      := fwd_mode;
-              fc_constructor_call     := false;
-              fc_to_system            := is_syscall_query;
+              memory_quasi_fat_ptr := in_ptr;
+              ergs_passed          := ergs_query;
+              shard_id             := __;
+              forwarding_mode      := fwd_mode;
+              constructor_call     := false;
+              to_system            := is_syscall_query;
             |}
             {|
               gs_flags        := flags;
@@ -255,13 +476,6 @@ Inductive fetch_operands abi dest handler:
     let handler_addr := resize _ code_address_bits handler_location in
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params).
 
-
-
-(**
-<<
-## Far calls
->>
-*)
 Inductive step : instruction -> smallstep :=
                                         
 | step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
@@ -284,10 +498,39 @@ Inductive step : instruction -> smallstep :=
 
     step (OpDelegateCall abi dest handler call_as_static) gs gs'
 .
+
 (**
-<<
+
+## Affected parts of VM state
+
+- flags are cleared
+- registers are affected as described by [regs_effect].
+- new pages appear as described by [alloc_pages_extframe].
+- context register is zeroed.
+- execution stack is affected in a non-trivial way (see step 10 in description for [farcall]).
+
+## Comparison with near calls
+
+- Far calls can not accept more than [max_passable] ergs, while near calls may accept all available ergs.
+- Abnormal returns from far calls through [OpPanic] or [OpRevert] roll back all
+storage changes that occured during the contract execution.
+
+This includes exceptional situations when an error occured and the current
+instruction is masked as [OpPanic].
+
+
+## Usage
+
+- Calling precompiles
+- Calling other contracts
+
+## Encoding
+
+- In the encoding, [OpDelegateCall], [OpFarCall], and [OpMimicCall] share the same opcode.
+
+
 # Possible exceptions
->>
+
  *)
 Record FarCallExceptions : Set := {
     fce_input_is_not_pointer_when_expected : bool;

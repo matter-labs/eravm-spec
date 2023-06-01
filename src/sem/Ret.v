@@ -132,7 +132,7 @@ Record params := {
 }.
 ```
 
-2. Forward a memory slice to the caller:
+2. Forward a memory slice to the caller (see [paid_forward]):
    - If `page_forwarding_mode` is `ForwardFatPointer`, then:
       + ensure that the register containing `abi_reg`  is tagged as pointer.
       + ensure that `memory_quasi_fat_ptr` does NOT refer to a page owned by an older frame.
