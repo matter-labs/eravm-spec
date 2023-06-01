@@ -29,7 +29,7 @@ Section Defs.
       }.
 
 
-  Definition is_fresh cm := contains _ VersionedHash.eq_dec (cm_fresh cm).
+  Definition is_fresh cm vh := negb (contains _ VersionedHash.eq_dec (cm_fresh cm) vh).
 
   Inductive code_fetch_no_masking: depot -> code_storage
                         -> contract_address -> (versioned_hash * code_page * code_length) -> Prop :=
