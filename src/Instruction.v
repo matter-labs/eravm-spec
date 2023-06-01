@@ -10,29 +10,24 @@ Import Common Condition Memory Ergs CodeStorage.
 TODO The exact binary encoding of instructions is different from the following description and will be explored in a different section.
  *)
 
-(** # Structure of instructions *)
+(**
+# Structure of instructions 
 
-(** ## Inner structure *)
+## Inner structure 
 
-(** This section presents a high-level description of how to construct a valid instruction.
+This section presents a high-level description of how to construct a valid instruction.
 
 §1. Instructions have a part common to all instructions, and an instruction-specific part.
 
 §1.1. The common part [instruction] consists of:
+
 - Opcode: encodes instruction type. See [opcode_specific].
 - Common modifiers: alters the meaning of instruction. See [common_mod], [ins_mods].
 
   1. `swap`: if an instruction has two input operands, this modifier swaps
-    them. For example, if `sub in1, in2, out1` computes `in1`-`in2`, `sub` with
-    `swap` modifier computes `in2` - `in1`. This is useful because `in1` has
-    richer address modes: it can be e.g. fetched from stack, whereas `in2` can
-    only be fetched from a register.
+    them.
 
-  2. `set_flags`: if set, instruction is allowed to change the flags. If
-    cleared, the instruction will not touch the flags.
-
- *)
-
+*)
 Inductive mod_swap := Swap | NoSwap.
 
 Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
@@ -41,6 +36,16 @@ Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
   | Swap => (b,a)
   end.
 
+(**
+  For example, if `sub in1, in2, out1` computes `in1`-`in2`, `sub` with
+  `swap` modifier computes `in2` - `in1`. This is useful because `in1` has
+  richer address modes: it can be e.g. fetched from stack, whereas `in2` can
+  only be fetched from a register.
+
+
+  2. `set_flags`: if set, instruction is allowed to change the flags. If
+    cleared, the instruction will not touch the flags.
+ *)
 Inductive mod_set_flags := SetFlags | PreserveFlags.
 
 Definition apply_set_flags (md: mod_set_flags) (f f':flags_state) : flags_state :=
@@ -53,12 +58,14 @@ Record common_mod : Set := mk_cmod {
                                cm_swap: mod_swap;
                                cm_set_flags: mod_set_flags
                              }.
-(** - Condition of execution: instruction is executed only if the currently set
+(**
+
+ - Condition of execution: instruction is executed only if the currently set
 flags are compatible with the condition. Each instruction has a condition
-encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]. *)
+encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]. 
 
 
-(** §1.2. Additionally, depending on [opcode_specific], an instruction may have:
+§1.2. Additionally, depending on [opcode_specific], an instruction may have:
 
 - Exclusive modifiers: alter the meaning of instruction, e.g. [binop_mod].
 - Operands: up to two input operands `in1` and `in2`, and up to two output operands `out1` and `out2`. Their allowed formats are systematized in the section Addressing Modes.
@@ -69,9 +76,11 @@ encoded inside it. See [flags_activated], [ins_mods], [global_state], [gs_flags]
 (* Create a namespace for argument format description. *)
 Module Arg.
 
-  (** ## Addressing modes *)
-
-  (** §1. There are 8 main types of addressing the instruction arguments. Some of them only support reading (indicated by "in"), or writing (indicated by "out").
+  (**
+## Addressing modes
+      
+§1. There are 8 main types of addressing the instruction arguments. Some of them
+    only support reading (indicated by "in"), or writing (indicated by "out").
 
 
 1. Register (in/out), see §1.1
@@ -89,14 +98,14 @@ This section details these types.
 
 
 
-§1.1. #<b>#Register#</b># addressing takes value from one of General Purpose Registers (GPR).
+§1.1. **Register** addressing takes value from one of General Purpose Registers (GPR).
    *)
 
   Inductive reg_io : Set := Reg (reg:reg_name).
 
   (** §1.1.1. See [global_state], [gs_regs]. *)
 
-  (** §1.2. #<b>#Immediate 16-bit #</b># value. *)
+  (** §1.2. **Immediate 16-bit** value. *)
 
   Inductive imm_in : Set := Imm (imm: u16).
   (**
@@ -105,7 +114,7 @@ This section details these types.
 §1.2.2. See [imm_in], [in_regimm].
    *)
 
-  (** §1.3. #<b>#Address on a code page, relative to a GPR.#</b># *)
+  (** §1.3. **Address on a code page, relative to a GPR.** *)
 
   Inductive code_in : Set := CodeAddr (reg:reg_name) (imm:code_address).
 
@@ -113,7 +122,7 @@ This section details these types.
 
 §1.3.2. Code and const pages may coincide.
 
-§1.4. #<b>#Address on a const page, relative to a GPR.#</b># *)
+§1.4. **Address on a const page, relative to a GPR.** *)
   Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
   (**
@@ -122,7 +131,7 @@ This section details these types.
 §1.4.2. Code and const pages may coincide.
 
 
-§1.5. #<b># Address on a stack page, relative to a GPR. #</b>#
+§1.5. **Address on a stack page, relative to a GPR.**
 
 §1.5.1. Resolved to (reg + imm).
 
@@ -131,7 +140,7 @@ This section details these types.
   | Absolute (reg:reg_name) (imm: stack_address)
 
   (**
-§1.6. #<b>#Address on a stack page, relative to SP and GPR.#</b>#
+§1.6. **Address on a stack page, relative to SP and GPR.**
 
 §1.6.1. Resolved to (SP - reg + imm).
 
@@ -142,7 +151,7 @@ This section details these types.
   .
 
   (**
-§1.7. #<b># Stack page, relative to GPR and SP, with decreasing SP (in) #</b>#.
+§1.7. ** Stack page, relative to GPR and SP, with decreasing SP (in) **.
 
 §1.7.1 Resolved to (SP - (reg + imm)).
 
@@ -158,7 +167,7 @@ This section details these types.
 
   (**
 
-§1.8. #<b># Stack page, relative to GPR and SP, with increasing SP (out) #</b>#.
+§1.8. **Stack page, relative to GPR and SP, with increasing SP (out)**.
 
 §1.8.1. Resolved to (SP + (reg + imm)).
 
@@ -319,6 +328,7 @@ input argument. *)
 
   Module Coercions.
 
+  Coercion Imm :  u16 >-> imm_in.
   Coercion InReg :  reg_io >-> in_any.
   Coercion InImm :  imm_in >-> in_any.
   Coercion InStack: stack_in >-> in_any.
