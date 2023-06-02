@@ -5,6 +5,7 @@ Require Common Condition Ergs Memory Instruction CodeStorage.
 Import ZArith Condition Common Ergs MemoryBase Memory CodeStorage Instruction ZMod List ListNotations.
 
 
+Definition EXECUTION_STACK_LIMIT : nat := 1024.
 Definition page := page instruction_predicated instruction_invalid.
 
 Definition exception_handler := code_address.
@@ -39,6 +40,16 @@ Inductive callframe :=
 
 Definition execution_stack := callframe.
 
+Fixpoint callframe_depth cf :=
+  (match cf with
+| InternalCall x tail => 1 + callframe_depth tail
+| ExternalCall x (Some tail)=> 1 + callframe_depth tail
+| ExternalCall x None => 1
+end)%nat.
+
+Definition stack_overflow (xstack:execution_stack) : bool :=
+  Nat.ltb EXECUTION_STACK_LIMIT (callframe_depth xstack).
+                                                           
 Definition cfc (ef: callframe) : callframe_common :=
   match ef with
   | InternalCall x _ => x
