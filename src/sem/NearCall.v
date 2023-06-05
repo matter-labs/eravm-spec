@@ -8,6 +8,12 @@ Import Common Condition ExecutionStack Ergs MemoryOps Memory Instruction State Z
 
 ## NearCall
 
+### Abstract Syntax
+
+```
+| OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
+```
+
 ### Syntax
 
 - `call abi_reg, callee_address, exception_handler` as a fully expanded form.

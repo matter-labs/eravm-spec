@@ -12,6 +12,10 @@ Inductive step: instruction -> smallstep :=
 
 Unconditional jump.
 
+### Abstract Syntax
+
+[ OpJump (dest: in_any)]
+
 ### Syntax
 
 - `jump label`

@@ -32,6 +32,10 @@ Inductive step_ret: instruction -> smallstep :=
 
 ## `ret` (normal return, not panic/revert)
 
+### Abstract Syntax
+
+- [OpRet (args: in_reg) (label: option code_address)]
+
 ### Syntax
 
 - `ret`
@@ -237,6 +241,10 @@ Inductive step_revert: instruction -> smallstep :=
 ## `revert` (recoverable error, not normal return/not panic)
 
 Return from a function signaling an error; execute exception handler, possibly return data like normal `ret`.
+
+### Abstract Syntax
+
+- [OpRevert (args: in_reg) (label: option code_address)]
 
 ### Syntax
 
@@ -477,6 +485,10 @@ Inductive step_panic: instruction -> smallstep :=
 
 Return from a function signaling an error; execute exception handler, burn all
 regs in current frame, set OF flag, return no data.
+
+### Abstract Syntax
+
+- [OpPanic (args: in_reg) (label: option code_address)]
 
 ### Syntax
 

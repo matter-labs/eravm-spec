@@ -5,10 +5,14 @@ Import MemoryOps Instruction State SemanticCommon.
 
 # ModSP
 
+## Abstract Syntax
+
+[OpModSP (in1: in_any) (out1: out_any)]
+
 ## Syntax
 
 ```
-OpModSP in1, out1
+ModSP in1, out1
 ```
 
 ## Summary
