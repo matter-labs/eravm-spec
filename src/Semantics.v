@@ -11,7 +11,7 @@ Inductive step_ins: instruction -> smallstep :=
 Performs no operations.
 *)
 | step_ins_noop: forall gs, step_ins OpNoOp gs gs
-| step_ins_jump: forall ins gs gs', Jump.step_jump ins gs gs' -> step_ins ins gs gs'
+| step_ins_jump: forall ins gs gs', Jump.step ins gs gs' -> step_ins ins gs gs'
 | step_ins_modsp: forall ins gs gs', ModSP.step ins gs gs' -> step_ins ins gs gs'
 | step_ins_farcall: forall ins gs gs', Farcall.step ins gs gs' -> step_ins ins gs gs'
 | step_ins_ret: forall ins gs gs', Ret.step_ret ins gs gs' -> step_ins ins gs gs'
@@ -145,3 +145,4 @@ Inductive step: smallstep :=
       stack_overflow xstack0 = true ->
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs.
+ 

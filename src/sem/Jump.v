@@ -5,7 +5,7 @@ Require SemanticCommon.
 Import Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
   Arg Arg.Coercions SemanticCommon RecordSetNotations.
 
-Inductive step_jump: instruction -> smallstep :=
+Inductive step: instruction -> smallstep :=
 (**
 
 ## `jump`
@@ -29,7 +29,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
     forall codes flags depot pages xstack context_u128 regs (dest:in_any) dest_val any_tag,
       resolve_fetch_value regs xstack pages dest (mk_pv any_tag dest_val) ->
       let dest_addr := resize _ code_address_bits dest_val in
-      step_jump (OpJump dest)
+      step (OpJump dest)
         {|
           gs_callstack    := xstack;
 
