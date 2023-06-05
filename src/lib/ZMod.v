@@ -159,3 +159,9 @@ Definition bitwise_and := bitwise_op land.
 Definition resize (sz1 sz2:nat) (x: int_mod sz1) : int_mod sz2 :=
   int_mod_of sz2 (int_val sz1 x).
 
+
+Definition mix_lower n (source: int_mod (n+n) ) (mix: int_mod n) : int_mod (n+n) :=
+  (
+    let p := Z.of_nat n in
+    let hi := source.(int_val _) / (2^p) in
+    int_mod_of (n+n) ( hi * (2^p) + mix.(int_val _))) %Z.
