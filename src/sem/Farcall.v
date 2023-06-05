@@ -229,7 +229,7 @@ The semantics of all three
 First two steps are formalized by predicates [Semantics.step] and [fetch_operands].
 
 1. Fetch the instruction, adjust PC and perform the usual checks (such as kernel
-   mode), pay static costs, and so on.
+   mode), pay basic costs, and so on.
 
    See [Semantics.step] for details.
 
