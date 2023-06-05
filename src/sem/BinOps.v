@@ -36,26 +36,22 @@ The operation follows a similar scheme as described below. It is parameterized u
 
 See [RelSpPop], [RelSpPush], [step].
  *)
-Inductive binop_effect: execution_stack -> regs_state -> pages -> flags_state ->
+
+Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
                         forall F: word_type -> word_type -> (word_type * flags_state),
-                        (execution_stack * regs_state * pages * flags_state) -> Prop :=
+                        (regs_state * execution_stack * pages * flags_state) -> Prop :=
 | be_apply:
-  forall f ef0 ef1 ef' regs regs' mm mm' (in1: in_any) (in2:regonly) (out: out_any) loc1 loc2
-    op1 op2 op1' op2' swap set_flags out_loc result flags_candidate flags0 new_flags tag1 tag2,
-    resolve ef0 regs in1 loc1 ->
-    resolve_effect__in in1 ef0 ef1 ->
-    resolve ef1 regs in2 loc2 ->
-    resolve ef1 regs out out_loc ->
-    resolve_effect__out out ef1 ef' ->
-    fetch_loc regs ef' mm loc1 (FetchPV (mk_pv tag1 op1)) ->
-    fetch_loc regs ef' mm loc2 (FetchPV (mk_pv tag2 op2)) ->
+  forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:regonly) (out: out_any) 
+    op1 op2 op1' op2' swap set_flags result flags_candidate flags0 new_flags ,
+
+    fetch_apply2 (regs, xstack, pages) in1 in2 out (IntValue op1) (IntValue op2) (IntValue result) (new_regs, new_xstack, new_pages) ->
     apply_swap swap op1 op2 = (op1', op2') -> (* [op1', op2'] are [op1,op2] or [op2,op1] depending on swap modifier value. *)
     f op1' op2' = (result, flags_candidate) ->
-    store_loc regs ef' mm (IntValue result) out_loc (regs', mm') ->
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
-    binop_effect ef0 regs mm flags0 in1 in2 out swap set_flags f (ef', regs', mm', new_flags).
+    binop_effect (regs, xstack, pages, flags0) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags).
+
 
 Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
                       (word_type -> word_type -> (word_type * flags_state)) ->
@@ -71,7 +67,7 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
           gs_depot        := depot;
           gs_contracts    := codes;
           |}  in
-    binop_effect xstack regs pages flags in1 in2 out swap set_flags f (new_xstack, new_regs, new_pages, new_flags) ->
+    binop_effect (regs, xstack, pages, flags) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags) ->
     binop_state_effect
       in1 in2 out swap set_flags f gs
       {|
@@ -88,6 +84,12 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
 Inductive step: instruction -> smallstep :=
 (**
 ## Add
+
+### Abstract Syntax
+
+```
+| OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+```
 
 ### Syntax
 
@@ -149,6 +151,12 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
 ## Sub
 
+### Abstract Syntax
+
+```
+ | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+```
+
 ### Syntax
 
 - `sub in1, in2, out`
@@ -209,6 +217,12 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 (**
 ## And
 
+### Abstract Syntax
+
+```
+ | OpAnd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+```
+
 ### Syntax
 
 - `and in1, in2, out`
@@ -260,6 +274,13 @@ Reminder: flags are only set if `set_flags` modifier is set.
  (**
 
 ## OR
+
+### Abstract Syntax
+
+```
+ | OpOr (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+```
+
 
 ### Syntax
 
@@ -314,6 +335,12 @@ Reminder: flags are only set if `set_flags` modifier is set.
 (**
 
 ## XOR
+
+### Abstract Syntax
+
+```
+ | OpXor (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+```
 
 ### Syntax
 

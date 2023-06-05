@@ -139,3 +139,28 @@ Definition code_manager := code_manager.
 
 Definition revert_storage (ef:callframe_external) : depot :=
   ef.(ecf_saved_depot).
+
+
+
+Inductive fetch_apply2:
+  (regs_state * execution_stack * pages) ->
+  in_any -> in_reg -> out_any ->
+  primitive_value -> primitive_value -> primitive_value ->
+  (regs_state * execution_stack * pages)
+  -> Prop :=
+
+ | fa_apply:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out:out_any) out_loc val1 val2 result new_regs new_pages new_xstack,
+  resolve xstack0 regs in1 loc1 ->
+  resolve_effect__in in1 xstack0 xstack1 ->
+  resolve xstack1 regs in2 loc2 ->
+  resolve xstack1 regs out out_loc ->
+  resolve_effect__out out xstack1 new_xstack ->
+  fetch_loc regs new_xstack pages loc1 (FetchPV val1) ->
+  fetch_loc regs new_xstack pages loc2 (FetchPV val2) ->
+  store_loc regs new_xstack pages result  out_loc (new_regs, new_pages) ->
+
+  fetch_apply2 (regs,xstack0,pages)
+              in1 in2 out
+              val1 val2 result
+              (new_regs, new_xstack, new_pages)
+.
