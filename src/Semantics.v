@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require sem.Ret sem.Farcall sem.BinOps sem.ModSP sem.Jump.
+Require sem.Ret sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.Ptr.
 
 Import Bool ZArith Common CodeStorage Condition ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits SemanticCommon RecordSetNotations.
@@ -18,6 +18,7 @@ Performs no operations.
 | step_ins_revert: forall ins gs gs', Ret.step_revert ins gs gs' -> step_ins ins gs gs'
 | step_ins_panic: forall ins gs gs', Ret.step_panic ins gs gs' -> step_ins ins gs gs'
 | step_ins_binop: forall ins gs gs', BinOps.step ins gs gs' -> step_ins ins gs gs'
+| step_ins_ptr: forall ins gs gs', Ptr.step ins gs gs' -> step_ins ins gs gs'
 .
 
 

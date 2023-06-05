@@ -374,6 +374,11 @@ semantics is described in a different place; see [step]. *)
                   (* quasi fat pointer + forwarding mode *)
   | OpRevert      (args: in_reg) (label: option code_address)
   | OpPanic       (label: option code_address)
+
+  | OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
+  | OpPtrSub      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
+  | OpPtrShrink   (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
+  | OpPtrPack     (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
   .
 
 
@@ -433,6 +438,10 @@ Section Costs.
                               + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
                               + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
     | OpRet _ _ | OpRevert _ _ | OpPanic _ => AVERAGE_OPCODE_ERGS
+    | OpPtrAdd _ _ _ _
+    | OpPtrSub _ _ _ _
+    | OpPtrShrink _ _ _ _
+    | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     end.
 End Costs.
 
