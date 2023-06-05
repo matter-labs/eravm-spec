@@ -89,10 +89,8 @@ Section Memory.
           is_ptr: bool;
           value: word_type;
         }.
-    Definition IntValue := mk_pv false.
-    Definition PtrValue := mk_pv true.
 
-    Definition pv0 := IntValue word_zero_value.
+    Definition pv0 := mk_pv false word_zero_value.
 
     Definition clear_pointer_tag (pv:primitive_value): primitive_value :=
       match pv with | mk_pv _ value => mk_pv false value end.
@@ -100,7 +98,7 @@ Section Memory.
     Definition stack_page_params := {|
                                      addressable_block := primitive_value;
                                      address_bits := 16;
-                                     default_value := IntValue zero256;
+                                     default_value := mk_pv false zero256;
                                      writable := true
                                    |}.
 
@@ -240,7 +238,7 @@ Section Memory.
                               gprs_r15  : primitive_value;
                             }.
 
-    Definition regs_state_zero := let z := IntValue zero256
+    Definition regs_state_zero := let z := mk_pv false zero256
                                   in mk_regs z z z z z z z z z z z z z z z.
 
     (* begin hide *)
@@ -268,3 +266,6 @@ Section Memory.
     := extract_address _.
   End Helpers.
 End Memory.
+
+Notation IntValue := (mk_pv false).
+Notation PtrValue := (mk_pv true).
