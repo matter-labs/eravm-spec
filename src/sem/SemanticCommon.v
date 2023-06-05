@@ -164,3 +164,20 @@ Inductive fetch_apply2:
               val1 val2 result
               (new_regs, new_xstack, new_pages)
 .
+
+Inductive fetch_apply2_swap swap:
+  (regs_state * execution_stack * pages) ->
+  in_any -> in_reg -> out_any ->
+  primitive_value -> primitive_value -> primitive_value ->
+  (regs_state * execution_stack * pages)
+  -> Prop :=
+ | fas_apply:  forall xstack0 regs (in1:in_any) (in2:in_reg) pages (out:out_any) val1 val2 val1' val2' result new_regs new_pages new_xstack,
+  fetch_apply2 (regs,xstack0,pages)
+              in1 in2 out
+              val1 val2 result
+              (new_regs, new_xstack, new_pages) ->
+  apply_swap swap val1 val2 = (val1', val2') ->
+  fetch_apply2_swap swap (regs,xstack0,pages)
+              in1 in2 out
+              val1' val2' result
+              (new_regs, new_xstack, new_pages) .
