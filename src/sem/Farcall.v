@@ -348,7 +348,6 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
    - it is a checkpoint that saves all storage states;
    - start PC at 0;
    - start SP at [INITIAL_SP_ON_FAR_CALL];
-   - `this_address`,`msg_sender` and `context` fields are affected by the [farcall_type] as follows:
 *)
 
 Definition CALL_IMPLICIT_PARAMETER_REG := R3.
@@ -356,21 +355,22 @@ Inductive farcall_type : Set := Normal | Mimic | Delegate.
 
 (**
 
-- Normal far call sets:
-  + `this_address` <- destination address;
-  + `msg_sender` <- caller address;
-  + `context` <- [gs_context_u128] register value.
-
-- Delegate call sets:
-  + `this_address` <- [this_address] of the current frame;
-  + `msg_sender` <- [msg_sender] of the current frame;
-  + `context` <- [context_u128] of the current frame.
-
-- Mimic call sets:
-  + `this_address` <- destination address;
-  + `msg_sender` <- value of `r3`;
-  + `context` <- [gs_context_u128] register value.
-
+   - `this_address`,`msg_sender` and `context` fields are affected by the [farcall_type] as follows:
+      + Normal far call sets:
+        * `this_address` <- destination address;
+        * `msg_sender` <- caller address;
+        * `context` <- value of context register [gs_context_u128].
+      
+      + Delegate call sets:
+        * `this_address` <- [this_address] of the current frame;
+        * `msg_sender` <- [msg_sender] of the current frame;
+        * `context` <- [context_u128] of the current frame.
+      
+      + Mimic call sets:
+        * `this_address` <- destination address;
+        * `msg_sender` <- value of `r3`;
+        * `context` <- value of context register [gs_context_u128].
+      
  *)
 Definition select_this_address type (caller dest: contract_address) :=
   match type with
