@@ -348,32 +348,6 @@ input argument. *)
   End Coercions.
 End Arg.
 
-(** # Exclusive modifiers *)
-Section ModifiersExclusive.
-  Import ZMod.
-  (** This section describes all exclusive modifiers of instructions. *)
-  Inductive binop_mod: Set := | BinOpAnd | BinOpOr | BinOpXor.
-
-  Definition binop_func {bits} (m:binop_mod) : int_mod bits -> int_mod bits -> int_mod bits :=
-    match m with
-    | BinOpAnd => bitwise_and bits
-    | BinOpOr  => bitwise_or bits
-    | BinOpXor => bitwise_xor bits
-    end.
-
-
-  Record far_call_exception : Set := mk_far_call_exception {
-        fce_input_is_not_pointer_when_expected : bool;
-        fce_invalid_code_hash_format : bool;
-        fce_not_enough_ergs_to_decommit : bool;
-        fce_not_enough_ergs_to_grow_memory : bool;
-        fce_malformed_abi_quasi_pointer : bool;
-        fce_call_in_now_constructed_system_contract : bool;
-        fce_note_enough_ergs_for_extra_far_call_costs : bool;
-    }.
-
-End ModifiersExclusive.
-
 (** # Instructions *)
 Section Def.
   Import Arg.
