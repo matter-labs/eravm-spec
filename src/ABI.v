@@ -72,6 +72,11 @@ Module FatPointer.
     length - ofs = (length', false) ->
     fat_ptr_shrink (mk_fat_ptr p start length ofs) (mk_fat_ptr p start' length' zero32).
 
+  (** Used by [OpPtrShrink] instruction. *)
+  Inductive fat_ptr_trim_length : fat_ptr -> u32 -> fat_ptr -> Prop :=
+  | fptl_apply: forall p start diff length length' ofs,
+    length - diff = (length', false) ->
+    fat_ptr_trim_length (mk_fat_ptr p start length ofs) diff (mk_fat_ptr p start length' ofs).
 
   Definition growth (current_bound: mem_address) (query_bound: mem_address)
     : mem_address :=
