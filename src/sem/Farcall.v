@@ -11,6 +11,7 @@ ZMod.
 
 
 Import
+Addressing
 ABI ABI.FarCall ABI.FatPointer
 CodeStorage
 Common
@@ -24,7 +25,7 @@ RecordSetNotations
 SemanticCommon
 State.
 
-Import Instruction Arg Arg.Coercions.
+Import Instruction Addressing.Coercions.
 
 Local Coercion Z.b2z: bool >-> Z.
 Local Coercion int_mod_of : Z >-> int_mod.

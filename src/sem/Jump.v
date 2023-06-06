@@ -2,8 +2,8 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
-  Arg Arg.Coercions SemanticCommon RecordSetNotations.
+Import Addressing Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
+  Addressing.Coercions SemanticCommon RecordSetNotations.
 
 Inductive step: instruction -> smallstep :=
 (**

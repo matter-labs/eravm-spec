@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import MemoryOps Instruction State SemanticCommon.
+Import Addressing MemoryOps Instruction State SemanticCommon.
 (**  
 
 # ModSP
@@ -88,7 +88,7 @@ Inductive step : instruction -> smallstep :=
 
  *)
 Section Examples.
-Import Arg Arg.Coercions ZMod Memory ZArith ExecutionStack.
+Import Addressing.Coercions ZMod Memory ZArith ExecutionStack.
 Open Scope Z.
 Coercion int_mod_of : Z >-> int_mod.
 Set Printing Coercions.

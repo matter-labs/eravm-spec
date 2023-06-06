@@ -1,7 +1,8 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Condition ExecutionStack Memory Instruction State MemoryOps ABI.
+Require Addressing Common Condition ExecutionStack Memory Instruction State MemoryOps ABI.
 
 Import
+Addressing
 ABI
 ABI.FarCall
 ABI.FatPointer
@@ -23,7 +24,7 @@ ZArith
 ZBits
 ZMod.
 
-Import Arg Arg.Coercions.
+Import Addressing.Coercions.
 
 Definition smallstep := state -> state -> Prop .
 

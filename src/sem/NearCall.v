@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Common Condition ExecutionStack Ergs MemoryOps Memory Instruction State ZMod
-  ABI ABI.NearCall Arg Arg.Coercions SemanticCommon.
+Import Addressing Common Condition ExecutionStack Ergs MemoryOps Memory Instruction State ZMod
+  ABI ABI.NearCall Addressing.Coercions SemanticCommon.
 
 (**
 

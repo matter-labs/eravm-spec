@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Require  sem.SemanticCommon.
 
-Import Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
-  ZBits Arg Arg.Coercions RecordSetNotations SemanticCommon.
+Import Addressing Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
+  ZBits Addressing.Coercions RecordSetNotations SemanticCommon.
 (**
 # Binary operations
 
@@ -43,7 +43,7 @@ Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
                         forall F: word_type -> word_type -> (word_type * flags_state),
                         (regs_state * execution_stack * pages * flags_state) -> Prop :=
 | be_apply:
-  forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:regonly) (out: out_any) 
+  forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 op1' op2' swap set_flags result flags_candidate flags0 new_flags ,
 
     fetch_apply2 (regs, xstack, pages) in1 in2 out (IntValue op1) (IntValue op2) (IntValue result) (new_regs, new_xstack, new_pages) ->

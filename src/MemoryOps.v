@@ -1,6 +1,6 @@
-Require Common Condition ExecutionStack Memory Instruction State.
+Require Addressing Common Condition ExecutionStack Memory Instruction State.
 
-Import ZArith ZMod Common Condition ExecutionStack MemoryBase Memory Instruction State Arg List ListNotations.
+Import Addressing ZArith ZMod Common Condition ExecutionStack MemoryBase Memory Instruction State List ListNotations.
 
 (** Location from where a value can be fetched. *)
 Inductive loc : Set :=
@@ -226,6 +226,16 @@ Section Addressing.
       (forall reg ofs, arg <> OutStack (StackOutOnly (RelSpPush reg ofs))) ->
       resolve_effect__out  arg  ef ef.
 
+  (**
+If in instruction `in1` is using [RelSpPop] And `out1` is using [RelSpPush], then both
+ effects are applied in order:
+
+- first, the `in` effect,
+- then, the `out` effect.
+- then, if the instruction accesses SP, it will observe the value after both effects are applied.
+
+See an example in [sem.ModSP.step].
+*)
   Inductive resolve_effect: in_any -> out_any -> execution_stack -> execution_stack -> Prop :=
   | rslv_effect_full: forall arg1 arg2 ef1 ef2 ef3,
       resolve_effect__in arg1 ef1 ef2 ->
@@ -291,20 +301,20 @@ Section FetchStore.
   .
   (* TODO UMA related *)
 
-  Inductive resolve_fetch_value: regs_state -> execution_stack -> pages -> Arg.any -> primitive_value -> Prop :=
+  Inductive resolve_fetch_value: regs_state -> execution_stack -> pages -> any -> primitive_value -> Prop :=
   | rf_resfetch_pv: forall ef mm regs arg loc res,
       resolve ef regs arg loc ->
       fetch_loc regs ef mm loc (FetchPV res) ->
       resolve_fetch_value regs ef mm arg res.
 
-  Inductive resolve_fetch_word: regs_state -> execution_stack -> pages -> Arg.any -> word_type -> Prop :=
+  Inductive resolve_fetch_word: regs_state -> execution_stack -> pages -> any -> word_type -> Prop :=
   | rf_resfetch_w: forall ef mm regs arg res,
       resolve_fetch_value regs ef mm arg (IntValue res) ->
       resolve_fetch_word regs ef mm arg res.
 
 
   Inductive resolve_store: regs_state -> execution_stack -> pages
-                           -> Arg.out_any -> primitive_value -> regs_state * pages
+                           -> out_any -> primitive_value -> regs_state * pages
                            -> Prop :=
   | rs_resstore: forall ef mm regs arg loc_out pv regs' mm',
       resolve ef regs (out_any_incl arg) loc_out ->

@@ -2,8 +2,8 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
-  ABI ABI.FatPointer Arg Arg.Coercions SemanticCommon RecordSetNotations ZArith.
+Import Addressing Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
+  ABI ABI.FatPointer Addressing.Coercions SemanticCommon RecordSetNotations ZArith.
 
 Definition MAX_OFFSET_FOR_ADD_SUB: u256 := int_mod_of _ (2^32)%Z.
 
