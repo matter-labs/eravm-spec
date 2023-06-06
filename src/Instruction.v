@@ -418,7 +418,7 @@ Definition code_storage_type: Type := code_storage instruction_predicated instru
 Section Costs.
   Import ZMod ZArith.
   Definition base_cost (ins:instruction) :=
-    match ins with
+    (match ins with
     | OpInvalid => INVALID_OPCODE_ERGS
     | OpNoOp | OpModSP _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
@@ -427,22 +427,21 @@ Section Costs.
     | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
     | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-    | OpNearCall _ _ _ => fst (AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST)
+    | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
     | OpFarCall _ _ _ _
     | OpDelegateCall _ _ _ _
-    | OpMimicCall _ _ _ _ => ZMod.int_mod_of 32 (
-                              2 * VM_CYCLE_COST_IN_ERGS.(int_val _)
-                              + RAM_PERMUTATION_COST_IN_ERGS.(int_val _)
-                              + STORAGE_READ_IO_PRICE.(int_val _)
-                              + CALL_LIKE_ERGS_COST.(int_val _)
-                              + STORAGE_SORTER_COST_IN_ERGS.(int_val _)
-                              + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS.(int_val _))%Z
+    | OpMimicCall _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
+                              + RAM_PERMUTATION_COST_IN_ERGS
+                              + STORAGE_READ_IO_PRICE
+                              + CALL_LIKE_ERGS_COST
+                              + STORAGE_SORTER_COST_IN_ERGS
+                              + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
     | OpRet _ _ | OpRevert _ _ | OpPanic _ => AVERAGE_OPCODE_ERGS
     | OpPtrAdd _ _ _ _
     | OpPtrSub _ _ _ _
     | OpPtrShrink _ _ _ _
     | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-    end.
+    end)%Z.
 End Costs.
 
 

@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require sem.Ret sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.Ptr.
 
-Import Bool ZArith Common CodeStorage Condition ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
+Import Bool ZArith Common CodeStorage Condition Ergs ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits SemanticCommon RecordSetNotations.
 
 Inductive step_ins: instruction -> smallstep :=
@@ -53,7 +53,7 @@ Inductive step: smallstep :=
       fetch_instr regs xstack0 pages (Ins ins cond) ->
 
       update_pc_regular xstack0 xstack1 ->
-      pay (base_cost ins) xstack1 new_xstack ->
+      pay (ergs_of (base_cost ins)) xstack1 new_xstack ->
       step_ins ins gs1 new_gs ->
       step gs0 new_gs
  | step_requires_kernel:
@@ -127,7 +127,7 @@ Inductive step: smallstep :=
 
       update_pc_regular xstack0 xstack1 ->
       (* Still pay the price of the fetched instruction *)
-      pay (base_cost ins) xstack1 new_xstack ->
+      pay (ergs_of (base_cost ins)) xstack1 new_xstack ->
       step_ins OpNoOp gs1 new_gs ->
       step gs0 new_gs
 
