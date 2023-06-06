@@ -41,11 +41,11 @@ div + br {
 div:empty{ display: none;}
 
 #main h1 {
-	font-size: 4em;
+	font-size: 3em;
 }
 
 #main h2 {
-	font-size: 3em;
+	font-size: 2.5em;
 }
 
 #main h3 {
@@ -64,6 +64,7 @@ div:empty{ display: none;}
     margin: 0;
     text-align: left;
     background-color: rgba(0,0,0,0.08);
+    max-width: 40em;
 }
 
 .inlinecode, .code, #main pre {
