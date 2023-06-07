@@ -1,8 +1,9 @@
 From RecordUpdate Require Import RecordSet.
 Require Ergs Memory.
 
-Import Bool ZMod Common Ergs Memory RecordSetNotations.
+Import Bool ZMod Common Ergs Memory RecordSetNotations ZMod.
 
+Open Scope ZMod_scope.
 (** ABIs are described here:
 https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
  *)
@@ -89,6 +90,12 @@ Module FatPointer.
       let diff := growth current_bound query_bound in
       fat_ptr_induced_growth (mk_fat_ptr fp_page fp_start fp_length fp_offset) current_bound diff.
 
+  Inductive ptr_inc : fat_ptr -> fat_ptr -> Prop :=
+  |fpi_apply :
+    forall page start len ofs ofs',
+      uinc_overflow _ ofs = (ofs', false) ->
+      ptr_inc (mk_fat_ptr page start len ofs) (mk_fat_ptr page start len ofs').
+  
 End FatPointer.
 
 
