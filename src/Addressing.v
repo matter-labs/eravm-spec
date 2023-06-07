@@ -249,6 +249,7 @@ Module Coercions.
   Coercion OutStack: stack_out >-> out_any.
   Coercion AnyStack: stack_any >-> any.
   Coercion StackOutOnly: stack_out_only >-> stack_out. 
+  Coercion in_regimm_incl: in_regimm >-> any.
 
 End Coercions.
 
