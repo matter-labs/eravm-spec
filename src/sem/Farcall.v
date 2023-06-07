@@ -433,7 +433,7 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
               memory_quasi_fat_ptr := in_ptr;
               ergs_passed          := ergs_query;
               shard_id             := __;
-              forwarding_mode      := fwd_mode;
+              forwarding_mode      := Ret.UseMemory page_type;
               constructor_call     := false;
               to_system            := is_syscall_query;
             |}
