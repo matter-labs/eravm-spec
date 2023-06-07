@@ -146,7 +146,10 @@ Infix "+" := (uadd_overflow _) : ZMod_scope.
 Infix "-" := (usub_overflow _) : ZMod_scope.
 Infix "*" := (umul_overflow _) : ZMod_scope.
 
-Open Scope ZMod_scope.
+Infix "<" := (lt_unsigned _) : ZMod_scope.
+Infix ">" := (gt_unsigned _) : ZMod_scope.
+Infix "<=" := (le_unsigned _) : ZMod_scope.
+Infix ">=" := (ge_unsigned _) : ZMod_scope.
 
 Definition bitwise_op (f:Z->Z->Z) (bits:nat) (x y: int_mod bits) : int_mod bits :=
   int_mod_of _ (f (int_val _ x) (int_val _ y)).
