@@ -281,4 +281,12 @@ Section ActivePages.
   Definition heap_bound xstack := (get_active_pages xstack).(ctx_heap_bound).
   Definition auxheap_bound xstack := (get_active_pages xstack).(ctx_auxheap_bound).
 
+
+  Definition heap_variant_id (page_type: data_page_type)
+    :  callframe -> page_id :=
+    match page_type with
+    | Heap => active_heap_id
+    | AuxHeap => active_auxheap_id
+    end.
+
 End ActivePages.

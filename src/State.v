@@ -62,6 +62,13 @@ Section AllocatedPages.
         page_has_id mm (active_auxheap_id ef) auxheappage ->
         active_auxheappage mm ef auxheappage.
 
+  Definition heap_variant_page (page_type: data_page_type)
+    : pages -> callframe -> page -> Prop :=
+    match page_type with
+    | Heap => active_heappage
+    | AuxHeap => active_auxheappage
+    end.
+
 End AllocatedPages.
 
 
