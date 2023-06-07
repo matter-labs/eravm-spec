@@ -276,11 +276,27 @@ Section FetchStore.
       active_codepage ps ef (ConstPage _ _ constpage) ->
       load_result _ addr constpage value ->
       fetch_loc regs ef ps (LocConstAddr addr) (FetchPV (IntValue value))
-
   .
-  (* TODO UMA; reading byte sequences is already implemented, see
-  tests in MemoryBase.v *)
 
+  Definition load_data_word (mem:data_page) (addr:mem_address) :option word_type :=
+    option_map (merge_bytes 8 256) (load_multicell data_page_params addr 64 mem)
+  .
+  
+  Inductive load_data_result : data_page -> mem_address -> word_type -> Prop :=
+  | ldr_apply: forall (mem:data_page) (addr:mem_address) res,
+      load_data_word mem addr = Some res ->
+      load_data_result mem addr res.
+
+  Inductive fetch_from_heap_variant : data_page_type -> execution_stack -> pages -> mem_address -> word_type -> Prop :=
+    | fhv_heap: forall pages addr page xstack res,
+        active_heappage pages xstack (DataPage _ _ page) ->
+        load_data_result page addr res ->
+        fetch_from_heap_variant Heap xstack pages addr res
+    | fhv_auxheap: forall pages addr page xstack res,
+        active_auxheappage pages xstack (DataPage _ _ page) ->
+        load_data_result page addr res ->
+        fetch_from_heap_variant AuxHeap xstack pages addr res.
+  
   Inductive fetch_instr : regs_state -> execution_stack -> pages -> instruction_predicated -> Prop :=
   | fi_fetch: forall regs ef mm ins,
       fetch_loc regs ef mm (LocCodeAddr (pc_get ef)) (FetchIns ins) ->
