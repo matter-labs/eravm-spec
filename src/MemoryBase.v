@@ -4,6 +4,7 @@ Require Common.
 Section Mem.
   Import lib.ZMod.
   Import BinNums ZArith FMapPositive.
+  Import List ListNotations.
 
   Record mem_descr := {
       addressable_block: Type;
@@ -114,6 +115,56 @@ Proof.
       eapply IHtl; eauto.
   }
 Qed.
+
+Fixpoint store_multicell (a:address) (vals: list addressable_block) (m:mem_parameterized)
+  : option mem_parameterized  :=
+  if writable mem_params then
+  match vals with
+    | [] =>  Some m
+    | v :: tail =>
+        let stored := store v a m in
+        let (nextaddr,overflow) := uinc_overflow _ a in
+        if overflow then None else
+          store_multicell nextaddr tail stored 
+  end
+  else None.
+
+Inductive store_multicell_result:
+  address -> list addressable_block -> mem_parameterized -> mem_parameterized -> Prop :=
+| smr_end : forall a m,
+    writable mem_params = true ->
+    store_multicell_result a [] m m 
+                         
+| smr_progress: forall addr nextaddr mem mem' mem'' value tail,
+    writable mem_params = true ->
+    (nextaddr, false) = uinc_overflow _  addr ->
+    store_result addr mem value mem' ->
+    store_multicell_result nextaddr tail mem' mem'' ->
+    store_multicell_result addr (value::tail)  mem mem''
+.
+
+Theorem store_multicell_spec:
+  forall ls a m m',
+  store_multicell a ls m = Some m'  ->
+  store_multicell_result a ls m m'.
+Proof.
+  induction ls.
+  - intros a m m'. inversion 1.
+    destruct (writable _) eqn: Hw;[|discriminate]. inversion H1. constructor. assumption.
+  - intros a0 m m'.
+    inversion 1.
+    destruct (writable _) eqn: Hw;[|discriminate].
+    destruct (carry _ _) eqn: Heq; [discriminate|].
+    unfold uadd_overflow, as_unsigned, carry in *.
+    econstructor 2 with (nextaddr := int_mod_of _ (int_val address_bits a0 +  PArith_ext.mod_pow2 1 address_bits)%Z); eauto ; [|constructor; auto].
+
+    
+    unfold uinc_overflow, uadd_overflow, as_unsigned, carry in *.
+    simpl.
+    rewrite Heq.
+    reflexivity.
+Qed.
+
 
 End Mem.
 Import BinInt Z List ZMod.
