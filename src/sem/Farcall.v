@@ -397,17 +397,77 @@ Definition select_ctx type (reg_ctx frame_ctx: u128) :=
 
 (* Not implemented yet: shards *)
 Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_ptr_tag: FarCall.params -> state -> state -> Prop :=
-| farcall_invoke: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page mem_ctx1 new_mem_ctx in_ptr __ ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
+| farcall_fwd_fatptr: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr __ ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
     let old_extframe := topmost_extframe xstack0 in
     let mem_ctx0 := old_extframe.(ecf_pages) in
     let current_contract := old_extframe.(ecf_this_address) in
     let is_system := addr_is_kernel dest_addr && is_syscall_query in
     let allow_masking := negb is_system in
 
-    (fwd_mode = Ret.ForwardFatPointer -> abi_ptr_tag = true) ->
+    abi_ptr_tag = true ->
+    
+    paid_code_fetch allow_masking depot codes dest_addr xstack0 (xstack1, new_code_page) ->
+    paid_forward Ret.ForwardFatPointer (in_ptr, xstack1) (out_ptr, xstack2) ->
+    alloc_pages_extframe (old_pages,mem_ctx0) new_code_page (new_pages, new_mem_ctx) ->
+    pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
+
+    let new_stack := ExternalCall {|
+                         ecf_this_address := select_this_address type current_contract dest_addr;
+                         ecf_msg_sender := select_sender type old_extframe.(ecf_msg_sender) current_contract old_regs;
+                         ecf_context_u128_value := select_ctx type reg_context_u128 old_extframe.(ecf_context_u128_value);
+
+                         ecf_code_address := zero16;
+                         ecf_pages := new_mem_ctx;
+                         ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
+                         ecf_saved_depot := depot;
+                         ecf_common := {|
+                                        cf_exception_handler_location := handler_addr;
+                                        cf_sp := INITIAL_SP_ON_FAR_CALL;
+                                        cf_pc := zero16;
+                                        cf_ergs_remaining := ergs_actual;
+                                      |};
+                       |} (Some new_caller_stack) in
+
+    farcall type dest_addr handler_addr call_as_static abi_ptr_tag 
+            {|
+              memory_quasi_fat_ptr := in_ptr;
+              ergs_passed          := ergs_query;
+              shard_id             := __;
+              forwarding_mode      := fwd_mode;
+              constructor_call     := false;
+              to_system            := is_syscall_query;
+            |}
+            {|
+              gs_flags        := flags;
+              gs_regs         := old_regs;
+              gs_pages        := old_pages;
+              gs_callstack    := xstack0;
+              gs_context_u128 := reg_context_u128;
+
+
+              gs_depot        := depot;
+              gs_contracts    := codes;
+            |}
+            {|
+              gs_flags        := flags_clear;
+              gs_regs         := regs_effect old_regs is_system false out_ptr;
+              gs_pages        := new_pages;
+              gs_callstack    := new_stack;
+              gs_context_u128 := zero128;
+
+
+              gs_depot        := depot;
+              gs_contracts    := codes;
+            |}
+| farcall_fwd_memory: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page mem_ctx1 new_mem_ctx in_ptr __ ergs_query ergs_actual is_syscall_query out_ptr page_type,
+    let old_extframe := topmost_extframe xstack0 in
+    let mem_ctx0 := old_extframe.(ecf_pages) in
+    let current_contract := old_extframe.(ecf_this_address) in
+    let is_system := addr_is_kernel dest_addr && is_syscall_query in
+    let allow_masking := negb is_system in
 
     paid_code_fetch allow_masking depot codes dest_addr xstack0 (xstack1, new_code_page) ->
-    paid_forward_and_adjust_bounds fwd_mode (in_ptr, xstack1, mem_ctx0) (out_ptr, xstack2, mem_ctx1)->
+    paid_forward_and_adjust_bounds page_type (in_ptr, xstack1, mem_ctx0) (out_ptr, xstack2, mem_ctx1)->
     alloc_pages_extframe (old_pages,mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
     pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
