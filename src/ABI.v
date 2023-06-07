@@ -95,7 +95,8 @@ End FatPointer.
 (** * Ret *)
 Module Ret.
   Import FatPointer.
-  Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
+  (*Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.*)
+  Inductive forward_page_type := ForwardFatPointer | UseMemory (type: data_page_type).
 
   Record params := mk_params {
       memory_quasi_fat_ptr: fat_ptr;
@@ -103,7 +104,7 @@ Module Ret.
     }.
 
   Axiom ABI: @coder params.
-  Axiom ABI_decode_zero: ABI.(decode) zero256 = Some (mk_params fat_ptr_empty UseHeap).
+  Axiom ABI_decode_zero: ABI.(decode) zero256 = Some (mk_params fat_ptr_empty (UseMemory Heap) ).
 End Ret.
 
 (** * Near call *)

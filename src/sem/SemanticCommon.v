@@ -56,17 +56,24 @@ Inductive pay_growth_or_burn_ptr : mem_address -> fat_ptr -> execution_stack -> 
     pay_growth_or_burn diff ef ef' ->
     pay_growth_or_burn_ptr current_bound ptr ef ef'.
 
-Inductive pay_heaps_growth_or_burn: forward_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
-| mpgb_forward p xstack:
-  pay_heaps_growth_or_burn ForwardFatPointer p xstack xstack
-
+Inductive pay_heaps_growth_or_burn: data_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
 | mpgb_heap in_ptr xstack0 xstack1:
   pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn UseHeap in_ptr xstack0 xstack1
+  pay_heaps_growth_or_burn Heap in_ptr xstack0 xstack1
 | mpgb_auxheap in_ptr xstack0 xstack1:
   pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn UseAuxHeap in_ptr xstack0 xstack1.
+  pay_heaps_growth_or_burn AuxHeap in_ptr xstack0 xstack1.
 
+(* Inductive pay_heaps_growth_or_burn: forward_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  := *)
+(* | mpgb_forward p xstack: *)
+(*   pay_heaps_growth_or_burn ForwardFatPointer p xstack xstack *)
+
+(* | mpgb_heap in_ptr xstack0 xstack1: *)
+(*   pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 -> *)
+(*   pay_heaps_growth_or_burn UseHeap in_ptr xstack0 xstack1 *)
+(* | mpgb_auxheap in_ptr xstack0 xstack1: *)
+(*   pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 -> *)
+(*   pay_heaps_growth_or_burn UseAuxHeap in_ptr xstack0 xstack1. *)
 
 Inductive grow_heap_page: mem_address -> active_pages -> active_pages -> Prop :=
 | gp_heap: forall ap new_bound diff,
@@ -79,12 +86,12 @@ Inductive grow_auxheap_page : mem_address -> active_pages -> active_pages -> Pro
     grow_auxheap_page diff ap (ap <| ctx_auxheap_bound := new_bound |>).
 
 
-Inductive select_page_bound : execution_stack -> Ret.forward_page_type -> page_id * mem_address -> Prop :=
+Inductive select_page_bound : execution_stack -> data_page_type -> page_id * mem_address -> Prop :=
 | fpmspb_heap: forall ef,
-    select_page_bound ef UseHeap
+    select_page_bound ef Heap
       (active_heap_id ef, (get_active_pages ef).(ctx_heap_bound))
 | fpmspb_auxheap: forall ef,
-    select_page_bound ef UseAuxHeap
+    select_page_bound ef AuxHeap
       (active_auxheap_id ef, (get_active_pages ef).(ctx_auxheap_bound)).
 
 Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_ptr * execution_stack -> Prop :=
@@ -93,14 +100,14 @@ Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_pt
     validate_fresh in_ptr = no_exceptions ->
     fat_ptr_induced_growth in_ptr bound diff ->
     pay_growth_or_burn diff xstack0 xstack1 ->
-    paid_forward UseHeap (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
+    paid_forward (UseMemory Heap) (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
 
 |pf_useauxheap: forall diff in_ptr xstack0 xstack1,
     let bound := auxheap_bound xstack0 in
     validate_fresh in_ptr = no_exceptions ->
     fat_ptr_induced_growth in_ptr bound diff ->
     pay_growth_or_burn diff xstack0 xstack1 ->
-    paid_forward UseAuxHeap (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
+    paid_forward (UseMemory AuxHeap) (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
 
 |pf_forwardfatpointer: forall in_ptr xstack out_ptr,
     validate_non_fresh in_ptr = no_exceptions ->
@@ -108,23 +115,20 @@ Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_pt
     paid_forward ForwardFatPointer (in_ptr, xstack) (out_ptr, xstack)
 .
 
-Inductive paid_forward_and_adjust_bounds: forward_page_type -> fat_ptr * execution_stack * active_pages  -> fat_ptr * execution_stack * active_pages -> Prop :=
+Inductive paid_forward_and_adjust_bounds: data_page_type -> fat_ptr * execution_stack * active_pages  -> fat_ptr * execution_stack * active_pages -> Prop :=
 |fcf_useheap: forall diff in_ptr xstack0 xstack1 out_ptr old_apages grown_apages,
-    paid_forward UseHeap (in_ptr, xstack0) (out_ptr, xstack1) ->
+    paid_forward (UseMemory Heap) (in_ptr, xstack0) (out_ptr, xstack1) ->
     let bound := heap_bound xstack0 in
     grow_heap_page diff old_apages grown_apages ->
-    paid_forward_and_adjust_bounds UseHeap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
+    paid_forward_and_adjust_bounds Heap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
 
 |fcf_useauxheap: forall diff in_ptr xstack0 xstack1 out_ptr old_apages grown_apages,
-    paid_forward UseAuxHeap (in_ptr, xstack0) (out_ptr, xstack1) ->
+    paid_forward (UseMemory AuxHeap) (in_ptr, xstack0) (out_ptr, xstack1) ->
     let bound := auxheap_bound xstack0 in
     grow_auxheap_page diff old_apages grown_apages ->
-    paid_forward_and_adjust_bounds UseAuxHeap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
-
-|fcf_forwardfatpointer: forall in_ptr xstack0 xstack1 pages out_ptr,
-    paid_forward ForwardFatPointer (in_ptr, xstack0) (out_ptr, xstack1) ->
-    paid_forward_and_adjust_bounds ForwardFatPointer (in_ptr, xstack0, pages) (out_ptr, xstack1,pages)
+    paid_forward_and_adjust_bounds AuxHeap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
 .
+
 Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
 
 Definition addr_is_kernel (addr:contract_address) : bool :=

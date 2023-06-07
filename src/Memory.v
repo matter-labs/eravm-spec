@@ -159,6 +159,8 @@ Section Memory.
     | ConstPage : const_page -> page
     | CodePage : code_page -> page.
 
+    Inductive data_page_type := Heap | AuxHeap.
+    
     Definition pages := list (prod nat page).
 
     Definition page_alloc (p:page) (m: pages) : pages :=
