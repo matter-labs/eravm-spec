@@ -49,20 +49,7 @@ Two modifiers are commonly encountered:
     | PreserveFlags => f
     end.
 
-  (** ## Instruction-specific modifiers
-
-Additionally, the following modifiers are specific to certain instructions or instruction groups:
-
- 1. [mod_inc32] is specific to UMA instructions: [OpHeapWrite], [OpAuxHeapWrite], [OpHeapRead], [OpAuxHeapRead], and [OpFatPointerRead].
-   *)
-
   Inductive mod_inc32 := Inc32 | NoInc32.
-  (** If set to [Inc32], the instruction:
-
-   - increments lowest 32 bits of $\mathit{in_1}$ by 32 with overflow check (and panics otherwise).
-   - for write operations ([OpHeapWrite], [OpAuxHeapWrite]): place the incremented value in $\mathit{out_1}$;
-   - for read operations ([OpHeapRead], [OpAuxHeapRead], [OpFatPointerRead]): place the incremented value in $\mathit{out_2}$.
-   *)
   Inductive instruction: Set :=
   | OpInvalid
   | OpNoOp
@@ -88,6 +75,16 @@ Additionally, the following modifiers are specific to certain instructions or in
   | OpPtrSub      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
   | OpPtrShrink   (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
   | OpPtrPack     (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
+
+                  
+  | OpLoad        (ptr: in_regimm) (res: out_reg)                    (mem:data_page_type)
+  | OpLoadInc     (ptr: in_regimm) (res: out_reg) (inc_ptr: out_reg) (mem:data_page_type) 
+  | OpStore       (ptr: in_regimm) (val: in_reg)  (inc_ptr: out_reg) (mem:data_page_type) 
+  | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (inc_ptr: out_reg) (mem:data_page_type)
+                  
+                  
+  | OpLoadPointer     (ptr: in_reg)  (res: out_reg)
+  | OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
   .
 
   (** ## Common definitions
@@ -153,13 +150,14 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpPtrShrink _ _ _ _
      | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      |
-       OpAuxHeapWrite _ _ _ _ _
-     | OpHeapWrite _ _ _ _ _
+       OpStore _ _ _ _
+     | OpStoreInc _ _ _ _ 
        => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
 
-     | OpHeapRead  _ _ _ _ _
-     | OpAuxHeapRead _ _ _ _ _
-     | OpFatPointerRead _ _ _ _
+     | OpLoad _ _ _
+     | OpLoadInc _ _ _ _
+     | OpLoadPointer _ _
+     | OpLoadPointerInc _ _ _
        => VM_CYCLE_COST_IN_ERGS + 3 * RAM_PERMUTATION_COST_IN_ERGS
      end)%Z.
 End Costs.
