@@ -278,24 +278,35 @@ Section FetchStore.
       fetch_loc regs ef ps (LocConstAddr addr) (FetchPV (IntValue value))
   .
 
-  Definition load_data_word (mem:data_page) (addr:mem_address) :option word_type :=
-    option_map (merge_bytes 8 256) (load_multicell data_page_params addr 64 mem)
+  Definition load_data_word_be (mem:data_page) (addr:mem_address) :option word_type :=
+    option_map (merge_bytes 8 256)
+      (load_multicell data_page_params addr 64 mem)
   .
-  
-  Inductive load_data_result : data_page -> mem_address -> word_type -> Prop :=
-  | ldr_apply: forall (mem:data_page) (addr:mem_address) res,
-      load_data_word mem addr = Some res ->
-      load_data_result mem addr res.
 
+  Definition load_data_word_le (mem:data_page) (addr:mem_address) :option word_type :=
+    option_map (fun l => merge_bytes 8 256 (List.rev l))
+      (load_multicell data_page_params addr 64 mem)
+ .
+ 
+  Inductive load_data_be_result : data_page -> mem_address -> word_type -> Prop :=
+  | ldr_apply: forall (mem:data_page) (addr:mem_address) res,
+      load_data_word_be mem addr = Some res ->
+      load_data_be_result mem addr res.
+
+  Inductive fetch_from_page: page_id -> pages -> mem_address -> word_type -> Prop :=
+    | ffp_fetch: forall pages addr page id res,
+        page_has_id pages id (DataPage _ _ page) ->
+        load_data_be_result page addr res ->
+        fetch_from_page id pages addr res.
+  
   Inductive fetch_from_heap_variant : data_page_type -> execution_stack -> pages -> mem_address -> word_type -> Prop :=
-    | fhv_heap: forall pages addr page xstack res,
-        active_heappage pages xstack (DataPage _ _ page) ->
-        load_data_result page addr res ->
+    | fhv_heap: forall pages addr xstack res,
+        fetch_from_page (active_heap_id xstack) pages addr res ->
         fetch_from_heap_variant Heap xstack pages addr res
-    | fhv_auxheap: forall pages addr page xstack res,
-        active_auxheappage pages xstack (DataPage _ _ page) ->
-        load_data_result page addr res ->
-        fetch_from_heap_variant AuxHeap xstack pages addr res.
+    | fhv_auxheap: forall pages addr xstack res,
+        fetch_from_page (active_auxheap_id xstack) pages addr res ->
+        fetch_from_heap_variant AuxHeap xstack pages addr res
+  .
   
   Inductive fetch_instr : regs_state -> execution_stack -> pages -> instruction_predicated -> Prop :=
   | fi_fetch: forall regs ef mm ins,
@@ -315,8 +326,9 @@ Section FetchStore.
       page_replace pid (StackPage _ _ stackpage') ps ps' ->
       store_loc regs ef ps value (LocStackAddress addr) (regs, ps')
   .
-  (* TODO UMA related *)
 
+  (* TODO UMA related *)
+  
   Inductive resolve_fetch_value: regs_state -> execution_stack -> pages -> any -> primitive_value -> Prop :=
   | rf_resfetch_pv: forall ef mm regs arg loc res,
       resolve ef regs arg loc ->
