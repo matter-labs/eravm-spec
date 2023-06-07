@@ -4,6 +4,7 @@ Require Common Condition Ergs Memory Instruction CodeStorage.
 
 Import ZArith Condition Common Ergs MemoryBase Memory CodeStorage Instruction ZMod List ListNotations.
 
+Open Scope ZMod_scope.
 
 Definition EXECUTION_STACK_LIMIT : nat := 1024.
 Definition page := page instruction_predicated instruction_invalid.
