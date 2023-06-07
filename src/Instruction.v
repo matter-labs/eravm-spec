@@ -77,10 +77,10 @@ Two modifiers are commonly encountered:
   | OpPtrPack     (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
 
                   
-  | OpLoad        (ptr: in_regimm) (res: out_reg)                    (mem:data_page_type)
-  | OpLoadInc     (ptr: in_regimm) (res: out_reg) (inc_ptr: out_reg) (mem:data_page_type) 
-  | OpStore       (ptr: in_regimm) (val: in_reg)  (inc_ptr: out_reg) (mem:data_page_type) 
-  | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (inc_ptr: out_reg) (mem:data_page_type)
+  | OpLoad        (ptr: in_regimm) (res: out_reg) (mem:data_page_type)
+  | OpLoadInc     (ptr: in_regimm) (res: out_reg) (mem:data_page_type) (inc_ptr: out_reg)
+  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) 
+  | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg)
                   
                   
   | OpLoadPointer     (ptr: in_reg)  (res: out_reg)
@@ -150,7 +150,7 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpPtrShrink _ _ _ _
      | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      |
-       OpStore _ _ _ _
+       OpStore _ _ _
      | OpStoreInc _ _ _ _ 
        => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
 
