@@ -2,6 +2,8 @@ Require Addressing Common Condition ExecutionStack Memory Instruction State.
 
 Import Addressing ZArith ZMod Common Condition ExecutionStack MemoryBase Memory Instruction State List ListNotations.
 
+Inductive endianness := LittleEndian | BigEndian.
+
 (** Location from where a value can be fetched. *)
 Inductive loc : Set :=
 | LocImm: u16 ->  loc
@@ -121,7 +123,7 @@ Section Addressing.
 
   Inductive reg_rel addr_bits : regs_state -> reg_name -> int_mod addr_bits -> int_mod addr_bits -> Prop :=
   | rca_code_pp: forall regs reg reg_val base ofs
-                   abs OF_ignored,
+                        abs OF_ignored,
       fetch_gpr regs reg = IntValue reg_val ->
       extract_address addr_bits reg_val base ->
       base + ofs = (abs, OF_ignored) ->
@@ -235,7 +237,7 @@ If in instruction `in1` is using [RelSpPop] And `out1` is using [RelSpPush], the
 - then, if the instruction accesses SP, it will observe the value after both effects are applied.
 
 See an example in [sem.ModSP.step].
-*)
+   *)
   Inductive resolve_effect: in_any -> out_any -> execution_stack -> execution_stack -> Prop :=
   | rslv_effect_full: forall arg1 arg2 ef1 ef2 ef3,
       resolve_effect__in arg1 ef1 ef2 ->
@@ -278,45 +280,38 @@ Section FetchStore.
       fetch_loc regs ef ps (LocConstAddr addr) (FetchPV (IntValue value))
   .
 
-  Definition load_data_word_be (mem:data_page) (addr:mem_address) :option word_type :=
-    option_map (merge_bytes bits_in_byte word_bits)
-      (load_multicell data_page_params addr bytes_in_word mem)
+  Definition load_word (e: endianness) (mem:data_page) (addr:mem_address) :option word_type :=
+    match load_multicell data_page_params addr bytes_in_word mem with
+    | None => None
+    | Some val =>
+        let fend : list u8 -> list u8 := match e with
+                                        | LittleEndian => @List.rev u8
+                                        | BigEndian => id
+                                        end in
+        Some (merge_bytes bits_in_byte word_bits (fend val))
+    end
   .
 
-  Definition load_slice_word_be (mem:data_slice) (addr:mem_address) :option word_type :=
-    option_map (merge_bytes bits_in_byte word_bits)
-      (load_multicell data_page_slice_params addr bytes_in_word mem)
-  .
+  Definition load_slice_word (e:endianness) (mem:data_slice) (addr:mem_address) :option word_type :=
+    match load_multicell data_page_slice_params addr bytes_in_word mem with
+    | None => None
+    | Some val =>
+        let fend : list u8 -> list u8 := match e with
+                                        | LittleEndian => @List.rev u8
+                                        | BigEndian => id
+                                        end in
+        Some (merge_bytes bits_in_byte word_bits (fend val))
+    end.
   
-  Definition load_data_word_le (mem:data_page) (addr:mem_address) :option word_type :=
-    option_map (fun l => merge_bytes bits_in_byte word_bits (List.rev l))
-      (load_multicell data_page_params addr bytes_in_word mem)
- .
- 
-  Inductive load_data_be_result : data_page -> mem_address -> word_type -> Prop :=
-  | ldr_apply: forall (mem:data_page) (addr:mem_address) res,
-      load_data_word_be mem addr = Some res ->
-      load_data_be_result mem addr res.
+  Inductive load_result : endianness -> data_page -> mem_address -> word_type -> Prop :=
+  | ldr_apply: forall (mem:data_page) (addr:mem_address) e res,
+      load_word e mem addr = Some res ->
+      load_result e mem addr res.
 
-  Inductive load_slice_be_result : data_slice -> mem_address -> word_type -> Prop :=
-  | lsr_apply: forall (mem:data_slice) (addr:mem_address) res,
-      load_slice_word_be mem addr = Some res ->
-      load_slice_be_result mem addr res.
-  
-  Inductive fetch_from_page: page_id -> pages -> mem_address -> word_type -> Prop :=
-    | ffp_fetch: forall pages addr page id res,
-        page_has_id pages id (DataPage _ _ page) ->
-        load_data_be_result page addr res ->
-        fetch_from_page id pages addr res.
-  
-  Inductive fetch_from_heap_variant : data_page_type -> execution_stack -> pages -> mem_address -> word_type -> Prop :=
-    | fhv_heap: forall pages addr xstack res,
-        fetch_from_page (active_heap_id xstack) pages addr res ->
-        fetch_from_heap_variant Heap xstack pages addr res
-    | fhv_auxheap: forall pages addr xstack res,
-        fetch_from_page (active_auxheap_id xstack) pages addr res ->
-        fetch_from_heap_variant AuxHeap xstack pages addr res
-  .
+  Inductive load_slice_result : endianness -> data_slice -> mem_address -> word_type -> Prop :=
+  | lsr_apply: forall (mem:data_slice) (addr:mem_address) res e,
+      load_slice_word e mem addr = Some res ->
+      load_slice_result e mem addr res.
   
   Inductive fetch_instr : regs_state -> execution_stack -> pages -> instruction_predicated -> Prop :=
   | fi_fetch: forall regs ef mm ins,
@@ -336,8 +331,21 @@ Section FetchStore.
       page_replace pid (StackPage _ _ stackpage') ps ps' ->
       store_loc regs ef ps value (LocStackAddress addr) (regs, ps')
   .
+  
 
-  (* TODO UMA related *)
+
+  Definition store_word (e:endianness) (mem:data_page) (addr:mem_address) (val: word_type) : option data_page :=
+    let ls := match e with
+              | LittleEndian => word_to_bytes val
+              | BigEndian => rev (word_to_bytes val)
+              end in
+    store_multicell _ addr ls mem.
+
+  Inductive store_word_result: endianness -> data_page -> mem_address -> word_type -> data_page -> Prop :=
+  | sdr_apply :
+    forall e page addr val page',
+      store_word e page addr val = Some page' ->
+      store_word_result e page addr val page'.
   
   Inductive resolve_fetch_value: regs_state -> execution_stack -> pages -> any -> primitive_value -> Prop :=
   | rf_resfetch_pv: forall ef mm regs arg loc res,
