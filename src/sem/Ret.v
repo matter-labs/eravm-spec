@@ -204,6 +204,91 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
           gs_depot        := depot;
           gs_contracts    := codes;
           |}
+(*| step_RetExt_FwdFatPointer:
+  forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr out_ptr,
+    let xstack0 := ExternalCall cf (Some caller_stack) in
+    
+    (* Panic if not a pointer *)
+    resolve_fetch_value regs xstack0 pages arg (PtrValue in_ptr_encoded) ->
+
+    Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr Ret.ForwardFatPointer) ->
+
+    page_older in_ptr.(fp_page) (get_active_pages xstack0) = false ->
+
+    validate_non_fresh in_ptr = no_exceptions ->
+    fat_ptr_shrink in_ptr out_ptr ->
+    ergs_reimburse_caller_and_drop xstack0 caller_reimbursed ->
+
+    let encoded_out_ptr := FatPointer.ABI.(encode) out_ptr in
+    step_ret (OpRet arg label_ignored)
+          {|
+          gs_flags        := flags;
+          gs_callstack    := xstack0;
+          gs_regs         := regs;
+          gs_context_u128 := context_u128;
+
+
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+          |}
+          {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                             <| gprs_r1 := PtrValue encoded_out_ptr |>
+                             <| gprs_r2 := reg_reserved |>
+                             <| gprs_r3 := reg_reserved |>
+                             <| gprs_r4 := reg_reserved |> ;
+          gs_callstack    := caller_reimbursed;
+          gs_context_u128 := zero128;
+
+
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+        |}
+ | step_RetExt_UseHeapVariant:
+  forall codes flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
+    let xstack0 := ExternalCall cf (Some caller_stack) in
+    
+    (* Panic if not a pointer *)
+    resolve_fetch_value regs xstack0 pages arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+
+    Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
+
+    validate_fresh in_ptr = no_exceptions ->
+    fat_ptr_induced_growth in_ptr 
+    paid_forward fwd_mode (in_ptr, xstack0) (out_ptr, xstack1) ->
+    ergs_reimburse_caller_and_drop xstack1 caller_reimbursed ->
+
+    let encoded_out_ptr := FatPointer.ABI.(encode) out_ptr in
+    step_ret (OpRet arg label_ignored)
+          {|
+          gs_flags        := flags;
+          gs_callstack    := xstack0;
+          gs_regs         := regs;
+          gs_context_u128 := context_u128;
+
+
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+          |}
+          {|
+          gs_flags        := flags_clear;
+          gs_regs         := regs_state_zero
+                             <| gprs_r1 := PtrValue encoded_out_ptr |>
+                             <| gprs_r2 := reg_reserved |>
+                             <| gprs_r3 := reg_reserved |>
+                             <| gprs_r4 := reg_reserved |> ;
+          gs_callstack    := caller_reimbursed;
+          gs_context_u128 := zero128;
+
+
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+          |}*)
 .
 
 (**

@@ -39,42 +39,6 @@ Inductive update_pc_regular : execution_stack -> execution_stack -> Prop :=
     update_pc_regular ef ef'.
 
 
-Inductive pay_growth_or_burn: mem_address -> execution_stack -> execution_stack -> Prop  :=
-| phg_affordable: forall ef ef' diff,
-    let cost := Ergs.growth_cost diff in
-    affordable ef cost = true ->
-    pay cost ef ef' ->
-    pay_growth_or_burn diff ef ef'
-| phg_too_expensive: forall ef diff,
-    let cost := Ergs.growth_cost diff in
-    affordable ef cost = false ->
-    pay_growth_or_burn diff ef (ergs_reset ef).
-
-Inductive pay_growth_or_burn_ptr : mem_address -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
-| pgb_ptr:forall current_bound ptr diff ef ef',
-    fat_ptr_induced_growth ptr current_bound diff ->
-    pay_growth_or_burn diff ef ef' ->
-    pay_growth_or_burn_ptr current_bound ptr ef ef'.
-
-Inductive pay_heaps_growth_or_burn: data_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  :=
-| mpgb_heap in_ptr xstack0 xstack1:
-  pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn Heap in_ptr xstack0 xstack1
-| mpgb_auxheap in_ptr xstack0 xstack1:
-  pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 ->
-  pay_heaps_growth_or_burn AuxHeap in_ptr xstack0 xstack1.
-
-(* Inductive pay_heaps_growth_or_burn: forward_page_type -> fat_ptr -> execution_stack -> execution_stack -> Prop  := *)
-(* | mpgb_forward p xstack: *)
-(*   pay_heaps_growth_or_burn ForwardFatPointer p xstack xstack *)
-
-(* | mpgb_heap in_ptr xstack0 xstack1: *)
-(*   pay_growth_or_burn_ptr (heap_bound xstack0) in_ptr xstack0 xstack1 -> *)
-(*   pay_heaps_growth_or_burn UseHeap in_ptr xstack0 xstack1 *)
-(* | mpgb_auxheap in_ptr xstack0 xstack1: *)
-(*   pay_growth_or_burn_ptr (auxheap_bound xstack0) in_ptr xstack0 xstack1 -> *)
-(*   pay_heaps_growth_or_burn UseAuxHeap in_ptr xstack0 xstack1. *)
-
 Inductive grow_heap_page: mem_address -> active_pages -> active_pages -> Prop :=
 | gp_heap: forall ap new_bound diff,
     ap.(ctx_heap_bound) + diff = (new_bound, false) ->
@@ -85,48 +49,39 @@ Inductive grow_auxheap_page : mem_address -> active_pages -> active_pages -> Pro
     ap.(ctx_auxheap_bound) + diff = (new_bound, false) ->
     grow_auxheap_page diff ap (ap <| ctx_auxheap_bound := new_bound |>).
 
+Inductive grow_heap_variant: data_page_type -> mem_address -> active_pages -> active_pages -> Prop :=
+| ghv_heap: forall diff ap ap',
+    grow_heap_page diff ap ap' ->
+    grow_heap_variant Heap diff ap ap'
+| ghv_auxheap: forall diff ap ap',
+    grow_auxheap_page diff ap ap' ->
+    grow_heap_variant AuxHeap diff ap ap'.
 
-Inductive select_page_bound : execution_stack -> data_page_type -> page_id * mem_address -> Prop :=
-| fpmspb_heap: forall ef,
-    select_page_bound ef Heap
-      (active_heap_id ef, (get_active_pages ef).(ctx_heap_bound))
-| fpmspb_auxheap: forall ef,
-    select_page_bound ef AuxHeap
-      (active_auxheap_id ef, (get_active_pages ef).(ctx_auxheap_bound)).
-
+Inductive grow_and_pay : data_page_type -> mem_address ->  execution_stack -> execution_stack -> Prop :=
+  | pg_grow: forall heap_type query xstack0 xstack1 new_xstack new_apages diff,
+      let current_bound := heap_variant_bound heap_type xstack0 in
+      (diff, false) = query - current_bound ->
+      pay (Ergs.growth_cost diff) xstack0 xstack1 ->
+      let apages := get_active_pages xstack1 in
+      grow_heap_variant heap_type diff apages new_apages ->
+      new_xstack = update_memory_context new_apages xstack1 ->
+      grow_and_pay heap_type query xstack0 new_xstack
+  | pg_nogrow: forall heap_type query xstack0 diff,
+      let current_bound := heap_variant_bound heap_type xstack0 in
+      (diff, false) = query - current_bound ->
+      grow_and_pay heap_type query xstack0 xstack0.
+        
+    
 Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_ptr * execution_stack -> Prop :=
-|pf_useheap: forall diff in_ptr xstack0 xstack1,
-    let bound := heap_bound xstack0 in
+|pf_useheapvariant: forall type in_ptr xstack0 xstack1 query,
     validate_fresh in_ptr = no_exceptions ->
-    fat_ptr_induced_growth in_ptr bound diff ->
-    pay_growth_or_burn diff xstack0 xstack1 ->
-    paid_forward (UseMemory Heap) (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
-
-|pf_useauxheap: forall diff in_ptr xstack0 xstack1,
-    let bound := auxheap_bound xstack0 in
-    validate_fresh in_ptr = no_exceptions ->
-    fat_ptr_induced_growth in_ptr bound diff ->
-    pay_growth_or_burn diff xstack0 xstack1 ->
-    paid_forward (UseMemory AuxHeap) (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
-
+    in_ptr.(fp_start) + in_ptr.(fp_length) = (query, false) ->
+    grow_and_pay type query xstack0 xstack1 ->
+    paid_forward (UseMemory type) (in_ptr, xstack0) (in_ptr <| fp_page := active_heap_id xstack0 |>, xstack1)
 |pf_forwardfatpointer: forall in_ptr xstack out_ptr,
     validate_non_fresh in_ptr = no_exceptions ->
     fat_ptr_shrink in_ptr out_ptr ->
     paid_forward ForwardFatPointer (in_ptr, xstack) (out_ptr, xstack)
-.
-
-Inductive paid_forward_and_adjust_bounds: data_page_type -> fat_ptr * execution_stack * active_pages  -> fat_ptr * execution_stack * active_pages -> Prop :=
-|fcf_useheap: forall diff in_ptr xstack0 xstack1 out_ptr old_apages grown_apages,
-    paid_forward (UseMemory Heap) (in_ptr, xstack0) (out_ptr, xstack1) ->
-    let bound := heap_bound xstack0 in
-    grow_heap_page diff old_apages grown_apages ->
-    paid_forward_and_adjust_bounds Heap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
-
-|fcf_useauxheap: forall diff in_ptr xstack0 xstack1 out_ptr old_apages grown_apages,
-    paid_forward (UseMemory AuxHeap) (in_ptr, xstack0) (out_ptr, xstack1) ->
-    let bound := auxheap_bound xstack0 in
-    grow_auxheap_page diff old_apages grown_apages ->
-    paid_forward_and_adjust_bounds AuxHeap (in_ptr, xstack0, old_apages) (out_ptr, xstack1, grown_apages)
 .
 
 Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).

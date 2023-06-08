@@ -459,16 +459,17 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
               gs_depot        := depot;
               gs_contracts    := codes;
             |}
-| farcall_fwd_memory: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page mem_ctx1 new_mem_ctx in_ptr __ ergs_query ergs_actual is_syscall_query out_ptr page_type,
+| farcall_fwd_memory: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack depot codes reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr __ ergs_query ergs_actual is_syscall_query out_ptr page_type,
     let old_extframe := topmost_extframe xstack0 in
-    let mem_ctx0 := old_extframe.(ecf_pages) in
     let current_contract := old_extframe.(ecf_this_address) in
     let is_system := addr_is_kernel dest_addr && is_syscall_query in
     let allow_masking := negb is_system in
 
     paid_code_fetch allow_masking depot codes dest_addr xstack0 (xstack1, new_code_page) ->
-    paid_forward_and_adjust_bounds page_type (in_ptr, xstack1, mem_ctx0) (out_ptr, xstack2, mem_ctx1)->
-    alloc_pages_extframe (old_pages,mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
+    paid_forward (Ret.UseMemory page_type) (in_ptr, xstack1) (out_ptr, xstack2) ->
+    
+    let mem_ctx1 := (topmost_extframe xstack2).(ecf_pages) in
+    alloc_pages_extframe (old_pages, mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
     pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
     let new_stack := ExternalCall {|
