@@ -289,4 +289,9 @@ Section ActivePages.
     | AuxHeap => active_auxheap_id
     end.
 
+  Definition heap_variant_bound (type:data_page_type):  execution_stack -> mem_address :=
+    match type with
+    | Heap => heap_bound
+    | AuxHeap => auxheap_bound
+    end.
 End ActivePages.
