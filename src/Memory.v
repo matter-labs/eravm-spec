@@ -10,6 +10,14 @@ Definition word_bits: nat := 256.
 Definition word_type : Set := ZMod.int_mod word_bits.
 Definition word_zero_value: word_type := ZMod.int_mod_of word_bits 0%Z.
 
+Section Helpers.
+Import Nat.
+Definition bits_in_byte : nat  := 8%nat.
+Definition bytes_in_word : nat := word_bits/bits_in_byte.
+Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
+
+End Helpers.
+
 (** §2. A _storage_ is a linear mapping from $2^256$ #2<sup>256</sup>#
     addresses to words.
 

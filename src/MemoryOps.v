@@ -279,13 +279,13 @@ Section FetchStore.
   .
 
   Definition load_data_word_be (mem:data_page) (addr:mem_address) :option word_type :=
-    option_map (merge_bytes 8 256)
-      (load_multicell data_page_params addr 64 mem)
+    option_map (merge_bytes bits_in_byte word_bits)
+      (load_multicell data_page_params addr bytes_in_word mem)
   .
 
   Definition load_data_word_le (mem:data_page) (addr:mem_address) :option word_type :=
-    option_map (fun l => merge_bytes 8 256 (List.rev l))
-      (load_multicell data_page_params addr 64 mem)
+    option_map (fun l => merge_bytes bits_in_byte word_bits (List.rev l))
+      (load_multicell data_page_params addr bytes_in_word mem)
  .
  
   Inductive load_data_be_result : data_page -> mem_address -> word_type -> Prop :=
