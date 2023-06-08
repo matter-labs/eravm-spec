@@ -1,3 +1,4 @@
+From RecordUpdate Require Import RecordSet.
 Require BinNums FMapPositive ZArith.
 Require Common.
 
@@ -6,12 +7,14 @@ Section Mem.
   Import BinNums ZArith FMapPositive.
   Import List ListNotations.
 
-  Record mem_descr := {
+  Record mem_descr := mk_mem_descr {
       addressable_block: Type;
       default_value: addressable_block;
       address_bits: nat;
       writable: bool;
     }.
+
+  #[export] Instance etaMD: Settable _ := settable! mk_mem_descr< addressable_block; default_value; address_bits; writable>.
 
   Variable mem_params: mem_descr.
 
