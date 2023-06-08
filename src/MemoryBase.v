@@ -6,7 +6,7 @@ Section Mem.
   Import lib.ZMod.
   Import BinNums ZArith FMapPositive.
   Import List ListNotations.
-
+  
   Record mem_descr := mk_mem_descr {
       addressable_block: Type;
       default_value: addressable_block;
@@ -173,22 +173,25 @@ End Mem.
 Import BinInt Z List ZMod.
 
 Section Util.
-Import BinInt ZArith Z List ZMod.
+Import BinInt ZArith Z List ZMod Common.
 Variable bits: nat.
 
 Definition concat_z z1 z2 : Z:=
-  (z1* (2^ of_nat bits) +z2)%Z.
+  ((Z.shiftl z1 (Z.of_nat bits)) + z2)%Z.
 
 Definition concat_bytes_Z (ls: list Z)  : Z :=
   @fold_left Z Z concat_z ls 0%Z.
+
+Definition word_to_bytes (w:u256) : list u8 :=
+  let zs := extract_digits w.(int_val _) bits_in_byte (256 / bits_in_byte) in
+  List.map u8_of zs.
+
+
 End Util.
 
-
-Definition merge_bytes bits resbits (ls: list (int_mod bits)) : int_mod resbits
+Definition merge_bytes (bits resbits: nat) (ls: list (int_mod bits)) : int_mod resbits
   :=
   let only_zs := List.map (int_val bits) ls in
   int_mod_of resbits
     (concat_bytes_Z bits only_zs).
-
-
 

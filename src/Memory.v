@@ -12,7 +12,6 @@ Definition word_zero_value: word_type := ZMod.int_mod_of word_bits 0%Z.
 
 Section Helpers.
 Import Nat.
-Definition bits_in_byte : nat  := 8%nat.
 Definition bytes_in_word : nat := word_bits/bits_in_byte.
 Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
 

@@ -38,3 +38,5 @@ Section Types.
   Definition zero160 := u160_of 0.
   Definition zero256 := u256_of 0.
 End Types.
+
+Definition bits_in_byte : nat  := 8%nat.

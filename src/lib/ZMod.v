@@ -168,3 +168,15 @@ Definition mix_lower n (source: int_mod (n+n) ) (mix: int_mod n) : int_mod (n+n)
     let p := Z.of_nat n in
     let hi := source.(int_val _) / (2^p) in
     int_mod_of (n+n) ( hi * (2^p) + mix.(int_val _))) %Z.
+
+Fixpoint extract_digits (w:Z) (bits_per_digit: nat) (units:nat) : list Z :=
+  let truncate x := ZArith_ext.mod_pow2 x bits_per_digit in
+  match units with
+  | O =>  truncate w :: nil
+  | S m =>
+      let h := truncate w in
+      let new_w := Z.shiftr w (Z.of_nat bits_per_digit) in
+      let tail := extract_digits new_w bits_per_digit m in
+      h:: tail
+
+  end.
