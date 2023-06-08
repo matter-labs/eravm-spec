@@ -16,7 +16,7 @@ Inductive slice_from_ptr (m:data_page) : fat_ptr -> data_slice -> Prop :=
     start + length = (upper_bound, false) ->
     slice start upper_bound  m = readonly_slice ->
     slice_from_ptr m (mk_fat_ptr  page start length ofs) readonly_slice.
-      
+
 
 Inductive query_bound_uma : fat_ptr -> mem_address -> Prop :=
   | qbu_apply : forall start length addr upper_bound ofs page,
@@ -39,11 +39,11 @@ Inductive step  : instruction -> smallstep :=
     let used_ptr := in_ptr <| fp_page := heap_variant_id heap_variant xstack |> in
 
     (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-    let addr := in_ptr.(fp_offset) in
+    let addr := used_ptr.(fp_offset) in
     addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
     
     heap_variant_page heap_variant pages xstack (DataPage _ _ selected_page) ->
-    load_data_be_result selected_page addr result ->
+    load_result BigEndian selected_page addr result ->
 
     query_bound_uma used_ptr query ->
     grow_and_pay heap_variant query xstack new_xstack ->
@@ -84,11 +84,11 @@ Inductive step  : instruction -> smallstep :=
     ABI.(decode) enc_ptr = Some in_ptr ->
     let used_ptr := in_ptr <| fp_page := heap_variant_id heap_variant xstack |> in
     (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-    let addr := in_ptr.(fp_offset) in
+    let addr := used_ptr.(fp_offset) in
     addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
     
     heap_variant_page heap_variant pages xstack (DataPage _ _ selected_page) ->
-    load_data_be_result selected_page addr result ->
+    load_result BigEndian selected_page addr result ->
 
     query_bound_uma used_ptr query ->
     grow_and_pay heap_variant query xstack new_xstack ->
@@ -96,8 +96,7 @@ Inductive step  : instruction -> smallstep :=
     resolve_store regs new_xstack pages arg_dest (IntValue result) (new_regs, new_pages) ->
 
     ptr_inc used_ptr ptr_incremented  ->
-    let out_ptr := ptr_incremented <| fp_page := heap_variant_id heap_variant xstack |> in
-    let out_ptr_enc := PtrValue (ABI.(encode) out_ptr) in
+    let out_ptr_enc := PtrValue (ABI.(encode) used_ptr) in
     resolve_store regs new_xstack pages arg_dest (IntValue result) (regs1, pages1) ->
     resolve_store regs1 new_xstack pages1 arg_modptr out_ptr_enc  (new_regs, new_pages) ->
 
@@ -136,7 +135,7 @@ Inductive step  : instruction -> smallstep :=
     slice_from_ptr selected_page in_ptr slice ->
     
     (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
-    load_slice_be_result slice addr result ->
+    load_slice_result BigEndian slice addr result ->
     
     ptr_inc in_ptr out_ptr ->
     resolve_store regs xstack pages arg_dest (IntValue result) (regs1, pages1) ->
@@ -177,7 +176,7 @@ Inductive step  : instruction -> smallstep :=
     slice_from_ptr selected_page in_ptr slice ->
     
     (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
-    load_slice_be_result slice addr result ->
+    load_slice_result BigEndian slice addr result ->
     
     resolve_store regs xstack pages arg_dest (IntValue result) (new_regs, new_pages) ->
 
@@ -199,6 +198,105 @@ Inductive step  : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_callstack    := xstack;
+           gs_depot        := depot;
+           gs_context_u128 := context_u128;
+           gs_contracts    := codes;
+         |}
+| step_StoreInc:
+  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr ptr_incremented regs1 pages1 query modified_page,
+
+    let selected_page_id := heap_variant_id heap_variant xstack in
+    let fetch := resolve_fetch_word regs xstack pages in
+
+    fetch arg_enc_ptr enc_ptr ->
+    fetch arg_val value ->
+    
+    ABI.(decode) enc_ptr = Some in_ptr ->
+    
+    let used_ptr := in_ptr <| fp_page := selected_page_id |> in
+    (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
+    let addr := used_ptr.(fp_offset) in
+    addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
+    
+    heap_variant_page heap_variant pages xstack (DataPage _ _ selected_page) ->
+
+    query_bound_uma used_ptr query ->
+    grow_and_pay heap_variant query xstack new_xstack ->
+
+    store_word_result BigEndian selected_page addr value modified_page ->
+
+    page_replace selected_page_id (DataPage _ _ modified_page) pages pages1 ->
+    
+    ptr_inc used_ptr ptr_incremented  ->
+    let out_ptr_enc := PtrValue (ABI.(encode) ptr_incremented) in
+    resolve_store regs1 new_xstack pages1 arg_modptr out_ptr_enc  (new_regs, new_pages) ->
+
+    step (OpStoreInc arg_enc_ptr arg_val heap_variant arg_modptr)
+         {|
+           gs_regs         := regs;
+           gs_callstack    := xstack;
+           gs_pages        := pages;
+
+
+           gs_flags        := flags;
+           gs_depot        := depot;
+           gs_context_u128 := context_u128;
+           gs_contracts    := codes;
+         |}
+         {|
+           gs_regs         := new_regs;
+           gs_callstack    := new_xstack;
+           gs_pages        := new_pages;
+
+
+           gs_flags        := flags;
+           gs_depot        := depot;
+           gs_context_u128 := context_u128;
+           gs_contracts    := codes;
+         |}
+| step_Store:
+  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr query modified_page,
+
+    let selected_page_id := heap_variant_id heap_variant xstack in
+    let fetch := resolve_fetch_word regs xstack pages in
+
+    fetch arg_enc_ptr enc_ptr ->
+    fetch arg_val value ->
+    
+    ABI.(decode) enc_ptr = Some in_ptr ->
+    
+    (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
+    let addr := in_ptr.(fp_offset) in
+    addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
+    
+    heap_variant_page heap_variant pages xstack (DataPage _ _ selected_page) ->
+
+    query_bound_uma in_ptr query ->
+    grow_and_pay heap_variant query xstack new_xstack ->
+
+    store_word_result BigEndian selected_page addr value modified_page ->
+
+    page_replace selected_page_id (DataPage _ _ modified_page) pages new_pages ->
+
+    step (OpStore arg_enc_ptr arg_val heap_variant)
+         {|
+           gs_regs         := regs;
+           gs_callstack    := xstack;
+           gs_pages        := pages;
+
+
+           gs_flags        := flags;
+           gs_depot        := depot;
+           gs_context_u128 := context_u128;
+           gs_contracts    := codes;
+         |}
+         {|
+           gs_regs         := new_regs;
+           gs_callstack    := new_xstack;
+           gs_pages        := new_pages;
+
+
+           gs_flags        := flags;
            gs_depot        := depot;
            gs_context_u128 := context_u128;
            gs_contracts    := codes;
