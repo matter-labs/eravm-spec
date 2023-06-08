@@ -93,7 +93,7 @@ Module FatPointer.
   Inductive ptr_inc : fat_ptr -> fat_ptr -> Prop :=
   |fpi_apply :
     forall page start len ofs ofs',
-      uinc_overflow _ ofs = (ofs', false) ->
+      ofs + (u32_of z_bytes_in_word) = (ofs', false) ->
       ptr_inc (mk_fat_ptr page start len ofs) (mk_fat_ptr page start len ofs').
   
 End FatPointer.
