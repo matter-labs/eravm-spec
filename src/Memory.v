@@ -1,6 +1,6 @@
 From RecordUpdate Require Import RecordSet.
-Require Common MemoryBase.
-Import Common MemoryBase BinInt List.
+Require Common MemoryBase lib.PMap_ext.
+Import Common MemoryBase BinInt List PMap_ext.
 Import ListNotations.
 Import RecordSetNotations.
 
@@ -186,6 +186,17 @@ Section Memory.
             ltb id ctx_heap_page_id &&
             ltb id ctx_auxheap_page_id
       end.
+
+
+    Definition data_page_slice_params := data_page_params <| writable := false |>.
+    Definition data_slice := mem_parameterized data_page_slice_params.
+    
+    Definition slice  (from_incl to_excl: mem_address) (m:data_page) : data_slice:=
+      let from_key := MemoryBase.addr_to_key _ from_incl in
+      let to_key := MemoryBase.addr_to_key _ to_excl in
+      let contents := pmap_slice m from_key to_key in
+      mk_mem data_page_slice_params contents.
+    
   End Pages.
 
   (** * Registers*)

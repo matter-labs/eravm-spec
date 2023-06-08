@@ -283,6 +283,11 @@ Section FetchStore.
       (load_multicell data_page_params addr bytes_in_word mem)
   .
 
+  Definition load_slice_word_be (mem:data_slice) (addr:mem_address) :option word_type :=
+    option_map (merge_bytes bits_in_byte word_bits)
+      (load_multicell data_page_slice_params addr bytes_in_word mem)
+  .
+  
   Definition load_data_word_le (mem:data_page) (addr:mem_address) :option word_type :=
     option_map (fun l => merge_bytes bits_in_byte word_bits (List.rev l))
       (load_multicell data_page_params addr bytes_in_word mem)
@@ -293,6 +298,11 @@ Section FetchStore.
       load_data_word_be mem addr = Some res ->
       load_data_be_result mem addr res.
 
+  Inductive load_slice_be_result : data_slice -> mem_address -> word_type -> Prop :=
+  | lsr_apply: forall (mem:data_slice) (addr:mem_address) res,
+      load_slice_word_be mem addr = Some res ->
+      load_slice_be_result mem addr res.
+  
   Inductive fetch_from_page: page_id -> pages -> mem_address -> word_type -> Prop :=
     | ffp_fetch: forall pages addr page id res,
         page_has_id pages id (DataPage _ _ page) ->
