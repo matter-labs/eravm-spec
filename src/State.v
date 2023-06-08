@@ -72,7 +72,7 @@ Section AllocatedPages.
 End AllocatedPages.
 
 
-Definition update_memory_context (ps:active_pages): callframe -> callframe :=
+Definition update_active_pages (ps:active_pages): callframe -> callframe :=
  change_topmost_extframe (fun ef => ef <| ecf_pages := ps |> ).
 
 
