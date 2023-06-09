@@ -141,3 +141,46 @@ Inductive fetch_apply2_swap swap:
               in1 in2 out
               val1' val2' result
               (new_regs, new_xstack, new_pages) .
+
+(** for [OpMul] and [OpDiv] instructions *)
+Inductive fetch_apply22:
+  (regs_state * execution_stack * pages) ->
+  in_any -> in_reg -> out_any -> out_reg ->
+  primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
+  (regs_state * execution_stack * pages)
+  -> Prop :=
+
+ | fa_apply22:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out1:out_any) (out2:out_reg) out_loc1 out_loc2 val1 val2 result1 result2 regs1 pages1 new_regs new_pages new_xstack,
+  resolve xstack0 regs in1 loc1 ->
+  resolve_effect__in in1 xstack0 xstack1 ->
+  resolve xstack1 regs in2 loc2 ->
+  resolve xstack1 regs out1 out_loc1 ->
+  resolve xstack1 regs out2 out_loc2 ->
+  resolve_effect__out out1 xstack1 new_xstack ->
+  fetch_loc regs new_xstack pages loc1 (FetchPV val1) ->
+  fetch_loc regs new_xstack pages loc2 (FetchPV val2) ->
+  store_loc regs new_xstack pages result1 out_loc1 (regs1, pages1) ->
+  store_loc regs1 new_xstack pages1 result2  out_loc2 (new_regs, new_pages) ->
+
+  fetch_apply22 (regs,xstack0,pages)
+              in1 in2 out1 out2
+              val1 val2 (result1, result2)
+              (new_regs, new_xstack, new_pages)
+
+.
+Inductive fetch_apply22_swap swap:
+  (regs_state * execution_stack * pages) ->
+  in_any -> in_reg -> out_any -> out_reg ->
+  primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
+  (regs_state * execution_stack * pages)
+  -> Prop :=
+ | fas_apply22:  forall xstack0 regs (in1:in_any) (in2:in_reg) pages (out1:out_any) (out2:out_reg) val1 val2 val1' val2' result new_regs new_pages new_xstack,
+  fetch_apply22 (regs,xstack0,pages)
+              in1 in2 out1 out2
+              val1 val2 result
+              (new_regs, new_xstack, new_pages) ->
+  apply_swap swap val1 val2 = (val1', val2') ->
+  fetch_apply22_swap swap (regs,xstack0,pages)
+              in1 in2 out1 out2
+              val1' val2' result
+              (new_regs, new_xstack, new_pages) .
