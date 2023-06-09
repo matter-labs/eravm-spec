@@ -139,9 +139,11 @@ End Def.
 
 
 Definition beq_op {n:nat} (x y: int_mod n) : bool := beq n x y.
+Definition bneq_op {n:nat} (x y: int_mod n) : bool := negb (beq n x y).
 
 Declare Scope ZMod_scope.
 Infix "==" := beq_op (at level 70, no associativity): ZMod_scope.
+Infix "!=" := bneq_op (at level 70, no associativity): ZMod_scope.
 Infix "+" := (uadd_overflow _) : ZMod_scope.
 Infix "-" := (usub_overflow _) : ZMod_scope.
 Infix "*" := (umul_overflow _) : ZMod_scope.
