@@ -35,6 +35,12 @@ Section Flags.
                               | mk_fs _ EQ GT => mk_fs Set_OF_LT EQ GT
                               end.
 
+  Definition bflags (OF EQ GT: bool) : flags_state :=
+    {|
+      fs_OF_LT := OF_LT_of_bool OF;
+      fs_EQ := EQ_of_bool EQ;
+      fs_GT := GT_of_bool GT
+    |}.
   Definition flags_clear : flags_state := mk_fs Clear_OF_LT Clear_EQ Clear_GT.
 End Flags.
 
