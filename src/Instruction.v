@@ -60,6 +60,8 @@ Two modifiers are commonly encountered:
   | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
   | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
+  | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
   | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
   | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
@@ -133,8 +135,10 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+
+     | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
-                                                  
      | OpFarCall _ _ _ _
      | OpDelegateCall _ _ _ _
      | OpMimicCall _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
