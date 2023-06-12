@@ -315,8 +315,8 @@ Record versioned_hash := {
 *)
 Definition regs_effect regs (is_system is_ctor:bool) ptr :=
   let far_call_r2 :=
-    let is_system_bit := shiftl is_system 1 in
-    let is_ctor_bit := shiftl is_ctor 0 in
+    let is_system_bit := Z.shiftl is_system 1 in
+    let is_ctor_bit := Z.shiftl is_ctor 0 in
     let bits := Z.lor is_system_bit is_ctor_bit in
     IntValue (int_mod_of word_bits bits) in
   let enc_ptr := FatPointer.ABI.(encode) ptr in
