@@ -89,7 +89,7 @@ Explanation for [split_ergs_caller_callee]:
 5. Clear flags.
 
 *)
-Inductive step_nearcall : instruction -> smallstep :=
+Inductive step: instruction -> smallstep :=
 | step_NearCall_pass_some_ergs:
   forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value (expt_handler call_addr: code_address) passed_ergs callee_ergs caller_ergs abi_tag,
 
@@ -100,7 +100,7 @@ Inductive step_nearcall : instruction -> smallstep :=
     (callee_ergs, caller_ergs) = split_ergs_caller_callee passed_ergs (ergs_remaining xstack0) ->
     let new_caller := ergs_set caller_ergs xstack0 in
     let new_frame := mk_cf expt_handler (sp_get xstack0) call_addr callee_ergs in
-    step_nearcall (OpNearCall abi_params_op (Imm call_addr) (Imm expt_handler))
+    step (OpNearCall abi_params_op (Imm call_addr) (Imm expt_handler))
                   {|
                     gs_flags        := flags;
                     gs_callstack    := xstack0;
