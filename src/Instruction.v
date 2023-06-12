@@ -93,6 +93,18 @@ Two modifiers are commonly encountered:
                   
   | OpLoadPointer     (ptr: in_reg)  (res: out_reg)
   | OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
+
+
+  | OpContextThis                                (out: out_reg)
+  | OpContextCaller                              (out: out_reg)
+  | OpContextCodeAddress                         (out: out_reg)
+  | OpContextMeta                                (out: out_reg)
+  | OpContextErgsLeft                            (out: out_reg)
+  | OpContextSp                                  (out: out_reg)
+  | OpContextGetContextU128                      (out: out_reg)
+  | OpContextSetContextU128        (in1: in_reg)
+  | OpContextSetErgsPerPubdataByte (in1: in_reg)
+  | OpContextIncrementTxNumber
   .
 
   (** ## Common definitions
@@ -174,6 +186,17 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpLoadPointer _ _
      | OpLoadPointerInc _ _ _
        => VM_CYCLE_COST_IN_ERGS + 3 * RAM_PERMUTATION_COST_IN_ERGS
+
+     | OpContextThis _
+     | OpContextCaller _
+     | OpContextCodeAddress _
+     | OpContextMeta _
+     | OpContextErgsLeft _
+     | OpContextSp _
+     | OpContextGetContextU128 _
+     | OpContextSetContextU128 _
+     | OpContextSetErgsPerPubdataByte _
+     | OpContextIncrementTxNumber => AVERAGE_OPCODE_ERGS
      end)%Z.
 End Costs.
 
@@ -181,6 +204,9 @@ End Costs.
 in a static context. *)
 Definition allowed_static_ctx (ins:instruction) : bool :=
   match ins with
+  | OpContextSetContextU128 _
+  | OpContextSetErgsPerPubdataByte _
+  | OpContextIncrementTxNumber => false
   | _ => true
   end.
 
@@ -199,7 +225,11 @@ Definition check_allowed_static_ctx
 (** Is instruction only allowed in kernel mode? *)
 Definition requires_kernel (ins: instruction) : bool :=
   match ins with
-  | OpMimicCall _ _ _ _ => true
+  | OpMimicCall _ _ _ _
+  | OpContextSetContextU128 _
+  | OpContextSetErgsPerPubdataByte _
+  | OpContextIncrementTxNumber => true
+
   | _ => false
   end.
 

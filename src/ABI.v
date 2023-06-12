@@ -141,3 +141,20 @@ Module FarCall.
   Axiom ABI: @coder params.
 
 End FarCall.
+
+
+Module MetaParameters.
+
+  Record params :=
+    mk_params {
+        ergs_per_pubdata_byte: u32;
+        heap_size: u32;
+        aux_heap_size: u32;
+        this_shard_id: u8;
+        caller_shard_id: u8;
+        code_shard_id: u8;
+      }.
+
+  Axiom ABI: @coder params.
+
+End MetaParameters.
