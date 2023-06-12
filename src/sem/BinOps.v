@@ -37,7 +37,7 @@ The operation follows a similar scheme as described below. It is parameterized u
 See [RelSpPop], [RelSpPush], [step].
  *)
 
-Definition binop_eval := word_type -> word_type -> (word_type * flags_state).
+Definition binop_eval := word -> word -> (word * flags_state).
 Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
@@ -129,10 +129,10 @@ Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mo
 
 Inductive binop_state_bitwise_effect:
 in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                      (word_type -> word_type -> word_type) ->
+                      (word -> word -> word) ->
                       smallstep :=
 | bsee_apply:
-  forall (bitwise_op: word_type -> word_type -> word_type) (in1: in_any) (in2:in_reg) (out: out_any) swap set_flags
+  forall (bitwise_op: word -> word -> word) (in1: in_any) (in2:in_reg) (out: out_any) swap set_flags
     old_state new_state,
     binop_state_effect  in1 in2 out swap set_flags 
       (fun x y =>

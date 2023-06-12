@@ -7,8 +7,8 @@ Import RecordSetNotations.
 (** * Storage *)
 (**  §1. A _word_ is a 256-bit unsigned number. *)
 Definition word_bits: nat := 256.
-Definition word_type : Set := ZMod.int_mod word_bits.
-Definition word_zero_value: word_type := ZMod.int_mod_of word_bits 0%Z.
+Definition word: Set := ZMod.int_mod word_bits.
+Definition word_zero_value: word := ZMod.int_mod_of word_bits 0%Z.
 
 Section Helpers.
 Import Nat.
@@ -35,7 +35,7 @@ End Helpers.
  *)
 
 Definition storage_params := {|
-                              addressable_block := word_type;
+                              addressable_block := word;
                               address_bits := 256;
                               default_value := zero256;
                               writable := true
@@ -94,7 +94,7 @@ Section Memory.
     Inductive primitive_value := mk_pv
         {
           is_ptr: bool;
-          value: word_type;
+          value: word;
         }.
 
     Definition pv0 := mk_pv false word_zero_value.
@@ -118,7 +118,7 @@ Section Memory.
     Definition const_address_bits := 16.
 
     Definition const_page_params := {|
-                                     addressable_block := word_type;
+                                     addressable_block := word;
                                      address_bits := const_address_bits;
                                      default_value := zero256;
                                      writable := false
@@ -276,13 +276,13 @@ Section Memory.
   Section Helpers.
   Import ZMod.
 
-  Inductive extract_address bits: word_type -> int_mod bits -> Prop :=
+  Inductive extract_address bits: word -> int_mod bits -> Prop :=
   |ea_extract: forall val,
       extract_address bits val (ZMod.resize word_bits bits val).
 
-  Definition extract_code_address: word_type -> code_address -> Prop := extract_address _.
-  Definition extract_const_address: word_type -> const_address -> Prop := extract_address _.
-  Definition extract_stack_address: word_type -> stack_address -> Prop
+  Definition extract_code_address: word -> code_address -> Prop := extract_address _.
+  Definition extract_const_address: word -> const_address -> Prop := extract_address _.
+  Definition extract_stack_address: word -> stack_address -> Prop
     := extract_address _.
   End Helpers.
 End Memory.

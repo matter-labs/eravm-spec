@@ -280,7 +280,7 @@ Section FetchStore.
       fetch_loc regs ef ps (LocConstAddr addr) (FetchPV (IntValue value))
   .
 
-  Definition load_word (e: endianness) (mem:data_page) (addr:mem_address) :option word_type :=
+  Definition load_word (e: endianness) (mem:data_page) (addr:mem_address) :option word :=
     match load_multicell data_page_params addr bytes_in_word mem with
     | None => None
     | Some val =>
@@ -292,7 +292,7 @@ Section FetchStore.
     end
   .
 
-  Definition load_slice_word (e:endianness) (mem:data_slice) (addr:mem_address) :option word_type :=
+  Definition load_slice_word (e:endianness) (mem:data_slice) (addr:mem_address) :option word :=
     match load_multicell data_page_slice_params addr bytes_in_word mem with
     | None => None
     | Some val =>
@@ -303,12 +303,12 @@ Section FetchStore.
         Some (merge_bytes bits_in_byte word_bits (fend val))
     end.
   
-  Inductive load_result : endianness -> data_page -> mem_address -> word_type -> Prop :=
+  Inductive load_result : endianness -> data_page -> mem_address -> word -> Prop :=
   | ldr_apply: forall (mem:data_page) (addr:mem_address) e res,
       load_word e mem addr = Some res ->
       load_result e mem addr res.
 
-  Inductive load_slice_result : endianness -> data_slice -> mem_address -> word_type -> Prop :=
+  Inductive load_slice_result : endianness -> data_slice -> mem_address -> word -> Prop :=
   | lsr_apply: forall (mem:data_slice) (addr:mem_address) res e,
       load_slice_word e mem addr = Some res ->
       load_slice_result e mem addr res.
@@ -334,14 +334,14 @@ Section FetchStore.
   
 
 
-  Definition store_word (e:endianness) (mem:data_page) (addr:mem_address) (val: word_type) : option data_page :=
+  Definition store_word (e:endianness) (mem:data_page) (addr:mem_address) (val: word) : option data_page :=
     let ls := match e with
               | LittleEndian => word_to_bytes val
               | BigEndian => rev (word_to_bytes val)
               end in
     store_multicell _ addr ls mem.
 
-  Inductive store_word_result: endianness -> data_page -> mem_address -> word_type -> data_page -> Prop :=
+  Inductive store_word_result: endianness -> data_page -> mem_address -> word -> data_page -> Prop :=
   | sdr_apply :
     forall e page addr val page',
       store_word e page addr val = Some page' ->
@@ -353,7 +353,7 @@ Section FetchStore.
       fetch_loc regs ef mm loc (FetchPV res) ->
       resolve_fetch_value regs ef mm arg res.
 
-  Inductive resolve_fetch_word: regs_state -> execution_stack -> pages -> any -> word_type -> Prop :=
+  Inductive resolve_fetch_word: regs_state -> execution_stack -> pages -> any -> word -> Prop :=
   | rf_resfetch_w: forall ef mm regs arg res,
       resolve_fetch_value regs ef mm arg (IntValue res) ->
       resolve_fetch_word regs ef mm arg res.

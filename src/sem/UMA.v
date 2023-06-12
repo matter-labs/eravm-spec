@@ -17,7 +17,7 @@ Inductive slice_from_ptr (m:data_page) : fat_ptr -> data_slice -> Prop :=
     slice start upper_bound  m = readonly_slice ->
     slice_from_ptr m (mk_fat_ptr  page start length ofs) readonly_slice.
 
-
+(** [query_bound_uma] describes an upper bound imposed on heap or auxheap by *)
 Inductive query_bound_uma : fat_ptr -> mem_address -> Prop :=
   | qbu_apply : forall start length addr upper_bound ofs page,
       let bytes_in_word := int_mod_of _ z_bytes_in_word in

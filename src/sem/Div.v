@@ -5,17 +5,16 @@ Import Addressing Bool ZArith Common Condition Instruction ExecutionStack Memory
   ZBits Addressing.Coercions RecordSetNotations SemanticCommon List ListNotations.
 
 Local Coercion u256_of : Z >-> int_mod.
-
+Open Scope Z_scope.
 Inductive step: instruction -> smallstep :=
 
   | step_Div_no_overflow:
     forall gs flags pages xstack context_u128 regs (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg) any_tag1 any_tag2 mod_swap mod_flags (x y:Z) new_regs new_xstack new_pages new_flags quot rem,
       fetch_apply22_swap mod_swap (regs,xstack,pages)
-                     arg_op1 arg_op2
-                     arg_out1 arg_out2
+                     arg_op1 arg_op2 arg_out1 arg_out2
                      (mk_pv any_tag1 x) (mk_pv any_tag2 y) (IntValue quot, IntValue rem)
                      (new_regs, new_xstack, new_pages) ->
-      y <> 0%Z ->
+      y <> 0 ->
       quot = Z.div x y ->
       rem = Z.rem x y ->
 
@@ -51,7 +50,7 @@ Inductive step: instruction -> smallstep :=
                      arg_out1 arg_out2
                      (mk_pv any_tag1 x) (mk_pv any_tag2 y) (IntValue 0%Z, IntValue 0%Z)
                      (new_regs, new_xstack, new_pages) ->
-      y = 0%Z ->
+      y = 0 ->
 
       new_flags = apply_set_flags mod_flags flags (bflags true false false) ->
                        
