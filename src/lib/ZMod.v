@@ -135,6 +135,36 @@ Section Def.
     let result := (as_unsigned x * as_unsigned y)%Z in
     (int_mod_of result, carry result).
   
+  (** ## Shifts *)
+
+  (** ### Logical shifts *)
+  Definition shiftl_nat (x: int_mod) (bits: nat) : int_mod :=
+    int_mod_of (Z.shiftl (int_val x) (Z.of_nat bits)).
+  
+  Definition shiftl (x: int_mod) (bits: int_mod) : int_mod :=
+    int_mod_of (Z.shiftl (int_val x) (int_val bits)).
+  
+  Definition shiftr_nat (x: int_mod) (bits: nat): int_mod :=
+    int_mod_of (Z.shiftr (int_val x) (Z.of_nat bits)).
+
+  Definition shiftr (x: int_mod) (bits: int_mod) : int_mod :=
+    int_mod_of (Z.shiftr (int_val x) (int_val bits)).
+  
+  (** ### Circular shifts *)
+  Definition rol (x: int_mod) (shift: int_mod): int_mod :=
+    let shift := Z.modulo shift.(int_val) zbits in
+    let x := int_val x in
+    let low := Z.shiftl x shift in
+    let high := Z.shiftr x (zbits - shift) in
+    int_mod_of (Z.lor low high).
+  
+  Definition ror (x: int_mod) (shift: int_mod): int_mod :=
+    let shift := Z.modulo shift.(int_val) zbits in
+    let x := int_val x in
+    let low := Z.shiftr x shift in
+    let high := Z.shiftl x (zbits - shift) in
+    int_mod_of (Z.lor low high).
+  
 End Def.
 
 
