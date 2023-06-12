@@ -52,7 +52,7 @@ The primary use is adjusting SP.
 
 Inductive step : instruction -> smallstep :=
 | step_ModSP:
-  forall codes flags depot pages xstack0 xstack1 new_xstack context_u128 in1 out1 regs,
+  forall gs flags pages xstack0 xstack1 new_xstack context_u128 in1 out1 regs,
     resolve_effect__in in1 xstack0 xstack1 ->      (* Account for possible [RelSpPop]. *)
     resolve_effect__out out1 xstack1 new_xstack ->(* Account for possible [RelSpPush]. *)
     step (OpModSP in1 out1)
@@ -63,9 +63,8 @@ Inductive step : instruction -> smallstep :=
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |}
           {|
           gs_callstack    := new_xstack;
@@ -74,9 +73,8 @@ Inductive step : instruction -> smallstep :=
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          gs_global       := gs;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
           |}
 .
 

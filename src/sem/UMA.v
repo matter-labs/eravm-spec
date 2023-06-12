@@ -30,7 +30,7 @@ Inductive query_bound_uma : fat_ptr -> mem_address -> Prop :=
 Inductive step  : instruction -> smallstep := 
 
 | step_Load:
-  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant ptr_tag enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs new_pages selected_page in_ptr query,
+  forall gs flags  pages xstack new_xstack context_u128 regs heap_variant ptr_tag enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs new_pages selected_page in_ptr query,
     let fetch := resolve_fetch_value regs xstack pages in
 
 
@@ -58,9 +58,8 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -69,13 +68,12 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
         
 | step_LoadInc:
-  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant ptr_tag enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result new_regs new_pages selected_page in_ptr ptr_incremented regs1 pages1 query,
+  forall gs flags  pages xstack new_xstack context_u128 regs heap_variant ptr_tag enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result new_regs new_pages selected_page in_ptr ptr_incremented regs1 pages1 query,
 
     let fetch := resolve_fetch_value regs xstack pages in
 
@@ -108,9 +106,8 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -119,12 +116,11 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_LoadPointerInc:
-  forall codes flags depot pages xstack context_u128 regs enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_reg) result new_regs new_pages addr selected_page in_ptr out_ptr regs1 pages1 slice,
+  forall gs flags  pages xstack context_u128 regs enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_reg) result new_regs new_pages addr selected_page in_ptr out_ptr regs1 pages1 slice,
 
     resolve_fetch_value regs xstack pages arg_enc_ptr (PtrValue enc_ptr) ->
     ABI.(decode) enc_ptr = Some in_ptr ->
@@ -149,9 +145,8 @@ Inductive step  : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_callstack    := xstack;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -159,13 +154,12 @@ Inductive step  : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_callstack    := xstack;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 
 | step_LoadPointer:
-  forall codes flags depot pages xstack context_u128 regs enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_reg) result new_regs new_pages addr selected_page in_ptr slice,
+  forall gs flags  pages xstack context_u128 regs enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_reg) result new_regs new_pages addr selected_page in_ptr slice,
 
     resolve_fetch_value regs xstack pages arg_enc_ptr (PtrValue enc_ptr) ->
     ABI.(decode) enc_ptr = Some in_ptr ->
@@ -188,9 +182,8 @@ Inductive step  : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_callstack    := xstack;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -198,12 +191,11 @@ Inductive step  : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_callstack    := xstack;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_StoreInc:
-  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr ptr_incremented regs1 pages1 query modified_page,
+  forall gs flags  pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr ptr_incremented regs1 pages1 query modified_page,
 
     let selected_page_id := heap_variant_id heap_variant xstack in
     let fetch := resolve_fetch_word regs xstack pages in
@@ -239,9 +231,8 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -250,12 +241,11 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_Store:
-  forall codes flags depot pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr query modified_page,
+  forall gs flags  pages xstack new_xstack context_u128 regs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr query modified_page,
 
     let selected_page_id := heap_variant_id heap_variant xstack in
     let fetch := resolve_fetch_word regs xstack pages in
@@ -286,9 +276,8 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -297,9 +286,8 @@ Inductive step  : instruction -> smallstep :=
 
 
            gs_flags        := flags;
-           gs_depot        := depot;
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 .
 

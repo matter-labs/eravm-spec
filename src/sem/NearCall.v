@@ -91,7 +91,7 @@ Explanation for [split_ergs_caller_callee]:
 *)
 Inductive step: instruction -> smallstep :=
 | step_NearCall_pass_some_ergs:
-  forall codes flags depot pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value (expt_handler call_addr: code_address) passed_ergs callee_ergs caller_ergs abi_tag,
+  forall gs flags pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value (expt_handler call_addr: code_address) passed_ergs callee_ergs caller_ergs abi_tag,
 
     resolve_fetch_value regs xstack0 pages abi_params_op (mk_pv abi_tag abi_params_value) ->
 
@@ -108,9 +108,8 @@ Inductive step: instruction -> smallstep :=
 
                     gs_regs         := regs;
                     gs_pages        := pages;
-                    gs_depot        := depot;
                     gs_context_u128 := context_u128;
-                    gs_contracts    := codes;
+                    gs_global       := gs;
                   |}
                   {|
                     gs_flags        := flags_clear;
@@ -119,9 +118,8 @@ Inductive step: instruction -> smallstep :=
 
                     gs_regs         := regs;
                     gs_pages        := pages;
-                    gs_depot        := depot;
                     gs_context_u128 := context_u128;
-                    gs_contracts    := codes;
+                    gs_global       := gs;
                   |}
 .
 (**

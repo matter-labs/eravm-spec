@@ -9,7 +9,7 @@ Local Coercion u256_of : Z >-> int_mod.
 Inductive step: instruction -> smallstep :=
 
   | step_Mul:
-    forall codes flags depot pages xstack context_u128 regs (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg) any_tag1 any_tag2 mod_swap mod_flags (x y prod_hi prod_low:Z) new_regs new_xstack new_pages new_flags,
+    forall gs flags pages xstack context_u128 regs (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg) any_tag1 any_tag2 mod_swap mod_flags (x y prod_hi prod_low:Z) new_regs new_xstack new_pages new_flags,
       fetch_apply22_swap mod_swap (regs,xstack,pages)
                      arg_op1 arg_op2
                      arg_out1 arg_out2
@@ -31,9 +31,8 @@ Inductive step: instruction -> smallstep :=
           gs_pages        := pages;
 
 
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_flags        := new_flags;
@@ -42,8 +41,7 @@ Inductive step: instruction -> smallstep :=
           gs_pages        := new_pages;
 
 
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
 .

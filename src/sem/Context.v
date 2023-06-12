@@ -8,7 +8,7 @@ Import Addressing ABI Bool Common Condition ExecutionStack Memory MemoryOps Inst
 Inductive step: instruction -> smallstep :=
 
 | step_ContextThis:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) this_addr new_regs new_pages,
+  forall gs flags pages xstack context_u128 regs (out_arg:out_reg) this_addr new_regs new_pages,
     resolve_store regs xstack pages
       out_arg (IntValue this_addr) (new_regs, new_pages) ->
     this_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_this_address) ->
@@ -20,9 +20,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -31,12 +31,12 @@ Inductive step: instruction -> smallstep :=
 
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_ContextCaller:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) sender_addr new_regs new_pages,
+  forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) sender_addr new_regs new_pages,
     resolve_store regs xstack pages
       out_arg (IntValue sender_addr)
       (new_regs, new_pages) ->
@@ -49,9 +49,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -60,12 +60,12 @@ Inductive step: instruction -> smallstep :=
 
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_ContextCodeAddress:
-  forall codes flags depot pages xstack context_u128 regs (out:out_reg) code_addr new_regs new_pages,
+  forall gs flags  pages xstack context_u128 regs (out:out_reg) code_addr new_regs new_pages,
     resolve_store regs xstack pages
       out (IntValue code_addr) (new_regs, new_pages) ->
     
@@ -78,9 +78,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -89,12 +89,12 @@ Inductive step: instruction -> smallstep :=
 
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 | step_ContextErgsLeft:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) balance new_regs new_pages,
+  forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) balance new_regs new_pages,
     resolve_store regs xstack pages
       out_arg (IntValue balance) (new_regs, new_pages) ->
     
@@ -107,9 +107,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -118,13 +118,13 @@ Inductive step: instruction -> smallstep :=
 
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          
 | step_ContextSP:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) sp new_regs new_pages,
+  forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) sp new_regs new_pages,
     resolve_store regs xstack pages
       out_arg (IntValue sp) (new_regs, new_pages) ->
     
@@ -137,9 +137,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -148,13 +148,13 @@ Inductive step: instruction -> smallstep :=
 
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          
 | step_ContextGetContextU128:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages wcontext,
+  forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages wcontext,
     resolve_store regs xstack pages
       out_arg (IntValue wcontext) (new_regs, new_pages) ->
 
@@ -168,9 +168,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -179,13 +179,13 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          
 | step_ContextSetContextU128:
-  forall codes flags depot pages xstack old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128,
+  forall gs flags  pages xstack old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128,
     resolve_fetch_value regs xstack pages
       in_arg (mk_pv any_tag val) ->
 
@@ -199,8 +199,8 @@ Inductive step: instruction -> smallstep :=
            gs_pages        := pages;
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
          {|
            gs_context_u128 := new_context_u128;
@@ -210,13 +210,13 @@ Inductive step: instruction -> smallstep :=
            gs_pages        := pages;
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
 
 (* Fixme: shards, tx are not implemented *)
 | step_ContextMeta:
-  forall codes flags depot pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages meta_encoded
+  forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages meta_encoded
     ergs_per_pubdata
     shard_id
     caller_shard
@@ -243,9 +243,9 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
          {|
            gs_regs         := new_regs;
@@ -254,8 +254,8 @@ Inductive step: instruction -> smallstep :=
            
            gs_callstack    := xstack;
            gs_flags        := flags;
-           gs_depot        := depot;
+           
            gs_context_u128 := context_u128;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 .

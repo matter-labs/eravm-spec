@@ -74,15 +74,15 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
                       binop_eval ->
                       smallstep :=
 | be_apply_step:
-  forall f xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags flags new_flags codes,
+  forall f xstack new_xstack context_u128 regs new_regs pages new_pages (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags flags new_flags gs,
     let gs := {|
           gs_flags        := flags;
           gs_callstack    := xstack;
           gs_regs         := regs;
           gs_context_u128 := context_u128;
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          
+          gs_global       := gs;
           |}  in
     binop_effect (regs, xstack, pages, flags) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags) ->
     binop_state_effect
@@ -93,23 +93,23 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
         gs_regs         := new_regs;
         gs_context_u128 := context_u128;
         gs_pages        := new_pages;
-        gs_depot        := depot;
-        gs_contracts    := codes;
+        
+        gs_global       := gs;
       |}
 .
 Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
                                    primitive_value -> primitive_value -> primitive_value -> flags_state ->
                       smallstep :=
 | bes_apply_step:
-  forall xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags new_flags codes op1 op2 result flags,
+  forall xstack new_xstack context_u128 regs new_regs pages new_pages (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags new_flags gs op1 op2 result flags,
     let gs := {|
           gs_flags        := flags;
           gs_callstack    := xstack;
           gs_regs         := regs;
           gs_context_u128 := context_u128;
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          
+          gs_global       := gs;
           |}  in
     binop_effect_spec (regs, xstack, pages, flags) in1 in2 out swap set_flags
                       op1 op2 result flags 
@@ -122,8 +122,8 @@ Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mo
         gs_regs         := new_regs;
         gs_context_u128 := context_u128;
         gs_pages        := new_pages;
-        gs_depot        := depot;
-        gs_contracts    := codes;
+        
+        gs_global       := gs;
       |}
 .
 

@@ -30,7 +30,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 - Assign to current PC the fetched value truncated to [code_address_bits] bits.
  *)
 | step_Jump:
-    forall codes flags depot pages xstack context_u128 regs (dest:in_any) dest_val any_tag,
+    forall gs flags pages xstack context_u128 regs (dest:in_any) dest_val any_tag,
       resolve_fetch_value regs xstack pages dest (mk_pv any_tag dest_val) ->
       let dest_addr := resize _ code_address_bits dest_val in
       step (OpJump dest)
@@ -41,9 +41,8 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_callstack    := pc_set dest_addr xstack;
@@ -52,9 +51,8 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
 .
 

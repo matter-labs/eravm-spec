@@ -29,16 +29,16 @@ Performs no operations.
 
 Inductive step: smallstep := 
    | step_correct:
-    forall codes flags depot pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
+    forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       let gs1 := {|
           gs_callstack    := new_xstack;
@@ -46,9 +46,9 @@ Inductive step: smallstep :=
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       cond_holds cond flags = true ->
 
@@ -62,16 +62,16 @@ Inductive step: smallstep :=
       step_ins ins gs1 new_gs ->
       step gs0 new_gs
  | step_requires_kernel:
-    forall cond codes flags depot pages xstack0 ins context_u128 regs new_gs,
+    forall cond gs flags  pages xstack0 ins context_u128 regs new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       stack_overflow xstack0 = false ->
       fetch_instr regs xstack0 pages (Ins ins cond) ->
@@ -80,16 +80,16 @@ Inductive step: smallstep :=
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs
 | step_incompatible_static:
-    forall cond codes flags depot pages xstack0 ins context_u128 regs new_gs,
+    forall cond gs flags  pages xstack0 ins context_u128 regs new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
 
       check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = false ->
@@ -101,16 +101,16 @@ Inductive step: smallstep :=
       step gs0 new_gs
 
 | step_skip_cond:
-    forall codes flags depot pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
+    forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       let gs1 := {|
           gs_callstack    := new_xstack;
@@ -118,9 +118,9 @@ Inductive step: smallstep :=
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       (* Checks have passed *)
       cond_holds cond flags = false ->
@@ -137,16 +137,16 @@ Inductive step: smallstep :=
       step gs0 new_gs
 
  | step_stack_overflow:
-   forall codes flags depot pages xstack0 context_u128 regs new_gs,
+   forall gs flags  pages xstack0 context_u128 regs new_gs,
       let gs0 := {|
           gs_callstack    := xstack0;
 
           gs_flags        := flags;
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |} in
       stack_overflow xstack0 = true ->
       step_ins (OpPanic None) gs0 new_gs->

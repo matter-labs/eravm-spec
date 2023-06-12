@@ -55,7 +55,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 Inductive step : instruction -> smallstep :=
 | step_PtrAdd:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs codes context_u128 depot ptr_in,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs gs context_u128 ptr_in,
     
     fetch_apply2_swap swap (regs, xstack0, pages)
       in1 in2 out
@@ -79,8 +79,8 @@ Inductive step : instruction -> smallstep :=
 
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
          {|
            gs_callstack    := new_xstack;
@@ -90,8 +90,8 @@ Inductive step : instruction -> smallstep :=
            
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
 
 (** ## Affected parts of VM state
@@ -155,7 +155,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrSub:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 page start length ofs new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs codes context_u128 depot,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 page start length ofs new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs gs context_u128,
     
     fetch_apply2_swap swap (regs, xstack0, pages)
       in1 in2 out
@@ -180,8 +180,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
          {|
            gs_callstack    := new_xstack;
@@ -191,8 +191,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
            
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
 (**
 
@@ -249,7 +249,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
  *)
 
 | step_PtrPack :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs codes context_u128 depot,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs gs context_u128,
     
     fetch_apply2_swap swap (regs, xstack, pages)
       in1 in2 out
@@ -267,8 +267,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
 
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
          {|
            gs_callstack    := new_xstack;
@@ -278,8 +278,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
            
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
 (**
 
@@ -340,7 +340,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrShrink :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs codes context_u128 depot result ptr_in ptr_out,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs gs context_u128 result ptr_in ptr_out,
     
     fetch_apply2_swap swap (regs, xstack, pages)
       in1 in2 out
@@ -364,8 +364,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           
+           gs_global       := gs;
          |}
          {|
            gs_callstack    := new_xstack;
@@ -375,8 +375,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
            
            gs_flags        := flags;
            gs_context_u128 := context_u128;
-           gs_depot        := depot;
-           gs_contracts    := codes;
+           gs_global       := gs;
          |}
 .
 

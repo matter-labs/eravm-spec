@@ -83,16 +83,24 @@ Definition is_kernel (ef:callframe) : bool :=
   let ef := topmost_extframe ef in
   addr_is_kernel ef.(ecf_this_address).
 
+Definition tx_num := u16.
 
-Record state := mk_state {
-    gs_flags : flags_state;
-    gs_regs: regs_state;
-    gs_depot: depot;
+Record global_state :=
+  mk_gstate {
+    gs_current_ergs_per_pubdata_byte: ergs;
+    gs_tx_number_in_block: tx_num; 
     gs_contracts: code_manager;
-    gs_pages: pages;
-    gs_callstack: execution_stack;
-    gs_context_u128: u128;
-  }.
-#[export] Instance etaXGS : Settable _ := settable! mk_state <gs_flags ; gs_regs; gs_depot; gs_contracts; gs_pages; gs_callstack; gs_context_u128>.
+    gs_depot: depot;
+    }.
 
-
+Record state :=
+  mk_state {
+      gs_flags : flags_state;
+      gs_regs: regs_state;
+      gs_pages: pages;
+      gs_callstack: execution_stack;
+      gs_context_u128: u128;
+      gs_global :> global_state;
+    }.
+#[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_depot>.
+#[export] Instance etaXS : Settable _ := settable! mk_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128; gs_global> .

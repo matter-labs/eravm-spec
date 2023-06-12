@@ -74,7 +74,7 @@ Inductive step_ret: instruction -> smallstep :=
 
  *)
 | step_RetLocal_nolabel:
-    forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
+    forall flags gs pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
       step_ret (OpRet _ignored None)
@@ -85,9 +85,8 @@ Inductive step_ret: instruction -> smallstep :=
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          gs_global       := gs;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
         |}
         {|
           gs_flags        := flags_clear;
@@ -96,9 +95,8 @@ Inductive step_ret: instruction -> smallstep :=
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
+          gs_global       := gs;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
         |}
 (**
 
@@ -163,7 +161,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 *)
 | step_RetExt:
-  forall codes flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
+  forall flags gs pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
     let xstack0 := ExternalCall cf (Some caller_stack) in
     
     (* Panic if not a pointer *)
@@ -186,8 +184,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |}
           {|
           gs_flags        := flags_clear;
@@ -201,8 +198,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          gs_global       := gs;
           |}
 (*| step_RetExt_FwdFatPointer:
   forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr out_ptr,
@@ -372,7 +368,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 
  *)
 | step_RevertLocal_nolabel:
-    forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
+    forall flags gs pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
       let handler := active_exception_handler (InternalCall cf caller_stack) in
@@ -384,9 +380,8 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_flags        := flags_clear;
@@ -395,9 +390,8 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         (**
  
@@ -410,7 +404,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 
 *)
 | step_RevertLocal_label:
-    forall codes flags depot pages cf caller_stack caller_reimbursed context_u128 regs _ignored label,
+    forall gs flags pages cf caller_stack caller_reimbursed context_u128 regs _ignored label,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
       step_revert (OpRevert _ignored (Some label))
@@ -421,9 +415,8 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_flags        := flags_clear;
@@ -432,9 +425,8 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
 
 
@@ -488,7 +480,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 *)
 | step_RevertExt:
-  forall codes flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr,
+  forall flags depot pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr cergs tx_num codes,
     let xstack0 := ExternalCall cf (Some caller_stack) in
     
     (* Panic if not a pointer *)
@@ -512,8 +504,12 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_depot := depot;
+                            |};
           |}
           {|
           gs_flags        := flags_clear;
@@ -524,11 +520,15 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
                              <| gprs_r4 := reg_reserved |> ;
           gs_callstack    := pc_set (active_exception_handler xstack0) caller_reimbursed ;
           gs_context_u128 := zero128;
-          gs_depot        := revert_storage cf;
 
 
           gs_pages        := pages;
-          gs_contracts    := codes;
+          gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_depot     := revert_storage cf;
+                            |};
           |}
 
 .
@@ -618,7 +618,7 @@ regs in current frame, set OF flag, return no data.
 
 
 | step_PanicLocal_nolabel:
-    forall codes flags depot pages cf caller_stack context_u128 regs,
+    forall gs flags pages cf caller_stack context_u128 regs,
 
       (* no reimbursement, ergs are lost *)
       let handler := active_exception_handler (InternalCall cf caller_stack) in
@@ -630,9 +630,8 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_flags        := set_overflow flags_clear;
@@ -641,9 +640,8 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
 
         (**
@@ -656,7 +654,7 @@ regs in current frame, set OF flag, return no data.
 
  *)
 | step_PanicLocal_label:
-    forall codes flags depot pages cf caller_stack context_u128 regs _ignored label,
+    forall gs flags pages cf caller_stack context_u128 regs _ignored label,
 
       step_panic (OpRet _ignored (Some label))
         {|
@@ -666,9 +664,8 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
         {|
           gs_flags        := set_overflow flags_clear;
@@ -677,9 +674,8 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_depot        := depot;
           gs_context_u128 := context_u128;
-          gs_contracts    := codes;
+          gs_global       := gs;
         |}
 (**
 
@@ -698,7 +694,7 @@ regs in current frame, set OF flag, return no data.
 
 *)
 | step_PanicExt:
-  forall codes flags depot pages cf caller_stack context_u128 regs label_ignored (arg:in_reg),
+  forall codes flags depot pages cf caller_stack context_u128 regs label_ignored (arg:in_reg) cergs tx_num,
     let xstack0 := ExternalCall cf (Some caller_stack) in
 
     let encoded_out_ptr := FatPointer.ABI.(encode) fat_ptr_empty in
@@ -711,8 +707,14 @@ regs in current frame, set OF flag, return no data.
 
 
           gs_pages        := pages;
-          gs_depot        := depot;
-          gs_contracts    := codes;
+          gs_global       := {|
+                          gs_current_ergs_per_pubdata_byte := cergs;
+                          gs_tx_number_in_block := tx_num;
+                          gs_contracts := codes;
+                          gs_depot     := depot;
+                        |};
+
+
           |}
           {|
           gs_flags        := set_overflow flags_clear;
@@ -723,11 +725,16 @@ regs in current frame, set OF flag, return no data.
                              <| gprs_r4 := reg_reserved |> ;
           gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack;
           gs_context_u128 := zero128;
-          gs_depot        := revert_storage cf;
 
 
           gs_pages        := pages;
-          gs_contracts    := codes;
+          gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_depot     := revert_storage cf;
+                            |};
+
           |}
 
 .
