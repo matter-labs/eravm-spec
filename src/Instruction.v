@@ -55,11 +55,17 @@ Two modifiers are commonly encountered:
   | OpNoOp
   | OpModSP       (in1: in_any) (out1: out_any)
   | OpJump        (dest: in_any)
-  | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-  | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-  | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-  | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
+  | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)                 (swap:mod_swap) (flags:mod_set_flags)
+  | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)                 (swap:mod_swap) (flags:mod_set_flags)
+  | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)                 (swap:mod_swap) (flags:mod_set_flags)
+  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)                 (swap:mod_swap) (flags:mod_set_flags)
+  | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)                 (swap:mod_swap) (flags:mod_set_flags)
+
+  | OpShl         (in1: in_any) (in2: in_reg)  (out1: out_any)                                 (flags:mod_set_flags)
+  | OpShr         (in1: in_any) (in2: in_reg)  (out1: out_any)                                 (flags:mod_set_flags)
+  | OpRol         (in1: in_any) (in2: in_reg)  (out1: out_any)                                 (flags:mod_set_flags)
+  | OpRor         (in1: in_any) (in2: in_reg)  (out1: out_any)                                 (flags:mod_set_flags)
+
   | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
@@ -135,6 +141,11 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+
+     | OpShl _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpShr _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpRol _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpRor _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
 
      | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS

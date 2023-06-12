@@ -54,6 +54,8 @@ Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
     binop_effect (regs, xstack, pages, flags0) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags).
 
 
+
+
 Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
                       binop_eval ->
                       smallstep :=
@@ -81,6 +83,22 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
         gs_contracts    := codes;
       |}
 .
+
+Inductive binop_state_bitwise_effect:
+in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
+                      (word_type -> word_type -> word_type) ->
+                      smallstep :=
+| bsee_apply:
+  forall (bitwise_op: word_type -> word_type -> word_type) (in1: in_any) (in2:in_reg) (out: out_any) swap set_flags
+    old_state new_state,
+    binop_state_effect  in1 in2 out swap set_flags 
+      (fun x y =>
+         let result := bitwise_op x y in
+         (result, bflags false (result == zero256) false))
+      old_state new_state ->
+    
+    binop_state_bitwise_effect in1 in2 out swap set_flags bitwise_op old_state new_state.
+
 
 Inductive step: instruction -> smallstep :=
 (**
@@ -142,9 +160,9 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
     binop_state_effect in1 in2 out mod_swap mod_sf
       (fun x y =>
          let (result, NEW_OF) := x + y in
-         let NEW_EQ := EQ_of_bool (result == zero256) in
-         let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
-         (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
+         let NEW_EQ := result == zero256 in
+         let NEW_GT := negb NEW_EQ && negb NEW_OF in
+         (result, bflags NEW_OF NEW_EQ NEW_GT))
       gs gs' ->
 
     step (OpAdd in1 in2 out mod_swap mod_sf) gs gs'
@@ -208,9 +226,9 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
     binop_state_effect in1 in2 out mod_swap mod_sf
       (fun x y =>
          let (result, NEW_OF) := x - y in
-         let NEW_EQ := EQ_of_bool (result == zero256) in
-         let NEW_GT := GT_of_bool (negb NEW_EQ && negb NEW_OF) in
-         (result, mk_fs (OF_LT_of_bool NEW_OF) NEW_EQ NEW_GT))
+         let NEW_EQ := result == zero256 in
+         let NEW_GT := negb NEW_EQ && negb NEW_OF in
+         (result, bflags NEW_OF NEW_EQ NEW_GT))
       gs gs' ->
 
     step (OpSub in1 in2 out mod_swap mod_sf) gs gs'
@@ -268,9 +286,8 @@ Reminder: flags are only set if `set_flags` modifier is set.
 | step_And:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-    binop_state_effect in1 in2 out mod_swap mod_sf
-      (fun x y => let result := bitwise_and _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
-      gs gs' ->
+    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
+      (bitwise_and _) gs gs' ->
     step (OpAnd in1 in2 out mod_swap mod_sf) gs gs'
  (**
 
@@ -327,8 +344,8 @@ Reminder: flags are only set if `set_flags` modifier is set.
 | step_Or:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-    binop_state_effect in1 in2 out mod_swap mod_sf
-      (fun x y => let result := bitwise_or _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
+    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
+      (bitwise_or _)
       gs gs' ->
 
     step (OpOr in1 in2 out mod_swap mod_sf) gs gs'
@@ -388,9 +405,25 @@ Reminder: flags are only set if `set_flags` modifier is set.
 | step_Xor:
   forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
 
-    binop_state_effect in1 in2 out mod_swap mod_sf
-      (fun x y => let result := bitwise_xor _ x y in (result, (mk_fs Clear_OF_LT (EQ_of_bool (result == zero256)) Clear_GT)))
+    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
+      (bitwise_xor _)
       gs gs' ->
-
     step (OpXor in1 in2 out mod_swap mod_sf) gs gs'
+         
+| step_Shl:
+  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (shiftl _) gs gs' ->
+    step (OpShl in1 in2 out mod_sf) gs gs'
+| step_Shr:
+  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (shiftr _) gs gs' ->
+    step (OpShr in1 in2 out mod_sf) gs gs'
+| step_Rol:
+  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (rol _) gs gs' ->
+    step (OpRol in1 in2 out mod_sf) gs gs'
+| step_Ror:
+  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (ror _) gs gs' ->
+    step (OpRor in1 in2 out mod_sf) gs gs'
 .
