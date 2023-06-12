@@ -37,10 +37,11 @@ The operation follows a similar scheme as described below. It is parameterized u
 See [RelSpPop], [RelSpPush], [step].
  *)
 
+Definition binop_eval := word_type -> word_type -> (word_type * flags_state).
 Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
-                        forall F: word_type -> word_type -> (word_type * flags_state),
+                        binop_eval ->
                         (regs_state * execution_stack * pages * flags_state) -> Prop :=
 | be_apply:
   forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
@@ -54,7 +55,7 @@ Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
 
 
 Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                      (word_type -> word_type -> (word_type * flags_state)) ->
+                      binop_eval ->
                       smallstep :=
 | be_apply_step:
   forall f xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags flags new_flags codes,
