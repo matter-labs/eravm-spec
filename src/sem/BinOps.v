@@ -45,15 +45,29 @@ Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
                         (regs_state * execution_stack * pages * flags_state) -> Prop :=
 | be_apply:
   forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
-    op1 op2 op1' op2' swap set_flags result flags_candidate flags0 new_flags ,
+    op1 op2 swap set_flags result flags_candidate flags0 new_flags tag1 tag2,
 
-    fetch_apply2 (regs, xstack, pages) in1 in2 out (IntValue op1) (IntValue op2) (IntValue result) (new_regs, new_xstack, new_pages) ->
-    apply_swap swap op1 op2 = (op1', op2') -> (* [op1', op2'] are [op1,op2] or [op2,op1] depending on swap modifier value. *)
-    f op1' op2' = (result, flags_candidate) ->
+    fetch_apply2_swap swap (regs, xstack, pages) in1 in2 out (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) (new_regs, new_xstack, new_pages) ->
+    f op1 op2 = (result, flags_candidate) ->
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
     binop_effect (regs, xstack, pages, flags0) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags).
 
 
+Definition binop_spec := primitive_value -> primitive_value -> primitive_value * flags_state.
+Inductive binop_effect_spec: (regs_state * execution_stack * pages * flags_state) ->
+                        in_any -> in_reg -> out_any ->
+                        mod_swap -> mod_set_flags ->
+                        primitive_value -> primitive_value -> primitive_value -> flags_state ->
+                        (regs_state * execution_stack * pages * flags_state) -> Prop :=
+| bes_apply:
+  forall xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
+    op1 op2 swap set_flags result flags_candidate flags0 new_flags ,
+
+    fetch_apply2_swap swap (regs, xstack, pages) in1 in2 out op1 op2 result (new_regs, new_xstack, new_pages) ->
+    new_flags = apply_set_flags set_flags flags0 flags_candidate ->
+    binop_effect_spec (regs, xstack, pages, flags0) in1 in2 out swap set_flags
+                 op1 op2 result flags_candidate
+      (new_regs, new_xstack, new_pages, new_flags).
 
 
 Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
@@ -83,6 +97,35 @@ Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set
         gs_contracts    := codes;
       |}
 .
+Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
+                                   primitive_value -> primitive_value -> primitive_value -> flags_state ->
+                      smallstep :=
+| bes_apply_step:
+  forall xstack new_xstack context_u128 regs new_regs pages new_pages depot (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags new_flags codes op1 op2 result flags,
+    let gs := {|
+          gs_flags        := flags;
+          gs_callstack    := xstack;
+          gs_regs         := regs;
+          gs_context_u128 := context_u128;
+          gs_pages        := pages;
+          gs_depot        := depot;
+          gs_contracts    := codes;
+          |}  in
+    binop_effect_spec (regs, xstack, pages, flags) in1 in2 out swap set_flags
+                      op1 op2 result flags 
+      (new_regs, new_xstack, new_pages, new_flags) ->
+    binop_state_effect_spec
+      in1 in2 out swap set_flags op1 op2 result flags gs
+      {|
+        gs_flags        := new_flags;
+        gs_callstack    := new_xstack;
+        gs_regs         := new_regs;
+        gs_context_u128 := context_u128;
+        gs_pages        := new_pages;
+        gs_depot        := depot;
+        gs_contracts    := codes;
+      |}
+.
 
 Inductive binop_state_bitwise_effect:
 in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
@@ -99,6 +142,19 @@ in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
     
     binop_state_bitwise_effect in1 in2 out swap set_flags bitwise_op old_state new_state.
 
+Inductive binop_state_bitwise_effect_spec:
+in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
+primitive_value -> primitive_value -> primitive_value -> 
+                      smallstep :=
+| bseec_apply:
+  forall  (in1: in_any) (in2:in_reg) (out: out_any) swap set_flags
+    old_state new_state op1 op2 result flags_candidate,
+    binop_state_effect_spec in1 in2 out swap set_flags
+                            op1 op2 result flags_candidate
+                            old_state new_state ->
+    
+    flags_candidate = bflags false (result.(value) == zero256) false ->
+    binop_state_bitwise_effect_spec in1 in2 out swap set_flags op1 op2 result old_state new_state.
 
 Inductive step: instruction -> smallstep :=
 (**
@@ -155,16 +211,18 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
 *)
 | step_Add:
-  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs' _tag1 _tag2 op1 op2 result flags_candidate new_OF,
 
-    binop_state_effect in1 in2 out mod_swap mod_sf
-      (fun x y =>
-         let (result, NEW_OF) := x + y in
-         let NEW_EQ := result == zero256 in
-         let NEW_GT := negb NEW_EQ && negb NEW_OF in
-         (result, bflags NEW_OF NEW_EQ NEW_GT))
+    binop_state_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 op1)
+      (mk_pv _tag2 op2)
+      (IntValue result) flags_candidate
       gs gs' ->
 
+    (result, new_OF) = op1 + op2 ->
+    let new_EQ := result == zero256 in
+    let new_GT := negb new_EQ && negb new_OF in
+    flags_candidate = bflags new_OF new_EQ new_GT ->
     step (OpAdd in1 in2 out mod_swap mod_sf) gs gs'
 (**
 
@@ -221,16 +279,18 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
 *)
 | step_Sub:
-  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs' _tag1 _tag2 op1 op2 result flags_candidate new_OF,
 
-    binop_state_effect in1 in2 out mod_swap mod_sf
-      (fun x y =>
-         let (result, NEW_OF) := x - y in
-         let NEW_EQ := result == zero256 in
-         let NEW_GT := negb NEW_EQ && negb NEW_OF in
-         (result, bflags NEW_OF NEW_EQ NEW_GT))
+    binop_state_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 op1)
+      (mk_pv _tag2 op2)
+      (IntValue result) flags_candidate
       gs gs' ->
 
+    (result, new_OF) = op1 - op2 ->
+    let new_EQ := result == zero256 in
+    let new_GT := negb new_EQ && negb new_OF in
+    flags_candidate = bflags new_OF new_EQ new_GT ->
     step (OpSub in1 in2 out mod_swap mod_sf) gs gs'
 
 (**
@@ -284,10 +344,10 @@ Reminder: flags are only set if `set_flags` modifier is set.
 *)
 
 | step_And:
-  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-
-    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
-      (bitwise_and _) gs gs' ->
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = bitwise_and _ x y ->
     step (OpAnd in1 in2 out mod_swap mod_sf) gs gs'
  (**
 
@@ -342,12 +402,10 @@ Reminder: flags are only set if `set_flags` modifier is set.
 
 *)   
 | step_Or:
-  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-
-    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
-      (bitwise_or _)
-      gs gs' ->
-
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = bitwise_or _ x y ->
     step (OpOr in1 in2 out mod_swap mod_sf) gs gs'
 
 (**
@@ -403,27 +461,33 @@ Reminder: flags are only set if `set_flags` modifier is set.
 *)
          
 | step_Xor:
-  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-
-    binop_state_bitwise_effect in1 in2 out mod_swap mod_sf
-      (bitwise_xor _)
-      gs gs' ->
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = bitwise_xor _ x y ->
     step (OpXor in1 in2 out mod_swap mod_sf) gs gs'
-         
 | step_Shl:
-  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (shiftl _) gs gs' ->
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = shiftl _ x y ->
     step (OpShl in1 in2 out mod_sf) gs gs'
 | step_Shr:
-  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (shiftr _) gs gs' ->
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = shiftr _ x y ->
     step (OpShr in1 in2 out mod_sf) gs gs'
 | step_Rol:
-  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (rol _) gs gs' ->
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = rol _ x y ->
     step (OpRol in1 in2 out mod_sf) gs gs'
 | step_Ror:
-  forall mod_sf (in1:in_any) (in2:in_reg) out gs gs',
-    binop_state_bitwise_effect in1 in2 out NoSwap mod_sf (ror _) gs gs' ->
-    step (OpRor in1 in2 out mod_sf) gs gs'
-.
+  forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
+    binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
+    result = ror _ x y ->
+    step (OpRor in1 in2 out mod_sf) gs gs'.
+
