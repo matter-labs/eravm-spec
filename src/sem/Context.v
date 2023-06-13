@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing ABI Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
+Import Addressing ABI Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions SemanticCommon RecordSetNotations MetaParameters.
 
 Inductive step: instruction -> smallstep :=

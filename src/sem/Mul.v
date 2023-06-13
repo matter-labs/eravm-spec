@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require  sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
   ZBits Addressing.Coercions RecordSetNotations SemanticCommon List ListNotations.
 
 Local Coercion u256_of : Z >-> int_mod.

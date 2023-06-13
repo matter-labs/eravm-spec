@@ -2,15 +2,15 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
+Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions SemanticCommon RecordSetNotations.
 
 Section Def.
   
-Context (regs: regs_state) (old_pages:pages) (xstack: execution_stack).
+Context (regs: regs_state) (old_pages:pages) (xstack: callstack).
 Let resolve := resolve_fetch_value regs xstack old_pages.
 
-Inductive step_jump: instruction -> execution_stack -> Prop :=
+Inductive step_jump: instruction -> callstack -> Prop :=
 (**
 
 ## `jump`
@@ -36,7 +36,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
  *)
 | step_jump_apply:
   forall (dest:in_any) (dest_val: word) (any_tag: bool)
-    (new_xstack: execution_stack),
+    (new_xstack: callstack),
     
     resolve dest (mk_pv any_tag dest_val) ->
       

@@ -86,7 +86,7 @@ Inductive step : instruction -> smallstep :=
 
  *)
 Section Examples.
-Import Addressing.Coercions ZMod Memory ZArith ExecutionStack.
+Import Addressing.Coercions ZMod Memory ZArith CallStack.
 Open Scope Z.
 Coercion int_mod_of : Z >-> int_mod.
 Set Printing Coercions.

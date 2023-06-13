@@ -6,7 +6,7 @@ Import ZArith Condition Common Ergs MemoryBase Memory CodeStorage Instruction ZM
 
 Open Scope ZMod_scope.
 
-Definition EXECUTION_STACK_LIMIT : nat := 1024.
+Definition CALLSTACK_LIMIT : nat := 1024.
 Definition page := page instruction_predicated instruction_invalid.
 
 Definition exception_handler := code_address.
@@ -20,6 +20,14 @@ Record callframe_common := mk_cf {
 #[export] Instance etaCFC : Settable _ :=
   settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
 
+Record shards := mk_shards {
+      sh_this_shard_id: shard_id;
+      sh_caller_shard_id: shard_id;
+      sh_code_shard_id: shard_id;
+  }.
+#[export] Instance etaSH: Settable _ :=
+  settable! mk_shards < sh_this_shard_id; sh_caller_shard_id; sh_code_shard_id >.
+
 Record callframe_external :=
   mk_extcf {
       ecf_this_address: contract_address;
@@ -28,18 +36,19 @@ Record callframe_external :=
       ecf_pages: active_pages;
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;
+      ecf_shards: shards;
       ecf_saved_depot: depot;
       ecf_common :> callframe_common
     }.
 
 #[export] Instance etaCFE : Settable _ :=
-  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_saved_depot; ecf_common>.
+  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_depot; ecf_common>.
 
 Inductive callframe :=
 | InternalCall (_: callframe_common) (tail: callframe): callframe
 | ExternalCall (_: callframe_external) (tail: option callframe): callframe.
 
-Definition execution_stack := callframe.
+Definition callstack := callframe.
 
 Fixpoint callframe_depth cf :=
   (match cf with
@@ -48,8 +57,8 @@ Fixpoint callframe_depth cf :=
 | ExternalCall x None => 1
 end)%nat.
 
-Definition stack_overflow (xstack:execution_stack) : bool :=
-  Nat.ltb EXECUTION_STACK_LIMIT (callframe_depth xstack).
+Definition stack_overflow (xstack:callstack) : bool :=
+  Nat.ltb CALLSTACK_LIMIT (callframe_depth xstack).
                                                            
 Definition cfc (ef: callframe) : callframe_common :=
   match ef with
@@ -116,9 +125,9 @@ Section SP.
     (ef <| ecf_common ::= fun cf => cf <| cf_sp ::=  f |> |>).
 
   Inductive sp_mod_extcall_spec f: callframe_external -> callframe_external -> Prop :=
-  | sme_apply: forall a b c d e g h eh sp pc ergs,
-      sp_mod_extcall_spec f (mk_extcf a b c d e g h (mk_cf eh sp pc ergs))
-        (mk_extcf a b c d e g h (mk_cf eh (f sp) pc ergs)).
+  | sme_apply: forall a b c d e g h eh sp pc ss ergs,
+      sp_mod_extcall_spec f (mk_extcf a b c d e g h ss (mk_cf eh sp pc ergs))
+        (mk_extcf a b c d e g h ss (mk_cf eh (f sp) pc ergs)).
 
   Theorem sp_mod_extcall_correct:
     forall f ef, sp_mod_extcall_spec f ef (sp_mod_extcall f ef).
@@ -182,13 +191,13 @@ Section PC.
   Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
                                -> Prop :=
   | upe_update:
-    forall pc' cf cf' this_address msg_sender code_address pages is_static context_u128_value saved_storage_state,
+    forall pc' cf cf' this_address msg_sender code_address pages is_static context_u128_value saved_storage_state ss,
       update_pc_cfc pc' cf cf' ->
       update_pc_extcall pc'
         (mk_extcf this_address msg_sender code_address pages is_static
-           context_u128_value saved_storage_state cf)
+           context_u128_value saved_storage_state ss cf)
         (mk_extcf this_address msg_sender code_address pages is_static
-           context_u128_value saved_storage_state cf')
+           context_u128_value saved_storage_state ss cf')
   .
 
   Inductive update_pc : code_address -> callframe -> callframe -> Prop :=
@@ -289,7 +298,7 @@ Section ActivePages.
     | AuxHeap => active_auxheap_id
     end.
 
-  Definition heap_variant_bound (type:data_page_type):  execution_stack -> mem_address :=
+  Definition heap_variant_bound (type:data_page_type):  callstack -> mem_address :=
     match type with
     | Heap => heap_bound
     | AuxHeap => auxheap_bound

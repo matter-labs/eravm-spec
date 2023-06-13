@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Ergs Condition ExecutionStack Memory Instruction State MemoryOps ABI SemanticCommon.
+Require Common Ergs Condition CallStack Memory Instruction State MemoryOps ABI SemanticCommon.
 
 Import
 BinIntDef.Z
@@ -17,7 +17,7 @@ CodeStorage
 Common
 Condition
 Ergs
-ExecutionStack
+CallStack
 Memory
 MemoryBase
 MemoryOps
@@ -87,7 +87,7 @@ End Parameters.
    It is not allowed to pass more than 63/64th of your remaining ergs to a far call.
 *)
 Definition max_passable (remaining:ergs) : ergs := (((int_val _ remaining) / 64 ) * 63)%Z.
-Inductive pass_allowed_ergs : (ergs * execution_stack )-> ergs * execution_stack -> Prop :=
+Inductive pass_allowed_ergs : (ergs * callstack )-> ergs * callstack -> Prop :=
 | pae_apply: forall xstack1 xstack2 pass_ergs_query,
     let pass_ergs_actual := ZMod.min _ (max_passable (ergs_remaining xstack1)) pass_ergs_query in
     pay pass_ergs_actual xstack1 xstack2 ->
@@ -154,7 +154,7 @@ Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_
 associated with a given contract address, then the default AA code will be
 fetched. See [code_fetch]. *)
 Inductive paid_code_fetch masking_allowed: depot -> code_manager -> contract_address
-                               -> execution_stack -> execution_stack * code_page
+                               -> callstack -> callstack * code_page
                                ->Prop :=
 | cfp_apply:
   forall depot codes (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
@@ -394,10 +394,25 @@ Definition select_ctx type (reg_ctx frame_ctx: u128) :=
   | Normal | Mimic => reg_ctx
   | Delegate => frame_ctx
   end.
+Definition new_code_shard_id (is_call_shard:bool) shard_provided caller_shard: shard_id :=
+  if is_call_shard
+  then shard_provided
+  else caller_shard.
 
+Definition new_this_shard_id type is_call_shard shard_provided caller_shard : shard_id :=
+  match type with
+  | Delegate => caller_shard
+  |_ => new_code_shard_id is_call_shard shard_provided caller_shard
+  end.
+
+Section Def.
+
+  Context (type:farcall_type) (dest_addr:contract_address) (handler_addr: code_address)
+    (call_as_static: bool) (shard_provided: bool) (abi_ptr_tag: bool).
+  
 (* Not implemented yet: shards *)
-Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_ptr_tag: FarCall.params -> state -> state -> Prop :=
-| farcall_fwd_fatptr: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack gs reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr __ ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
+Inductive farcall : FarCall.params -> state -> state -> Prop :=
+| farcall_fwd_fatptr: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack gs reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr to_shard ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
     let old_extframe := topmost_extframe xstack0 in
     let mem_ctx0 := old_extframe.(ecf_pages) in
     let current_contract := old_extframe.(ecf_this_address) in
@@ -420,6 +435,9 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
                          ecf_pages := new_mem_ctx;
                          ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                          ecf_saved_depot := gs.(gs_depot);
+                         ecf_this_shard_id := new_this_shard_id type to_shard old_extframe.(ecf_this_shard_id);
+                         ecf_caller_shard_id := new_caller;
+                         ecf_code_shard_id := new_caller;
                          ecf_common := {|
                                         cf_exception_handler_location := handler_addr;
                                         cf_sp := INITIAL_SP_ON_FAR_CALL;
@@ -428,11 +446,11 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
                                       |};
                        |} (Some new_caller_stack) in
 
-    farcall type dest_addr handler_addr call_as_static abi_ptr_tag 
+    farcall
             {|
               memory_quasi_fat_ptr := in_ptr;
               ergs_passed          := ergs_query;
-              shard_id             := __;
+              FarCall.shard_id             := to_shard;
               forwarding_mode      := fwd_mode;
               constructor_call     := false;
               to_system            := is_syscall_query;
@@ -457,7 +475,7 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
 
               gs_global       := gs;
             |}
-| farcall_fwd_memory: forall gs flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr __ ergs_query ergs_actual is_syscall_query out_ptr page_type,
+| farcall_fwd_memory: forall gs flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr to_shard ergs_query ergs_actual is_syscall_query out_ptr page_type,
     let old_extframe := topmost_extframe xstack0 in
     let current_contract := old_extframe.(ecf_this_address) in
     let is_system := addr_is_kernel dest_addr && is_syscall_query in
@@ -487,11 +505,11 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
                                       |};
                        |} (Some new_caller_stack) in
 
-    farcall type dest_addr handler_addr call_as_static abi_ptr_tag
+    farcall 
             {|
               memory_quasi_fat_ptr := in_ptr;
               ergs_passed          := ergs_query;
-              shard_id             := __;
+              FarCall.shard_id             := to_shard;
               forwarding_mode      := Ret.UseMemory page_type;
               constructor_call     := false;
               to_system            := is_syscall_query;
@@ -516,6 +534,7 @@ Inductive farcall (type:farcall_type) dest_addr handler_addr call_as_static abi_
               gs_global       := gs;
             |}
 .
+End Def.
 
 Inductive fetch_operands abi dest handler:
 (contract_address * ExecutionStack.exception_handler * bool *  FarCall.params) -> Prop:=
@@ -535,25 +554,26 @@ Inductive fetch_operands abi dest handler:
 
 Inductive step : instruction -> smallstep :=
                                         
-| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
 
-    step (OpFarCall abi dest handler call_as_static) gs gs'
+    step (OpFarCall abi dest handler call_shard call_as_static) gs gs'
 
-| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs'
+  call_shard,
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
 
-    step (OpMimicCall abi dest handler call_as_static) gs gs'
-| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+    step (OpMimicCall abi dest handler call_shard call_as_static) gs gs'
+| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs' call_shard,
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag abi_params gs gs' ->
 
-    step (OpDelegateCall abi dest handler call_as_static) gs gs'
+    step (OpDelegateCall abi dest handler call_shard  call_as_static) gs gs'
 .
 
 (**

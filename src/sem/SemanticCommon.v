@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Addressing Common Condition ExecutionStack Memory Instruction State MemoryOps ABI.
+Require Addressing Common Condition CallStack Memory Instruction State MemoryOps ABI.
 
 Import
 Addressing
@@ -12,7 +12,7 @@ Bool
 CodeStorage
 Common
 Condition
-ExecutionStack
+CallStack
 Instruction
 Instruction
 Memory
@@ -30,7 +30,7 @@ Definition smallstep := state -> state -> Prop .
 
 Definition reg_reserved := pv0.
 
-Inductive update_pc_regular : execution_stack -> execution_stack -> Prop :=
+Inductive update_pc_regular : callstack -> callstack -> Prop :=
 | fp_update:
   forall pc' ef,
     let pc := pc_get ef in
@@ -57,7 +57,7 @@ Inductive grow_heap_variant: data_page_type -> mem_address -> active_pages -> ac
     grow_auxheap_page diff ap ap' ->
     grow_heap_variant AuxHeap diff ap ap'.
 
-Inductive grow_and_pay : data_page_type -> mem_address ->  execution_stack -> execution_stack -> Prop :=
+Inductive grow_and_pay : data_page_type -> mem_address ->  callstack -> callstack -> Prop :=
   | pg_grow: forall heap_type query xstack0 xstack1 new_xstack new_apages diff,
       let current_bound := heap_variant_bound heap_type xstack0 in
       (diff, false) = query - current_bound ->
@@ -72,7 +72,7 @@ Inductive grow_and_pay : data_page_type -> mem_address ->  execution_stack -> ex
       grow_and_pay heap_type query xstack0 xstack0.
         
     
-Inductive paid_forward: forward_page_type -> fat_ptr * execution_stack -> fat_ptr * execution_stack -> Prop :=
+Inductive paid_forward: forward_page_type -> fat_ptr * callstack -> fat_ptr * callstack -> Prop :=
 |pf_useheapvariant: forall type in_ptr xstack0 xstack1 query,
     validate_fresh in_ptr = no_exceptions ->
     in_ptr.(fp_start) + in_ptr.(fp_length) = (query, false) ->
@@ -103,10 +103,10 @@ Definition revert_storage (ef:callframe_external) : depot :=
 
 
 Inductive fetch_apply2:
-  (regs_state * execution_stack * pages) ->
+  (regs_state * callstack * pages) ->
   in_any -> in_reg -> out_any ->
   primitive_value -> primitive_value -> primitive_value ->
-  (regs_state * execution_stack * pages)
+  (regs_state * callstack * pages)
   -> Prop :=
 
  | fa_apply:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out:out_any) out_loc val1 val2 result new_regs new_pages new_xstack,
@@ -126,10 +126,10 @@ Inductive fetch_apply2:
 .
 
 Inductive fetch_apply2_swap swap:
-  (regs_state * execution_stack * pages) ->
+  (regs_state * callstack * pages) ->
   in_any -> in_reg -> out_any ->
   primitive_value -> primitive_value -> primitive_value ->
-  (regs_state * execution_stack * pages)
+  (regs_state * callstack * pages)
   -> Prop :=
  | fas_apply:  forall xstack0 regs (in1:in_any) (in2:in_reg) pages (out:out_any) val1 val2 val1' val2' result new_regs new_pages new_xstack,
   fetch_apply2 (regs,xstack0,pages)
@@ -144,10 +144,10 @@ Inductive fetch_apply2_swap swap:
 
 (** for [OpMul] and [OpDiv] instructions *)
 Inductive fetch_apply22:
-  (regs_state * execution_stack * pages) ->
+  (regs_state * callstack * pages) ->
   in_any -> in_reg -> out_any -> out_reg ->
   primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
-  (regs_state * execution_stack * pages)
+  (regs_state * callstack * pages)
   -> Prop :=
 
  | fa_apply22:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out1:out_any) (out2:out_reg) out_loc1 out_loc2 val1 val2 result1 result2 regs1 pages1 new_regs new_pages new_xstack,
@@ -169,10 +169,10 @@ Inductive fetch_apply22:
 
 .
 Inductive fetch_apply22_swap swap:
-  (regs_state * execution_stack * pages) ->
+  (regs_state * callstack * pages) ->
   in_any -> in_reg -> out_any -> out_reg ->
   primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
-  (regs_state * execution_stack * pages)
+  (regs_state * callstack * pages)
   -> Prop :=
  | fas_apply22:  forall xstack0 regs (in1:in_any) (in2:in_reg) pages (out1:out_any) (out2:out_reg) val1 val2 val1' val2' result new_regs new_pages new_xstack,
   fetch_apply22 (regs,xstack0,pages)

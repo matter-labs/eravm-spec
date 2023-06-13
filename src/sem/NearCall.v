@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Addressing Common Condition ExecutionStack Ergs MemoryOps Memory Instruction State ZMod
+Import Addressing Common Condition CallStack Ergs MemoryOps Memory Instruction State ZMod
   ABI ABI.NearCall Addressing.Coercions SemanticCommon.
 
 (**
@@ -100,11 +100,11 @@ the caller.
 
    *)
   
-  Context (regs: regs_state) (pgs: pages) (xstack: execution_stack).
+  Context (regs: regs_state) (pgs: pages) (xstack: callstack).
 
   Let fetch := resolve_fetch_value regs xstack pgs.
   
-  Inductive step_nearcall: instruction -> flags_state * execution_stack -> Prop:=
+  Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
   | step_NearCall_pass_some_ergs:
     forall (abi_params_op:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
       (passed_ergs callee_ergs caller_ergs:ergs)

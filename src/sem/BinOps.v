@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require  sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
   ZBits Addressing.Coercions RecordSetNotations SemanticCommon.
 (**
 # Binary operations
@@ -38,11 +38,11 @@ See [RelSpPop], [RelSpPush], [step].
  *)
 
 Definition binop_eval := word -> word -> (word * flags_state).
-Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
+Inductive binop_effect: (regs_state * callstack * pages * flags_state) ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
                         binop_eval ->
-                        (regs_state * execution_stack * pages * flags_state) -> Prop :=
+                        (regs_state * callstack * pages * flags_state) -> Prop :=
 | be_apply:
   forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 swap set_flags result flags_candidate flags0 new_flags tag1 tag2,
@@ -54,11 +54,11 @@ Inductive binop_effect: (regs_state * execution_stack * pages * flags_state) ->
 
 
 Definition binop_spec := primitive_value -> primitive_value -> primitive_value * flags_state.
-Inductive binop_effect_spec: (regs_state * execution_stack * pages * flags_state) ->
+Inductive binop_effect_spec: (regs_state * callstack * pages * flags_state) ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
                         primitive_value -> primitive_value -> primitive_value -> flags_state ->
-                        (regs_state * execution_stack * pages * flags_state) -> Prop :=
+                        (regs_state * callstack * pages * flags_state) -> Prop :=
 | bes_apply:
   forall xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 swap set_flags result flags_candidate flags0 new_flags ,

@@ -69,9 +69,9 @@ Two modifiers are commonly encountered:
   | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
-  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
-  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
+  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
+  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
 
   (*               quasi fat pointer + forwarding mode *)
   | OpRet         (args: in_reg) (label: option code_address)
@@ -162,9 +162,9 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
-     | OpFarCall _ _ _ _
-     | OpDelegateCall _ _ _ _
-     | OpMimicCall _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
+     | OpFarCall _ _ _ _ _
+     | OpDelegateCall _ _ _ _ _
+     | OpMimicCall _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
                              + RAM_PERMUTATION_COST_IN_ERGS
                              + STORAGE_READ_IO_PRICE
                              + CALL_LIKE_ERGS_COST
@@ -225,7 +225,7 @@ Definition check_allowed_static_ctx
 (** Is instruction only allowed in kernel mode? *)
 Definition requires_kernel (ins: instruction) : bool :=
   match ins with
-  | OpMimicCall _ _ _ _
+  | OpMimicCall _ _ _ _ _
   | OpContextSetContextU128 _
   | OpContextSetErgsPerPubdataByte _
   | OpContextIncrementTxNumber => true

@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import ABI Addressing Bool Common Condition ExecutionStack Memory MemoryOps Instruction State ZMod
+Import ABI Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions SemanticCommon RecordSetNotations ZArith ZMod.
 
 Import FatPointer.

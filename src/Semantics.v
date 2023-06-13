@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require sem.Ret sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.Ptr sem.UMA sem.Context sem.Div sem.Mul sem.NearCall.
 
-Import Bool ZArith Common CodeStorage Condition Ergs ExecutionStack MemoryBase Memory MemoryOps Instruction State ZMod
+Import Bool ZArith Common CodeStorage Condition Ergs CallStack MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits SemanticCommon RecordSetNotations.
 
 Inductive step_ins: instruction -> smallstep :=
@@ -151,4 +151,4 @@ Inductive step: smallstep :=
       stack_overflow xstack0 = true ->
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs.
- 
+  

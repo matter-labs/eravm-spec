@@ -1,6 +1,6 @@
-Require Addressing Common Condition ExecutionStack Memory Instruction State.
+Require Addressing Common Condition CallStack Memory Instruction State.
 
-Import Addressing ZArith ZMod Common Condition ExecutionStack MemoryBase Memory Instruction State List ListNotations.
+Import Addressing ZArith ZMod Common Condition CallStack MemoryBase Memory Instruction State List ListNotations.
 
 Inductive endianness := LittleEndian | BigEndian.
 
@@ -160,7 +160,7 @@ Section Addressing.
       reg_rel_const regs reg abs_imm addr ->
       loc_const regs (ConstAddr reg abs_imm) (LocConstAddr addr).
 
-  Inductive loc_stack_io: execution_stack -> regs_state -> stack_io -> loc -> Prop :=
+  Inductive loc_stack_io: callstack -> regs_state -> stack_io -> loc -> Prop :=
   | rslv_stack_rel_aux: forall ef regs reg offset_imm dlt_sp sp_rel OF_ignore,
       let base := sp_get ef in
       sp_delta_abs regs reg offset_imm dlt_sp ->
@@ -170,7 +170,7 @@ Section Addressing.
       reg_rel_stack regs reg imm abs ->
       loc_stack_io ef regs (Absolute reg imm) (LocStackAddress imm).
 
-  Inductive loc_stack_in_only: execution_stack -> regs_state -> stack_in_only -> loc -> Prop :=
+  Inductive loc_stack_in_only: callstack -> regs_state -> stack_in_only -> loc -> Prop :=
   | rslv_stack_gpop_aux: forall ef regs reg ofs dlt_sp new_sp OF_ignore,
       let sp := sp_get ef in
       sp_delta_abs regs reg ofs dlt_sp ->
@@ -178,7 +178,7 @@ Section Addressing.
       loc_stack_in_only ef regs (RelSpPop reg ofs) (LocStackAddress new_sp)
   .
 
-  Inductive loc_stack_out_only: execution_stack -> regs_state -> stack_out_only -> loc -> Prop :=
+  Inductive loc_stack_out_only: callstack -> regs_state -> stack_out_only -> loc -> Prop :=
   | rslv_stack_gpush_aux: forall ef regs reg ofs dlt_sp new_sp OF_ignore,
       let sp := sp_get ef in
       sp_delta_abs regs reg ofs dlt_sp ->
@@ -186,7 +186,7 @@ Section Addressing.
       loc_stack_out_only ef regs (RelSpPush reg ofs) (LocStackAddress new_sp)
   .
 
-  Inductive resolve: execution_stack -> regs_state -> any -> loc -> Prop :=
+  Inductive resolve: callstack -> regs_state -> any -> loc -> Prop :=
   | rslv_reg : forall ef rs r loc,
       loc_reg r loc ->
       resolve ef rs (AnyReg r) loc
@@ -210,7 +210,7 @@ Section Addressing.
       resolve ef regs (AnyConst arg) loc
   .
 
-  Inductive resolve_effect__in: in_any -> execution_stack -> execution_stack -> Prop :=
+  Inductive resolve_effect__in: in_any -> callstack -> callstack -> Prop :=
   | rslv_stack_in_effect: forall ef ef' regs sp' reg ofs arg,
       loc_stack_in_only ef regs  arg (LocStackAddress sp') ->
       sp_mod_spec (fun _ => sp') ef ef' ->
@@ -219,7 +219,7 @@ Section Addressing.
       (forall reg ofs, arg <> InStack (StackInOnly (RelSpPop reg ofs))) ->
       resolve_effect__in  arg  ef ef.
 
-  Inductive resolve_effect__out: out_any -> execution_stack -> execution_stack -> Prop :=
+  Inductive resolve_effect__out: out_any -> callstack -> callstack -> Prop :=
   | rslv_stack_out_effect: forall ef ef' regs sp' reg ofs arg,
       loc_stack_out_only ef regs  arg (LocStackAddress sp') ->
       sp_mod_spec (fun _ => sp') ef ef' ->
@@ -238,7 +238,7 @@ If in instruction `in1` is using [RelSpPop] And `out1` is using [RelSpPush], the
 
 See an example in [sem.ModSP.step].
    *)
-  Inductive resolve_effect: in_any -> out_any -> execution_stack -> execution_stack -> Prop :=
+  Inductive resolve_effect: in_any -> out_any -> callstack -> callstack -> Prop :=
   | rslv_effect_full: forall arg1 arg2 ef1 ef2 ef3,
       resolve_effect__in arg1 ef1 ef2 ->
       resolve_effect__out arg2 ef2 ef3 ->
@@ -253,7 +253,7 @@ Section FetchStore.
   | FetchPV (pv: primitive_value) .
 
   (* Address resolution *)
-  Inductive fetch_loc: regs_state -> execution_stack -> pages -> loc -> fetch_result -> Prop :=
+  Inductive fetch_loc: regs_state -> callstack -> pages -> loc -> fetch_result -> Prop :=
   | fetch_reg:
     forall regs ef mm reg_name,
       fetch_loc regs ef mm (LocReg reg_name) (FetchPV (fetch_gpr regs reg_name))
@@ -313,12 +313,12 @@ Section FetchStore.
       load_slice_word e mem addr = Some res ->
       load_slice_result e mem addr res.
   
-  Inductive fetch_instr : regs_state -> execution_stack -> pages -> instruction_predicated -> Prop :=
+  Inductive fetch_instr : regs_state -> callstack -> pages -> instruction_predicated -> Prop :=
   | fi_fetch: forall regs ef mm ins,
       fetch_loc regs ef mm (LocCodeAddr (pc_get ef)) (FetchIns ins) ->
       fetch_instr regs ef mm ins.
 
-  Inductive store_loc: regs_state -> execution_stack -> pages -> primitive_value -> loc -> (regs_state * pages) -> Prop :=
+  Inductive store_loc: regs_state -> callstack -> pages -> primitive_value -> loc -> (regs_state * pages) -> Prop :=
   | store_reg:
     forall regs regs' ef mm reg_name value,
       store_gpr regs reg_name value regs' ->
@@ -347,19 +347,19 @@ Section FetchStore.
       store_word e page addr val = Some page' ->
       store_word_result e page addr val page'.
   
-  Inductive resolve_fetch_value: regs_state -> execution_stack -> pages -> any -> primitive_value -> Prop :=
+  Inductive resolve_fetch_value: regs_state -> callstack -> pages -> any -> primitive_value -> Prop :=
   | rf_resfetch_pv: forall ef mm regs arg loc res,
       resolve ef regs arg loc ->
       fetch_loc regs ef mm loc (FetchPV res) ->
       resolve_fetch_value regs ef mm arg res.
 
-  Inductive resolve_fetch_word: regs_state -> execution_stack -> pages -> any -> word -> Prop :=
+  Inductive resolve_fetch_word: regs_state -> callstack -> pages -> any -> word -> Prop :=
   | rf_resfetch_w: forall ef mm regs arg res,
       resolve_fetch_value regs ef mm arg (IntValue res) ->
       resolve_fetch_word regs ef mm arg res.
 
 
-  Inductive resolve_store: regs_state -> execution_stack -> pages
+  Inductive resolve_store: regs_state -> callstack -> pages
                            -> out_any -> primitive_value -> regs_state * pages
                            -> Prop :=
   | rs_resstore: forall ef mm regs arg loc_out pv regs' mm',

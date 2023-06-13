@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Condition Ergs Memory Instruction CodeStorage ExecutionStack.
+Require Common Condition Ergs Memory Instruction CodeStorage CallStack.
 
-Import ZArith Condition Common Ergs ExecutionStack MemoryBase Memory CodeStorage Instruction ZMod List.
+Import ZArith Condition Common Ergs CallStack MemoryBase Memory CodeStorage Instruction ZMod List.
 Import ListNotations RecordSetNotations.
 
 Definition page := page instruction_predicated instruction_invalid.
@@ -98,7 +98,7 @@ Record state :=
       gs_flags : flags_state;
       gs_regs: regs_state;
       gs_pages: pages;
-      gs_callstack: execution_stack;
+      gs_callstack: callstack;
       gs_context_u128: u128;
       gs_global :> global_state;
     }.

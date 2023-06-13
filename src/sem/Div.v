@@ -1,15 +1,15 @@
 From RecordUpdate Require Import RecordSet.
 Require  sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Condition Instruction ExecutionStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
   ZBits Addressing.Coercions RecordSetNotations SemanticCommon List ListNotations.
 
 Section Def.
   Local Coercion u256_of : Z >-> int_mod.
   Open Scope Z_scope.
-  Context (flags: flags_state) (regs: regs_state) (xstack: execution_stack) (pgs: pages).
+  Context (flags: flags_state) (regs: regs_state) (xstack: callstack) (pgs: pages).
 
-  Inductive step_div: instruction -> flags_state * regs_state * execution_stack * pages -> Prop :=
+  Inductive step_div: instruction -> flags_state * regs_state * callstack * pages -> Prop :=
 
   | step_Div_no_overflow:
     forall (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg)
