@@ -56,17 +56,27 @@ Definition storage_empty : storage_type := empty storage_params.
 
 (** §2. Every contract has a storage. *)
 
-Definition depot_params := {|
+
+Definition shard_params := {|
                                 addressable_block := storage_type;
                                 address_bits := 160;
                                 default_value := storage_empty;
                                 writable := true
                               |}.
-Definition contract_address := address depot_params.
-Definition contract_address_bits := address_bits depot_params.
+Definition contract_address := address shard_params.
+Definition contract_address_bits := address_bits shard_params.
+Definition shard := mem_parameterized shard_params.
+
+Definition depot_params :=
+  {|
+    addressable_block := shard;
+    address_bits := 8;
+    default_value := empty _;
+    writable := true
+  |}.
+
+Definition shard_id := ZMod.int_mod (address_bits depot_params).
 Definition depot := mem_parameterized depot_params.
-
-
 
 (** * Mem page *)
 Section Memory.

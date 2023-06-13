@@ -21,12 +21,13 @@ Record callframe_common := mk_cf {
   settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
 
 Record shards := mk_shards {
-      sh_this_shard_id: shard_id;
-      sh_caller_shard_id: shard_id;
-      sh_code_shard_id: shard_id;
+      shard_this: shard_id;
+      shard_caller: shard_id;
+      shard_code: shard_id;
   }.
+
 #[export] Instance etaSH: Settable _ :=
-  settable! mk_shards < sh_this_shard_id; sh_caller_shard_id; sh_code_shard_id >.
+  settable! mk_shards < shard_this; shard_caller; shard_code>.
 
 Record callframe_external :=
   mk_extcf {

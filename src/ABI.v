@@ -131,7 +131,7 @@ Module FarCall.
   Record params := mk_params {
       memory_quasi_fat_ptr: fat_ptr;
       ergs_passed: ergs;
-      shard_id: u8;
+      shard_id: shard_id;
       forwarding_mode: forward_page_type;
       constructor_call: bool;
       to_system: bool;
