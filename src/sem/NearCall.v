@@ -36,11 +36,13 @@ and calls the code inside the current contract space.
 
 ### Semantic
 
-Reminder: *callee* is the function that we call; the *caller* is the currently executing function where a call takes place. In other words, the caller calls the callee.
+Reminder: the *callee* is the function that we call; the *caller* is the
+currently executing function where a call takes place. In other words, the
+caller calls the callee.
 
 Step-by-step explanation:
 
-1. Read the value of `abi_reg` and decode the following structure from it.
+1. Read the value of `abi_reg` and decode the following structure [ABI.NearCall.params] from it.
    The `ergs_passed` field indicates the amount of ergs we intend to pass, but
    the actual amount of ergs passed gets decided at runtime (see step 2).
 
@@ -50,25 +52,23 @@ Record params := {
 }.
 ```
 
-2. The actual amount of ergs passed is determined by
+2. The actual amount of ergs passed is determined by [split_ergs_callee_caller] based on:
+
    - The current balance of the caller frame.
    - The value of `ergs_passed`.
+ *)
 
-   The decision procedure is given by:
-
-*)
-
-Definition split_ergs_caller_callee (ergs_passed balance:ergs) : ergs * ergs :=
+Definition split_ergs_callee_caller (ergs_passed balance:ergs) : ergs * ergs :=
   if ergs_passed == zero32 then (balance, zero32) else
-  match balance - ergs_passed with
-  | (remaining, false) => (ergs_passed, remaining)
-  | (remaining, true) => (balance, zero32)
-  end.
+    match balance - ergs_passed with
+    | (remaining, false) => (ergs_passed, remaining)
+    | (remaining, true) => (balance, zero32)
+    end.
 
-(**
+Section Defs.
+  
+  (**
 Explanation for [split_ergs_caller_callee]:
-
-
 
 - if `ergs_passed` = 0, pass all available ergs to the callee and set
   the caller's balance to zero. Upon the callee's normal return, its unspent
@@ -81,6 +81,16 @@ Explanation for [split_ergs_caller_callee]:
 - otherwise, if the call is not affordable (`ergs_passed` $\gt$
   `balance`), pass all available ergs to the callee.
 
+Function [split_ergs_callee_caller] returns a pair of erg values, where:
+
+- the first component is the amount of ergs actually passed to the callee;
+- the second component is the amount of ergs left to the caller.
+
+Note: after a normal return (not `panic`), the remaining ergs are returned to
+the caller.
+
+    
+
 3. Decrease the balance of the caller frame.
 4. Set up the new frame:
    - new PC is assigned the instruction's `callee_address` argument.
@@ -88,40 +98,31 @@ Explanation for [split_ergs_caller_callee]:
    - new SP is copied from the old frame as is.
 5. Clear flags.
 
-*)
-Inductive step: instruction -> smallstep :=
-| step_NearCall_pass_some_ergs:
-  forall gs flags pages xstack0 context_u128 regs (abi_params_op:in_reg) abi_params_value (expt_handler call_addr: code_address) passed_ergs callee_ergs caller_ergs abi_tag,
+   *)
+  
+  Context (regs: regs_state) (pgs: pages) (xstack: execution_stack).
 
-    resolve_fetch_value regs xstack0 pages abi_params_op (mk_pv abi_tag abi_params_value) ->
+  Let fetch := resolve_fetch_value regs xstack pgs.
+  
+  Inductive step_nearcall: instruction -> flags_state * execution_stack -> Prop:=
+  | step_NearCall_pass_some_ergs:
+    forall (abi_params_op:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
+      (passed_ergs callee_ergs caller_ergs:ergs)
+      (abi_tag: bool)
+      (new_caller:callframe) (new_frame:callframe_common),
 
-    Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
+      fetch abi_params_op (mk_pv abi_tag abi_params_value) ->
 
-    (callee_ergs, caller_ergs) = split_ergs_caller_callee passed_ergs (ergs_remaining xstack0) ->
-    let new_caller := ergs_set caller_ergs xstack0 in
-    let new_frame := mk_cf expt_handler (sp_get xstack0) call_addr callee_ergs in
-    step (OpNearCall abi_params_op (Imm call_addr) (Imm expt_handler))
-                  {|
-                    gs_flags        := flags;
-                    gs_callstack    := xstack0;
+      Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
 
+      (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining xstack) ->
+      
+      new_caller = ergs_set caller_ergs xstack ->
+      new_frame = mk_cf expt_handler (sp_get xstack) call_addr callee_ergs ->
+      
+      step_nearcall (OpNearCall abi_params_op (Imm call_addr) (Imm expt_handler))
+        (flags_clear, InternalCall new_frame new_caller).
 
-                    gs_regs         := regs;
-                    gs_pages        := pages;
-                    gs_context_u128 := context_u128;
-                    gs_global       := gs;
-                  |}
-                  {|
-                    gs_flags        := flags_clear;
-                    gs_callstack    := InternalCall new_frame new_caller;
-
-
-                    gs_regs         := regs;
-                    gs_pages        := pages;
-                    gs_context_u128 := context_u128;
-                    gs_global       := gs;
-                  |}
-.
 (**
 
 
@@ -130,11 +131,11 @@ Inductive step: instruction -> smallstep :=
 - Execution stack: a new frame is pushed on top of the execution stack, and the caller frame is changed.
   + Caller frame:
     * PC of the caller frame is advanced by one, as in any instruction.
-    * Ergs are split between caller and callee frames. See `split_ergs_caller_callee`.
+    * Ergs are split between caller and callee frames. See [split_ergs_callee_caller].
   + New (callee) frame:
     * PC is set to `callee_address`
     * SP is copied to the new frame as is.
-    * ergs are set to the actual amount passed. See `split_ergs_caller_callee`.
+    * ergs are set to the actual amount passed. See [split_ergs_callee_caller].
     * exception handler
 - Flags are always cleared.
 
@@ -158,4 +159,33 @@ Inductive step: instruction -> smallstep :=
 
 
 - See [OpFarCall], [OpMimicCall], [OpDelegateCall]. They are used to call code of other contracts.
-*)
+ *)
+End Defs.
+
+Inductive step: instruction -> smallstep :=
+| step_NearCall:
+  forall gs flags pages xstack context_u128 regs (abi_params_op:in_reg) new_flags new_xstack ins,
+
+    step_nearcall regs pages xstack ins (new_flags, new_xstack) ->
+    step ins 
+         {|
+           gs_flags        := flags;
+           gs_callstack    := xstack;
+
+
+           gs_regs         := regs;
+           gs_pages        := pages;
+           gs_context_u128 := context_u128;
+           gs_global       := gs;
+         |}
+         {|
+           gs_flags        := new_flags;
+           gs_callstack    := new_xstack;
+
+
+           gs_regs         := regs;
+           gs_pages        := pages;
+           gs_context_u128 := context_u128;
+           gs_global       := gs;
+         |}
+.
