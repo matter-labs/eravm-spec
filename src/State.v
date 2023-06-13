@@ -104,3 +104,20 @@ Record state :=
     }.
 #[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_depot>.
 #[export] Instance etaXS : Settable _ := settable! mk_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128; gs_global> .
+
+Inductive global_state_increment_tx : global_state -> global_state -> Prop :=
+| gsit_apply: forall current_ergs_per_pubdata_byte tx new_tx codes depot,
+  (new_tx, false) = uinc_overflow _ tx ->
+  global_state_increment_tx
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_depot := depot;
+  |}
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := new_tx;
+    gs_contracts := codes;
+    gs_depot := depot;
+  |}.
