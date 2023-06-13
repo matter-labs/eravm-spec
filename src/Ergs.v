@@ -5,8 +5,9 @@ Section Ergs.
 Import Common Memory ZMod ZArith.
 Open Scope Z_scope.
 
-Definition ergs := u32.
-Definition ergs_of := int_mod_of 32.
+Definition ergs_bits := 32%nat.
+Definition ergs := int_mod ergs_bits.
+Definition ergs_of := int_mod_of ergs_bits.
 #[reversible]
 Local Coercion ergs_of : Z >-> int_mod.
 
