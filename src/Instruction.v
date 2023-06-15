@@ -105,6 +105,13 @@ Two modifiers are commonly encountered:
   | OpContextSetContextU128        (in1: in_reg)
   | OpContextSetErgsPerPubdataByte (in1: in_reg)
   | OpContextIncrementTxNumber
+
+
+  | OpSLoad          (in1: in_reg)               (out: out_reg)
+  | OpSStore         (in1: in_reg) (in2: in_reg)
+  | OpToL1Message    (in1: in_reg) (in2: in_reg)                (is_first: bool)
+  | OpEvent          (in1: in_reg) (in2: in_reg)                (is_first: bool)
+  | OpPrecompileCall (in1: in_reg)               (out: out_reg)
   .
 
   (** ## Common definitions
@@ -197,6 +204,32 @@ Basic costs of all instructions. They get deducted when the instruction starts e
      | OpContextSetContextU128 _
      | OpContextSetErgsPerPubdataByte _
      | OpContextIncrementTxNumber => AVERAGE_OPCODE_ERGS
+     | OpSLoad _ _=> STORAGE_READ_IO_PRICE
+                 + VM_CYCLE_COST_IN_ERGS
+                 + RAM_PERMUTATION_COST_IN_ERGS
+                 + LOG_DEMUXER_COST_IN_ERGS
+                 + STORAGE_SORTER_COST_IN_ERGS
+     | OpSStore _ _ =>
+                Z.max MIN_STORAGE_WRITE_COST (
+                    STORAGE_WRITE_IO_PRICE
+                    + 2 * VM_CYCLE_COST_IN_ERGS
+                    + RAM_PERMUTATION_COST_IN_ERGS
+                    + 2 * LOG_DEMUXER_COST_IN_ERGS
+                    + 2 * STORAGE_SORTER_COST_IN_ERGS)
+     | OpToL1Message _ _ _ =>
+                let intrinsic_cost := L1_MESSAGE_IO_PRICE
+                    + 2 * VM_CYCLE_COST_IN_ERGS
+                    + RAM_PERMUTATION_COST_IN_ERGS
+                    + 2 * LOG_DEMUXER_COST_IN_ERGS
+                    + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS in
+                Z.max intrinsic_cost L1_MESSAGE_MIN_COST_IN_ERGS
+     | OpEvent _ _ _ => EVENT_IO_PRICE
+                     + 2 * VM_CYCLE_COST_IN_ERGS
+                     + RAM_PERMUTATION_COST_IN_ERGS
+                     + 2 * LOG_DEMUXER_COST_IN_ERGS
+                     + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
+     | OpPrecompileCall _ _ =>
+         VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
      end)%Z.
 End Costs.
 
@@ -206,7 +239,11 @@ Definition allowed_static_ctx (ins:instruction) : bool :=
   match ins with
   | OpContextSetContextU128 _
   | OpContextSetErgsPerPubdataByte _
-  | OpContextIncrementTxNumber => false
+  | OpContextIncrementTxNumber
+  | OpSStore _ _
+  | OpEvent _ _ _
+  | OpToL1Message _ _ _
+    => false
   | _ => true
   end.
 
@@ -228,8 +265,11 @@ Definition requires_kernel (ins: instruction) : bool :=
   | OpMimicCall _ _ _ _ _
   | OpContextSetContextU128 _
   | OpContextSetErgsPerPubdataByte _
-  | OpContextIncrementTxNumber => true
-
+  | OpContextIncrementTxNumber
+  | OpEvent _ _ _
+  | OpToL1Message _ _ _
+  | OpPrecompileCall _ _
+    => true
   | _ => false
   end.
 
