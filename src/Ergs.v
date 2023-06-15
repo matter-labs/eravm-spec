@@ -49,5 +49,17 @@ Definition L1_MESSAGE_IO_PRICE: Z := 100.
 Definition CALL_LIKE_ERGS_COST: Z := 20.
 Definition ERGS_PER_CODE_WORD_DECOMMITTMENT: Z := CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS.
 
+
+Definition DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD: Z := 64000.
+Definition MSG_VALUE_SIMULATOR_ADDITIVE_COST: Z := 11500 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
+Definition MSG_VALUE_SIMULATOR_MIN_USED_ERGS: Z := 8000 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
+
+Definition MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION: Z := Z.max
+                                                                    (MSG_VALUE_SIMULATOR_ADDITIVE_COST - MSG_VALUE_SIMULATOR_MIN_USED_ERGS + 1)
+                                                                    (2300 + 1).
+Definition MIN_STORAGE_WRITE_COST: Z := Z.max
+                                         MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION
+                                         STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS.
+
 Definition growth_cost (diff:mem_address) : ergs := diff.
 End Ergs.
