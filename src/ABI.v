@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require Ergs Memory.
+Require Ergs Memory Pages.
 
-Import Bool ZMod Common Ergs Memory RecordSetNotations ZMod.
+Import Bool ZMod Common Ergs Memory RecordSetNotations Pages ZMod.
 
 Open Scope ZMod_scope.
 (** ABIs are described here:
@@ -154,12 +154,12 @@ Module MetaParameters.
 
   Record params :=
     mk_params {
-        ergs_per_pubdata_byte: u32;
-        heap_size: u32;
-        aux_heap_size: u32;
-        this_shard_id: u8;
-        caller_shard_id: u8;
-        code_shard_id: u8;
+        ergs_per_pubdata_byte: ergs;
+        heap_size: mem_address;
+        aux_heap_size: mem_address;
+        this_shard_id: shard_id;
+        caller_shard_id: shard_id;
+        code_shard_id: shard_id;
       }.
 
   Axiom ABI: @coder params.

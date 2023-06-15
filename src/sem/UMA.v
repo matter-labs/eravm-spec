@@ -4,7 +4,7 @@ Require SemanticCommon Addressing.
 
 
 Import ABI Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations ZArith ZMod.
+  Addressing.Coercions SemanticCommon Pages State RecordSetNotations ZArith ZMod.
 
 Import FatPointer.
 Import List ListNotations.
@@ -30,7 +30,7 @@ Section Defs.
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
       
-      heap_variant_page heap_variant old_pages old_xstack (DataPage _ _ selected_page) ->
+      heap_variant_page _ heap_variant old_pages old_xstack (DataPage _ selected_page) ->
       load_result BigEndian selected_page addr result ->
 
       word_upper_bound used_ptr query ->
@@ -54,7 +54,7 @@ Section Defs.
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
       
-      heap_variant_page heap_variant old_pages old_xstack (DataPage _ _ selected_page) ->
+      heap_variant_page _ heap_variant old_pages old_xstack (DataPage _ selected_page) ->
       load_result BigEndian selected_page addr result ->
 
       word_upper_bound used_ptr query ->
@@ -84,7 +84,7 @@ Section Defs.
 
       validate_in_bounds in_ptr = true ->
       
-      page_has_id old_pages in_ptr.(fp_page) (DataPage _ _ selected_page) ->
+      page_has_id _ old_pages in_ptr.(fp_page) (DataPage  _ selected_page) ->
       slice_from_ptr selected_page in_ptr slice ->
       
       (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
@@ -107,7 +107,7 @@ Section Defs.
 
       validate_in_bounds in_ptr = true ->
       
-      page_has_id old_pages in_ptr.(fp_page) (DataPage _ _ selected_page) ->
+      page_has_id _ old_pages in_ptr.(fp_page) (DataPage _ selected_page) ->
       slice_from_ptr selected_page in_ptr slice ->
       
       (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
@@ -138,7 +138,7 @@ Section Defs.
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
       
-      heap_variant_page heap_variant old_pages old_xstack (DataPage _ _ selected_page) ->
+      heap_variant_page _ heap_variant old_pages old_xstack (DataPage _ selected_page) ->
 
       word_upper_bound used_ptr query ->
       grow_and_pay heap_variant query old_xstack new_xstack ->
@@ -153,7 +153,7 @@ Section Defs.
         (new_regs, pages1) ->
 
       store_word_result BigEndian selected_page addr value modified_page ->
-      page_replace selected_page_id (DataPage _ _ modified_page) pages1 new_pages ->
+      page_replace _ selected_page_id (DataPage _ modified_page) pages1 new_pages ->
 
       step_store (OpStoreInc arg_enc_ptr arg_val heap_variant arg_modptr)
         (new_regs, new_xstack, new_pages)
@@ -171,14 +171,14 @@ Section Defs.
       let addr := in_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
       
-      heap_variant_page heap_variant old_pages old_xstack (DataPage _ _ selected_page) ->
+      heap_variant_page _ heap_variant old_pages old_xstack (DataPage _ selected_page) ->
 
       word_upper_bound in_ptr query ->
       grow_and_pay heap_variant query old_xstack new_xstack ->
 
       store_word_result BigEndian selected_page addr value modified_page ->
 
-      page_replace selected_page_id (DataPage _ _ modified_page) old_pages new_pages ->
+      page_replace _ selected_page_id (DataPage _ modified_page) old_pages new_pages ->
 
       step_store (OpStore arg_enc_ptr arg_val heap_variant) (new_regs, new_xstack, new_pages)
                  

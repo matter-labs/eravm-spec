@@ -6,7 +6,7 @@ Section Def.
 Variable ins_type: Type.
 Variable invalid_ins: ins_type.
 
-Let code_page := code_page ins_type invalid_ins.
+Let code_page := code_page invalid_ins.
 Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
 Definition marker_valid (m: marker) :=
   match m with

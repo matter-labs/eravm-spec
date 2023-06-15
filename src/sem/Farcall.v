@@ -16,11 +16,13 @@ Import
     CodeStorage
     Common
     Condition
+    CodeStorage
     Ergs
     CallStack
     Memory
     MemoryBase
     MemoryOps
+    Pages
     RecordSetNotations
     SemanticCommon
     State.
@@ -121,11 +123,11 @@ Inductive alloc_pages_extframe:  (pages * active_pages) -> code_page -> pages * 
     (heap_id = code_id + 3)%nat ->
     (heap_aux_id = code_id + 4)%nat ->
     alloc_pages_extframe (mm,ctx) code
-      ( (heap_aux_id, (DataPage _ _ (empty _)))::
-          (heap_id, (DataPage _ _ (empty _)))::
-          (stack_id, (StackPage _ _ (empty _)))::
-          (const_id,(ConstPage _ _ (empty _)))::
-          (code_id,(CodePage _ _ code))::mm,
+      ( (heap_aux_id, (DataPage _ (empty _)))::
+          (heap_id, (DataPage _ (empty _)))::
+          (stack_id, (StackPage _ (empty _)))::
+          (const_id,(ConstPage _ (empty _)))::
+          (code_id,(CodePage _ code))::mm,
         {|
           ctx_code_page_id := code_id;
           ctx_const_page_id := const_id;
@@ -143,11 +145,11 @@ Otherwise, it costs the amount of ergs proportionate to the code size (in words)
  *)
 Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
 |dc_fresh: forall cost,
-    is_fresh _ _ cm vhash = true->
+    is_fresh _ cm vhash = true->
     (cost, false) = Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
     decommitment_cost cm vhash code_length_in_words cost
 |dc_not_fresh:
-  is_fresh _ _ cm vhash = false ->
+  is_fresh _  cm vhash = false ->
   decommitment_cost cm vhash code_length_in_words zero32.
 
 (** Fetch code and pay the associated cost. If [masking_allowed] is true and there is no code
@@ -157,9 +159,9 @@ Inductive paid_code_fetch masking_allowed sid: depot -> code_manager -> contract
                                            -> callstack -> callstack * code_page
                                            ->Prop :=
 | cfp_apply:
-  forall depot codes (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
+  forall depot (codes:code_manager) (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
 
-    code_fetch _ _ depot sid masking_allowed codes.(cm_storage _ _) dest_addr (vhash, new_code_page, code_length) ->
+    code_fetch _ depot codes.(cm_storage _) sid dest_addr masking_allowed (vhash, new_code_page, code_length) ->
     decommitment_cost codes vhash code_length cost__decomm ->
     pay cost__decomm xstack0 xstack1 ->
     paid_code_fetch masking_allowed sid depot codes dest_addr xstack0 (xstack1, new_code_page).

@@ -1,6 +1,6 @@
-Require Common Condition Memory Ergs CodeStorage.
+Require Common Memory.
 
-Import Common Condition Memory Ergs CodeStorage.
+Import Common Memory.
 
 (* Create a namespace for argument format description. *)
 

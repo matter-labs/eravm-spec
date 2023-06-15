@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Addressing Common Condition CallStack Memory Instruction State MemoryOps ABI.
+Require Addressing Common Condition CallStack Memory Instruction State MemoryOps ABI Pages.
 
 Import
 Addressing
@@ -19,6 +19,7 @@ Memory
 MemoryBase
 MemoryOps
 RecordSetNotations
+Pages
 State
 ZArith
 ZBits
@@ -95,7 +96,7 @@ Definition in_kernel_mode (ef:callframe) : bool :=
   let ef := topmost_extframe ef in
   addr_is_kernel ef.(ecf_this_address).
 
-Definition code_storage := code_storage _ instruction_invalid.
+Definition code_storage := code_storage instruction_invalid.
 Definition code_manager := code_manager.
 
 

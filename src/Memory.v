@@ -11,9 +11,9 @@ Definition word: Set := ZMod.int_mod word_bits.
 Definition word_zero_value: word := ZMod.int_mod_of word_bits 0%Z.
 
 Section Helpers.
-Import Nat.
-Definition bytes_in_word : nat := word_bits/bits_in_byte.
-Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
+  Import Nat.
+  Definition bytes_in_word : nat := word_bits/bits_in_byte.
+  Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
 
 End Helpers.
 
@@ -40,7 +40,7 @@ Definition storage_params := {|
                               default_value := zero256;
                               writable := true
                             |}.
-
+Definition storage_address := ZMod.int_mod (address_bits storage_params).
 Definition storage_type : Type := mem_parameterized storage_params.
 
 (**  §2.3. Most storages start blanks. *)
@@ -58,11 +58,11 @@ Definition storage_empty : storage_type := empty storage_params.
 
 
 Definition shard_params := {|
-                                addressable_block := storage_type;
-                                address_bits := 160;
-                                default_value := storage_empty;
-                                writable := true
-                              |}.
+                            addressable_block := storage_type;
+                            address_bits := 160;
+                            default_value := storage_empty;
+                            writable := true
+                          |}.
 Definition contract_address := address shard_params.
 Definition contract_address_bits := address_bits shard_params.
 Definition shard := mem_parameterized shard_params.
@@ -76,138 +76,97 @@ Definition depot_params :=
   |}.
 
 Definition shard_id := ZMod.int_mod (address_bits depot_params).
+
+Inductive shard_exists: shard_id -> Prop :=
+| se_rollup: shard_exists (ZMod.int_mod_of _ 0%Z)
+| se_porter: shard_exists (ZMod.int_mod_of _ 1%Z)
+.
+
 Definition depot := mem_parameterized depot_params.
 
 (** * Mem page *)
 Section Memory.
 
-  Variable ins_type: Type.
-  Variable invalid_ins: ins_type.
-  Section Pages.
+  Context {ins_type: Type} (invalid_ins: ins_type).
 
 
-    (** 24 bits, byte-addressable *)
-    Definition data_page_params := {|
-                                    addressable_block := u8;
-                                    address_bits := 32;
-                                    default_value := zero8;
-                                    writable := true
-                                  |}.
-    Definition mem_address := address data_page_params.
-    (* Definition mem_address_zeroval := zero24. *)
+  (** 24 bits, byte-addressable *)
+  Definition data_page_params := {|
+                                  addressable_block := u8;
+                                  address_bits := 32;
+                                  default_value := zero8;
+                                  writable := true
+                                |}.
+  Definition mem_address := address data_page_params.
+  (* Definition mem_address_zeroval := zero24. *)
 
-    Definition data_page := mem_parameterized data_page_params.
-
-    Definition page_id := nat.
+  Definition data_page := mem_parameterized data_page_params.
 
 
-    Inductive primitive_value := mk_pv
-        {
-          is_ptr: bool;
-          value: word;
-        }.
+  Inductive primitive_value := mk_pv
+                                 {
+                                   is_ptr: bool;
+                                   value: word;
+                                 }.
 
-    Definition pv0 := mk_pv false word_zero_value.
+  Definition pv0 := mk_pv false word_zero_value.
 
-    Definition clear_pointer_tag (pv:primitive_value): primitive_value :=
-      match pv with | mk_pv _ value => mk_pv false value end.
+  Definition clear_pointer_tag (pv:primitive_value): primitive_value :=
+    match pv with | mk_pv _ value => mk_pv false value end.
 
-    Definition stack_page_params := {|
-                                     addressable_block := primitive_value;
-                                     address_bits := 16;
-                                     default_value := mk_pv false zero256;
-                                     writable := true
-                                   |}.
+  Definition stack_page_params := {|
+                                   addressable_block := primitive_value;
+                                   address_bits := 16;
+                                   default_value := mk_pv false zero256;
+                                   writable := true
+                                 |}.
 
-    Definition stack_address := address stack_page_params.
-    Definition stack_address_zero: stack_address := zero16.
+  Definition stack_address := address stack_page_params.
+  Definition stack_address_zero: stack_address := zero16.
 
-    Definition stack_page := mem_parameterized stack_page_params.
+  Definition stack_page := mem_parameterized stack_page_params.
 
 
-    Definition const_address_bits := 16.
+  Definition const_address_bits := 16.
 
-    Definition const_page_params := {|
-                                     addressable_block := word;
-                                     address_bits := const_address_bits;
-                                     default_value := zero256;
-                                     writable := false
-                                   |}.
-    Definition const_address :=  address const_page_params.
-    Definition const_page := mem_parameterized const_page_params.
+  Definition const_page_params := {|
+                                   addressable_block := word;
+                                   address_bits := const_address_bits;
+                                   default_value := zero256;
+                                   writable := false
+                                 |}.
+  Definition const_address :=  address const_page_params.
+  Definition const_page := mem_parameterized const_page_params.
 
 
 
-    (* should be [address code_page_params] but we don't want to introduce
+  (* should be [address code_page_params] but we don't want to introduce
       dependency between code_address and instruction type *)
-    Definition code_address_bits := 16.
-    Definition code_address :=  ZMod.int_mod code_address_bits.
-    Definition code_page_params := {|
-                                    addressable_block := ins_type;
-                                    address_bits := code_address_bits;
-                                    default_value := invalid_ins;
-                                    writable := false
-                                  |}.
+  Definition code_address_bits := 16.
+  Definition code_address :=  ZMod.int_mod code_address_bits.
+  Definition code_page_params := {|
+                                  addressable_block := ins_type;
+                                  address_bits := code_address_bits;
+                                  default_value := invalid_ins;
+                                  writable := false
+                                |}.
 
 
-    Definition code_page := mem_parameterized code_page_params.
+  Definition code_page := mem_parameterized code_page_params.
 
 
-    Definition code_length := code_address.
+  Definition code_length := code_address.
 
 
-    Record active_pages := mk_apages
-      {
-        ctx_code_page_id:  page_id;
-        ctx_const_page_id:  page_id;
-        ctx_stack_page_id:  page_id;
-        ctx_heap_page_id:  page_id;
-        ctx_auxheap_page_id:  page_id;
-        ctx_heap_bound: mem_address;
-        ctx_auxheap_bound: mem_address;
-      }.
-
-    #[export] Instance etaAP: Settable _ := settable! mk_apages< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
-
-    Inductive page :=
-    (** Heap or auxheap *)
-    | DataPage : data_page -> page
-    | StackPage : stack_page -> page
-    | ConstPage : const_page -> page
-    | CodePage : code_page -> page.
-
-    Inductive data_page_type := Heap | AuxHeap.
-    
-    Definition pages := list (prod nat page).
-
-    Definition page_alloc (p:page) (m: pages) : pages :=
-             cons (length m, p) m.
-
-    Import Nat.
-    Definition page_older (id: page_id) (mps: active_pages) : bool :=
-      match mps with
-      | mk_apages ctx_code_page_id ctx_const_page_id ctx_stack_page_id
-          ctx_heap_page_id ctx_auxheap_page_id ctx_heap_bound
-          ctx_aux_heap_bound =>
-          ltb id ctx_code_page_id &&
-            ltb id ctx_const_page_id &&
-            ltb id ctx_stack_page_id &&
-            ltb id ctx_heap_page_id &&
-            ltb id ctx_auxheap_page_id
-      end.
-
-
-    Definition data_page_slice_params := data_page_params <| writable := false |>.
-    Definition data_slice := mem_parameterized data_page_slice_params.
-    
-    Definition slice  (from_incl to_excl: mem_address) (m:data_page) : data_slice:=
-      let from_key := MemoryBase.addr_to_key _ from_incl in
-      let to_key := MemoryBase.addr_to_key _ to_excl in
-      let contents := pmap_slice m from_key to_key in
-      mk_mem data_page_slice_params contents.
-    
-  End Pages.
-
+  Definition data_page_slice_params := data_page_params <| writable := false |>.
+  Definition data_slice := mem_parameterized data_page_slice_params.
+  
+  Definition slice  (from_incl to_excl: mem_address) (m:data_page) : data_slice:=
+    let from_key := MemoryBase.addr_to_key _ from_incl in
+    let to_key := MemoryBase.addr_to_key _ to_excl in
+    let contents := pmap_slice m from_key to_key in
+    mk_mem data_page_slice_params contents.
+  
   (** * Registers*)
   (** There are 16 registers; [r0_reserved] always holds 0. *)
   Section Regs.
@@ -284,16 +243,16 @@ Section Memory.
   End Regs.
 
   Section Helpers.
-  Import ZMod.
+    Import ZMod.
 
-  Inductive extract_address bits: word -> int_mod bits -> Prop :=
-  |ea_extract: forall val,
-      extract_address bits val (ZMod.resize word_bits bits val).
+    Inductive extract_address bits: word -> int_mod bits -> Prop :=
+    |ea_extract: forall val,
+        extract_address bits val (ZMod.resize word_bits bits val).
 
-  Definition extract_code_address: word -> code_address -> Prop := extract_address _.
-  Definition extract_const_address: word -> const_address -> Prop := extract_address _.
-  Definition extract_stack_address: word -> stack_address -> Prop
-    := extract_address _.
+    Definition extract_code_address: word -> code_address -> Prop := extract_address _.
+    Definition extract_const_address: word -> const_address -> Prop := extract_address _.
+    Definition extract_stack_address: word -> stack_address -> Prop
+      := extract_address _.
   End Helpers.
 End Memory.
 

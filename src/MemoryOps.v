@@ -1,6 +1,6 @@
-Require Addressing Common Condition CallStack Memory Instruction State.
+Require Addressing Common Condition CallStack Memory Instruction.
 
-Import Addressing ZArith ZMod Common Condition CallStack MemoryBase Memory Instruction State List ListNotations.
+Import Addressing ZArith ZMod Common Condition CallStack MemoryBase Memory Instruction Pages List ListNotations.
 
 Inductive endianness := LittleEndian | BigEndian.
 
@@ -248,6 +248,9 @@ End Addressing.
 
 Section FetchStore.
 
+  Context {instruction: Type} (inv: instruction).
+ 
+  Let pages := pages instruction_invalid.
   Inductive fetch_result : Set :=
   | FetchIns (ins :instruction_predicated)
   | FetchPV (pv: primitive_value) .
@@ -265,17 +268,17 @@ Section FetchStore.
 
   | fetch_stackaddr:
     forall regs ef ps stackpage addr value,
-      active_stackpage ps ef (StackPage _ _ stackpage) ->
+      active_stackpage _ ps ef (StackPage _ stackpage) ->
       load_result _ addr stackpage value ->
       fetch_loc regs ef ps (LocStackAddress addr) (FetchPV value)
   | fetch_codeaddr:
     forall regs ef ps codepage addr ins,
-      active_codepage ps ef (CodePage _ _ codepage) ->
+      active_codepage _ ps ef (CodePage _ codepage) ->
       load_result _ addr codepage ins ->
       fetch_loc regs ef ps (LocCodeAddr addr) (FetchIns ins)
   | fetch_constaddr:
     forall regs ef ps constpage addr value,
-      active_codepage ps ef (ConstPage _ _ constpage) ->
+      active_codepage _ ps ef (ConstPage _ constpage) ->
       load_result _ addr constpage value ->
       fetch_loc regs ef ps (LocConstAddr addr) (FetchPV (IntValue value))
   .
@@ -285,9 +288,9 @@ Section FetchStore.
     | None => None
     | Some val =>
         let fend : list u8 -> list u8 := match e with
-                                        | LittleEndian => @List.rev u8
-                                        | BigEndian => id
-                                        end in
+                                         | LittleEndian => @List.rev u8
+                                         | BigEndian => id
+                                         end in
         Some (merge_bytes bits_in_byte word_bits (fend val))
     end
   .
@@ -297,9 +300,9 @@ Section FetchStore.
     | None => None
     | Some val =>
         let fend : list u8 -> list u8 := match e with
-                                        | LittleEndian => @List.rev u8
-                                        | BigEndian => id
-                                        end in
+                                         | LittleEndian => @List.rev u8
+                                         | BigEndian => id
+                                         end in
         Some (merge_bytes bits_in_byte word_bits (fend val))
     end.
   
@@ -326,9 +329,9 @@ Section FetchStore.
 
   | store_stackaddr:
     forall regs ef ps ps' stackpage addr value pid stackpage',
-      active_stackpage ps ef (StackPage _ _ stackpage) ->
+      active_stackpage _ ps ef (StackPage _ stackpage) ->
       store_result _ addr stackpage value stackpage' ->
-      page_replace pid (StackPage _ _ stackpage') ps ps' ->
+      page_replace _ pid (StackPage _ stackpage') ps ps' ->
       store_loc regs ef ps value (LocStackAddress addr) (regs, ps')
   .
   
@@ -368,8 +371,8 @@ Section FetchStore.
       resolve_store ef (regs, mm) arg pv (regs', mm').
 
   Inductive resolve_stores: callstack -> (regs_state * pages)
-                           -> list (out_any * primitive_value) -> (regs_state * pages)
-                           -> Prop :=
+                            -> list (out_any * primitive_value) -> (regs_state * pages)
+                            -> Prop :=
   | rsl_nil: forall ef s ,
       resolve_stores ef s nil s
   | rsl_cons: forall ef regs pages regs' pages' regs'' pages'' out pv tail,
@@ -377,4 +380,18 @@ Section FetchStore.
       resolve_store ef (regs,pages) out pv (regs', pages') ->
       resolve_stores ef (regs, pages) (cons (out,pv) tail)  (regs'', pages'').
 
+  Record fqa_key := mk_fqa_key {
+                        k_shard: shard_id;
+                        k_contract: contract_address;
+                        k_key: storage_address
+                        }.
+                               
+  Inductive storage_read (d: depot): fqa_key -> word -> Prop :=
+  | sr_apply: forall storage shard s c k w,
+      shard_exists s ->
+      MemoryBase.load_result depot_params s d shard ->
+      MemoryBase.load_result shard_params c shard storage  ->
+      MemoryBase.load_result storage_params k storage w ->
+      storage_read d (mk_fqa_key s c k) w.
+  
 End FetchStore.

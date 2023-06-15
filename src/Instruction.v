@@ -1,6 +1,6 @@
-Require Addressing Common Condition Memory Ergs CodeStorage.
+Require Addressing Common Condition Memory Pages Ergs.
 
-Import Addressing Common Condition Memory Ergs CodeStorage.
+Import Addressing Common Condition Memory Pages Ergs.
 
 (** - This file describes the syntax of assembly instructions.
  - The instruction semantics is described in a different place; see [step]. 
@@ -132,8 +132,8 @@ An instruction type, including:
 End Def.
 
 (** A helper definition to specialize a code page with a (just defined) instruction type. *)
-Definition code_page : Type := code_page instruction_predicated instruction_invalid.
-Definition code_storage_type: Type := code_storage instruction_predicated instruction_invalid.
+Definition code_page : Type := code_page instruction_invalid.
+(* Definition code_storage_type: Type := code_storage instruction_predicated instruction_invalid. *)
 
 
 Section Costs.
