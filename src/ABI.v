@@ -96,6 +96,13 @@ Module FatPointer.
       ofs + (u32_of z_bytes_in_word) = (ofs', false) ->
       ptr_inc (mk_fat_ptr page start len ofs) (mk_fat_ptr page start len ofs').
   
+  Inductive slice_from_ptr (m:data_page) : fat_ptr -> data_slice -> Prop :=
+  | sfp_apply:
+    forall page start length ofs upper_bound readonly_slice,
+      start + length = (upper_bound, false) ->
+      slice start upper_bound  m = readonly_slice ->
+      slice_from_ptr m (mk_fat_ptr  page start length ofs) readonly_slice.
+  
 End FatPointer.
 
 

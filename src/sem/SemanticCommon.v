@@ -26,6 +26,8 @@ ZMod.
 
 Import Addressing.Coercions.
 
+Definition MAX_OFFSET_TO_DEREF_LOW_U32: u32 := int_mod_of _ (2^32 - 33)%Z.
+
 Definition smallstep := state -> state -> Prop .
 
 Definition reg_reserved := pv0.
@@ -184,3 +186,12 @@ Inductive fetch_apply22_swap swap:
               in1 in2 out1 out2
               val1' val2' result
               (new_regs, new_xstack, new_pages) .
+
+(** [word_upper_bound] describes an upper bound imposed on heap or auxheap by *)
+Inductive word_upper_bound : fat_ptr -> mem_address -> Prop :=
+| qbu_apply : forall start length addr upper_bound ofs page,
+    let bytes_in_word := int_mod_of _ z_bytes_in_word in
+    start + length = (addr, false) ->
+    addr + bytes_in_word  = (upper_bound, false) ->
+    word_upper_bound (mk_fat_ptr page start length ofs) upper_bound.
+
