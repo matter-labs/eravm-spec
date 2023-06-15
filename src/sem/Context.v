@@ -9,7 +9,7 @@ Inductive step: instruction -> smallstep :=
 
 | step_ContextThis:
   forall gs flags pages xstack context_u128 regs (out_arg:out_reg) this_addr new_regs new_pages,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue this_addr) (new_regs, new_pages) ->
     this_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_this_address) ->
     
@@ -37,7 +37,7 @@ Inductive step: instruction -> smallstep :=
          |}
 | step_ContextCaller:
   forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) sender_addr new_regs new_pages,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue sender_addr)
       (new_regs, new_pages) ->
     sender_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_msg_sender) ->
@@ -66,7 +66,7 @@ Inductive step: instruction -> smallstep :=
          |}
 | step_ContextCodeAddress:
   forall gs flags  pages xstack context_u128 regs (out:out_reg) code_addr new_regs new_pages,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out (IntValue code_addr) (new_regs, new_pages) ->
     
     code_addr = resize code_address_bits word_bits (pc_get xstack) -> 
@@ -95,7 +95,7 @@ Inductive step: instruction -> smallstep :=
          |}
 | step_ContextErgsLeft:
   forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) balance new_regs new_pages,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue balance) (new_regs, new_pages) ->
     
     balance = resize _ word_bits (topmost_extframe xstack).(ecf_common).(cf_ergs_remaining) ->
@@ -125,7 +125,7 @@ Inductive step: instruction -> smallstep :=
          
 | step_ContextSP:
   forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) sp new_regs new_pages,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue sp) (new_regs, new_pages) ->
     
     sp = resize _ word_bits (sp_get xstack) ->
@@ -155,7 +155,7 @@ Inductive step: instruction -> smallstep :=
          
 | step_ContextGetContextU128:
   forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages wcontext,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue wcontext) (new_regs, new_pages) ->
 
     wcontext = resize _ word_bits context_u128 ->  
@@ -217,7 +217,7 @@ Inductive step: instruction -> smallstep :=
 | step_ContextMeta:
   forall gs flags  pages xstack context_u128 regs (out_arg:out_reg) new_regs new_pages meta_encoded
     ergs_per_pubdata,
-    resolve_store regs xstack pages
+    resolve_store xstack (regs,pages)
       out_arg (IntValue meta_encoded) (new_regs, new_pages) ->
 
     let shards := (topmost_extframe xstack).(ecf_shards) in 

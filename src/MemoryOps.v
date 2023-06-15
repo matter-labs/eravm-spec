@@ -359,12 +359,22 @@ Section FetchStore.
       resolve_fetch_word regs ef mm arg res.
 
 
-  Inductive resolve_store: regs_state -> callstack -> pages
+  Inductive resolve_store: callstack -> (regs_state * pages)
                            -> out_any -> primitive_value -> regs_state * pages
                            -> Prop :=
   | rs_resstore: forall ef mm regs arg loc_out pv regs' mm',
       resolve ef regs (out_any_incl arg) loc_out ->
       store_loc regs ef mm pv loc_out (regs', mm') ->
-      resolve_store regs ef mm arg pv (regs', mm').
+      resolve_store ef (regs, mm) arg pv (regs', mm').
+
+  Inductive resolve_stores: callstack -> (regs_state * pages)
+                           -> list (out_any * primitive_value) -> (regs_state * pages)
+                           -> Prop :=
+  | rsl_nil: forall ef s ,
+      resolve_stores ef s nil s
+  | rsl_cons: forall ef regs pages regs' pages' regs'' pages'' out pv tail,
+      resolve_stores ef (regs', pages') tail (regs'', pages'') ->
+      resolve_store ef (regs,pages) out pv (regs', pages') ->
+      resolve_stores ef (regs, pages) (cons (out,pv) tail)  (regs'', pages'').
 
 End FetchStore.
