@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Condition Ergs Memory Pages.
+Require Common Condition Ergs Event Log Memory Pages.
 
-Import ZArith Condition Common Ergs MemoryBase Memory Pages ZMod List ListNotations.
+Import ZArith Condition Common Ergs Event Log MemoryBase Memory Pages ZMod List ListNotations.
 
 Open Scope ZMod_scope.
 
@@ -55,6 +55,11 @@ Definition page_older (id: page_id) (mps: active_pages) : bool :=
 
 #[export] Instance etaAP: Settable _ := settable! mk_apages< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
 
+Record state_checkpoint := {
+    gs_depot: depot;
+    gs_events: log query;
+    gs_l1_msgs: log event;
+  }.
 
 Record callframe_external :=
   mk_extcf {
@@ -65,12 +70,12 @@ Record callframe_external :=
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;
       ecf_shards: active_shards;
-      ecf_saved_depot: depot;
+      ecf_saved_checkpoint: state_checkpoint;
       ecf_common :> callframe_common
     }.
 
 #[export] Instance etaCFE : Settable _ :=
-  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_depot; ecf_common>.
+  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
 
 Inductive callframe :=
 | InternalCall (_: callframe_common) (tail: callframe): callframe

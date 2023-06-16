@@ -100,8 +100,8 @@ Definition code_storage := code_storage instruction_invalid.
 Definition code_manager := code_manager.
 
 
-Definition revert_storage (ef:callframe_external) : depot :=
-  ef.(ecf_saved_depot).
+Definition revert_state (ef:callframe_external) : state_checkpoint :=
+  ef.(ecf_saved_checkpoint).
 
 
 

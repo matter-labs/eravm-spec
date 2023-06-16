@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Ergs Memory Instruction CallStack CodeStorage Pages.
+Require Common Ergs Memory Event Log Instruction CallStack CodeStorage Pages.
 
-Import ZArith Condition Common CodeStorage Ergs CallStack MemoryBase Memory Instruction Pages ZMod List.
+Import ZArith Condition Common CodeStorage Ergs Event CallStack Log MemoryBase Memory Instruction Pages ZMod List.
 Import ListNotations RecordSetNotations.
 
 
@@ -29,12 +29,13 @@ Definition is_kernel (ef:callframe) : bool :=
 
 Definition tx_num := u16.
 
+
 Record global_state :=
   mk_gstate {
     gs_current_ergs_per_pubdata_byte: ergs;
     gs_tx_number_in_block: tx_num; 
     gs_contracts: code_manager;
-    gs_depot: depot;
+    gs_revertable: state_checkpoint;
     }.
 
 Record state :=
@@ -46,22 +47,22 @@ Record state :=
       gs_context_u128: u128;
       gs_global :> global_state;
     }.
-#[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_depot>.
+#[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_revertable>.
 #[export] Instance etaXS : Settable _ := settable! mk_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128; gs_global> .
 
 Inductive global_state_increment_tx : global_state -> global_state -> Prop :=
-| gsit_apply: forall current_ergs_per_pubdata_byte tx new_tx codes depot,
+| gsit_apply: forall current_ergs_per_pubdata_byte tx new_tx codes rev ,
   (new_tx, false) = uinc_overflow _ tx ->
   global_state_increment_tx
   {|
     gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
     gs_tx_number_in_block := tx;
     gs_contracts := codes;
-    gs_depot := depot;
+    gs_revertable := rev;
   |}
   {|
     gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
     gs_tx_number_in_block := new_tx;
     gs_contracts := codes;
-    gs_depot := depot;
+    gs_revertable := rev;
   |}.

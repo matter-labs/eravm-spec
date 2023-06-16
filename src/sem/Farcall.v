@@ -433,7 +433,7 @@ Section Def.
       let callee_shard := if to_abi_shard then abi_shard else old_extframe.(ecf_shards).(shard_this) in
       abi_ptr_tag = true ->
       
-      paid_code_fetch allow_masking callee_shard gs.(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
+      paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward Ret.ForwardFatPointer (in_ptr, xstack1) (out_ptr, xstack2) ->
       alloc_pages_extframe (old_pages,mem_ctx0) new_code_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
@@ -446,7 +446,7 @@ Section Def.
                            ecf_code_address := zero16;
                            ecf_pages := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
-                           ecf_saved_depot := gs.(gs_depot);
+                           ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
                            ecf_common := {|
                                           cf_exception_handler_location := handler_addr;
@@ -490,7 +490,7 @@ Section Def.
       let allow_masking := negb is_system in
       let callee_shard := if to_abi_shard then abi_shard else old_extframe.(ecf_shards).(shard_this) in
 
-      paid_code_fetch allow_masking callee_shard gs.(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
+      paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward (Ret.UseMemory page_type) (in_ptr, xstack1) (out_ptr, xstack2) ->
       
       let mem_ctx1 := (topmost_extframe xstack2).(ecf_pages) in
@@ -506,7 +506,7 @@ Section Def.
                            ecf_code_address := zero16;
                            ecf_pages := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
-                           ecf_saved_depot := gs.(gs_depot);
+                           ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_common := {|
                                           cf_exception_handler_location := handler_addr;
                                           cf_sp := INITIAL_SP_ON_FAR_CALL;

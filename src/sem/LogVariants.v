@@ -15,7 +15,7 @@ Inductive step: instruction -> smallstep :=
     new_regs new_pages read_value key,
     resolve_fetch_word regs xstack pages arg_key key ->
       
-    storage_read (gs_depot gs) (mk_fqa_key (current_shard xstack) (current_contract xstack) key) read_value ->
+    storage_read gs.(gs_revertable).(gs_depot) (mk_fqa_key (current_shard xstack) (current_contract xstack) key) read_value ->
     resolve_store xstack (regs, pages) arg_dest_value (IntValue read_value) (new_regs, new_pages) ->
     step (OpSLoad arg_key arg_dest_value)
          {|
