@@ -20,7 +20,7 @@ Record callframe_common := mk_cf {
 #[export] Instance etaCFC : Settable _ :=
   settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
 
-Record shards := mk_shards {
+Record active_shards := mk_shards {
                      shard_this: shard_id;
                      shard_caller: shard_id;
                      shard_code: shard_id;
@@ -64,7 +64,7 @@ Record callframe_external :=
       ecf_pages: active_pages;
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;
-      ecf_shards: shards;
+      ecf_shards: active_shards;
       ecf_saved_depot: depot;
       ecf_common :> callframe_common
     }.

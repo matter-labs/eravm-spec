@@ -401,7 +401,7 @@ Definition new_code_shard_id (is_call_shard:bool)
   (provided current_shard:shard_id) : shard_id :=
   if is_call_shard then provided else current_shard.
 
-Definition select_shards (type: farcall_type) (is_call_shard: bool) (provided: shard_id) (ss: shards) : shards :=
+Definition select_shards (type: farcall_type) (is_call_shard: bool) (provided: shard_id) (ss: active_shards) : active_shards :=
   match ss with
   | mk_shards old_this _ code =>
       let new_caller := old_this in
