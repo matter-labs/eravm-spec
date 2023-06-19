@@ -373,6 +373,17 @@ Section FetchStore.
       resolve_load ef s arg (IntValue res) ->
       resolve_load_word ef s arg res.
 
+  Inductive resolve_load_words: callstack -> (regs_state * pages)
+                            -> list (in_any * word) 
+                            -> Prop :=
+  | rslw_nil: forall ef s ,
+      resolve_load_words ef s nil
+                    
+  | rslw_cons: forall ef regs pages (arg:in_any) pv (tail: list (in_any*word)),
+      resolve_load_words ef (regs, pages) tail ->
+      resolve_load_word ef (regs, pages ) (in_any_incl arg) pv ->
+      resolve_load_words ef (regs, pages ) ((arg,pv)::tail).
+
   Inductive resolve_store: callstack -> (regs_state * pages)
                            -> out_any -> primitive_value -> regs_state * pages
                            -> Prop :=
