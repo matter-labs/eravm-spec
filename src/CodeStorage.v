@@ -31,7 +31,7 @@ Section Defs.
   Definition is_fresh cm vh := negb (contains _ VersionedHash.eq_dec (cm_fresh cm) vh).
 
   Definition code_hash_location (for_contract: contract_address) (sid:shard_id): fqa_key :=
-      mk_fqa_key sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS (resize _ 256 for_contract).
+      mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (resize _ 256 for_contract).
   
   Inductive code_fetch_hash (d:depot) (cs: code_storage) (sid: shard_id) (contract_addr: contract_address) :
    option (versioned_hash * code_length) -> Prop :=
