@@ -41,10 +41,10 @@ Definition storage_params := {|
                               writable := true
                             |}.
 Definition storage_address := ZMod.int_mod (address_bits storage_params).
-Definition storage_type : Type := mem_parameterized storage_params.
+Definition storage: Type := mem_parameterized storage_params.
 
 (**  §2.3. Most storages start blanks. *)
-Definition storage_empty : storage_type := empty storage_params.
+Definition storage_empty : storage := empty storage_params.
 
 (** §2.4. Storage has a sequentially-consistent, strong mem model. All writes *)
 (** are atomic and immediately visible; reads are guaranteed to return the last *)
@@ -58,7 +58,7 @@ Definition storage_empty : storage_type := empty storage_params.
 
 
 Definition shard_params := {|
-                            addressable_block := storage_type;
+                            addressable_block := storage;
                             address_bits := 160;
                             default_value := storage_empty;
                             writable := true
