@@ -165,3 +165,18 @@ Module MetaParameters.
   Axiom ABI: @coder params.
 
 End MetaParameters.
+
+Module PrecompileParameters.
+
+  Record params := mk_params
+                     {
+                       input_memory_offset: mem_address;
+                       input_memory_length: mem_address;
+                       output_memory_offset: mem_address;
+                       output_memory_length: mem_address;
+                       per_precompile_interpreted: u64;
+                     }.
+  
+  Axiom ABI: @coder params.
+
+End PrecompileParameters. 
