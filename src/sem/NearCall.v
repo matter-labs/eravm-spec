@@ -102,7 +102,7 @@ the caller.
   
   Context (regs: regs_state) (pgs: pages) (xstack: callstack).
 
-  Let fetch := resolve_fetch_value regs xstack pgs.
+  Let fetch := resolve_load xstack (regs,pgs).
   
   Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
   | step_NearCall_pass_some_ergs:

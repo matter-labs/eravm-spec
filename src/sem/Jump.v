@@ -8,7 +8,7 @@ Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction S
 Section Def.
   
 Context (regs: regs_state) (old_pages:pages) (xstack: callstack).
-Let resolve := resolve_fetch_value regs xstack old_pages.
+Let resolve := resolve_load xstack (regs,old_pages).
 
 Inductive step_jump: instruction -> callstack -> Prop :=
 (**

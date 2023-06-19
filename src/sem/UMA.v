@@ -14,8 +14,8 @@ Import Addressing.Coercions.
 Section Defs.
   
   Context (old_regs: regs_state) (old_xstack: callstack) (old_pages:pages).
-  Let fetch := resolve_fetch_value old_regs old_xstack old_pages.
-  Let fetch_word := resolve_fetch_word old_regs old_xstack old_pages.
+  Let fetch := resolve_load old_xstack (old_regs, old_pages).
+  Let fetch_word := resolve_load_word old_xstack (old_regs, old_pages).
   Let stores := resolve_stores old_xstack (old_regs,old_pages).
   
   Inductive step_load : instruction -> 

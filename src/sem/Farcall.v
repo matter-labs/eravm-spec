@@ -550,11 +550,13 @@ Inductive fetch_operands abi dest handler:
   (contract_address * exception_handler * bool *  FarCall.params) -> Prop:=
 
 | farcall_fetch: forall handler_location dest_val abi_val (abi_ptr_tag:bool) abi_params gs abi_ptr_tag,
-    let fetch := resolve_fetch_value gs.(gs_regs) gs.(gs_callstack) gs.(gs_pages) in
+    let resolve_loads := resolve_loads gs.(gs_callstack) (gs.(gs_regs),gs.(gs_pages)) in
 
-    fetch dest dest_val ->
-    fetch abi (mk_pv abi_ptr_tag abi_val) ->
-    fetch handler (IntValue handler_location) ->
+    resolve_loads [
+        (dest,dest_val);
+        (abi, mk_pv abi_ptr_tag abi_val);
+        (handler, IntValue handler_location)]
+    ->
 
     FarCall.ABI.(decode) abi_val = Some abi_params ->
 

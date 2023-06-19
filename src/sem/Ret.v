@@ -165,7 +165,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
     let xstack0 := ExternalCall cf (Some caller_stack) in
     
     (* Panic if not a pointer *)
-    resolve_fetch_value regs xstack0 pages arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+    resolve_load xstack0 (regs,pages) arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
 
     Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
 
@@ -484,7 +484,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
     let xstack0 := ExternalCall cf (Some caller_stack) in
     
     (* Panic if not a pointer *)
-    resolve_fetch_value regs xstack0 pages arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+    resolve_load  xstack0 (regs,pages) arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
     Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
 
     (fwd_mode = ForwardFatPointer ->

@@ -350,17 +350,28 @@ Section FetchStore.
       store_word e page addr val = Some page' ->
       store_word_result e page addr val page'.
   
-  Inductive resolve_fetch_value: regs_state -> callstack -> pages -> any -> primitive_value -> Prop :=
+  Inductive resolve_load: callstack -> (regs_state * pages) -> any -> primitive_value -> Prop :=
   | rf_resfetch_pv: forall ef mm regs arg loc res,
       resolve ef regs arg loc ->
       fetch_loc regs ef mm loc (FetchPV res) ->
-      resolve_fetch_value regs ef mm arg res.
+      resolve_load ef (regs , mm) arg res.
 
-  Inductive resolve_fetch_word: regs_state -> callstack -> pages -> any -> word -> Prop :=
-  | rf_resfetch_w: forall ef mm regs arg res,
-      resolve_fetch_value regs ef mm arg (IntValue res) ->
-      resolve_fetch_word regs ef mm arg res.
+  Inductive resolve_loads: callstack -> (regs_state * pages)
+                            -> list (in_any * primitive_value) 
+                            -> Prop :=
+  | rsl_nil: forall ef s ,
+      resolve_loads ef s nil
+                    
+  | rsl_cons: forall ef regs pages (arg:in_any) pv (tail: list (in_any*primitive_value)),
+      resolve_loads ef (regs, pages) tail ->
+      resolve_load  ef (regs, pages ) (in_any_incl arg) pv ->
+      resolve_loads ef (regs, pages ) ((arg,pv)::tail).
 
+  
+  Inductive resolve_load_word: callstack -> regs_state * pages -> any -> word -> Prop :=
+  | rf_resfetch_w: forall ef s arg res,
+      resolve_load ef s arg (IntValue res) ->
+      resolve_load_word ef s arg res.
 
   Inductive resolve_store: callstack -> (regs_state * pages)
                            -> out_any -> primitive_value -> regs_state * pages
@@ -373,25 +384,40 @@ Section FetchStore.
   Inductive resolve_stores: callstack -> (regs_state * pages)
                             -> list (out_any * primitive_value) -> (regs_state * pages)
                             -> Prop :=
-  | rsl_nil: forall ef s ,
+  | rss_nil: forall ef s ,
       resolve_stores ef s nil s
-  | rsl_cons: forall ef regs pages regs' pages' regs'' pages'' out pv tail,
+  | rss_cons: forall ef regs pages regs' pages' regs'' pages'' out pv tail,
       resolve_stores ef (regs', pages') tail (regs'', pages'') ->
       resolve_store ef (regs,pages) out pv (regs', pages') ->
       resolve_stores ef (regs, pages) (cons (out,pv) tail)  (regs'', pages'').
 
-  Record fqa_key := mk_fqa_key {
+  Record fqa_storage := mk_fqa_storage {
                         k_shard: shard_id;
                         k_contract: contract_address;
+                        }.
+  Record fqa_key := mk_fqa_key {
+                        k_storage :> fqa_storage;
                         k_key: storage_address
                         }.
-                               
-  Inductive storage_read (d: depot): fqa_key -> word -> Prop :=
-  | sr_apply: forall storage shard s c k w,
+
+  Inductive storage_get (d: depot): fqa_storage -> storage -> Prop :=
+  | sg_apply: forall storage shard s c st,
       shard_exists s ->
       MemoryBase.load_result depot_params s d shard ->
       MemoryBase.load_result shard_params c shard storage  ->
-      MemoryBase.load_result storage_params k storage w ->
-      storage_read d (mk_fqa_key s c k) w.
+      storage_get d (mk_fqa_storage s c) st .
   
+  Inductive storage_read (d: depot): fqa_key -> word -> Prop :=
+  | sr_apply: forall storage sk c w,
+      storage_get d sk storage -> 
+      storage_read d (mk_fqa_key sk c) w.
+  
+  Inductive storage_write (d: depot): fqa_key -> word -> depot -> Prop :=
+  | sw_apply: forall storage shard sk s c k w  shard' depot' storage',
+      storage_get d sk storage -> 
+      MemoryBase.store_result storage_params k storage w storage' ->
+      MemoryBase.store_result shard_params c shard storage' shard'  ->
+      MemoryBase.store_result depot_params s d shard' depot' ->
+      storage_write d (mk_fqa_key sk k) w depot'.
+
 End FetchStore.

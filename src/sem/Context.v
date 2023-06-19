@@ -186,8 +186,7 @@ Inductive step: instruction -> smallstep :=
          
 | step_ContextSetContextU128:
   forall gs flags  pages xstack old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128,
-    resolve_fetch_value regs xstack pages
-      in_arg (mk_pv any_tag val) ->
+    resolve_load xstack (regs,pages) in_arg (mk_pv any_tag val) ->
 
     new_context_u128 = resize word_bits 128 val ->
     step (OpContextSetContextU128 in_arg)
@@ -284,8 +283,7 @@ Inductive step: instruction -> smallstep :=
 | step_ContextSetErgsPerPubdata:
   forall gs new_gs flags  pages xstack context_u128 regs (in_arg:in_reg) any_tag new_val (new_val_arg:in_reg),
 
-    resolve_fetch_value regs xstack pages
-      in_arg (mk_pv any_tag new_val) ->
+    resolve_load xstack (regs, pages) in_arg (mk_pv any_tag new_val) ->
 
     let new_ergs := resize _ ergs_bits new_val in
     new_gs = gs <| gs_global ::= (fun s => s <| gs_current_ergs_per_pubdata_byte := new_ergs |> ) |> ->
