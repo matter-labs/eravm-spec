@@ -66,3 +66,51 @@ Inductive global_state_increment_tx : global_state -> global_state -> Prop :=
     gs_contracts := codes;
     gs_revertable := rev;
   |}.
+
+Inductive global_state_new_depot: depot -> global_state -> global_state -> Prop :=
+| gsnd_apply: forall current_ergs_per_pubdata_byte tx codes d evs l1s d',
+  global_state_new_depot d'
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d; gs_events := evs; gs_l1_msgs := l1s |} ;
+  |}
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d'; gs_events := evs; gs_l1_msgs := l1s |} ;
+  |}.
+
+Inductive emit_event e: global_state -> global_state -> Prop :=
+| ee_apply: forall current_ergs_per_pubdata_byte tx codes d evs l1s d',
+  emit_event e 
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d; gs_events := evs; gs_l1_msgs := l1s |} ;
+  |}
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d'; gs_events := e::evs; gs_l1_msgs := l1s |} ;
+  |}.
+
+Inductive emit_l1_msg e: global_state -> global_state -> Prop :=
+| eel1_apply: forall current_ergs_per_pubdata_byte tx codes d evs l1s d',
+  emit_l1_msg e 
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d; gs_events := evs; gs_l1_msgs := l1s |} ;
+  |}
+  {|
+    gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
+    gs_tx_number_in_block := tx;
+    gs_contracts := codes;
+    gs_revertable := {| gs_depot := d'; gs_events := evs; gs_l1_msgs := e::l1s |} ;
+  |}.
