@@ -135,6 +135,14 @@ Section Def.
     let result := (as_unsigned x * as_unsigned y)%Z in
     (int_mod_of result, carry result).
   
+  Definition add_wrap (x y: int_mod) : int_mod :=
+    match uadd_overflow x y with
+    | (z, _) => z
+    end.
+  Definition sub_wrap (x y: int_mod) : int_mod :=
+    match usub_overflow x  y with
+    | (z, _) => z
+  end.
   (** ## Shifts *)
 
   (** ### Logical shifts *)
@@ -210,3 +218,4 @@ Fixpoint extract_digits (w:Z) (bits_per_digit: nat) (units:nat) : list Z :=
       h:: tail
 
   end.
+

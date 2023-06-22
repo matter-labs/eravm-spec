@@ -246,8 +246,9 @@ Section Memory.
     Import ZMod.
 
     Inductive extract_address bits: word -> int_mod bits -> Prop :=
-    |ea_extract: forall val,
-        extract_address bits val (ZMod.resize word_bits bits val).
+    |ea_extract: forall val val_adj,
+        val_adj = ZMod.resize word_bits bits val ->
+        extract_address bits val val_adj.
 
     Definition extract_code_address: word -> code_address -> Prop := extract_address _.
     Definition extract_const_address: word -> const_address -> Prop := extract_address _.

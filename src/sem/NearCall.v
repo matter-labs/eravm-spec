@@ -100,7 +100,7 @@ the caller.
 
    *)
   
-  Context (regs: regs_state) (pgs: pages) (xstack: callstack).
+  Context (regs: regs_state) (pgs: memory) (xstack: callstack).
 
   Let fetch := resolve_load xstack (regs,pgs).
   
@@ -164,19 +164,17 @@ End Defs.
 
 Inductive step: instruction -> smallstep :=
 | step_NearCall:
-  forall gs flags pages xstack context_u128 regs (abi_params_op:in_reg) new_flags new_xstack ins,
+  forall flags memory xstack regs (abi_params_op:in_reg) new_flags new_xstack ins s1 s2,
 
-    step_nearcall regs pages xstack ins (new_flags, new_xstack) ->
-    step ins 
-         {|
+    step_nearcall regs memory xstack ins (new_flags, new_xstack) ->
+    step_xstate
+      {|
            gs_flags        := flags;
            gs_callstack    := xstack;
 
 
            gs_regs         := regs;
-           gs_pages        := pages;
-           gs_context_u128 := context_u128;
-           gs_global       := gs;
+           gs_pages        := memory;
          |}
          {|
            gs_flags        := new_flags;
@@ -184,8 +182,6 @@ Inductive step: instruction -> smallstep :=
 
 
            gs_regs         := regs;
-           gs_pages        := pages;
-           gs_context_u128 := context_u128;
-           gs_global       := gs;
-         |}
-.
+           gs_pages        := memory;
+         |} s1 s2 ->
+    step ins s1 s2.

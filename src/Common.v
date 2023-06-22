@@ -1,5 +1,6 @@
 Require ZArith lib.ZMod.
-
+Require Lib.
+Export Lib.
 Section Types.
   Import ZArith lib.ZMod.
   Let mk n := int_mod_of n.
@@ -49,3 +50,4 @@ Section Params.
   Definition L1_MESSAGE_PUBDATA_BYTES: Z := (1 + 1 + 2 + 20 + 32 + 32)%Z.
 
 End Params.
+

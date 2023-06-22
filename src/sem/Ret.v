@@ -26,7 +26,6 @@ the callee.
 
 *)
 
-
 Inductive step_ret: instruction -> smallstep :=
 (**
 
@@ -74,19 +73,17 @@ Inductive step_ret: instruction -> smallstep :=
 
  *)
 | step_RetLocal_nolabel:
-    forall flags gs pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
+    forall flags pages cf caller_stack caller_reimbursed regs _ignored s1 s2,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
-      step_ret (OpRet _ignored None)
-        {|
+      
+      step_xstate {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-
+          
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_global       := gs;
-          gs_context_u128 := context_u128;
         |}
         {|
           gs_flags        := flags_clear;
@@ -95,9 +92,10 @@ Inductive step_ret: instruction -> smallstep :=
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_global       := gs;
-          gs_context_u128 := context_u128;
-        |}
+        |} s1 s2 ->          
+      step_ret (OpRet _ignored None) s1 s2
+        
+        
 (**
 
 #### Case 2: `ret label` from local call, label provided.
@@ -111,7 +109,8 @@ Inductive step_ret: instruction -> smallstep :=
 | step_RetLocal_label:
   forall gs gs1 _ignored label,
     step_ret (OpRet _ignored None) gs gs1 ->
-    step_ret (OpRet _ignored (Some label)) gs (gs1 <| gs_callstack ::= pc_set label |>)
+    gs1 = gs1 <| gs_xstate  ::= fun xs => xs <| gs_callstack ::= pc_set label |> |> ->
+    step_ret (OpRet _ignored (Some label)) gs gs1 
 
 (**
 
@@ -177,27 +176,34 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
     let encoded_out_ptr := FatPointer.ABI.(encode) out_ptr in
     step_ret (OpRet arg label_ignored)
           {|
-          gs_flags        := flags;
-          gs_callstack    := xstack0;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
+            gs_xstate := {|
+                          gs_flags        := flags;
+                          gs_callstack    := xstack0;
+                          gs_regs         := regs;
 
-
-          gs_pages        := pages;
-          gs_global       := gs;
+                          
+                          gs_pages        := pages;
+                        |};
+            gs_context_u128 := context_u128;
+            
+            gs_global       := gs;
           |}
           {|
-          gs_flags        := flags_clear;
-          gs_regs         := regs_state_zero
+            gs_xstate := {|
+                          gs_flags        := flags_clear;
+                          gs_regs         := regs_state_zero
                              <| gprs_r1 := PtrValue encoded_out_ptr |>
                              <| gprs_r2 := reg_reserved |>
                              <| gprs_r3 := reg_reserved |>
                              <| gprs_r4 := reg_reserved |> ;
-          gs_callstack    := caller_reimbursed;
+                          gs_callstack    := caller_reimbursed;
+
+                          gs_pages        := pages;
+                          |};
+
+                          
           gs_context_u128 := zero128;
 
-
-          gs_pages        := pages;
           gs_global       := gs;
           |}
 (*| step_RetExt_FwdFatPointer:
@@ -368,20 +374,18 @@ Return from a function signaling an error; execute exception handler, possibly r
 
  *)
 | step_RevertLocal_nolabel:
-    forall flags gs pages cf caller_stack caller_reimbursed context_u128 regs _ignored,
+    forall flags pages cf caller_stack caller_reimbursed regs _ignored s1 s2,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
       let handler := active_exception_handler (InternalCall cf caller_stack) in
-      step_revert (OpRevert _ignored None)
-        {|
+
+      step_xstate {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-
-
+          
+          
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
         |}
         {|
           gs_flags        := flags_clear;
@@ -390,9 +394,9 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
+
+        |} s1 s2 ->
+      step_revert (OpRevert _ignored None) s1 s2 
         (**
  
 #### Case 2: `revert label` from near call, label provided
@@ -404,19 +408,16 @@ Return from a function signaling an error; execute exception handler, possibly r
 
 *)
 | step_RevertLocal_label:
-    forall gs flags pages cf caller_stack caller_reimbursed context_u128 regs _ignored label,
+    forall flags pages cf caller_stack caller_reimbursed regs _ignored label s1 s2,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
-      step_revert (OpRevert _ignored (Some label))
-        {|
+      step_xstate {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-
-
+          
+          
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
         |}
         {|
           gs_flags        := flags_clear;
@@ -425,9 +426,9 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
+        |} s1 s2 ->
+      
+      step_revert (OpRevert _ignored (Some label)) s1 s2
 
 
 (**
@@ -497,14 +498,17 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
     let encoded_out_ptr := FatPointer.ABI.(encode) out_ptr in
     step_revert (OpRevert arg label_ignored)
           {|
-          gs_flags        := flags;
-          gs_callstack    := xstack0;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
+            gs_xstate := {|
+                          gs_flags        := flags;
+                          gs_callstack    := xstack0;
+                          gs_regs         := regs;
 
-
-          gs_pages        := pages;
-          gs_global       := {|
+                          
+                          gs_pages        := pages;
+                        |};
+            gs_context_u128 := context_u128;
+            
+            gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
                               gs_contracts := codes;
@@ -512,23 +516,27 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
                             |};
           |}
           {|
-          gs_flags        := flags_clear;
-          gs_regs         := regs_state_zero
+            gs_xstate := {|
+                          gs_flags        := flags_clear;
+                          gs_regs         := regs_state_zero
                              <| gprs_r1 := PtrValue encoded_out_ptr |>
                              <| gprs_r2 := reg_reserved |>
                              <| gprs_r3 := reg_reserved |>
                              <| gprs_r4 := reg_reserved |> ;
-          gs_callstack    := pc_set (active_exception_handler xstack0) caller_reimbursed ;
+                          gs_callstack    := pc_set (active_exception_handler xstack0) caller_reimbursed ;
+
+                          gs_pages        := pages;
+                          |};
+
+                          
           gs_context_u128 := zero128;
 
-
-          gs_pages        := pages;
           gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
                               gs_contracts := codes;
                               gs_revertable := revert_state cf;
-                            |};
+                            |}
           |}
 
 .
@@ -618,32 +626,28 @@ regs in current frame, set OF flag, return no data.
 
 
 | step_PanicLocal_nolabel:
-    forall gs flags pages cf caller_stack context_u128 regs,
+    forall s1 s2 flags pages cf caller_stack regs,
 
       (* no reimbursement, ergs are lost *)
       let handler := active_exception_handler (InternalCall cf caller_stack) in
-      step_panic (OpPanic None)
-        {|
+      
+      step_xstate {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-
-
+          
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
-        {|
+          |}
+          {|
           gs_flags        := set_overflow flags_clear;
           gs_callstack    := pc_set handler caller_stack;
 
-
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
-
+          |} s1 s2 ->
+      
+      step_panic (OpPanic None) s1 s2
+                 
         (**
 
 #### Case 2: `panic` from near call, label provided
@@ -654,9 +658,9 @@ regs in current frame, set OF flag, return no data.
 
  *)
 | step_PanicLocal_label:
-    forall gs flags pages cf caller_stack context_u128 regs _ignored label,
+    forall flags pages cf caller_stack regs _ignored label s1 s2,
 
-      step_panic (OpRet _ignored (Some label))
+      step_xstate
         {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
@@ -664,8 +668,6 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
         |}
         {|
           gs_flags        := set_overflow flags_clear;
@@ -674,9 +676,9 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
         |}
+        s1 s2 ->
+        step_panic (OpRet _ignored (Some label)) s1 s2
 (**
 
 #### Case 3: `revert` from external call
@@ -700,41 +702,45 @@ regs in current frame, set OF flag, return no data.
     let encoded_out_ptr := FatPointer.ABI.(encode) fat_ptr_empty in
     step_panic (OpPanic label_ignored)
           {|
-          gs_flags        := flags;
-          gs_callstack    := xstack0;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
+            gs_xstate := {|
+                          gs_flags        := flags;
+                          gs_callstack    := xstack0;
+                          gs_regs         := regs;
 
-
-          gs_pages        := pages;
-          gs_global       := {|
-                          gs_current_ergs_per_pubdata_byte := cergs;
-                          gs_tx_number_in_block := tx_num;
-                          gs_contracts := codes;
-                          gs_revertable:= rev;
+                          
+                          gs_pages        := pages;
                         |};
-
-
+            gs_context_u128 := context_u128;
+            
+            gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_revertable := rev;
+                            |};
           |}
           {|
-          gs_flags        := set_overflow flags_clear;
-          gs_regs         := regs_state_zero
+            gs_xstate := {|
+                          gs_flags        := set_overflow flags_clear;
+                          gs_regs         := regs_state_zero
                              <| gprs_r1 := PtrValue encoded_out_ptr |>
                              <| gprs_r2 := reg_reserved |>
                              <| gprs_r3 := reg_reserved |>
                              <| gprs_r4 := reg_reserved |> ;
-          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack;
+                          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack;
+
+                          gs_pages        := pages;
+                          |};
+
+                          
           gs_context_u128 := zero128;
 
-
-          gs_pages        := pages;
           gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
                               gs_contracts := codes;
-                              gs_revertable:= revert_state cf;
-                            |};
-
+                              gs_revertable := revert_state cf;
+                            |}
           |}
 
 .

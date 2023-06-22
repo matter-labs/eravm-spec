@@ -6,7 +6,7 @@ Import ListNotations RecordSetNotations.
 
 
 Definition page := page instruction_invalid.
-Definition pages := pages instruction_invalid.
+Definition memory := memory instruction_invalid.
 Definition code_manager := code_manager instruction_invalid.
 
 Definition exception_handler := code_address.
@@ -17,7 +17,7 @@ Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
 
 
 Definition update_active_pages (ps:active_pages): callframe -> callframe :=
- change_topmost_extframe (fun ef => ef <| ecf_pages := ps |> ).
+ change_topmost_extframe (fun ef => ef <| ecf_memory := ps |> ).
 
 
 Definition addr_is_kernel (addr:contract_address) : bool :=
@@ -38,17 +38,23 @@ Record global_state :=
     gs_revertable: state_checkpoint;
     }.
 
-Record state :=
-  mk_state {
+Record exec_state :=
+  mk_exec_state {
       gs_flags : flags_state;
       gs_regs: regs_state;
-      gs_pages: pages;
+      gs_pages:memory;
       gs_callstack: callstack;
+    }.
+
+Record state :=
+  mk_state {
+      gs_xstate :> exec_state;
       gs_context_u128: u128;
       gs_global :> global_state;
     }.
 #[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_revertable>.
-#[export] Instance etaXS : Settable _ := settable! mk_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128; gs_global> .
+#[export] Instance etaXS : Settable _ := settable! mk_exec_state <gs_flags ; gs_regs; gs_pages; gs_callstack>.
+#[export] Instance etaXGGS : Settable _ := settable! mk_state <gs_xstate; gs_context_u128; gs_global> .
 
 Inductive global_state_increment_tx : global_state -> global_state -> Prop :=
 | gsit_apply: forall current_ergs_per_pubdata_byte tx new_tx codes rev ,

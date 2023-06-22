@@ -115,7 +115,7 @@ Far call creates a new execution context with new pages for:
 
 The initial bounds for the new heap and auxheap pages are set to [NEW_FRAME_MEMORY_STIPEND].
  *)
-Inductive alloc_pages_extframe:  (pages * active_pages) -> code_page -> pages * active_pages -> Prop :=
+Inductive alloc_pages_extframe:  (memory * active_pages) -> code_page -> memory * active_pages -> Prop :=
 | ape_alloc: forall code mm ctx code_id const_id stack_id heap_id heap_aux_id,
     code_id = length mm ->
     (const_id = code_id + 1)%nat ->
@@ -422,7 +422,7 @@ Section Def.
   Context (xstack0: callstack).
   
   Let old_extframe := topmost_extframe xstack0.
-  Let mem_ctx0 := old_extframe.(ecf_pages).
+  Let mem_ctx0 := old_extframe.(ecf_memory).
   Let current_contract := old_extframe.(ecf_this_address).
   
   (* Not implemented yet: shards *)
@@ -444,7 +444,7 @@ Section Def.
                            ecf_context_u128_value := select_ctx type reg_context_u128 old_extframe.(ecf_context_u128_value);
 
                            ecf_code_address := zero16;
-                           ecf_pages := new_mem_ctx;
+                           ecf_memory := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
@@ -466,20 +466,23 @@ Section Def.
           to_system            := is_syscall_query;
         |}
         {|
-          gs_flags        := flags;
-          gs_regs         := old_regs;
-          gs_pages        := old_pages;
-          gs_callstack    := xstack0;
+          gs_xstate := {|
+                        gs_flags        := flags;
+                        gs_regs         := old_regs;
+                        gs_pages        := old_pages;
+                        gs_callstack    := xstack0;
+                      |};
           gs_context_u128 := reg_context_u128;
-
 
           gs_global       := gs;
         |}
         {|
-          gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false out_ptr;
-          gs_pages        := new_pages;
-          gs_callstack    := new_stack;
+          gs_xstate := {|
+                        gs_flags        := flags_clear;
+                        gs_regs         := regs_effect old_regs is_system false out_ptr;
+                        gs_pages        := new_pages;
+                        gs_callstack    := new_stack;
+                      |};
           gs_context_u128 := zero128;
 
 
@@ -493,7 +496,7 @@ Section Def.
       paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward (Ret.UseMemory page_type) (in_ptr, xstack1) (out_ptr, xstack2) ->
       
-      let mem_ctx1 := (topmost_extframe xstack2).(ecf_pages) in
+      let mem_ctx1 := (topmost_extframe xstack2).(ecf_memory) in
       alloc_pages_extframe (old_pages, mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
@@ -504,7 +507,7 @@ Section Def.
 
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
                            ecf_code_address := zero16;
-                           ecf_pages := new_mem_ctx;
+                           ecf_memory:= new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_common := {|
@@ -525,20 +528,24 @@ Section Def.
           to_system            := is_syscall_query;
         |}
         {|
-          gs_flags        := flags;
-          gs_regs         := old_regs;
-          gs_pages        := old_pages;
-          gs_callstack    := xstack0;
+          gs_xstate := {|
+                        gs_flags        := flags;
+                        gs_regs         := old_regs;
+                        gs_pages        := old_pages;
+                        gs_callstack    := xstack0;
+                      |};
           gs_context_u128 := reg_context_u128;
 
 
           gs_global       := gs;
         |}
         {|
-          gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false out_ptr;
-          gs_pages        := new_pages;
-          gs_callstack    := new_stack;
+          gs_xstate := {|
+                        gs_flags        := flags_clear;
+                        gs_regs         := regs_effect old_regs is_system false out_ptr;
+                        gs_pages        := new_pages;
+                        gs_callstack    := new_stack;
+                      |};
           gs_context_u128 := zero128;
 
           gs_global       := gs;
@@ -566,21 +573,20 @@ Inductive fetch_operands abi dest handler:
 
 Inductive step : instruction -> smallstep :=
   
-| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs',
+| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state),
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->
 
     step (OpFarCall abi dest handler call_shard call_as_static) gs gs'
 
-| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs'
-                call_shard,
+| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard,
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->
 
     step (OpMimicCall abi dest handler call_shard call_as_static) gs gs'
-| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params gs gs' call_shard,
+| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard,
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
     farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->

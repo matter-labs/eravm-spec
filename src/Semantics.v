@@ -31,21 +31,24 @@ Inductive step: smallstep :=
    | step_correct:
     forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
-          gs_callstack    := xstack0;
+          gs_xstate := {|
+                        gs_callstack    := xstack0;
 
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
-          
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       let gs1 := {|
-          gs_callstack    := new_xstack;
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
+          gs_xstate := {|
+                        gs_callstack    := new_xstack;
+                        
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                        |};
           
           gs_context_u128 := context_u128;
           gs_global       := gs;
@@ -64,12 +67,13 @@ Inductive step: smallstep :=
  | step_requires_kernel:
     forall cond gs flags  pages xstack0 ins context_u128 regs new_gs,
       let gs0 := {|
-          gs_callstack    := xstack0;
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
-          
+          gs_xstate := {|
+                        gs_callstack    := xstack0;
+                        
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
@@ -82,11 +86,13 @@ Inductive step: smallstep :=
 | step_incompatible_static:
     forall cond gs flags  pages xstack0 ins context_u128 regs new_gs,
       let gs0 := {|
-          gs_callstack    := xstack0;
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
+                  gs_xstate := {|
+                        gs_callstack    := xstack0;
+                                
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           
           gs_context_u128 := context_u128;
           gs_global       := gs;
@@ -103,21 +109,25 @@ Inductive step: smallstep :=
 | step_skip_cond:
     forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
-          gs_callstack    := xstack0;
+          gs_xstate := {|
+                        gs_callstack    := xstack0;
 
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       let gs1 := {|
-          gs_callstack    := new_xstack;
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
+          gs_xstate := {|
+                        gs_callstack    := new_xstack;
+                        
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           
           gs_context_u128 := context_u128;
           gs_global       := gs;
@@ -139,11 +149,13 @@ Inductive step: smallstep :=
  | step_stack_overflow:
    forall gs flags  pages xstack0 context_u128 regs new_gs,
       let gs0 := {|
-          gs_callstack    := xstack0;
+          gs_xstate := {|
+                        gs_callstack    := xstack0;
 
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |}; 
           
           gs_context_u128 := context_u128;
           gs_global       := gs;

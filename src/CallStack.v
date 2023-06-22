@@ -66,7 +66,7 @@ Record callframe_external :=
       ecf_this_address: contract_address;
       ecf_msg_sender: contract_address;
       ecf_code_address: code_address;
-      ecf_pages: active_pages;
+      ecf_memory: active_pages;
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;
       ecf_shards: active_shards;
@@ -75,7 +75,7 @@ Record callframe_external :=
     }.
 
 #[export] Instance etaCFE : Settable _ :=
-  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_pages; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
+  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_memory; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
 
 Inductive callframe :=
 | InternalCall (_: callframe_common) (tail: callframe): callframe
@@ -221,12 +221,12 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
     Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
                                  -> Prop :=
     | upe_update:
-      forall pc' cf cf' this_address msg_sender code_address pages is_static context_u128_value saved_storage_state ss,
+      forall pc' cf cf' this_address msg_sender code_address memory is_static context_u128_value saved_storage_state ss,
         update_pc_cfc pc' cf cf' ->
         update_pc_extcall pc'
-          (mk_extcf this_address msg_sender code_address pages is_static
+          (mk_extcf this_address msg_sender code_address memory is_static
              context_u128_value saved_storage_state ss cf)
-          (mk_extcf this_address msg_sender code_address pages is_static
+          (mk_extcf this_address msg_sender code_address memory is_static
              context_u128_value saved_storage_state ss cf')
     .
 
@@ -293,14 +293,14 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
     Qed.
 
     Definition update_memory_context (ctx:active_pages): callframe -> callframe :=
-      change_topmost_extframe (fun ef => ef <| ecf_pages := ctx |> ).
+      change_topmost_extframe (fun ef => ef <| ecf_memory := ctx |> ).
 
   End TopmostExternalFrame.
 
 
-  Section ActivePages.
+  Section ActiveMemory.
     Definition get_active_pages (ef: callframe) : active_pages :=
-      (topmost_extframe ef).(ecf_pages).
+      (topmost_extframe ef).(ecf_memory).
 
     Definition active_code_id (ef: callframe) : page_id :=
       (get_active_pages ef).(ctx_code_page_id).
@@ -335,40 +335,47 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
       end.
 
     Context {instruction:Type} (invalid: instruction).
-    Let pages := pages invalid.
+    Let memory := memory invalid.
     Let page := page invalid.
     Let page_has_id := page_has_id invalid.
     
     Definition active_exception_handler (ef: callframe) : exception_handler :=
       (cfc ef).(cf_exception_handler_location).
     
-    Inductive active_codepage : pages -> callframe -> page -> Prop :=
+    Inductive active_codepage : memory -> callframe -> page -> Prop :=
     | ap_active_code: forall mm ef codepage,
         page_has_id mm (active_code_id ef) codepage ->
         active_codepage mm ef codepage.
     
-    Inductive active_constpage : pages -> callframe -> page -> Prop :=
+    Inductive active_constpage : memory -> callframe -> page -> Prop :=
     | ap_active_const: forall mm ef constpage,
         page_has_id  mm (active_const_id ef) constpage ->
         active_constpage mm ef constpage.
 
-    Inductive active_stackpage : pages -> callframe -> page -> Prop :=
+    Inductive active_stackpage : memory -> callframe -> page -> Prop :=
     | ap_active_stack: forall mm ef stackpage,
         page_has_id mm (active_stack_id ef) stackpage ->
         active_stackpage mm ef stackpage.
 
-    Inductive active_heappage : pages -> callframe -> page -> Prop :=
+    Inductive active_heappage : memory -> callframe -> page -> Prop :=
     | ap_active_heap: forall mm ef heappage,
         page_has_id mm (active_heap_id ef) heappage ->
         active_heappage mm ef heappage.
 
-    Inductive active_auxheappage : pages -> callframe -> page -> Prop :=
+    Inductive active_auxheappage : memory -> callframe -> page -> Prop :=
     | ap_active_auxheap: forall mm ef auxheappage,
         page_has_id mm (active_auxheap_id ef) auxheappage ->
         active_auxheappage mm ef auxheappage.
 
+    Definition heap_variant_page_id (page_type: data_page_type)
+      : callframe -> page_id :=
+      match page_type with
+      | Heap => active_heap_id
+      | AuxHeap => active_auxheap_id
+      end.
+
     Definition heap_variant_page (page_type: data_page_type)
-      : pages -> callframe -> page -> Prop :=
+      : memory -> callframe -> page -> Prop :=
       match page_type with
       | Heap => active_heappage
       | AuxHeap => active_auxheappage
@@ -377,4 +384,4 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
 
     Definition current_contract xstack : contract_address := (topmost_extframe xstack).(ecf_this_address).
     
-  End ActivePages.
+  End ActiveMemory.

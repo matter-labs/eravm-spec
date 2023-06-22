@@ -6,7 +6,7 @@ Import RecordSetNotations.
 
 Definition page_id := nat.
 
-Section Pages.
+Section Memory.
   
   Context {ins_type: Type} (inv: ins_type).
   Inductive page :=
@@ -18,14 +18,14 @@ Section Pages.
 
   Inductive data_page_type := Heap | AuxHeap.
 
-  Definition pages := list (prod nat page).
+  Definition memory := list (prod nat page).
 
-  Inductive page_has_id : pages -> page_id -> page -> Prop :=
+  Inductive page_has_id : memory -> page_id -> page -> Prop :=
   | mpid_select : forall mm id page,
       List.In (id, page) mm ->
       page_has_id mm id page.
 
-  Inductive page_replace:  page_id -> page -> pages -> pages -> Prop :=
+  Inductive page_replace:  page_id -> page -> memory -> memory -> Prop :=
   | mm_replace_base: forall oldpage id newpage tail,
       page_replace id newpage ((id, oldpage)::tail) ((id,newpage)::tail)
   | mm_replace_ind: forall oldpage id not_id newpage tail tail',
@@ -34,8 +34,8 @@ Section Pages.
       page_replace id newpage ((not_id,oldpage)::tail) ((not_id,oldpage)::tail').
 
 
-  Definition page_alloc (p:page) (m: pages) : pages :=
+  Definition page_alloc (p:page) (m: memory) : memory :=
     cons (length m, p) m.
 
 
-End Pages.
+End Memory.

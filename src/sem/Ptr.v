@@ -55,12 +55,12 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 Inductive step : instruction -> smallstep :=
 | step_PtrAdd:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs gs context_u128 ptr_in,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result s1 s2 ptr_in xs1 xs2,
     
-    fetch_apply2_swap swap (regs, xstack0, pages)
+    fetch_apply2_swap swap xs1 
       in1 in2 out
       (PtrValue op1) (IntValue op2) (PtrValue result)
-      (new_regs, new_xstack, new_pages) ->
+      xs2  ->
     
     FatPointer.ABI.(decode) op1 = Some ptr_in   ->
     let diff := resize _ 32 op2 in
@@ -69,30 +69,10 @@ Inductive step : instruction -> smallstep :=
     let ptr := FatPointer.ABI.(encode) (ptr_in <| fp_offset := new_ofs |>) in
     let low := resize _ 128 ptr in
     mix_lower 128 op1 low = result ->
-    
-    step (OpPtrAdd in1 in2 out swap)
-         {|
-           gs_callstack    := xstack0;
-           gs_regs         := regs;
-           gs_pages        := pages;
 
-
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
-         {|
-           gs_callstack    := new_xstack;
-           gs_regs         := new_regs;
-           gs_pages        := new_pages;
-           
-           
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
+    step_xstate xs1 xs2 s1 s2 ->
+    step (OpPtrAdd in1 in2 out swap) s1 s2
+         
 
 (** ## Affected parts of VM state
 
@@ -155,45 +135,24 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrSub:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 page start length ofs new_ofs op2 swap flags result xstack0 new_xstack regs pages new_pages new_regs gs context_u128,
-    
-    fetch_apply2_swap swap (regs, xstack0, pages)
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result xs1 xs2 s1 s2 ptr_in,
+
+    fetch_apply2_swap swap xs1 
       in1 in2 out
       (PtrValue op1) (IntValue op2) (PtrValue result)
-      (new_regs, new_xstack, new_pages) ->
+      xs2  ->
     
-    FatPointer.ABI.(decode) op1 = Some (mk_fat_ptr page start length ofs)  ->
-    let diff := resize _ 32 op2 in 
-    (new_ofs, false) = ofs - diff  ->
+    FatPointer.ABI.(decode) op1 = Some ptr_in   ->
+    let diff := resize _ 32 op2 in
+    (new_ofs, false) = ptr_in.(fp_offset) - diff ->
 
-
-    let ptr := FatPointer.ABI.(encode) (mk_fat_ptr page start length new_ofs) in
+    let ptr := FatPointer.ABI.(encode) (ptr_in <| fp_offset := new_ofs |>) in
     let low := resize _ 128 ptr in
     mix_lower 128 op1 low = result ->
-    
-    step (OpPtrSub in1 in2 out swap)
-         {|
-           gs_callstack    := xstack0;
-           gs_regs         := regs;
-           gs_pages        := pages;
 
-
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
-         {|
-           gs_callstack    := new_xstack;
-           gs_regs         := new_regs;
-           gs_pages        := new_pages;
-           
-           
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
+    step_xstate xs1 xs2 s1 s2 ->
+    step (OpPtrSub in1 in2 out swap) s1 s2
+         
 (**
 
 ## Affected parts of VM state
@@ -249,38 +208,16 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
  *)
 
 | step_PtrPack :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs gs context_u128,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap xs1 xs2 s1 s2,
     
-    fetch_apply2_swap swap (regs, xstack, pages)
+    fetch_apply2_swap swap xs1 
       in1 in2 out
       (PtrValue op1) (IntValue op2) (PtrValue (mix_lower 128 op2 (resize _ 128 op1)))
-      (new_regs, new_xstack, new_pages) ->
+      xs2  ->
     
     resize _ 128 op2 = zero128 ->
-    
-    step (OpPtrPack in1 in2 out swap)
-         {|
-           gs_callstack    := xstack;
-           gs_regs         := regs;
-           gs_pages        := pages;
-
-
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
-         {|
-           gs_callstack    := new_xstack;
-           gs_regs         := new_regs;
-           gs_pages        := new_pages;
-           
-           
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
+    step_xstate xs1 xs2 s1 s2 ->
+    step (OpPtrPack in1 in2 out swap) s1 s2
 (**
 
 ## Affected parts of VM state
@@ -340,12 +277,12 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrShrink :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap flags xstack new_xstack regs pages new_pages new_regs gs context_u128 result ptr_in ptr_out,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap result ptr_in ptr_out xs1 xs2 s1 s2,
     
-    fetch_apply2_swap swap (regs, xstack, pages)
+    fetch_apply2_swap swap xs1
       in1 in2 out
       (PtrValue op1) (IntValue op2) (PtrValue result)
-      (new_regs, new_xstack, new_pages) ->
+      xs2 ->
     
     FatPointer.ABI.(decode) op1 = Some ptr_in ->
 
@@ -354,31 +291,10 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
       
     let res_low := resize _ 128 (FatPointer.ABI.(encode) ptr_out) in
     result = mix_lower 128 op1 res_low ->
-                   
-    step (OpPtrPack in1 in2 out swap)
-         {|
-           gs_callstack    := xstack;
-           gs_regs         := regs;
-           gs_pages        := pages;
 
-
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           
-           gs_global       := gs;
-         |}
-         {|
-           gs_callstack    := new_xstack;
-           gs_regs         := new_regs;
-           gs_pages        := new_pages;
-           
-           
-           gs_flags        := flags;
-           gs_context_u128 := context_u128;
-           gs_global       := gs;
-         |}
+    step_xstate xs1 xs2 s1 s2 ->
+    step (OpPtrPack in1 in2 out swap) s1 s2
 .
-
 (**
 
 ## Affected parts of VM state

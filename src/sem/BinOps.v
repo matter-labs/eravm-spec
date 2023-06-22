@@ -38,109 +38,54 @@ See [RelSpPop], [RelSpPush], [step].
  *)
 
 Definition binop_eval := word -> word -> (word * flags_state).
-Inductive binop_effect: (regs_state * callstack * pages * flags_state) ->
+Inductive binop_effect: exec_state ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
                         binop_eval ->
-                        (regs_state * callstack * pages * flags_state) -> Prop :=
+                        exec_state -> Prop :=
 | be_apply:
-  forall f xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
+  forall f xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 swap set_flags result flags_candidate flags0 new_flags tag1 tag2,
 
-    fetch_apply2_swap swap (regs, xstack, pages) in1 in2 out (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) (new_regs, new_xstack, new_pages) ->
+    fetch_apply2_swap swap (mk_exec_state flags0 regs memory xstack) in1 in2 out (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result)
+      (mk_exec_state flags0 new_regs new_memory new_xstack) ->
     f op1 op2 = (result, flags_candidate) ->
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
-    binop_effect (regs, xstack, pages, flags0) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags).
+    binop_effect
+      (mk_exec_state flags0 regs memory xstack)
+      in1 in2 out swap set_flags f
+      (mk_exec_state new_flags new_regs new_memory new_xstack).
 
 
 Definition binop_spec := primitive_value -> primitive_value -> primitive_value * flags_state.
-Inductive binop_effect_spec: (regs_state * callstack * pages * flags_state) ->
+Inductive binop_effect_spec: exec_state ->
                         in_any -> in_reg -> out_any ->
                         mod_swap -> mod_set_flags ->
-                        primitive_value -> primitive_value -> primitive_value -> flags_state ->
-                        (regs_state * callstack * pages * flags_state) -> Prop :=
+                        primitive_value -> primitive_value -> primitive_value -> 
+                        exec_state -> Prop :=
 | bes_apply:
-  forall xstack new_xstack regs new_regs pages new_pages (in1: in_any) (in2:in_reg) (out: out_any) 
+  forall xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 swap set_flags result flags_candidate flags0 new_flags ,
 
-    fetch_apply2_swap swap (regs, xstack, pages) in1 in2 out op1 op2 result (new_regs, new_xstack, new_pages) ->
+    fetch_apply2_swap swap (mk_exec_state flags0 regs memory xstack)
+       in1 in2 out op1 op2 result (mk_exec_state flags_candidate new_regs new_memory new_xstack) ->
     new_flags = apply_set_flags set_flags flags0 flags_candidate ->
-    binop_effect_spec (regs, xstack, pages, flags0) in1 in2 out swap set_flags
-                 op1 op2 result flags_candidate
-      (new_regs, new_xstack, new_pages, new_flags).
+    binop_effect_spec
+      (mk_exec_state flags0 regs memory xstack)
+      in1 in2 out swap set_flags
+      op1 op2 result
+      (mk_exec_state new_flags new_regs new_memory new_xstack).
 
 
-Inductive binop_state_effect: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                      binop_eval ->
-                      smallstep :=
-| be_apply_step:
-  forall f xstack new_xstack context_u128 regs new_regs pages new_pages (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags flags new_flags gs,
-    let gs := {|
-          gs_flags        := flags;
-          gs_callstack    := xstack;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
-          gs_pages        := pages;
-          
-          gs_global       := gs;
-          |}  in
-    binop_effect (regs, xstack, pages, flags) in1 in2 out swap set_flags f (new_regs, new_xstack, new_pages, new_flags) ->
-    binop_state_effect
-      in1 in2 out swap set_flags f gs
-      {|
-        gs_flags        := new_flags;
-        gs_callstack    := new_xstack;
-        gs_regs         := new_regs;
-        gs_context_u128 := context_u128;
-        gs_pages        := new_pages;
-        
-        gs_global       := gs;
-      |}
-.
 Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
                                    primitive_value -> primitive_value -> primitive_value -> flags_state ->
                       smallstep :=
 | bes_apply_step:
-  forall xstack new_xstack context_u128 regs new_regs pages new_pages (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags new_flags gs op1 op2 result flags,
-    let gs := {|
-          gs_flags        := flags;
-          gs_callstack    := xstack;
-          gs_regs         := regs;
-          gs_context_u128 := context_u128;
-          gs_pages        := pages;
-          
-          gs_global       := gs;
-          |}  in
-    binop_effect_spec (regs, xstack, pages, flags) in1 in2 out swap set_flags
-                      op1 op2 result flags 
-      (new_regs, new_xstack, new_pages, new_flags) ->
-    binop_state_effect_spec
-      in1 in2 out swap set_flags op1 op2 result flags gs
-      {|
-        gs_flags        := new_flags;
-        gs_callstack    := new_xstack;
-        gs_regs         := new_regs;
-        gs_context_u128 := context_u128;
-        gs_pages        := new_pages;
-        
-        gs_global       := gs;
-      |}
-.
-
-Inductive binop_state_bitwise_effect:
-in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                      (word -> word -> word) ->
-                      smallstep :=
-| bsee_apply:
-  forall (bitwise_op: word -> word -> word) (in1: in_any) (in2:in_reg) (out: out_any) swap set_flags
-    old_state new_state,
-    binop_state_effect  in1 in2 out swap set_flags 
-      (fun x y =>
-         let result := bitwise_op x y in
-         (result, bflags false (result == zero256) false))
-      old_state new_state ->
+  forall (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags op1 op2 result flags xs1 xs2 s1 s2,
+    binop_effect_spec xs1 in1 in2 out swap set_flags op1 op2 result xs2 ->
+    step_xstate xs1 xs2 s1 s2 ->
     
-    binop_state_bitwise_effect in1 in2 out swap set_flags bitwise_op old_state new_state.
+    binop_state_effect_spec in1 in2 out swap set_flags op1 op2 result flags s1 s2 .
 
 Inductive binop_state_bitwise_effect_spec:
 in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->

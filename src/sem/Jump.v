@@ -7,8 +7,8 @@ Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction S
 
 Section Def.
   
-Context (regs: regs_state) (old_pages:pages) (xstack: callstack).
-Let resolve := resolve_load xstack (regs,old_pages).
+Context (regs: regs_state) (old_memory:memory) (xstack: callstack).
+Let resolve := resolve_load xstack (regs,old_memory).
 
 Inductive step_jump: instruction -> callstack -> Prop :=
 (**
@@ -65,29 +65,9 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 *)
 
 End Def.
-
+ 
 Inductive step: instruction -> smallstep :=
-| step_Jump: forall regs pages xstack new_xstack flags context_u128 gs ins,
-  step_jump regs pages xstack ins new_xstack->
-  step ins
-        {|
-          gs_callstack    := xstack;
-
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
-        {|
-          gs_callstack    := new_xstack;
-
-
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_pages        := pages;
-          gs_context_u128 := context_u128;
-          gs_global       := gs;
-        |}
-.
+| step_Jump: forall regs memory xstack new_xstack ins s1 s2,
+  step_jump regs memory xstack ins new_xstack->
+  step_xstack xstack new_xstack s1 s2 ->
+  step ins s1 s2.
