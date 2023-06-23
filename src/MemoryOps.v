@@ -226,18 +226,18 @@ Section Addressing.
 
 (* FIXME of should not be ignored*)
   Inductive loc_stack_in_only: callstack -> regs_state -> stack_in_only -> loc -> Prop :=
-  | rslv_stack_gpop_aux: forall ef regs reg ofs dlt_sp new_sp OF_ignore,
+  | rslv_stack_gpop_aux: forall ef regs reg ofs dlt_sp new_sp,
       let sp := sp_get ef in
       sp_delta_abs regs reg ofs dlt_sp ->
-      (new_sp, OF_ignore) = sp - dlt_sp ->
+      (new_sp, false) = sp - dlt_sp ->
       loc_stack_in_only ef regs (RelSpPop reg ofs) (LocStackAddress new_sp)
   .
 (* FIXME of should not be ignored*)
   Inductive loc_stack_out_only: callstack -> regs_state -> stack_out_only -> loc -> Prop :=
-  | rslv_stack_gpush_aux: forall ef regs reg ofs dlt_sp new_sp OF_ignore,
+  | rslv_stack_gpush_aux: forall ef regs reg ofs dlt_sp new_sp,
       let sp := sp_get ef in
       sp_delta_abs regs reg ofs dlt_sp ->
-      (new_sp, OF_ignore) = sp + dlt_sp ->
+      (new_sp, false) = sp + dlt_sp ->
       loc_stack_out_only ef regs (RelSpPush reg ofs) (LocStackAddress new_sp)
   .
 
