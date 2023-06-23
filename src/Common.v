@@ -38,6 +38,16 @@ Section Types.
   Definition zero128 := u128_of 0.
   Definition zero160 := u160_of 0.
   Definition zero256 := u256_of 0.
+
+  Definition one8   := u8_of 1.
+  Definition one16  := u16_of 1.
+  Definition one24  := u24_of 1.
+  Definition one32  := u32_of 1.
+  Definition one64  := u64_of 1.
+  Definition one128 := u128_of 1.
+  Definition one160 := u160_of 1.
+  Definition one256 := u256_of 1.
+  
 End Types.
 
 Definition bits_in_byte : nat  := 8%nat.
