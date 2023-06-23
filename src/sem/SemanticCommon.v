@@ -238,3 +238,5 @@ Inductive step_xstack xstack1 xstack2 : state -> state -> Prop :=
     step_xstate xs1 xs2 s1 s2 ->
     step_xstack xstack1 xstack2 s1 s2.
       
+
+Parameter precompile_processor : contract_address -> PrecompileParameters.inner_params -> exec_state -> exec_state -> Prop.

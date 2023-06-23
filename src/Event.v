@@ -1,6 +1,5 @@
-Require Memory External.
-Import Common Memory External.
-
+Require Memory ABI External.
+Import Common Memory External ABI.
 
 
 (* For later: probably these structures can be redesigned so that *)
@@ -16,12 +15,10 @@ Record event := {
 
 
 Record precompile_query := {
-    q_timestamp: timestamp;
     q_tx_number_in_block: tx_num;
     q_shard_id: shard_id;
     q_contract_address: contract_address;
-    q_key: word;
-    q_is_service: bool; (* is first message? *)
+    q_key: PrecompileParameters.inner_params;
 }.
 
 Inductive query :=
