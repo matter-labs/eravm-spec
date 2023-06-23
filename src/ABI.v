@@ -8,12 +8,17 @@ Open Scope ZMod_scope.
 https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
  *)
 
-Record coder {ABIParams:Type} := {
-    decode: u256 -> option ABIParams ;
-    encode:  ABIParams -> u256 ;
-    revertible1: forall params, decode (encode params) = Some params;
-    revertible2: forall params encoded, decode encoded = Some params -> encode params = encoded;
-  }.
+Section Encoding.
+        Context {ABIParams:Type}.
+        Definition decoder := word -> option ABIParams.
+        Definition encoder := ABIParams -> word.
+        Record coder  := {
+            decode: decoder;
+            encode:  encoder; 
+            revertible1: forall params, decode (encode params) = Some params;
+            revertible2: forall params encoded, decode encoded = Some params -> encode params = encoded;
+          }.
+End Encoding.  
 
 (** * Fat Pointers *)
 Module FatPointer.
