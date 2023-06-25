@@ -10,7 +10,45 @@ Section Def.
   Context (flags: flags_state) (regs: regs_state) (xstack: callstack) (pgs: memory).
 
   Inductive step_div: instruction -> flags_state * regs_state * callstack * memory -> Prop :=
+  
+(**
+# Div
 
+## Abstract Syntax
+
+```
+OpDiv (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
+      (swap:mod_swap) (flags:mod_set_flags)
+```
+
+## Syntax
+
+- `div in1, in2, out1, out2`
+- `div.s in1, in2, out1, out2`, to set `swap` modifier.
+- `div! in1, in2, out1, out2`, to set `set flags` modifier.
+- `div.s! in1, in2, out1, out2`, to set both `swap` and `set flags` modifiers.
+
+## Summary
+
+Unsigned division of two numbers. The quotient is returned in `out1`, the remainder is returned in `out2`.
+
+## Semantic
+
+- resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
+
+- compute results of unsigned division of `in1` by `in2`.
+
+1. If `in2` $\neq 0$:
+   $$\begin{cases}out_1 := \frac{ op_1}{op_2} \\
+out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
+
+   Flags are computed as follows:
+   - `LT_OF` is cleared;
+   - `EQ` is cleared.
+   - `GT` is cleared.
+
+   Reminder: flags are only set if `set_flags` modifier is set.
+*) 
   | step_Div_no_overflow:
     forall (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg)
       (any_tag1 any_tag2: bool)
@@ -34,7 +72,18 @@ Section Def.
       
       step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
         (new_flags, new_regs, new_xstack, new_memory)
-        
+   (**
+2. If `in2` $= 0$:
+   $$\begin{cases}out_1 := 0 \\
+out_{2} := 0 \end{cases}$$
+
+   Flags are computed as follows:
+   - `LT_OF` is set.
+   - `EQ` is set if $result_{low} = 0$.
+   - `GT` is set if `LT_OF` and `EQ` are cleared.
+
+Reminder: flags are only set if `set_flags` modifier is set.
+*)
   | step_Div_overflow:
     forall (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg)
       (any_tag1 any_tag2: bool)
@@ -54,15 +103,30 @@ Section Def.
       
       step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
         (new_flags, new_regs, new_xstack, new_memory).
+(**
+- Finally, store results in the locations corresponding to `out1` and `out2`.
 
+## Affected parts of VM state
 
+- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out1` uses `RelPush` addressing mode.
+- Current stack memory page, if `out` resolves to it.
+- GPRs, by `out2` and `out1`, provided `out1` resolves to GPR.
+- flags, if `set_flags` modifier is set.
 
+## Usage
 
+Arithmetic operations.
 
+## Similar instructions
+
+- See [OpMul].
+
+ *)
 End Def. 
 
 Inductive step: instruction -> smallstep :=
-| step_Div:
+  
+| step_div_apply:
   forall flags regs xstack memory ins new_flags new_regs new_xstack new_memory s1 s2,
     step_div flags regs xstack memory ins (new_flags, new_regs, new_xstack, new_memory) ->
     step_xstate
