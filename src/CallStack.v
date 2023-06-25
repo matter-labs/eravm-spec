@@ -65,7 +65,7 @@ Record callframe_external :=
   mk_extcf {
       ecf_this_address: contract_address;
       ecf_msg_sender: contract_address;
-      ecf_code_address: code_address;
+      ecf_code_address: contract_address;
       ecf_memory: active_pages;
       ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
       ecf_context_u128_value: u128;

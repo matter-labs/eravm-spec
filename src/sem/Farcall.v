@@ -443,7 +443,7 @@ Section Def.
                            ecf_msg_sender := select_sender type old_extframe.(ecf_msg_sender) current_contract old_regs;
                            ecf_context_u128_value := select_ctx type reg_context_u128 old_extframe.(ecf_context_u128_value);
 
-                           ecf_code_address := zero16;
+                           ecf_code_address := dest_addr;
                            ecf_memory := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
@@ -506,7 +506,7 @@ Section Def.
                            ecf_context_u128_value := select_ctx type reg_context_u128 old_extframe.(ecf_context_u128_value);
 
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
-                           ecf_code_address := zero16;
+                           ecf_code_address := dest_addr;
                            ecf_memory:= new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
