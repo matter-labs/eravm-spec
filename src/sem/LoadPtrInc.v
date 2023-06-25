@@ -15,7 +15,58 @@ Section Defs.
   Let fetch_word := resolve_load_word old_xstack (old_regs,old_pages).
   Let stores := resolve_stores old_xstack (old_regs,old_pages).
   
-  
+  (**
+# LoadPointer
+
+
+## Abstract Syntax
+
+```
+OpLoadPointerInc (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
+```
+
+## Syntax
+
+- `uma.fat_ptr_read.inc in1, out` aliased as `ld.inc in1, out`
+
+
+## Summary
+
+Read 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page as a 256-bit word, Big Endian. Reading bytes past the slice bound yields zero bytes.
+
+## Semantic
+
+1. Decode a fat pointer `in_ptr` from `ptr`.
+
+   Fat pointers have following fields:
+
+```
+Record fat_ptr :=
+  mk_fat_ptr {
+      fp_page: page_id;
+      fp_start: mem_address;
+      fp_length: mem_address;
+      fp_offset: mem_address;
+    }.
+```
+
+2. Validate that offset is in bounds: `fp_offset < fp_length`.
+
+3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
+
+   Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
+```
+{|
+fp_start  := 0;
+fp_length := 4;
+fp_offset := 2
+|}
+```
+
+   Reading bytes from this pointer will produce a word with 2 most significant bytes read from memory fairly (addresses 2, 3) and 30 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
+
+4. Store the word to `res`.
+*)
   Inductive step_load_ptr : instruction -> 
                             regs_state * memory -> Prop :=
   | step_LoadPointerInc:
