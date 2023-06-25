@@ -10,11 +10,11 @@ Inductive step: instruction -> smallstep :=
 
   | step_Mul:
     forall flags pages xstack regs (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg) any_tag1 any_tag2 mod_swap mod_flags (x y prod_hi prod_low:Z) new_regs new_xstack new_pages new_flags s1 s2,
-      fetch_apply22_swap mod_swap (mk_exec_state flags regs pages xstack)
+      fetch_apply22_swap mod_swap (regs,pages,xstack)
                      arg_op1 arg_op2
                      arg_out1 arg_out2
                      (mk_pv any_tag1 x) (mk_pv any_tag2 y) (IntValue prod_hi, IntValue prod_low)
-                     (mk_exec_state flags new_regs new_pages new_xstack) ->
+                     (new_regs,new_pages,new_xstack) ->
 
       extract_digits (x * y) word_bits 2 = [ prod_hi;  prod_low ] -> 
 

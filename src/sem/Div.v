@@ -19,11 +19,11 @@ Section Def.
       new_regs new_xstack new_memory new_flags
       (quot rem: Z),
       
-      fetch_apply22_swap mod_swap (mk_exec_state flags regs pgs xstack)
+      fetch_apply22_swap mod_swap (regs,pgs,xstack)
         arg_op1 arg_op2 arg_out1 arg_out2
 
         (mk_pv any_tag1 x) (mk_pv any_tag2 y) (IntValue quot, IntValue rem)
-        (mk_exec_state flags new_regs new_memory new_xstack) ->
+        (new_regs,new_memory,new_xstack) ->
       y <> 0 ->
       quot = Z.div x y ->
       rem = Z.rem x y ->
@@ -43,12 +43,12 @@ Section Def.
       new_regs new_xstack new_memory new_flags
       (quot rem: Z),
       
-      fetch_apply22_swap mod_swap (mk_exec_state flags regs pgs xstack)
+      fetch_apply22_swap mod_swap (regs,pgs,xstack)
         arg_op1 arg_op2 arg_out1 arg_out2
 
         (mk_pv any_tag1 x) (mk_pv any_tag2 0) (IntValue 0, IntValue 0)
         
-        (mk_exec_state flags new_regs new_memory new_xstack) ->
+        (new_regs,new_memory,new_xstack) ->
 
       new_flags = apply_set_flags mod_flags flags (bflags true false false) ->
       

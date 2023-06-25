@@ -106,13 +106,13 @@ Definition revert_state (ef:callframe_external) : state_checkpoint :=
 
 
 Inductive fetch_apply2:
-  exec_state  ->
+  (regs_state * memory * callstack) ->
   in_any -> in_reg -> out_any ->
   primitive_value -> primitive_value -> primitive_value ->
-  exec_state  ->
+  (regs_state * memory * callstack) ->
   Prop :=
 
- | fa_apply:  forall _flags xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out:out_any) out_loc val1 val2 result new_regs new_pages new_xstack,
+ | fa_apply:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out:out_any) out_loc val1 val2 result new_regs new_pages new_xstack,
   resolve xstack0 regs in1 loc1 ->
   resolve_effect__in in1 xstack0 xstack1 ->
   resolve xstack1 regs in2 loc2 ->
@@ -122,17 +122,17 @@ Inductive fetch_apply2:
   fetch_loc regs new_xstack pages loc2 (FetchPV val2) ->
   store_loc regs new_xstack pages result  out_loc (new_regs, new_pages) ->
 
-  fetch_apply2 (mk_exec_state _flags regs pages xstack0) 
+  fetch_apply2 (regs,pages,xstack0) 
               in1 in2 out
               val1 val2 result
-              (mk_exec_state _flags new_regs new_pages new_xstack) 
+              (new_regs,new_pages,new_xstack) 
 .
 
 Inductive fetch_apply2_swap swap:
-  exec_state ->
+  (regs_state * memory * callstack) ->
   in_any -> in_reg -> out_any ->
   primitive_value -> primitive_value -> primitive_value ->
-  exec_state ->
+  (regs_state * memory * callstack) ->
   Prop :=
  | fas_apply:  forall xstate (in1:in_any) (in2:in_reg) (out:out_any) val1 val2 val1' val2' result new_xstate,
   fetch_apply2
@@ -148,13 +148,13 @@ Inductive fetch_apply2_swap swap:
 
 (** for [OpMul] and [OpDiv] instructions *)
 Inductive fetch_apply22:
-  exec_state ->
+  (regs_state * memory * callstack) ->
   in_any -> in_reg -> out_any -> out_reg ->
   primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
-  exec_state ->
+  (regs_state * memory * callstack) ->
   Prop :=
 
- | fa_apply22:  forall _flags xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out1:out_any) (out2:out_reg) out_loc1 out_loc2 val1 val2 result1 result2 regs1 pages1 new_regs new_pages new_xstack,
+ | fa_apply22:  forall xstack0 regs (in1:in_any) loc1 (in2:in_reg) loc2 xstack1 pages (out1:out_any) (out2:out_reg) out_loc1 out_loc2 val1 val2 result1 result2 regs1 pages1 new_regs new_pages new_xstack,
   resolve xstack0 regs in1 loc1 ->
   resolve_effect__in in1 xstack0 xstack1 ->
   resolve xstack1 regs in2 loc2 ->
@@ -166,17 +166,17 @@ Inductive fetch_apply22:
   store_loc regs new_xstack pages result1 out_loc1 (regs1, pages1) ->
   store_loc regs1 new_xstack pages1 result2  out_loc2 (new_regs, new_pages) ->
 
-  fetch_apply22 (mk_exec_state _flags regs pages xstack0)
+  fetch_apply22 (regs,pages,xstack0)
               in1 in2 out1 out2
               val1 val2 (result1, result2)
-              (mk_exec_state _flags new_regs new_pages new_xstack)
+              (new_regs,new_pages,new_xstack)
 .
 
 Inductive fetch_apply22_swap swap:
-  exec_state ->
+  (regs_state * memory * callstack) ->
   in_any -> in_reg -> out_any -> out_reg ->
   primitive_value -> primitive_value -> (primitive_value * primitive_value) ->
-  exec_state ->
+  (regs_state * memory * callstack) ->
   Prop :=
  | fas_apply22:  forall (in1:in_any) (in2:in_reg) (out1:out_any) (out2:out_reg) val1 val2 val1' val2' result 
    xstate new_xstate,
