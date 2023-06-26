@@ -34,6 +34,8 @@ OpLoadPointerInc (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
 
 Read 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page as a 256-bit word, Big Endian. Reading bytes past the slice bound yields zero bytes.
 
+Additionally, store a pointer to the next word to `inc_ptr` register.
+
 ## Semantic
 
 1. Decode a fat pointer `in_ptr` from `ptr`.
@@ -58,14 +60,22 @@ Record fat_ptr :=
 ```
 {|
 fp_start  := 0;
-fp_length := 4;
+fp_length := 5;
 fp_offset := 2
 |}
 ```
 
-   Reading bytes from this pointer will produce a word with 2 most significant bytes read from memory fairly (addresses 2, 3) and 30 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
+   Reading will produce a word with 3 most significant bytes read from memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
 
 4. Store the word to `res`.
+6. Store an encoded fat pointer to the next 32-byte word in (aux_)heap in `inc_ptr`. Its fields are assigned as follows:
+
+```
+fp_page := in_ptr.(fp_page);
+fp_start := in_ptr.(fp_page);
+fp_length := in_ptr.(fp_length);
+fp_offset := in_ptr.(fp_offset) + 32;
+```   
 *)
   Inductive step_load_ptr : instruction -> 
                             regs_state * memory -> Prop :=

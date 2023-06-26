@@ -58,15 +58,16 @@ Record fat_ptr :=
 3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
 
    Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
+
 ```
 {|
 fp_start  := 0;
-fp_length := 4;
+fp_length := 5;
 fp_offset := 2
 |}
 ```
 
-   Reading bytes from this pointer will produce a word with 2 most significant bytes read from memory fairly (addresses 2, 3) and 30 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
+   Reading will produce a word with 3 most significant bytes read from memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
 
 4. Store the word to `res`.
 *)
