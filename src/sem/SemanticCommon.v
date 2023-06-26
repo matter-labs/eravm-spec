@@ -240,3 +240,10 @@ Inductive step_xstack xstack1 xstack2 : state -> state -> Prop :=
       
 
 Parameter precompile_processor : contract_address -> PrecompileParameters.inner_params -> exec_state -> exec_state -> Prop.
+
+Definition is_rollup (xstack: callstack) : bool := zero8 == current_shard xstack.
+
+Definition net_pubdata xstack : Z := if is_rollup xstack then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0.
+    
+Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
+  mk_fqa_storage (current_shard xstack) (current_contract xstack).
