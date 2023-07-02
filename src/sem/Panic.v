@@ -2,24 +2,42 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
-  ABI ABI.Ret ABI.FatPointer Addressing.Coercions SemanticCommon RecordSetNotations.
-        
-
-
-Inductive step_panic: instruction -> smallstep :=
+Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
+  ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 (**
+# Returns 
 
-# `panic` (irrecoverable error, not normal return/not return from recoverable error)
+These three instructions return control from a currently executing function:
+
+
+
+- `ret`
+- `revert`
+- `panic`
+
+
+Their semantic changes semantics depending on whether the current frame is
+external or internal.
+
+
+Reminder: *callee* is the function that we call; the *caller* is the currently
+executing function where a call takes place. In other words, the caller calls
+the callee.
+
+*)
+
+Inductive step_panic: instruction -> xsmallstep :=
+(**
+## `panic` (irrecoverable error, not normal return/not return from recoverable error)
 
 Return from a function signaling an error; execute exception handler, burn all
 regs in current frame, set OF flag, return no data.
 
-## Abstract Syntax
+### Abstract Syntax
 
 - [OpPanic (args: in_reg) (label: option code_address)]
 
-## Syntax
+### Syntax
 
 - `panic` (when current call is internal)
 
@@ -42,9 +60,9 @@ regs in current frame, set OF flag, return no data.
   The assembler expands `panic` to `panicr1`, but `r1` is ignored by returns from near calls.
   
 
-## Semantic
+### Semantic
 
-### Common notes
+#### Common notes
 
 - `panic` always clears flags and sets OF.
 - panics from far calls ignore an explicit label from the instruction.
@@ -52,7 +70,7 @@ regs in current frame, set OF flag, return no data.
 - most errors in executing of other instructions lead to executing `panic` instead.
 
 
-### Case 1: `panic` from near call, no label
+#### Case 1: `panic` from near call, no label
 
 1. Drop current frame with its ergs.
 2. Set PC to the exception handler of a dropped frame.
@@ -62,12 +80,12 @@ regs in current frame, set OF flag, return no data.
 
 
 | step_PanicLocal_nolabel:
-    forall s1 s2 flags pages cf caller_stack regs,
+    forall flags pages cf caller_stack regs,
 
       (* no reimbursement, ergs are lost *)
       let handler := active_exception_handler (InternalCall cf caller_stack) in
       
-      step_xstate {|
+      step_panic OpPanic {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
           
@@ -80,13 +98,10 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          |} s1 s2 ->
-      
-      step_panic (OpPanic None) s1 s2
-                 
+          |} 
         (**
 
-### Case 2: `panic` from near call, label provided
+#### Case 2: `panic` from near call, label provided
 
 1. Drop current frame with its ergs.
 2. Set PC to label value.
@@ -94,12 +109,12 @@ regs in current frame, set OF flag, return no data.
 
  *)
 | step_PanicLocal_label:
-    forall flags pages cf caller_stack regs _ignored label s1 s2,
+    forall __ pages ___ caller_stack regs label,
 
-      step_xstate
+      step_panic (OpNearPanicTo label)
         {|
-          gs_flags        := flags;
-          gs_callstack    := InternalCall cf caller_stack;
+          gs_flags        := __;
+          gs_callstack    := InternalCall ___ caller_stack;
 
 
           gs_regs         := regs;
@@ -113,11 +128,12 @@ regs in current frame, set OF flag, return no data.
           gs_regs         := regs;
           gs_pages        := pages;
         |}
-        s1 s2 ->
-        step_panic (OpRet _ignored (Some label)) s1 s2
+     .
+
+     Inductive step_farpanic : instruction -> smallstep :=
 (**
 
-### Case 3: `revert` from external call
+#### Case 3: `revert` from external call
 
 1. Drop current frame and its ergs
 2. Clear flags and set OF.
@@ -128,19 +144,19 @@ regs in current frame, set OF flag, return no data.
 7. Put an encoded zero-pointer into `R1` and tag `R1` as a pointer.
 
    All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved
-   and may gain a special meaning in newer versions of zkEVM.
+   and may gain a special meaning in newer versions of EraVM.
 
 *)
 | step_PanicExt:
-  forall codes flags rev pages cf caller_stack context_u128 regs label_ignored (arg:in_reg) cergs tx_num,
-    let xstack0 := ExternalCall cf (Some caller_stack) in
+  forall codes flags rev pages cf caller_stack context_u128 regs (arg:in_reg) cergs tx_num,
+    let cs0 := ExternalCall cf (Some caller_stack) in
 
     let encoded_out_ptr := FatPointer.ABI.(encode) fat_ptr_empty in
-    step_panic (OpPanic label_ignored)
+    step_farpanic OpPanic
           {|
             gs_xstate := {|
                           gs_flags        := flags;
-                          gs_callstack    := xstack0;
+                          gs_callstack    := cs0;
                           gs_regs         := regs;
 
                           
@@ -159,11 +175,11 @@ regs in current frame, set OF flag, return no data.
             gs_xstate := {|
                           gs_flags        := set_overflow flags_clear;
                           gs_regs         := regs_state_zero
-                             <| gprs_r1 := PtrValue encoded_out_ptr |>
-                             <| gprs_r2 := reg_reserved |>
-                             <| gprs_r3 := reg_reserved |>
-                             <| gprs_r4 := reg_reserved |> ;
-                          gs_callstack    := pc_set (active_exception_handler xstack0) caller_stack;
+                             <| r1 := PtrValue encoded_out_ptr |>
+                             <| r2 := reserved |>
+                             <| r3 := reserved |>
+                             <| r4 := reserved |> ;
+                          gs_callstack    := pc_set (active_exception_handler cs0) caller_stack;
 
                           gs_pages        := pages;
                           |};
@@ -182,7 +198,7 @@ regs in current frame, set OF flag, return no data.
 .
 (**
 
-## Affected parts of VM state
+### Affected parts of VM state
 
 - Flags are cleared, then OF is set.
 - Context register is zeroed (only returns from far calls).
@@ -196,14 +212,14 @@ regs in current frame, set OF flag, return no data.
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
  
-## Usage
+### Usage
 
 - Abnormal returns from near/far calls when an irrecoverable error has happened.
 Use `revert` for recoverable errors.
 - An attempt of executing an invalid instruction will result in executing `panic`.
 - Most error situations happening during execution will result in executing `panic`.
 
-## Similar instructions
+### Similar instructions
 
 - `ret` returns to the caller instead of executing an exception handler, and does not burn ergs.
 - `revert` acts similar to `panic` but does not burn ergs and lets pass any data to the caller, and does not set an overflow flag.

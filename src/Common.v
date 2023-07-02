@@ -1,6 +1,8 @@
 Require ZArith lib.ZMod.
 Require Lib.
 Export Lib.
+
+(** # Common project-independent definitions *)
 Section Types.
   Import ZArith lib.ZMod.
   Let mk n := int_mod_of n.
@@ -51,13 +53,4 @@ Section Types.
 End Types.
 
 Definition bits_in_byte : nat  := 8%nat.
-
-Section Params.
-  Import ZArith lib.ZMod.
-  
-  Definition INITIAL_STORAGE_WRITE_PUBDATA_BYTES: Z := 64%Z.
-  Definition REPEATED_STORAGE_WRITE_PUBDATA_BYTES: Z := 40%Z.
-  Definition L1_MESSAGE_PUBDATA_BYTES: Z := (1 + 1 + 2 + 20 + 32 + 32)%Z.
-
-End Params.
 

@@ -191,6 +191,7 @@ Infix ">" := (gt_unsigned _) : ZMod_scope.
 Infix "<=" := (le_unsigned _) : ZMod_scope.
 Infix ">=" := (ge_unsigned _) : ZMod_scope.
 
+Bind Scope ZMod_scope with int_mod.
 Definition bitwise_op (f:Z->Z->Z) (bits:nat) (x y: int_mod bits) : int_mod bits :=
   int_mod_of _ (f (int_val _ x) (int_val _ y)).
 

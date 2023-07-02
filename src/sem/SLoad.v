@@ -3,18 +3,14 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing ABI Bool Common Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations MetaParameters.
+  Addressing.Coercions PrimitiveValue SemanticCommon Storage RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
-Definition is_rollup (xstack: callstack) : bool := zero8 == current_shard xstack.
-
-Definition net_pubdata xstack : Z := if is_rollup xstack then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0.
-    
 Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
   mk_fqa_storage (current_shard xstack) (current_contract xstack).
+Generalizable Variable __.
 
-
-Inductive step: instruction -> smallstep :=
+Inductive step: instruction -> xsmallstep :=
 (**
 # SLoad
 
@@ -43,28 +39,30 @@ Access word in current storage by key.
 
 *)
 | step_SLoad:
-  forall flags pages xstack regs (arg_key: in_reg) (arg_dest_value: out_reg)
-    new_regs new_pages read_value key (s1 s2:state),
-    resolve_load_word xstack (regs,pages) arg_key key ->
+  forall flags xstack regs (arg_key: in_reg) (arg_dest_value: out_reg)
+    new_regs pages read_value key (s1 s2:state) __,
+    load_reg regs arg_key (mk_pv __ key) ->
 
     let fqa_storage := mk_fqa_key (current_storage_fqa xstack) key in
      
     storage_read (gs_revertable s1).(gs_depot) fqa_storage read_value ->
-    resolve_store xstack (regs, pages) arg_dest_value (IntValue read_value) (new_regs, new_pages) ->
-    step_xstate
+    store_reg regs arg_dest_value (IntValue read_value) new_regs ->
+    step_xstate_only 
       {|
            gs_regs         := regs;
+
+
            gs_pages        := pages;
            gs_callstack    := xstack;
            gs_flags        := flags;
          |}
          {|
            gs_regs         := new_regs;
-           gs_pages        := new_pages;
 
+
+           gs_pages        := pages;
            gs_callstack    := xstack;
            gs_flags        := flags;
-           
          |} s1 s2 ->
     step (OpSLoad arg_key arg_dest_value) s1 s2
 .

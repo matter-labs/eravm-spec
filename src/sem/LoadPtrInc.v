@@ -1,19 +1,15 @@
 Require SemanticCommon Addressing.
 
 
-Import ABI Addressing Common Condition CallStack Memory MemoryOps Instruction ZMod
-  Addressing.Coercions SemanticCommon Pages State ZMod.
+Import ABI Addressing Common Coder Condition CallStack Memory MemoryOps Instruction ZMod
+  Addressing.Coercions SemanticCommon MemoryContext PrimitiveValue Pointer State ZMod.
 
 Import FatPointer.
 Import List ListNotations.
 
 
 Section Defs.
-  
-  Context (old_regs: regs_state) (old_xstack: callstack) (old_pages:memory).
-  Let fetch := resolve_load old_xstack (old_regs, old_pages).
-  Let fetch_word := resolve_load_word old_xstack (old_regs,old_pages).
-  Let stores := resolve_stores old_xstack (old_regs,old_pages).
+  Open Scope ZMod_scope.
   
   (**
 # LoadPointer
@@ -77,29 +73,32 @@ fp_length := in_ptr.(fp_length);
 fp_offset := in_ptr.(fp_offset) + 32;
 ```   
 *)
-  Inductive step_load_ptr : instruction -> 
-                            regs_state * memory -> Prop :=
+  Inductive step_load_ptr : instruction -> xsmallstep :=
   | step_LoadPointerInc:
-    forall enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_reg) result new_regs new_pages addr selected_page in_ptr out_ptr slice,
+    forall flags regs enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_reg) result cs new_regs mem addr selected_page in_ptr out_ptr slice page_id,
 
-      fetch arg_enc_ptr (PtrValue enc_ptr) ->
+      load_reg regs arg_enc_ptr (PtrValue enc_ptr) ->
+
       ABI.(decode) enc_ptr = Some in_ptr ->
 
       validate_in_bounds in_ptr = true ->
       
-      page_has_id _ old_pages in_ptr.(fp_page) (DataPage  _ selected_page) ->
+      Some page_id  =in_ptr.(fp_page) ->
+      page_has_id mem page_id (@DataPage era_pages selected_page) ->
       slice_from_ptr selected_page in_ptr slice ->
       
       (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
-      load_slice_result BigEndian slice addr result ->
+      mb_load_slice_result BigEndian slice addr result ->
       
       ptr_inc in_ptr out_ptr ->
 
-      stores [
-          (OutReg arg_dest,    IntValue result);
-          (OutReg arg_enc_ptr, PtrValue (ABI.(encode) out_ptr))
-        ] (new_regs, new_pages) ->
+      store_regs regs [
+          (arg_dest,    IntValue result);
+          (arg_enc_ptr, PtrValue (ABI.(encode) out_ptr))
+        ] new_regs ->
 
-      step_load_ptr (OpLoadPointerInc arg_enc_ptr arg_dest arg_modptr) (new_regs, new_pages)
+      step_load_ptr (OpLoadPointerInc arg_enc_ptr arg_dest arg_modptr)
+        (mk_exec_state flags regs mem cs)
+        (mk_exec_state flags new_regs mem cs) 
   .
 End Defs.

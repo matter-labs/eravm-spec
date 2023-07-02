@@ -1,11 +1,11 @@
-From RecordUpdate Require Import RecordSet.
-
 Require SemanticCommon.
 
-Import Addressing Common CallStack Memory Instruction State ZMod
-  ABI ABI.FatPointer Addressing.Coercions SemanticCommon RecordSetNotations ZArith.
+Import Addressing Addressing.Coercions Common CallStack Memory Instruction State ZMod
+  ABI ABI.FatPointer Addressing.Coercions SemanticCommon PrimitiveValue ZArith.
 
-Inductive step : instruction -> smallstep :=
+Section Def.
+  Open Scope ZMod_scope.
+Inductive step : instruction -> xsmallstep :=
 (**
 # PtrPack
 
@@ -32,20 +32,18 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
  *)
 
 | step_PtrPack :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap s1 s2 regs mem xstack new_regs new_mem new_xstack flags,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap regs mem cs new_regs new_mem new_cs flags,
     
-    fetch_apply2_swap swap
-      (regs, mem, xstack)
-      in1 in2 out
-      (PtrValue op1) (IntValue op2) (PtrValue (mix_lower 128 op2 (resize _ 128 op1)))
-      (new_regs, new_mem, new_xstack) ->
+    fetch_apply21_swap swap
+      (regs, mem, cs)
+      (in1, PtrValue op1) (InReg in2, IntValue op2) (out, PtrValue (mix_lower 128 op2 (resize _ 128 op1)))
+      (new_regs, new_mem, new_cs) ->
     
     resize _ 128 op2 = zero128 ->
-    step_xstate
-      (mk_exec_state flags regs mem xstack)
-      (mk_exec_state flags new_regs new_mem new_xstack)
-      s1 s2 ->
-    step (OpPtrPack in1 in2 out swap) s1 s2.
+    step (OpPtrPack in1 in2 out swap)
+      (mk_exec_state flags regs mem cs)
+      (mk_exec_state flags new_regs new_mem new_cs)
+.
 (**
 
 ## Affected parts of VM state
@@ -75,3 +73,4 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
 Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
 
 *)
+End Def.

@@ -1,12 +1,12 @@
-Require  sem.BinOps.
+Require sem.BinOps.
 
-Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
-  Addressing.Coercions SemanticCommon BinOps.
+Import Addressing Bool Common Condition Instruction Memory State ZMod
+  Addressing.Coercions PrimitiveValue SemanticCommon BinOps.
 
 Section Def.
   Open Scope ZMod_scope.
   
-  Inductive step: instruction -> smallstep :=
+  Inductive step: instruction -> xsmallstep :=
   (**
 # Add
 
@@ -59,19 +59,19 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
    *)
   | step_Add:
-    forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out gs gs' _tag1 _tag2 op1 op2 result flags_candidate new_OF,
+    forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out xs xs' _tag1 _tag2 op1 op2 result flags_candidate new_OF,
 
-      binop_state_effect_spec in1 in2 out mod_swap mod_sf
-        (mk_pv _tag1 op1)
-        (mk_pv _tag2 op2)
-        (IntValue result) flags_candidate
-        gs gs' ->
+      binop_effect_spec mod_swap mod_sf
+        (in1, mk_pv _tag1 op1)
+        (in2, mk_pv _tag2 op2)
+        (out, IntValue result) flags_candidate
+        xs xs' ->
 
       (result, new_OF) = op1 + op2 ->
       let new_EQ := result == zero256 in
       let new_GT := negb new_EQ && negb new_OF in
       flags_candidate = bflags new_OF new_EQ new_GT ->
       
-      step (OpAdd in1 in2 out mod_swap mod_sf) gs gs'
+      step (OpAdd in1 in2 out mod_swap mod_sf) xs xs'
   .
 End Def.

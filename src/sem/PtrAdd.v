@@ -3,8 +3,10 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing Common CallStack Memory Instruction State ZMod
-  ABI ABI.FatPointer Addressing.Coercions SemanticCommon RecordSetNotations ZArith.
+  ABI ABI.FatPointer Addressing.Coercions Coder PrimitiveValue Pointer SemanticCommon RecordSetNotations ZArith.
 
+Section Def.
+  Open Scope ZMod_scope.
 (**
 
 # PtrAdd
@@ -37,15 +39,17 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset + diff}$$
 
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
  *)
-Inductive step : instruction -> smallstep :=
+Inductive step : instruction -> xsmallstep :=
 | step_PtrAdd:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result s1 s2 ptr_in regs mem xstack new_regs new_mem new_xstack flags,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result ptr_in regs mem cs new_regs new_mem new_cs flags,
     
-    fetch_apply2_swap swap
-      (regs, mem, xstack)
-      in1 in2 out
-      (PtrValue op1) (IntValue op2) (PtrValue result)
-      (new_regs, new_mem, new_xstack) ->
+    fetch_apply21_swap swap (regs, mem, cs)
+      
+      (in1,PtrValue op1) 
+      (InReg in2, IntValue op2)
+      (out,PtrValue result)
+      
+      (new_regs, new_mem, new_cs) ->
     
     FatPointer.ABI.(decode) op1 = Some ptr_in   ->
     let diff := resize _ 32 op2 in
@@ -55,11 +59,23 @@ Inductive step : instruction -> smallstep :=
     let low := resize _ 128 ptr in
     mix_lower 128 op1 low = result ->
 
-    step_xstate
-      (mk_exec_state flags regs mem xstack)
-      (mk_exec_state flags new_regs new_mem new_xstack)
-      s1 s2 ->
-    step (OpPtrAdd in1 in2 out swap) s1 s2
+    step (OpPtrAdd in1 in2 out swap)
+         {|
+           gs_callstack    := cs;
+           gs_regs         := regs;
+           gs_pages        := mem;
+           
+           
+           gs_flags        := flags;
+         |}
+         {|
+           gs_callstack    := new_cs;
+           gs_regs         := new_regs;
+           gs_pages        := new_mem;
+           
+           
+           gs_flags        := flags;
+         |} 
 .
 (** ## Affected parts of VM state
 
@@ -88,4 +104,5 @@ Inductive step : instruction -> smallstep :=
 
 Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
 
- *)
+  *)
+End Def.

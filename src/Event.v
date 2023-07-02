@@ -1,8 +1,9 @@
-Require Memory ABI External.
-Import Common Memory External ABI.
+Require Core Memory.
+Import Core Memory.
 
-
-(* For later: probably these structures can be redesigned so that *)
+Section Definitions.
+Context {contract_address precompile_params: Type}.
+(* For later: probably these structures can be redesigned *)
 
 Record event := {
     ev_shard_id: shard_id;
@@ -18,7 +19,7 @@ Record precompile_query := {
     q_tx_number_in_block: tx_num;
     q_shard_id: shard_id;
     q_contract_address: contract_address;
-    q_key: PrecompileParameters.inner_params;
+    q_key: precompile_params
 }.
 
 Inductive query :=
@@ -28,3 +29,4 @@ Inductive query :=
   | PrecompileQuery : precompile_query -> query.
 
          
+End Definitions.

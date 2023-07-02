@@ -1,7 +1,7 @@
 Require SemanticCommon.
 
 Import Addressing Common CallStack Event MemoryOps Instruction State 
-  Addressing.Coercions SemanticCommon .
+  Addressing.Coercions PrimitiveValue SemanticCommon.
 Import List ListNotations.
 
 Inductive step: instruction -> smallstep :=
@@ -31,14 +31,14 @@ Emit an event with provided key and value. See [event] for more details on event
 
  *)
 | step_Event:
-  forall context_u128 xs (arg_key: in_reg) (arg_value: in_reg) is_first
+  forall context_u128 xs (arg_key: in_reg) (arg_value: in_reg) is_first __ ___
     key value gs new_gs,
     let regs := gs_regs xs in
     let pages := gs_pages xs in
     let xstack := gs_callstack xs in
-    resolve_load_words xstack (regs, pages) [
-        (InReg arg_key, key);
-        (InReg arg_value, value)
+    load_regs regs [
+        (arg_key, mk_pv __ key);
+        (arg_value, mk_pv ___ value)
       ] ->
 
     emit_event (EventQuery {|

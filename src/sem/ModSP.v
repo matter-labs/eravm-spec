@@ -1,7 +1,9 @@
 Require SemanticCommon.
 
-Import Addressing MemoryOps Instruction State SemanticCommon.
-(**  
+Import Addressing Addressing.Coercions Instruction Resolution State SemanticCommon.
+
+Section Def.
+  (**  
 
 # ModSP
 
@@ -10,6 +12,7 @@ Import Addressing MemoryOps Instruction State SemanticCommon.
 [OpModSP (in1: in_any) (out1: out_any)]
 
 ## Syntax
+
 
 ```
 ModSP in1, out1
@@ -49,16 +52,17 @@ The primary use is adjusting SP.
 
 
 *)
-
-Inductive step : instruction -> smallstep :=
+Generalizable Variables regs flags pages __ ___.
+Inductive cs_step : instruction -> callstack_smallstep :=
 | step_ModSP:
-  forall s1 s2 xstack0 xstack1 new_xstack in1 out1 ,
-    resolve_effect__in in1 xstack0 xstack1 ->      (* Account for possible [RelSpPop]. *)
-    resolve_effect__out out1 xstack1 new_xstack ->(* Account for possible [RelSpPush]. *)
-    step_xstack xstack0 new_xstack s1 s2 ->
-    step (OpModSP in1 out1) s1 s2
+  forall cs0 cs1 new_cs (in1:in_any) (out1:out_any),
+    `(
+        resolve_apply regs cs0 in1 (cs1, __) -> (* Account for possible [RelSpPop]. *)
+        resolve_apply regs cs1 out1 (new_cs, ___) -> (* Account for possible [RelSpPush]. *)
+        cs_step (OpModSP in1 out1) cs0 new_cs
+      )
 .
-
+End Def.
 (**
 
 ## Examples
@@ -69,7 +73,6 @@ Inductive step : instruction -> smallstep :=
 Section Examples.
 Import Addressing.Coercions ZMod Memory ZArith CallStack.
 Open Scope Z.
-Coercion int_mod_of : Z >-> int_mod.
 Set Printing Coercions.
 
 (**
@@ -79,7 +82,9 @@ Set Printing Coercions.
 *)
 
 Section Ex1.
-Let ex := OpModSP (RelSpPop R0 23) (RelSpPush R0 88) : instruction.
+  Import GPR.
+  (* Coercion int_mod_of : Z >-> int_mod. *)
+  (* Let ex := OpModSP (RelSpPop R0 23) (RelSpPush R0 88) : instruction. *)
 (* Import ZMod.
 Goal 
   forall codes flags depot pages xstack0 context_u128 regs,

@@ -2,22 +2,43 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
-  ABI ABI.Ret ABI.FatPointer Addressing.Coercions SemanticCommon RecordSetNotations.
-        
+Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
+  ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
+(**
+# Returns 
 
-Inductive step_revert: instruction -> smallstep :=
+These three instructions return control from a currently executing function:
+
+
+
+- `ret`
+- `revert`
+- `panic`
+
+
+Their semantic changes semantics depending on whether the current frame is
+external or internal.
+
+
+Reminder: *callee* is the function that we call; the *caller* is the currently
+executing function where a call takes place. In other words, the caller calls
+the callee.
+
+*)
+Generalizable Variables regs flags pages s.
+
+Inductive step_revert: instruction -> xsmallstep :=
 (**
 
-# `revert` (recoverable error, not normal return/not panic)
+## `revert` (recoverable error, not normal return/not panic)
 
 Return from a function signaling an error; execute exception handler, possibly return data like normal `ret`.
 
-## Abstract Syntax
+### Abstract Syntax
 
 - [OpRevert (args: in_reg) (label: option code_address)]
 
-## Syntax
+### Syntax
 
 - `revert`
 
@@ -41,15 +62,15 @@ Return from a function signaling an error; execute exception handler, possibly r
   The assembler expands `revert` to `revert r1`, but `r1` is ignored by reverts from near calls.
   
 
-## Semantic
+### Semantic
 
-### Common notes
+#### Common notes
 
 - `revert` always clears flags.
 - reverts from far calls ignore an explicit label from the instruction.
 - reverts from far calls may pass data to the caller in form of a fat pointer.
 
-### Case 1: `revert` from near call, no label
+#### Case 1: `revert` from near call, no label
 
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame. 
@@ -58,12 +79,12 @@ Return from a function signaling an error; execute exception handler, possibly r
 
  *)
 | step_RevertLocal_nolabel:
-    forall flags pages cf caller_stack caller_reimbursed regs _ignored s1 s2,
+    forall flags pages cf caller_stack caller_reimbursed regs ,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
       let handler := active_exception_handler (InternalCall cf caller_stack) in
 
-      step_xstate {|
+      step_revert OpNearRevert {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
           
@@ -79,11 +100,10 @@ Return from a function signaling an error; execute exception handler, possibly r
           gs_regs         := regs;
           gs_pages        := pages;
 
-        |} s1 s2 ->
-      step_revert (OpRevert _ignored None) s1 s2 
+        |}
         (**
- 
-### Case 2: `revert label` from near call, label provided
+
+#### Case 2: `revert label` from near call, label provided
 
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame. 
@@ -92,10 +112,11 @@ Return from a function signaling an error; execute exception handler, possibly r
 
 *)
 | step_RevertLocal_label:
-    forall flags pages cf caller_stack caller_reimbursed regs _ignored label s1 s2,
+    forall flags pages cf caller_stack caller_reimbursed regs label,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
-      step_xstate {|
+      
+      step_revert (OpNearRevertTo label) {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
           
@@ -110,14 +131,13 @@ Return from a function signaling an error; execute exception handler, possibly r
 
           gs_regs         := regs;
           gs_pages        := pages;
-        |} s1 s2 ->
-      
-      step_revert (OpRevert _ignored (Some label)) s1 s2
+        |}
 
-
+.
+Inductive step_revertext: instruction -> smallstep :=
 (**
 
-### Case 3: `revert abi_reg` from external call
+#### Case 3: `revert abi_reg` from external call
 
 Effectively the same as `ret abi_reg`, but restores storage and executes the exception handler.
 
@@ -159,38 +179,36 @@ Record params := {
 4. Clear flags.
 5. Encode the modified (through the step 2) `memory_quasi_fat_ptr` and put it to `R1` with pointer tag.
 
-All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and may gain a special meaning in newer versions of zkEVM.
+All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and may gain a special meaning in newer versions of EraVM.
 6. Context register is zeroed.
 7. All storages are reverted to the state prior to the current contract call.
 
 *)
 | step_RevertExt:
-  forall flags rev pages cf caller_stack xstack1 caller_reimbursed context_u128 regs label_ignored (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr cergs tx_num codes,
-    let xstack0 := ExternalCall cf (Some caller_stack) in
+   forall __ pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr page tx_num codes cergs rev,
+    let cs0 := ExternalCall cf (Some caller_stack) in
     
     (* Panic if not a pointer *)
-    resolve_load  xstack0 (regs,pages) arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+    load_reg regs arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+
     Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
+    in_ptr.(fp_page) = Some page ->
+    (fwd_mode = ForwardFatPointer -> abi_ptr_tag && negb ( MemoryContext.page_older page (get_mem_ctx cs0)) = true) ->
 
-    (fwd_mode = ForwardFatPointer ->
-     abi_ptr_tag &&
-       negb(page_older in_ptr.(fp_page) (get_active_pages xstack0)) = true)->
-    
-    paid_forward fwd_mode (in_ptr, xstack0) (out_ptr, xstack1) ->
-    ergs_reimburse_caller_and_drop xstack1 caller_reimbursed ->
+    paid_forward fwd_mode (in_ptr, cs0) (out_ptr, cs1) ->
+    ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
-    let encoded_out_ptr := FatPointer.ABI.(encode) out_ptr in
-    step_revert (OpRevert arg label_ignored)
+    step_revertext (OpFarRevert arg)
           {|
             gs_xstate := {|
-                          gs_flags        := flags;
-                          gs_callstack    := xstack0;
+                          gs_flags        := __;
+                          gs_callstack    := cs0;
                           gs_regs         := regs;
 
                           
                           gs_pages        := pages;
                         |};
-            gs_context_u128 := context_u128;
+            gs_context_u128 := ___;
             
             gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
@@ -203,11 +221,11 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
             gs_xstate := {|
                           gs_flags        := flags_clear;
                           gs_regs         := regs_state_zero
-                             <| gprs_r1 := PtrValue encoded_out_ptr |>
-                             <| gprs_r2 := reg_reserved |>
-                             <| gprs_r3 := reg_reserved |>
-                             <| gprs_r4 := reg_reserved |> ;
-                          gs_callstack    := pc_set (active_exception_handler xstack0) caller_reimbursed ;
+                             <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                             <| r2 := reserved |>
+                             <| r3 := reserved |>
+                             <| r4 := reserved |> ;
+                          gs_callstack    := pc_set (active_exception_handler cs0) caller_reimbursed ;
 
                           gs_pages        := pages;
                           |};
@@ -226,7 +244,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 .
 (**
 
-## Affected parts of VM state
+### Affected parts of VM state
 
 - Flags are cleared.
 - Context register is zeroed (only returns from far calls).
@@ -240,12 +258,12 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
  
-## Usage
+### Usage
 
 - Abnormal returns from near/far calls when a recoverable error happened.
 Use `panic` for irrecoverable errors.
 
-## Similar instructions
+### Similar instructions
 
 - `ret` returns to the caller instead of executing an exception handler.
 - `panic` acts similar to `revert` but does not let pass any data to the caller

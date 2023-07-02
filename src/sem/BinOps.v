@@ -1,8 +1,7 @@
-From RecordUpdate Require Import RecordSet.
-Require  sem.SemanticCommon.
+Require sem.SemanticCommon.
 
 Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
-  ZBits Addressing.Coercions RecordSetNotations SemanticCommon.
+  ZBits Addressing.Coercions PrimitiveValue SemanticCommon.
 (**
 #  Common binary operation semantic
 
@@ -39,40 +38,26 @@ The operation follows a similar scheme as described below.
 Note that predicate [binop_effect_spec] is a relation that binds `in1`, `in2`, `out`, `op1`, `op2`, `result`, `flags_candidate`; the computations specific to the operation will be described in specific constructors like [step_Add].
  *)
 
-Inductive binop_effect_spec: exec_state ->
-                        in_any -> in_reg -> out_any ->
+Inductive binop_effect_spec: 
                         mod_swap -> mod_set_flags ->
-                        primitive_value -> primitive_value -> primitive_value -> flags_state ->
-                        exec_state -> Prop :=
+                        in_any * primitive_value ->
+                        in_reg * primitive_value ->
+                        out_any* primitive_value ->
+                        flags_state ->
+                        exec_state -> exec_state -> Prop :=
 | bes_apply:
   forall xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any) 
     op1 op2 swap set_flags result flags_candidate flags new_flags ,
 
-    fetch_apply2_swap swap
+    fetch_apply21_swap swap
       (regs,memory,xstack)
-      in1 in2 out op1 op2 result
+      (in1, op1) (InReg in2, op2) (out, result)
       (new_regs,new_memory,new_xstack) ->
     new_flags = apply_set_flags set_flags flags flags_candidate ->
     binop_effect_spec
+      swap set_flags
+      (in1, op1) (in2, op2) (out, result)
+      flags_candidate
       (mk_exec_state flags regs memory xstack)
-      in1 in2 out swap set_flags
-      op1 op2 result flags_candidate
       (mk_exec_state new_flags new_regs new_memory new_xstack).
-
-
-(** The relation [binop_state_effect_spec] is an adapter for [binop_effect_spec]
-to apply it to appropriate parts of [state]. *)
-Inductive binop_state_effect_spec: in_any -> in_any -> out_any -> mod_swap -> mod_set_flags ->
-                                   primitive_value -> primitive_value -> primitive_value -> flags_state ->
-                      smallstep :=
-| bes_apply_step:
-  forall (in1: in_any) (in2: in_reg) (out: out_any) swap set_flags op1 op2 result xs1 xs2 s1 s2 flags_candidate,
-    binop_effect_spec xs1
-      in1 in2 out swap set_flags
-      op1 op2 result flags_candidate
-      xs2 ->
-    
-    step_xstate xs1 xs2 s1 s2 ->
-    
-    binop_state_effect_spec in1 in2 out swap set_flags op1 op2 result flags_candidate s1 s2 .
 

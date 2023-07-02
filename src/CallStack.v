@@ -1,126 +1,97 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Condition Ergs Event Log Memory Pages.
+Require Common Condition Memory Ergs Log MemoryContext.
 
-Import ZArith Condition Common Ergs Event Log MemoryBase Memory Pages ZMod List ListNotations.
+Import ZArith Condition Common Ergs Log MemoryBase MemoryContext Memory ZMod List ListNotations.
 
-Open Scope ZMod_scope.
+Section Stack.
 
-Definition CALLSTACK_LIMIT : nat := 1024.
-(*Definition page := page instruction_predicated instruction_invalid. *)
+  Context (CALLSTACK_LIMIT : nat).
+  Context {state_checkpoint: Type} {ins: Type} (ins_invalid: ins)
+    (pages := @era_pages _ ins_invalid).
+  
+  Definition exception_handler := code_address.
 
-Definition exception_handler := code_address.
+  Record callstack_common := mk_cf {
+                                 cf_exception_handler_location: exception_handler;
+                                 cf_sp: stack_address;
+                                 cf_pc: code_address;
+                                 cf_ergs_remaining: ergs;
+                               }.
+  #[export] Instance etaCFC : Settable _ :=
+    settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
 
-Record callframe_common := mk_cf {
-                               cf_exception_handler_location: exception_handler;
-                               cf_sp: stack_address;
-                               cf_pc: code_address;
-                               cf_ergs_remaining: ergs;
-                             }.
-#[export] Instance etaCFC : Settable _ :=
-  settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
+  Record active_shards := mk_shards {
+                              shard_this: shard_id;
+                              shard_caller: shard_id;
+                              shard_code: shard_id;
+                            }.
 
-Record active_shards := mk_shards {
-                     shard_this: shard_id;
-                     shard_caller: shard_id;
-                     shard_code: shard_id;
-                   }.
+  #[export] Instance etaSH: Settable _ :=
+    settable! mk_shards < shard_this; shard_caller; shard_code>.
 
-#[export] Instance etaSH: Settable _ :=
-  settable! mk_shards < shard_this; shard_caller; shard_code>.
+  Record callstack_external :=
+    mk_extcf {
+        ecf_this_address: contract_address;
+        ecf_msg_sender: contract_address;
+        ecf_code_address: contract_address;
+        ecf_mem_ctx: mem_ctx; 
+        ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
+        ecf_context_u128_value: u128;
+        ecf_shards:> active_shards;
+        ecf_saved_checkpoint: state_checkpoint;
+        ecf_common :> callstack_common
+      }.
 
-Record active_pages :=
-  mk_apages
-    {
-      ctx_code_page_id:  page_id;
-      ctx_const_page_id:  page_id;
-      ctx_stack_page_id:  page_id;
-      ctx_heap_page_id:  page_id;
-      ctx_auxheap_page_id:  page_id;
-      ctx_heap_bound: mem_address;
-      ctx_auxheap_bound: mem_address;
-    }.
+  #[export] Instance etaCFE : Settable _ :=
+    settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
 
-Definition list_active_pages (ap:active_pages) : list page_id :=
-  match ap with
-  | mk_apages code_id const_id stack_id heap_id auxheap_id _ _ =>
-      [code_id;const_id;stack_id;heap_id;auxheap_id]
-  end.
-
-Definition is_active_page (ap:active_pages) (id: page_id) : bool :=
-  List.existsb (Nat.eqb id) (list_active_pages ap).
-
-Definition page_older (id: page_id) (mps: active_pages) : bool :=
-  List.forallb (Nat.ltb id) (list_active_pages mps).
-
-#[export] Instance etaAP: Settable _ := settable! mk_apages< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
-
-Record state_checkpoint := {
-    gs_depot: depot;
-    gs_events: log query;
-    gs_l1_msgs: log event;
-  }.
-
-Record callframe_external :=
-  mk_extcf {
-      ecf_this_address: contract_address;
-      ecf_msg_sender: contract_address;
-      ecf_code_address: contract_address;
-      ecf_memory: active_pages;
-      ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
-      ecf_context_u128_value: u128;
-      ecf_shards: active_shards;
-      ecf_saved_checkpoint: state_checkpoint;
-      ecf_common :> callframe_common
-    }.
-
-#[export] Instance etaCFE : Settable _ :=
-  settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_memory; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
-
-Inductive callframe :=
-| InternalCall (_: callframe_common) (tail: callframe): callframe
-| ExternalCall (_: callframe_external) (tail: option callframe): callframe.
-
-Definition callstack := callframe.
-
-Fixpoint callframe_depth cf :=
-  (match cf with
-   | InternalCall x tail => 1 + callframe_depth tail
-   | ExternalCall x (Some tail)=> 1 + callframe_depth tail
-   | ExternalCall x None => 1
-   end)%nat.
-
-Definition stack_overflow (xstack:callstack) : bool :=
-  Nat.ltb CALLSTACK_LIMIT (callframe_depth xstack).
-
-Definition cfc (ef: callframe) : callframe_common :=
-  match ef with
-  | InternalCall x _ => x
-  | ExternalCall x _ => x
-  end.
-
-Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : callframe :=
-  match ef with
-  | InternalCall x tail => InternalCall (f x) tail
-  | ExternalCall x tail => ExternalCall (x <| ecf_common ::= f |>) tail
-  end.
+  Inductive callstack :=
+  | InternalCall (_: callstack_common) (tail: callstack): callstack
+  | ExternalCall (_: callstack_external) (tail: option callstack): callstack.
 
 
-  Section Ergs.
+  Fixpoint callstack_depth cf :=
+    (match cf with
+     | InternalCall x tail => 1 + callstack_depth tail
+     | ExternalCall x (Some tail)=> 1 + callstack_depth tail
+     | ExternalCall x None => 1
+     end)%nat.
 
-    Definition ergs_remaining (ef:callframe) : ergs := (cfc ef).(cf_ergs_remaining).
-    Definition ergs_map (f: ergs->ergs) (ef:callframe) : callframe
+  Definition stack_overflow (xstack:callstack) : bool :=
+    Nat.ltb CALLSTACK_LIMIT (callstack_depth xstack).
+
+  Definition cfc (ef: callstack) : callstack_common :=
+    match ef with
+    | InternalCall x _ => x
+    | ExternalCall x _ => x
+    end.
+
+  Definition cfc_map (f:callstack_common->callstack_common) (ef: callstack) : callstack :=
+    match ef with
+    | InternalCall x tail => InternalCall (f x) tail
+    | ExternalCall x tail => ExternalCall (x <| ecf_common ::= f |>) tail
+    end.
+
+
+  Section ErgsManagement.
+
+    Import ZMod.
+    Open Scope ZMod_scope.
+    
+    Definition ergs_remaining (ef:callstack) : ergs := (cfc ef).(cf_ergs_remaining).
+    Definition ergs_map (f: ergs->ergs) (ef:callstack) : callstack
       := cfc_map (fun x => x <| cf_ergs_remaining ::= f |>) ef.
     Definition ergs_set newergs := ergs_map (fun _ => newergs).
 
-    Inductive ergs_reimburse : ergs -> callframe -> callframe -> Prop :=
+    Inductive ergs_reimburse : ergs -> callstack -> callstack -> Prop :=
     | er_reimburse: forall delta new_ergs ef ef',
         delta + ergs_remaining ef = (new_ergs, false) ->
         ef' = ergs_set new_ergs ef ->
         ergs_reimburse delta ef ef'.
 
 
-    Inductive ergs_reimburse_caller_and_drop : callframe -> callframe -> Prop
+    Inductive ergs_reimburse_caller_and_drop : callstack -> callstack -> Prop
       :=
     |erc_internal: forall caller new_caller cf,
         ergs_reimburse (ergs_remaining (InternalCall cf caller)) caller
@@ -133,28 +104,28 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
 
     Definition ergs_reset := ergs_set zero32.
 
-    Definition affordable ef (e:ergs): bool :=
+    Definition affordable (ef: callstack) (e:ergs): bool :=
       match ergs_remaining ef - e with
       | (paid, false) => true
       | (overflowed, true) => false
       end.
 
-    Inductive pay : ergs -> callframe -> callframe -> Prop :=
+    Inductive pay : ergs -> callstack -> callstack -> Prop :=
     | pay_ergs : forall e ef paid,
         ergs_remaining ef - e = (paid, false) ->
         pay e ef (ergs_set paid ef).
-  End Ergs.
+  End ErgsManagement.
 
 
   Section SP.
     (** Fetching value of the stack pointer itself. *)
-    Definition sp_get (cf: callframe) : stack_address :=
+    Definition sp_get (cf: callstack) : stack_address :=
       (cfc cf).(cf_sp).
 
     Definition sp_mod_extcall (f:stack_address->stack_address) ef :=
       (ef <| ecf_common ::= fun cf => cf <| cf_sp ::=  f |> |>).
 
-    Inductive sp_mod_extcall_spec f: callframe_external -> callframe_external -> Prop :=
+    Inductive sp_mod_extcall_spec f: callstack_external -> callstack_external -> Prop :=
     | sme_apply: forall a b c d e g h eh sp pc ss ergs,
         sp_mod_extcall_spec f (mk_extcf a b c d e g h ss (mk_cf eh sp pc ergs))
           (mk_extcf a b c d e g h ss (mk_cf eh (f sp) pc ergs)).
@@ -167,7 +138,7 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
       constructor.
     Qed.
 
-    Definition sp_mod (f:stack_address->stack_address) ef : callframe :=
+    Definition sp_mod (f:stack_address->stack_address) ef : callstack :=
       match ef with
       | InternalCall x tail => InternalCall (x <| cf_sp ::=  f |>) tail
       | ExternalCall x tail => ExternalCall (sp_mod_extcall f x) tail
@@ -175,7 +146,7 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
 
     Definition sp_update new_sp := sp_mod (fun _ => new_sp).
 
-    Inductive sp_mod_spec f : callframe -> callframe -> Prop :=
+    Inductive sp_mod_spec f : callstack -> callstack -> Prop :=
     | usp_ext:
       forall ecf ecf' tail,
         sp_mod_extcall_spec f ecf ecf' ->
@@ -195,7 +166,7 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
 
 
   Section PC.
-    Definition pc_get (ef: callframe) : code_address :=
+    Definition pc_get (ef: callstack) : code_address :=
       match ef with
       | InternalCall cf _ => cf.(cf_pc)
       | ExternalCall ef tail => ef.(ecf_common).(cf_pc)
@@ -208,17 +179,15 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
       end.
 
 
-
-    Definition pc_inc (pc pc':code_address) := uinc_overflow _ pc = (pc',false).
     Definition pc_set new := pc_mod (fun _ => new).
 
-    Inductive update_pc_cfc : code_address -> callframe_common -> callframe_common
+    Inductive update_pc_cfc : code_address -> callstack_common -> callstack_common
                               -> Prop :=
     | uupdate_pc:
       forall ehl sp ergs pc pc',
         update_pc_cfc pc' (mk_cf ehl sp pc ergs) (mk_cf ehl sp pc' ergs).
 
-    Inductive update_pc_extcall: code_address -> callframe_external -> callframe_external
+    Inductive update_pc_extcall: code_address -> callstack_external -> callstack_external
                                  -> Prop :=
     | upe_update:
       forall pc' cf cf' this_address msg_sender code_address memory is_static context_u128_value saved_storage_state ss,
@@ -230,7 +199,7 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
              context_u128_value saved_storage_state ss cf')
     .
 
-    Inductive update_pc : code_address -> callframe -> callframe -> Prop :=
+    Inductive update_pc : code_address -> callstack -> callstack -> Prop :=
     | upc_ext:
       forall ecf ecf' tail pc',
         update_pc_extcall pc' ecf ecf' ->
@@ -250,13 +219,13 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
 
   Section TopmostExternalFrame.
 
-    Fixpoint topmost_extframe (ef : callframe) : callframe_external :=
+    Fixpoint topmost_extframe (ef : callstack) : callstack_external :=
       match ef with
       | InternalCall _ tail => topmost_extframe tail
       | ExternalCall x tail => x
       end.
 
-    Inductive topmost_extframe_spec : callframe -> callframe_external -> Prop :=
+    Inductive topmost_extframe_spec : callstack -> callstack_external -> Prop :=
     | te_Top: forall x t, topmost_extframe_spec (ExternalCall x t) x
     | te_Deeper: forall c t f,
         topmost_extframe_spec t f -> topmost_extframe_spec (InternalCall c t) f
@@ -268,13 +237,13 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
     Qed.
 
 
-    Fixpoint change_topmost_extframe f (ef:callframe) : callframe :=
+    Fixpoint change_topmost_extframe f (ef:callstack) : callstack :=
       match ef with
       | InternalCall x tail => InternalCall x (change_topmost_extframe f tail)
       | ExternalCall x tail => ExternalCall (f x) tail
       end.
 
-    Inductive change_topmost_extframe_spec f : callframe -> callframe -> Prop :=
+    Inductive change_topmost_extframe_spec f : callstack -> callstack -> Prop :=
     | ct_base: forall cf t,
         change_topmost_extframe_spec f (ExternalCall cf t) (ExternalCall (f cf) t)
     | ct_ind: forall cf t t',
@@ -292,96 +261,81 @@ Definition cfc_map (f:callframe_common->callframe_common) (ef: callframe) : call
         apply ct_base.
     Qed.
 
-    Definition update_memory_context (ctx:active_pages): callframe -> callframe :=
-      change_topmost_extframe (fun ef => ef <| ecf_memory := ctx |> ).
+    Definition update_memory_context (ctx:mem_ctx): callstack -> callstack :=
+      change_topmost_extframe (fun ef => ef <| ecf_mem_ctx := ctx |> ).
+
+    Definition revert_state (ef:callstack_external) : state_checkpoint :=
+      ef.(ecf_saved_checkpoint).
+
+    
+    Definition current_shard xstack : shard_id := (topmost_extframe xstack).(ecf_shards).(shard_this).
+
+    Definition current_contract xstack : contract_address := (topmost_extframe xstack).(ecf_this_address).
 
   End TopmostExternalFrame.
 
 
   Section ActiveMemory.
-    Definition get_active_pages (ef: callframe) : active_pages :=
-      (topmost_extframe ef).(ecf_memory).
-
-    Definition active_code_id (ef: callframe) : page_id :=
-      (get_active_pages ef).(ctx_code_page_id).
-
-    Definition active_stack_id (ef: callframe) : page_id :=
-      (get_active_pages ef).(ctx_stack_page_id).
-
-    Definition active_const_id (ef: callframe) : page_id :=
-      (get_active_pages ef).(ctx_const_page_id).
-
-    Definition active_heap_id (ef: callframe) : page_id :=
-      (get_active_pages ef).(ctx_heap_page_id).
-
-    Definition active_auxheap_id (ef: callframe) : page_id :=
-      (get_active_pages ef).(ctx_auxheap_page_id).
-
-    Definition heap_bound xstack := (get_active_pages xstack).(ctx_heap_bound).
-    Definition auxheap_bound xstack := (get_active_pages xstack).(ctx_auxheap_bound).
-
-
-    Definition heap_variant_id (page_type: data_page_type)
-      :  callframe -> page_id :=
-      match page_type with
-      | Heap => active_heap_id
-      | AuxHeap => active_auxheap_id
-      end.
-
-    Definition heap_variant_bound (type:data_page_type):  callstack -> mem_address :=
-      match type with
-      | Heap => heap_bound
-      | AuxHeap => auxheap_bound
-      end.
-
-    Context {instruction:Type} (invalid: instruction).
-    Let memory := memory invalid.
-    Let page := page invalid.
-    Let page_has_id := page_has_id invalid.
     
-    Definition active_exception_handler (ef: callframe) : exception_handler :=
-      (cfc ef).(cf_exception_handler_location).
+    Section ActivePageId.
+
+      Context (ef:callstack) (active_extframe := topmost_extframe ef).
+     
+      
+      Definition get_mem_ctx: mem_ctx := (topmost_extframe ef).(ecf_mem_ctx).
+      
+      Definition active_code_id: page_id := get_mem_ctx.(ctx_code_page_id).
+      
+      Definition active_stack_id: page_id := get_mem_ctx.(ctx_stack_page_id).
+      
+      Definition active_const_id: page_id := get_mem_ctx.(ctx_const_page_id).
+
+      Definition active_heap_id : page_id := get_mem_ctx.(ctx_heap_page_id).
+
+      Definition active_auxheap_id : page_id := get_mem_ctx.(ctx_auxheap_page_id).
+
+      Definition heap_bound := get_mem_ctx.(ctx_heap_bound).
+      
+      Definition auxheap_bound := get_mem_ctx.(ctx_auxheap_bound).
+      
+    End ActivePageId.
     
-    Inductive active_codepage : memory -> callframe -> page -> Prop :=
-    | ap_active_code: forall mm ef codepage,
-        page_has_id mm (active_code_id ef) codepage ->
-        active_codepage mm ef codepage.
-    
-    Inductive active_constpage : memory -> callframe -> page -> Prop :=
-    | ap_active_const: forall mm ef constpage,
-        page_has_id  mm (active_const_id ef) constpage ->
-        active_constpage mm ef constpage.
 
-    Inductive active_stackpage : memory -> callframe -> page -> Prop :=
-    | ap_active_stack: forall mm ef stackpage,
-        page_has_id mm (active_stack_id ef) stackpage ->
-        active_stackpage mm ef stackpage.
 
-    Inductive active_heappage : memory -> callframe -> page -> Prop :=
-    | ap_active_heap: forall mm ef heappage,
-        page_has_id mm (active_heap_id ef) heappage ->
-        active_heappage mm ef heappage.
+    Section ActivePages.
+      Context (page_has_id: page_id -> @page pages -> Prop).
+      
+      Definition active_exception_handler (ef: callstack) : exception_handler :=
+        (cfc ef).(cf_exception_handler_location).
 
-    Inductive active_auxheappage : memory -> callframe -> page -> Prop :=
-    | ap_active_auxheap: forall mm ef auxheappage,
-        page_has_id mm (active_auxheap_id ef) auxheappage ->
-        active_auxheappage mm ef auxheappage.
+      
+      Context (ef: callstack) (page_id := fun i => page_has_id (i ef)).
+      
+      Inductive active_codepage : code_page _ -> Prop :=
+      | ap_active_code: forall codepage,
+          page_id active_code_id (CodePage codepage) ->
+          active_codepage codepage.
+      
+      Inductive active_constpage : const_page -> Prop :=
+      | ap_active_const: forall constpage,
+          page_id  active_const_id (ConstPage constpage) ->
+          active_constpage  constpage.
 
-    Definition heap_variant_page_id (page_type: data_page_type)
-      : callframe -> page_id :=
-      match page_type with
-      | Heap => active_heap_id
-      | AuxHeap => active_auxheap_id
-      end.
+      Inductive active_stackpage : stack_page -> Prop :=
+      | ap_active_stack: forall  stackpage,
+          page_id active_stack_id (StackPage stackpage) ->
+          active_stackpage stackpage.
 
-    Definition heap_variant_page (page_type: data_page_type)
-      : memory -> callframe -> page -> Prop :=
-      match page_type with
-      | Heap => active_heappage
-      | AuxHeap => active_auxheappage
-      end.
-    Definition current_shard xstack : shard_id := (topmost_extframe xstack).(ecf_shards).(shard_this).
+      Inductive active_heappage : data_page -> Prop :=
+      | ap_active_heap: forall p,
+          page_id active_heap_id (DataPage p) ->
+          active_heappage p.
 
-    Definition current_contract xstack : contract_address := (topmost_extframe xstack).(ecf_this_address).
-    
+      Inductive active_auxheappage : data_page -> Prop :=
+      | ap_active_auxheap: forall p,
+          page_id active_auxheap_id (DataPage p) ->
+          active_auxheappage p.
+    End ActivePages.
+
   End ActiveMemory.
+End Stack.  

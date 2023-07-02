@@ -195,3 +195,8 @@ Definition merge_bytes (bits resbits: nat) (ls: list (int_mod bits)) : int_mod r
   int_mod_of resbits
     (concat_bytes_Z bits only_zs).
 
+
+Inductive extract_address {word_bits} (addr_bits: nat) : int_mod word_bits-> int_mod addr_bits -> Prop :=
+|ea_extract: forall val val_adj,
+    val_adj = ZMod.resize word_bits addr_bits val ->
+    extract_address addr_bits val val_adj.

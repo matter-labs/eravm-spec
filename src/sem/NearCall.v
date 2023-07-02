@@ -1,10 +1,12 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Addressing Common Condition CallStack Ergs MemoryOps Memory Instruction State ZMod
-  ABI ABI.NearCall Addressing.Coercions SemanticCommon.
+Import Addressing Common Coder Core Condition CallStack GPR Ergs MemoryOps Memory Instruction State ZMod
+  ABI ABI.NearCall Addressing.Coercions PrimitiveValue SemanticCommon.
 
-(**
+Section Def.
+  Open Scope ZMod_scope.
+  (**
 
 ## NearCall
 
@@ -56,18 +58,18 @@ Record params := {
 
    - The current balance of the caller frame.
    - The value of `ergs_passed`.
- *)
+   *)
 
-Definition split_ergs_callee_caller (ergs_passed balance:ergs) : ergs * ergs :=
-  if ergs_passed == zero32 then (balance, zero32) else
-    match balance - ergs_passed with
-    | (remaining, false) => (ergs_passed, remaining)
-    | (remaining, true) => (balance, zero32)
-    end.
+  Definition split_ergs_callee_caller (ergs_passed balance:ergs) : ergs * ergs :=
+    if ergs_passed == zero32 then (balance, zero32) else
+      match balance - ergs_passed with
+      | (remaining, false) => (ergs_passed, remaining)
+      | (remaining, true) => (balance, zero32)
+      end.
 
-Section Defs.
-  
-  (**
+  Section Defs.
+    
+    (**
 Explanation for [split_ergs_caller_callee]:
 
 - if `ergs_passed` = 0, pass all available ergs to the callee and set
@@ -98,32 +100,30 @@ the caller.
    - new SP is copied from the old frame as is.
 5. Clear flags.
 
-   *)
-  
-  Context (regs: regs_state) (pgs: memory) (xstack: callstack).
+     *)
+    
+    Context (regs: regs_state) (mem: memory) (cs: callstack).
+    
+    Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
+    | step_NearCall_pass_some_ergs:
+      forall (abi_params_arg:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
+        (passed_ergs callee_ergs caller_ergs:ergs)
+        (abi_tag: bool)
+        (new_caller:callstack) (new_frame:callstack_common),
+        
+        load_reg regs abi_params_arg (mk_pv abi_tag abi_params_value) ->
 
-  Let fetch := resolve_load xstack (regs,pgs).
-  
-  Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
-  | step_NearCall_pass_some_ergs:
-    forall (abi_params_op:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
-      (passed_ergs callee_ergs caller_ergs:ergs)
-      (abi_tag: bool)
-      (new_caller:callframe) (new_frame:callframe_common),
+        Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
 
-      fetch abi_params_op (mk_pv abi_tag abi_params_value) ->
+        (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
+        
+        new_caller = ergs_set caller_ergs cs ->
+        new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs ->
+        
+        step_nearcall (OpNearCall abi_params_arg (Imm call_addr) (Imm expt_handler))
+          (flags_clear, InternalCall new_frame new_caller).
 
-      Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
-
-      (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining xstack) ->
-      
-      new_caller = ergs_set caller_ergs xstack ->
-      new_frame = mk_cf expt_handler (sp_get xstack) call_addr callee_ergs ->
-      
-      step_nearcall (OpNearCall abi_params_op (Imm call_addr) (Imm expt_handler))
-        (flags_clear, InternalCall new_frame new_caller).
-
-(**
+  (**
 
 
 ### Affected parts of VM state
@@ -159,29 +159,30 @@ the caller.
 
 
 - See [OpFarCall], [OpMimicCall], [OpDelegateCall]. They are used to call code of other contracts.
- *)
-End Defs.
+   *)
+  End Defs.
 
-Inductive step: instruction -> smallstep :=
-| step_NearCall:
-  forall flags memory xstack regs (abi_params_op:in_reg) new_flags new_xstack ins s1 s2,
+  Inductive xstep: instruction -> xsmallstep :=
+  | step_NearCall:
+    forall flags memory cs regs (abi_params_op:in_reg) new_flags new_cs ins,
 
-    step_nearcall regs memory xstack ins (new_flags, new_xstack) ->
-    step_xstate
-      {|
-           gs_flags        := flags;
-           gs_callstack    := xstack;
-
-
-           gs_regs         := regs;
-           gs_pages        := memory;
-         |}
-         {|
-           gs_flags        := new_flags;
-           gs_callstack    := new_xstack;
+      step_nearcall regs cs ins (new_flags, new_cs) ->
+      xstep  ins
+        {|
+          gs_flags        := flags;
+          gs_callstack    := cs;
 
 
-           gs_regs         := regs;
-           gs_pages        := memory;
-         |} s1 s2 ->
-    step ins s1 s2.
+          gs_regs         := regs;
+          gs_pages        := memory;
+        |}
+        {|
+          gs_flags        := new_flags;
+          gs_callstack    := new_cs;
+
+
+          gs_regs         := regs;
+          gs_pages        := memory;
+        |}.
+      
+End Def.

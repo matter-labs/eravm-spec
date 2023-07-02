@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing ABI Bool Common Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations MetaParameters.
+  Addressing.Coercions PrimitiveValue Storage SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
 
@@ -38,8 +38,8 @@ Store word in current storage by key.
 *)
 | step_SStore:
   forall flags pages xstack context_u128 regs (arg_key: in_reg) (arg_dest_value: out_reg)
-    new_regs new_pages new_xstack key new_depot write_value gs new_gs,
-    resolve_load_word xstack (regs,pages) arg_key key ->
+    new_regs new_xstack key new_depot write_value gs new_gs __ ,
+    load_reg regs arg_key (mk_pv __ key) ->
 
     (* there are currently no refunds *)
     let fqa_storage := mk_fqa_key (current_storage_fqa xstack) key in
@@ -50,7 +50,7 @@ Store word in current storage by key.
 
     pay (ergs_of (net_pubdata xstack)) xstack new_xstack ->
     
-    resolve_store xstack (regs, pages) arg_dest_value (IntValue write_value) (new_regs, new_pages) ->
+    store_reg regs arg_dest_value (IntValue write_value) new_regs ->
     
     step (OpSLoad arg_key arg_dest_value)
          {|
@@ -68,7 +68,7 @@ Store word in current storage by key.
          {|
            gs_xstate := {|
                          gs_regs         := new_regs;
-                         gs_pages        := new_pages;
+                         gs_pages        := pages;
                          gs_callstack    := new_xstack;
                          gs_flags        := flags;
                        |};

@@ -61,5 +61,9 @@ Definition MIN_STORAGE_WRITE_COST: Z := Z.max
                                          MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION
                                          STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS.
 
+Definition INITIAL_STORAGE_WRITE_PUBDATA_BYTES: Z := 64.
+Definition REPEATED_STORAGE_WRITE_PUBDATA_BYTES: Z := 40.
+Definition L1_MESSAGE_PUBDATA_BYTES: Z := (1 + 1 + 2 + 20 + 32 + 32).
+
 Definition growth_cost (diff:mem_address) : ergs := diff.
 End Ergs.

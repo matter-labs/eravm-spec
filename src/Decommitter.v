@@ -1,6 +1,6 @@
-Require Common ABI lib.Decidability Log MemoryOps VersionedHash.
+Require Common ABI lib.Decidability Log MemoryOps VersionedHash Storage.
 
-Import Log VersionedHash Common Decidability Ergs MemoryOps Memory MemoryBase ZArith ZMod ABI.
+Import Coder Log VersionedHash Common Decidability Ergs Memory MemoryBase Storage ZArith ZMod ABI.
 (** A separate code storage. It is an abstraction, because in the current *)
 (** implementation it is a part of a decommitter. *)
 
@@ -21,7 +21,7 @@ Section Defs.
 
   Definition code_storage: Type := mem_parameterized code_storage_params.
 
-  Record code_manager :=
+  Record decommitter :=
     mk_code_mgr {
         cm_storage: code_storage;
         cm_fresh: log versioned_hash;
@@ -56,7 +56,7 @@ Section Defs.
       code_fetch d cs sid contract_addr masking (vhash, page_init, code_length_in_words) 
   | cfnm_masking: forall (code_storage:code_storage) code_length_in_words,
       code_fetch_hash d cs sid contract_addr None ->
-      code_fetch d cs sid contract_addr true (DEFAULT_AA_VHASH, DEFAULT_AA_CODE _ invalid_ins,code_length_in_words).
+      code_fetch d cs sid contract_addr true (DEFAULT_AA_VHASH, DEFAULT_AA_CODE invalid_ins,code_length_in_words).
 
   
     

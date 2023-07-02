@@ -2,8 +2,8 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing ABI Bool Common Condition Ergs CallStack Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations ABI.MetaParameters.
+Import Addressing ABI Bool Coder Core Common Condition Ergs CallStack Memory MemoryOps Instruction State ZMod
+  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParameters.
 
 (**  
 
@@ -52,27 +52,27 @@ See [OpContextCaller], [OpContextCodeAddress].
 Inductive step: instruction -> smallstep :=
 
 | step_ContextThis:
-  forall flags pages xstack regs (out_arg:out_reg) this_addr new_regs s1 s2,
+  forall flags mem cs regs (out_arg:out_reg) this_addr new_regs s1 s2,
 
-    resolve_store xstack (regs,pages)
-      out_arg (IntValue this_addr)
-      (new_regs, pages) ->
-    this_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_this_address) ->
+    store_reg regs out_arg (IntValue this_addr) new_regs ->
+    
+    this_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_this_address) ->
 
-    step_xstate
+    
+    step_xstate_only
       {|
         gs_regs         := regs;
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
       {|
         gs_regs         := new_regs;
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextThis out_arg) s1 s2
@@ -120,28 +120,30 @@ See [OpContextThis], [OpContextCodeAddress].
 
  *)
 | step_ContextCaller:
-  forall flags pages xstack regs (out_arg:out_reg) sender_addr new_regs new_pages s1 s2,
-    resolve_store xstack (regs,pages)
+  forall flags cs regs (out_arg:out_reg) sender_addr new_regs mem s1 s2,
+    store_reg regs
       out_arg (IntValue sender_addr)
-      (new_regs, new_pages) ->
+      new_regs ->
     
-    sender_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_msg_sender) ->
+    sender_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_msg_sender) ->
 
-    step_xstate
+    step_xstate_only
       {|
         gs_regs         := regs;
-        gs_pages        := pages;
+
         
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
       {|
         gs_regs         := new_regs;
-        gs_pages        := new_pages;
+
 
         
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextCaller out_arg) s1 s2
@@ -189,27 +191,27 @@ See [OpContextThis], [OpContextCaller].
 
  *)
 | step_ContextCodeAddress:
-  forall flags  pages xstack regs (out:out_reg) code_addr new_regs new_pages s1 s2,
-    resolve_store xstack (regs,pages)
-      out (IntValue code_addr) (new_regs, new_pages) ->
+  forall flags  cs regs (out:out_reg) code_addr new_regs mem s1 s2,
+    store_reg regs out (IntValue code_addr) new_regs ->
     
-    code_addr = resize contract_address_bits word_bits (topmost_extframe xstack).(ecf_code_address) ->
+    code_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_code_address) ->
     
-    step_xstate
+    step_xstate_only
       {|
         gs_regs         := regs;
-        gs_pages        := pages;
+        gs_pages        := mem;
         
-        gs_callstack    := xstack;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
       {|
         gs_regs         := new_regs;
-        gs_pages        := new_pages;
+
 
         
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextCodeAddress out) s1 s2
@@ -259,17 +261,16 @@ The `context` instruction family.
 
  *)
 | step_ContextErgsLeft:
-  forall flags pages xstack regs (out_arg:out_reg) balance new_regs s1 s2,
-    resolve_store xstack (regs,pages)
-      out_arg (IntValue balance) (new_regs, pages) ->
+  forall flags mem cs regs (out_arg:out_reg) balance new_regs s1 s2,
+    store_reg regs out_arg (IntValue balance) new_regs ->
     
-    balance = resize _ word_bits (ergs_remaining xstack) ->
-    step_xstate
+    balance = resize _ word_bits (ergs_remaining cs) ->
+    step_xstate_only
       {|
         gs_regs         := regs;
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
@@ -277,8 +278,8 @@ The `context` instruction family.
         gs_regs         := new_regs;
 
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
 
@@ -328,27 +329,28 @@ The `context` instruction family.
 
  *)
 | step_ContextSP:
-  forall flags  pages xstack regs (out_arg:out_reg) sp new_regs new_pages s1 s2,
-    resolve_store xstack (regs,pages)
-      out_arg (IntValue sp) (new_regs, new_pages) ->
+  forall flags  cs regs (out_arg:out_reg) sp new_regs mem s1 s2,
+    store_reg regs out_arg (IntValue sp) new_regs ->
     
-    sp = resize _ word_bits (sp_get xstack) ->
+    sp = resize _ word_bits (sp_get cs) ->
     
-    step_xstate
+    step_xstate_only
       {|
         gs_regs         := regs;
-        gs_pages        := pages;
+        gs_pages        := mem;
         
-        gs_callstack    := xstack;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
       {|
         gs_regs         := new_regs;
-        gs_pages        := new_pages;
 
         
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+
+        
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextSp out_arg) s1 s2
@@ -397,27 +399,26 @@ Does not interact with the context register.
 
  *) 
 | step_ContextGetContextU128:
-  forall flags pages xstack regs (out_arg:out_reg) new_regs new_pages wcontext s1 s2,
-    resolve_store xstack (regs,pages)
-      out_arg (IntValue wcontext) (new_regs, new_pages) ->
+  forall flags cs regs (out_arg:out_reg) new_regs mem wcontext s1 s2,
+    store_reg regs out_arg (IntValue wcontext) new_regs ->
 
     wcontext = resize _ word_bits (gs_context_u128 s1) ->  
     
-    step_xstate
+    step_xstate_only
       {|
         gs_regs         := regs;
-        gs_pages        := pages;
+        gs_pages        := mem;
         
-        gs_callstack    := xstack;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
       {|
         gs_regs         := new_regs;
-        gs_pages        := new_pages;
+        gs_pages        := mem;
 
         
-        gs_callstack    := xstack;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextGetContextU128 out_arg) s1 s2
@@ -468,8 +469,8 @@ Does not interact with the captured context value in the active external frame.
 
  *)
 | step_ContextSetContextU128:
-  forall gs pages xstack old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128 xstate,
-    resolve_load xstack (regs,pages) in_arg (mk_pv any_tag val) ->
+  forall gs old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128 xstate,
+    load_reg regs in_arg (mk_pv any_tag val) ->
 
     new_context_u128 = resize word_bits 128 val ->
     step (OpContextSetContextU128 in_arg)
@@ -539,31 +540,31 @@ Record params := {
 
  *)
 | step_ContextMeta:
-  forall flags  pages xstack regs (out_arg:out_reg) new_regs meta_encoded
+  forall flags  mem cs regs (out_arg:out_reg) new_regs meta_encoded
     (s1 s2: state),
-    resolve_store xstack (regs,pages)
+    store_reg regs
       out_arg (IntValue meta_encoded)
-      (new_regs, pages) ->
+      new_regs ->
 
-    let shards := (topmost_extframe xstack).(ecf_shards) in 
+    let shards := (topmost_extframe cs).(ecf_shards) in 
     meta_encoded =
       MetaParameters.ABI.(encode)
                            {|
                              ergs_per_pubdata_byte := gs_current_ergs_per_pubdata_byte s1;
-                             heap_size := heap_bound xstack;
-                             aux_heap_size := auxheap_bound xstack;
+                             heap_size := heap_bound cs;
+                             aux_heap_size := auxheap_bound cs;
                              this_shard_id := shard_this shards;
                              caller_shard_id := shard_caller shards;
                              code_shard_id := shard_code shards;
                            |} ->
     
-    step_xstate
+    step_xstate_only
       {|
         gs_regs         := regs;
 
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
         
       |}
@@ -571,8 +572,8 @@ Record params := {
         gs_regs         := new_regs;
 
         
-        gs_pages        := pages;
-        gs_callstack    := xstack;
+        gs_pages        := mem;
+        gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextMeta out_arg) s1 s2
@@ -620,7 +621,7 @@ Utility in system contracts.
          
 | step_ContextIncTx:
   forall context_u128 gs new_gs xstate,
-    global_state_increment_tx gs new_gs -> 
+    global_state_increment_tx tx_inc gs new_gs -> 
     step OpContextIncrementTxNumber
          {|
            gs_xstate       := xstate;
@@ -675,9 +676,9 @@ Utility in system contracts.
  *)
          
 | step_ContextSetErgsPerPubdata:
-  forall gs new_gs pages context_u128 regs (in_arg:in_reg) any_tag new_val (new_val_arg:in_reg) xstate ,
+  forall gs new_gs context_u128 regs (in_arg:in_reg) any_tag new_val (new_val_arg:in_reg) xstate ,
 
-    resolve_load xstate.(gs_callstack) (regs, pages) in_arg (mk_pv any_tag new_val) ->
+    load_reg regs in_arg (mk_pv any_tag new_val) ->
 
     let new_ergs := resize _ ergs_bits new_val in
     new_gs = gs <| gs_global ::= (fun s => s <| gs_current_ergs_per_pubdata_byte := new_ergs |> ) |> ->

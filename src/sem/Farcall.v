@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Ergs Condition CallStack Memory Instruction State MemoryOps ABI SemanticCommon.
+Require Common Decommitter Ergs Condition CallStack Memory Instruction State MemoryOps ABI SemanticCommon.
 
 Import
   BinIntDef.Z
@@ -13,16 +13,19 @@ Import
 Import
   Addressing
     ABI ABI.FarCall ABI.FatPointer
-    CodeStorage
+    Decommitter 
     Common
+    Core
+    Coder
     Condition
-    CodeStorage
+    GPR
     Ergs
     CallStack
     Memory
     MemoryBase
     MemoryOps
-    Pages
+    MemoryContext
+    PrimitiveValue
     RecordSetNotations
     SemanticCommon
     State.
@@ -55,7 +58,8 @@ VM state is described through the following main predicates:
 If you know about fetching operands for instructions and the instruction fetching described in [Semantics.step], start investigating farcalls from the [farcall] predicate.
  *)
 Section Parameters.
-  Open Scope Z.
+  Open Scope Z_scope.
+  Open Scope ZMod_scope.
 
   (**
 
@@ -115,7 +119,7 @@ Far call creates a new execution context with new pages for:
 
 The initial bounds for the new heap and auxheap pages are set to [NEW_FRAME_MEMORY_STIPEND].
  *)
-Inductive alloc_pages_extframe:  (memory * active_pages) -> code_page -> memory * active_pages -> Prop :=
+Inductive alloc_pages_extframe:  (memory * mem_ctx) -> code_page -> memory * mem_ctx -> Prop :=
 | ape_alloc: forall code mm ctx code_id const_id stack_id heap_id heap_aux_id,
     code_id = length mm ->
     (const_id = code_id + 1)%nat ->
@@ -123,11 +127,11 @@ Inductive alloc_pages_extframe:  (memory * active_pages) -> code_page -> memory 
     (heap_id = code_id + 3)%nat ->
     (heap_aux_id = code_id + 4)%nat ->
     alloc_pages_extframe (mm,ctx) code
-      ( (heap_aux_id, (DataPage _ (empty _)))::
-          (heap_id, (DataPage _ (empty _)))::
-          (stack_id, (StackPage _ (empty _)))::
-          (const_id,(ConstPage _ (empty _)))::
-          (code_id,(CodePage _ code))::mm,
+      ( (heap_aux_id, (@DataPage era_pages (empty _)))::
+          (heap_id, (@DataPage era_pages (empty _)))::
+          (stack_id, (@StackPage era_pages (empty _)))::
+          (const_id,(@ConstPage era_pages (empty _)))::
+          (code_id,(@CodePage era_pages  code))::mm,
         {|
           ctx_code_page_id := code_id;
           ctx_const_page_id := const_id;
@@ -143,10 +147,10 @@ Far call to a contract decommits the contract's code to a fresh code page.
 If the code was already decommitted in the current block, this operation is free.
 Otherwise, it costs the amount of ergs proportionate to the code size (in words).
  *)
-Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_length): ergs -> Prop :=
+Inductive decommitment_cost (cm:decommitter) vhash (code_length_in_words: code_length): ergs -> Prop :=
 |dc_fresh: forall cost,
     is_fresh _ cm vhash = true->
-    (cost, false) = Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
+    (cost, false) = umul_overflow _ Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT (resize _ _ code_length_in_words) ->
     decommitment_cost cm vhash code_length_in_words cost
 |dc_not_fresh:
   is_fresh _  cm vhash = false ->
@@ -155,11 +159,11 @@ Inductive decommitment_cost (cm:code_manager) vhash (code_length_in_words: code_
 (** Fetch code and pay the associated cost. If [masking_allowed] is true and there is no code
 associated with a given contract address, then the default AA code will be
 fetched. See [code_fetch]. *)
-Inductive paid_code_fetch masking_allowed sid: depot -> code_manager -> contract_address
+Inductive paid_code_fetch masking_allowed sid: depot -> decommitter -> contract_address
                                            -> callstack -> callstack * code_page
                                            ->Prop :=
 | cfp_apply:
-  forall depot (codes:code_manager) (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
+  forall depot (codes:decommitter) (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm xstack0 xstack1,
 
     code_fetch _ depot codes.(cm_storage _) sid dest_addr masking_allowed (vhash, new_code_page, code_length) ->
     decommitment_cost codes vhash code_length cost__decomm ->
@@ -324,25 +328,25 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
   let enc_ptr := FatPointer.ABI.(encode) ptr in
   if is_system then
     regs
-      <| gprs_r1 := PtrValue enc_ptr |>
-      <| gprs_r2 := far_call_r2      |>
+      <| r1 := PtrValue enc_ptr |>
+      <| r2 := far_call_r2      |>
 (* In system calls, preserve values in r3-r13 but clear ptr tags *)
-      <| gprs_r3 ::= clear_pointer_tag |>
-      <| gprs_r4 ::= clear_pointer_tag |>
-      <| gprs_r5 ::= clear_pointer_tag |>
-      <| gprs_r6 ::= clear_pointer_tag |>
-      <| gprs_r7 ::= clear_pointer_tag |>
-      <| gprs_r8 ::= clear_pointer_tag |>
-      <| gprs_r9 ::= clear_pointer_tag |>
-      <| gprs_r10 ::= clear_pointer_tag |>
-      <| gprs_r11 ::= clear_pointer_tag |>
-      <| gprs_r12 ::= clear_pointer_tag |>
-      <| gprs_r13 ::= clear_pointer_tag |>
+      <| r3 ::= clear_pointer_tag |>
+      <| r4 ::= clear_pointer_tag |>
+      <| r5 ::= clear_pointer_tag |>
+      <| r6 ::= clear_pointer_tag |>
+      <| r7 ::= clear_pointer_tag |>
+      <| r8 ::= clear_pointer_tag |>
+      <| r9 ::= clear_pointer_tag |>
+      <| r10 ::= clear_pointer_tag |>
+      <| r11 ::= clear_pointer_tag |>
+      <| r12 ::= clear_pointer_tag |>
+      <| r13 ::= clear_pointer_tag |>
       (* zero the rest *)
-      <| gprs_r14 := pv0 |>
-      <| gprs_r15 := pv0 |>
+      <| r14 := IntValue word0 |>
+      <| r15 := IntValue word0 |>
   else
-    regs_state_zero <| gprs_r1 := PtrValue enc_ptr |>.
+    regs_state_zero <| r1 := PtrValue enc_ptr |>.
 (*
 10. Form a new execution stack frame:
 
@@ -419,13 +423,12 @@ Section Def.
   Context (type:farcall_type) (dest_addr:contract_address) (handler_addr: code_address)
     (call_as_static: bool) (to_abi_shard: bool) (abi_ptr_tag: bool).
 
-  Context (xstack0: callstack).
+  Context (xstack0: callstack)
+    (old_extframe := topmost_extframe xstack0)
+    (mem_ctx0 := old_extframe.(ecf_mem_ctx))
+    (current_contract := old_extframe.(ecf_this_address))
+  .
   
-  Let old_extframe := topmost_extframe xstack0.
-  Let mem_ctx0 := old_extframe.(ecf_memory).
-  Let current_contract := old_extframe.(ecf_this_address).
-  
-  (* Not implemented yet: shards *)
   Inductive farcall : FarCall.params -> state -> state -> Prop :=
   | farcall_fwd_fatptr: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack gs reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr abi_shard ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
       let is_system := addr_is_kernel dest_addr && is_syscall_query in
@@ -444,7 +447,7 @@ Section Def.
                            ecf_context_u128_value := select_ctx type reg_context_u128 old_extframe.(ecf_context_u128_value);
 
                            ecf_code_address := dest_addr;
-                           ecf_memory := new_mem_ctx;
+                           ecf_mem_ctx := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
@@ -496,7 +499,7 @@ Section Def.
       paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward (Ret.UseMemory page_type) (in_ptr, xstack1) (out_ptr, xstack2) ->
       
-      let mem_ctx1 := (topmost_extframe xstack2).(ecf_memory) in
+      let mem_ctx1 := (topmost_extframe xstack2).(ecf_mem_ctx) in
       alloc_pages_extframe (old_pages, mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
@@ -507,7 +510,7 @@ Section Def.
 
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
                            ecf_code_address := dest_addr;
-                           ecf_memory:= new_mem_ctx;
+                           ecf_mem_ctx := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
                            ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_common := {|
@@ -554,42 +557,39 @@ Section Def.
 End Def.
 
 Inductive fetch_operands abi dest handler:
-  (contract_address * exception_handler * bool *  FarCall.params) -> Prop:=
+  (contract_address * exception_handler * bool *  FarCall.params * callstack) -> Prop:=
 
-| farcall_fetch: forall handler_location dest_val abi_val (abi_ptr_tag:bool) abi_params gs abi_ptr_tag,
-    let resolve_loads := resolve_loads gs.(gs_callstack) (gs.(gs_regs),gs.(gs_pages)) in
-
-    resolve_loads [
+| farcall_fetch: forall handler_location dest_val abi_val (abi_ptr_tag:bool) abi_params gs abi_ptr_tag cs1,
+    load_regs (gs_regs gs) [
         (dest,dest_val);
-        (abi, mk_pv abi_ptr_tag abi_val);
-        (handler, IntValue handler_location)]
+        (abi, mk_pv abi_ptr_tag abi_val)] 
     ->
-
+      handler = Imm handler_location ->
     FarCall.ABI.(decode) abi_val = Some abi_params ->
 
     let dest_addr := resize _ 160 dest_val.(value) in
     let handler_addr := resize _ code_address_bits handler_location in
-    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params).
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1).
 
 Inductive step : instruction -> smallstep :=
   
-| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state),
+| step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) cs1,
 
-    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
-    farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1)->
+    farcall Normal dest_addr handler_addr call_as_static abi_ptr_tag call_shard cs1 abi_params gs gs' ->
 
     step (OpFarCall abi dest handler call_shard call_as_static) gs gs'
 
-| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard,
+| step_mimic: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard cs1,
 
-    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
-    farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1)->
+    farcall Mimic dest_addr handler_addr call_as_static abi_ptr_tag call_shard cs1 abi_params gs gs' ->
 
     step (OpMimicCall abi dest handler call_shard call_as_static) gs gs'
-| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard,
+| step_delegate: forall (handler:imm_in) (abi dest:in_reg) call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) call_shard cs1,
 
-    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params)->
-    farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag call_shard gs.(gs_callstack) abi_params gs gs' ->
+    fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1)->
+    farcall Delegate dest_addr handler_addr call_as_static abi_ptr_tag call_shard cs1 abi_params gs gs' ->
 
     step (OpDelegateCall abi dest handler call_shard  call_as_static) gs gs'
 .

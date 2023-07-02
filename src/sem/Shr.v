@@ -1,10 +1,10 @@
 Require sem.Bitwise.
-Import Addressing ZArith Common Instruction Memory ZMod
-  Addressing.Coercions SemanticCommon sem.Bitwise.
+Import Addressing ZArith Core Common Instruction Memory ZMod
+  Addressing.Coercions PrimitiveValue SemanticCommon sem.Bitwise.
 
 Section Def.
   Open Scope ZMod_scope.
-  Inductive step: instruction -> smallstep :=
+  Inductive step: instruction -> xsmallstep :=
   (**
 # Shr
 
@@ -29,7 +29,7 @@ Bitwise left shift of `in1` by the number of binary digits specified by the lowe
 
 Follows the scheme described in [binop_state_bitwise_effect_spec].
 
-- result is computed as `in1 << (in2 mod 256)`
+- result is computed as `in1 >> (in2 mod 256)`
 - flags are computed as follows:
    - `EQ` is set if $result = 0$.
    - other flags are reset
@@ -37,7 +37,7 @@ Follows the scheme described in [binop_state_bitwise_effect_spec].
 Reminder: flags are only set if `set_flags` modifier is set. *)
   | step_Shr:
     forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs' shift,
-      binop_state_bitwise_effect_spec in1 in2 out mod_swap mod_sf
+      binop_bitwise_effect_spec in1 in2 out mod_swap mod_sf
         (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
       shift = resize _ word_bits (resize _ 8 y) ->
       result = shiftr _ x shift ->

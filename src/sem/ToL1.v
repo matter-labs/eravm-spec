@@ -3,19 +3,21 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing ABI Bool Common Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations MetaParameters.
+  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
+Section Def.
 
+  Open Scope ZMod_scope.
 
 Inductive step: instruction -> smallstep :=
 
 | step_ToL1:
-  forall flags pages xstack new_xstack context_u128 regs (arg_key: in_reg) (arg_value: in_reg) _tagk _tagv is_first 
-    new_regs new_pages key value gs new_gs cost,
-    resolve_loads xstack (regs, pages) [
-        (InReg arg_key, mk_pv _tagk key);
-        (InReg arg_value, mk_pv _tagv value)
+  forall flags pages xstack new_xstack context_u128 regs (arg_key: in_reg) (arg_value: in_reg) is_first 
+    new_regs new_pages key value gs new_gs cost __ ___,
+    load_regs regs [
+        (arg_key, mk_pv __ key);
+        (arg_value, mk_pv ___ value)
       ] ->
 
     (cost, false) = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
@@ -56,3 +58,4 @@ Inductive step: instruction -> smallstep :=
            gs_context_u128 := context_u128;
          |}
          .
+End Def.

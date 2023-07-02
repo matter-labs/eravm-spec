@@ -2,13 +2,12 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
+Import Addressing Bool Core Common Condition GPR CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions SemanticCommon RecordSetNotations.
 
 Section Def.
   
-Context (regs: regs_state) (old_memory:memory) (xstack: callstack).
-Let resolve := resolve_load xstack (regs,old_memory).
+Context (regs: regs_state) (mem:memory) (cs: callstack).
 
 Inductive step_jump: instruction -> callstack -> Prop :=
 (**
@@ -35,15 +34,13 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 - Assign to current PC the fetched value truncated to [code_address_bits] bits.
  *)
 | step_jump_apply:
-  forall (dest:in_any) (dest_val: word) (any_tag: bool)
-    (new_xstack: callstack),
-    
-    resolve dest (mk_pv any_tag dest_val) ->
-      
+  forall (dest:in_any) (dest_val: word) (any_tag: bool) (new_cs: callstack),
+
+    load_int _ regs cs mem dest new_cs dest_val ->
     let dest_addr := resize _ code_address_bits dest_val in
-    new_xstack = pc_set dest_addr xstack ->
+    new_cs = pc_set dest_addr cs ->
     
-    step_jump (OpJump dest) new_xstack.
+    step_jump (OpJump dest) new_cs.
 
 (**
 
@@ -67,7 +64,8 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 End Def.
  
 Inductive step: instruction -> smallstep :=
-| step_Jump: forall regs memory xstack new_xstack ins s1 s2,
-  step_jump regs memory xstack ins new_xstack->
-  step_xstack xstack new_xstack s1 s2 ->
-  step ins s1 s2.
+| step_Jump: forall ins (s1 s2:state),
+    let regs := gs_regs s1 in
+    let mem := gs_pages s1 in
+    step_callstack (fun cs => step_jump regs mem cs ins) s1 s2 ->
+    step ins s1 s2.

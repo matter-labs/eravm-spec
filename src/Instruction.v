@@ -1,6 +1,6 @@
-Require Addressing Common Condition Memory Pages Ergs.
+Require Addressing Common Condition Memory Ergs.
 
-Import Addressing Common Condition Memory Pages Ergs.
+Import Addressing Common Condition Memory Ergs.
 
 (** - This file describes the syntax of assembly instructions.
  - The instruction semantics is described in a different place; see [step]. 
@@ -74,10 +74,15 @@ Two modifiers are commonly encountered:
   | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
 
   (*               quasi fat pointer + forwarding mode *)
-  | OpRet         (args: in_reg) (label: option code_address)
+  | OpNearRet
+  | OpNearRetTo      (label: code_address)
+  | OpFarRet         (args: in_reg)
   (*               quasi fat pointer + forwarding mode *)
-  | OpRevert      (args: in_reg) (label: option code_address)
-  | OpPanic       (label: option code_address)
+  | OpNearRevert  
+  | OpNearRevertTo(label: code_address)
+  | OpFarRevert   (args: in_reg)
+  | OpNearPanicTo (label: code_address)
+  | OpPanic
 
   | OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
   | OpPtrSub      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
@@ -178,7 +183,10 @@ Basic costs of all instructions. They get deducted when the instruction starts e
                              + STORAGE_SORTER_COST_IN_ERGS
                              + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
 
-     | OpRet _ _ | OpRevert _ _ | OpPanic _ => AVERAGE_OPCODE_ERGS
+     | OpNearRet | OpNearRetTo _ | OpNearRevert | OpNearRevertTo _ | OpNearPanicTo _
+     | OpFarRet _ | OpFarRevert _
+     | OpPanic
+       => AVERAGE_OPCODE_ERGS
      | OpPtrAdd _ _ _ _
      | OpPtrSub _ _ _ _
      | OpPtrShrink _ _ _ _

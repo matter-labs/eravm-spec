@@ -3,8 +3,8 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon Addressing.
 
 
-Import ABI Addressing Bool Common Condition CallStack Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon Pages State RecordSetNotations ZArith ZMod.
+Import ABI Addressing Bool Core Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
+  Addressing.Coercions SemanticCommon MemoryContext Pointer PrimitiveValue State RecordSetNotations ZArith ZMod.
 
 Import FatPointer.
 Import List ListNotations.
@@ -12,13 +12,10 @@ Import Addressing.Coercions.
 
 
 Section Defs.
-  
-  Context (old_regs: regs_state) (old_xstack: callstack) (old_pages:memory).
-  Let fetch := resolve_load old_xstack (old_regs, old_pages).
-  Let fetch_word := resolve_load_word old_xstack (old_regs,old_pages).
-  Let stores := resolve_stores old_xstack (old_regs,old_pages).
-  
-  Inductive step_store: instruction -> regs_state * callstack * memory -> Prop :=
+ Open Scope ZMod_scope. 
+
+ Inductive step: instruction -> xsmallstep :=
+
 (**
 # Store
 
@@ -64,12 +61,14 @@ Record fat_ptr :=
 *)
     
   | step_Store:
-    forall new_xstack heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_pages selected_page in_ptr query modified_page,
+    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page in_ptr query modified_page cs regs mem __ ___,
 
-      let selected_page_id := heap_variant_id heap_variant old_xstack in
+      let selected_page_id := heap_variant_id heap_variant cs in
 
-      fetch_word arg_enc_ptr enc_ptr ->
-      fetch_word arg_val value ->
+      loads _ regs cs mem [
+         (in_regimm_incl arg_enc_ptr, mk_pv __ enc_ptr) ;
+         (InReg          arg_val, mk_pv ___ value) 
+          ] cs ->
       
       ABI.(decode) enc_ptr = Some in_ptr ->
       
@@ -77,16 +76,33 @@ Record fat_ptr :=
       let addr := in_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
       
-      heap_variant_page _ heap_variant old_pages old_xstack (DataPage _ selected_page) ->
+      heap_variant_page heap_variant cs mem selected_page ->
 
       word_upper_bound in_ptr query ->
-      grow_and_pay heap_variant query old_xstack new_xstack ->
+      grow_and_pay heap_variant query cs new_cs ->
 
-      store_word_result BigEndian selected_page addr value modified_page ->
+      mb_store_word_result BigEndian selected_page addr value modified_page ->
 
-      page_replace _ selected_page_id (DataPage _ modified_page) old_pages new_pages ->
+      page_replace selected_page_id (@DataPage era_pages modified_page) mem new_mem ->
 
-      step_store (OpStore arg_enc_ptr arg_val heap_variant) (new_regs, new_xstack, new_pages)
+      step (OpStore arg_enc_ptr arg_val heap_variant)
+                 {|
+                   gs_callstack    := cs;
+                   gs_regs         := regs;
+                   gs_pages        := mem;
+
+                   
+                   gs_flags        := flags;
+                 |}
+                 {|
+                   gs_callstack    := new_cs;
+                   gs_regs         := new_regs;
+                   gs_pages        := new_mem;
+                   
+                   
+                   gs_flags        := flags;
+                 |}   
+                 
   .
 (**
 ## Affected parts of VM state

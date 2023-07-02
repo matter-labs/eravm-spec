@@ -1,6 +1,6 @@
-Require Common Memory.
+Require Common Memory GPR.
 
-Import Common Memory.
+Import Common Memory GPR.
 
 (* Create a namespace for argument format description. *)
 
@@ -19,11 +19,13 @@ There are 8 main types of addressing the instruction arguments. Some of them
 7. Stack page, relative to GPR and SP, with decreasing SP (in)
 8. Stack page, relative to GPR and SP, with increasing SP (out)
 
-Note that other docs may merge the types (7) and (8) into a single addressing mode, but this is rather an implementation detail.
+Note that other docs may merge the types (7) and (8) into a single addressing
+mode, but this is rather an implementation detail.
 
 This section details these types.
 
-Predicate [resolve] formalizes resolving operands to immediate values, registers and memory locations.
+Predicate [resolve] formalizes resolving operands to immediate values, registers
+and memory locations.
 
 
 ## Register addressing
@@ -114,7 +116,7 @@ There is an hierarchy of these arguments, ordered by inclusion (see [Coercions])
 For example, the first argument of [OpAdd] can use any addressing mode, and its
 second argument can only use [reg] address mode.
 Both arguments should accept GPR as a source.
-*)
+ *)
 
 Inductive stack_in : Set :=
 | StackInOnly (arg: stack_in_only)
@@ -202,10 +204,10 @@ Inductive in_regimm : Set :=
 .
 
 (* begin details : Inclusion function *)
-Definition in_regimm_incl (ri: in_regimm) : any :=
+Definition in_regimm_incl (ri: in_regimm) : in_any :=
   match ri with
-  | RegImmR r => AnyReg r
-  | RegImmI i => AnyImm i
+  | RegImmR r => InReg r
+  | RegImmI i => InImm i
   end.
 (* end details *)
 
@@ -249,7 +251,7 @@ Module Coercions.
   Coercion OutStack: stack_out >-> out_any.
   Coercion AnyStack: stack_any >-> any.
   Coercion StackOutOnly: stack_out_only >-> stack_out. 
-  Coercion in_regimm_incl: in_regimm >-> any.
-
+  Coercion in_regimm_incl: in_regimm >-> in_any.
+  Coercion StackInAny : stack_io >-> stack_in.
 End Coercions.
 
