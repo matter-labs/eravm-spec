@@ -20,12 +20,12 @@ Section Def.
 
 - `call abi_reg, callee_address, exception_handler` as a fully expanded form.
 - `call abi_reg, callee_address`
-  + The assembler expands this variation to 
+  + The assembler expands this variation to
     `call abi_reg, callee_address, DEFAULT_UNWIND_DEST`. Here:
     * `DEFAULT_UNWIND_DEST` is a reserved system label; the linker will resolve it
       to the default exception handler.
 - `call callee_address` is a simplified form.
-  + Assembler expands this variation  to 
+  + Assembler expands this variation  to
     `call r0, callee_address, DEFAULT_UNWIND_DEST`, where:
     * `DEFAULT_UNWIND_DEST` is a reserved system label; linker will resolve it
       to the default exception handler.
@@ -68,7 +68,7 @@ Record params := {
       end.
 
   Section Defs.
-    
+
     (**
 Explanation for [split_ergs_caller_callee]:
 
@@ -91,7 +91,7 @@ Function [split_ergs_callee_caller] returns a pair of erg values, where:
 Note: after a normal return (not `panic`), the remaining ergs are returned to
 the caller.
 
-    
+
 
 3. Decrease the balance of the caller frame.
 4. Set up the new frame:
@@ -101,25 +101,25 @@ the caller.
 5. Clear flags.
 
      *)
-    
+
     Context (regs: regs_state) (mem: memory) (cs: callstack).
-    
+
     Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
     | step_NearCall_pass_some_ergs:
       forall (abi_params_arg:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
         (passed_ergs callee_ergs caller_ergs:ergs)
         (abi_tag: bool)
         (new_caller:callstack) (new_frame:callstack_common),
-        
+
         load_reg regs abi_params_arg (mk_pv abi_tag abi_params_value) ->
 
         Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
 
         (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
-        
+
         new_caller = ergs_set caller_ergs cs ->
         new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs ->
-        
+
         step_nearcall (OpNearCall abi_params_arg (Imm call_addr) (Imm expt_handler))
           (flags_clear, InternalCall new_frame new_caller).
 
@@ -184,5 +184,5 @@ the caller.
           gs_regs         := regs;
           gs_pages        := memory;
         |}.
-      
+
 End Def.

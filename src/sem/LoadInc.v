@@ -63,8 +63,8 @@ fp_page := (aux_)heap page id;
 fp_start := zero32;
 fp_length := in_ptr.(fp_length);
 fp_offset := in_ptr.(fp_offset) + 32;
-```   
- 
+```
+
 *)
   | step_LoadInc:
     forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page in_ptr ptr_incremented query new_cs regs,
@@ -72,11 +72,11 @@ fp_offset := in_ptr.(fp_offset) + 32;
       load _  regs cs0 mem arg_enc_ptr (cs1, PtrValue enc_ptr) ->
       ABI.(decode) enc_ptr = Some in_ptr ->
       let used_ptr := in_ptr <| fp_page := Some (heap_variant_id heap_variant cs1) |> in
-      
+
       (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
-      
+
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
@@ -93,7 +93,7 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
       step_load (OpLoadInc arg_enc_ptr arg_dest heap_variant arg_modptr)
         (mk_exec_state flags regs mem cs0)
-        (mk_exec_state flags new_regs mem new_cs) 
+        (mk_exec_state flags new_regs mem new_cs)
         )
   .
 (**
@@ -117,5 +117,5 @@ fp_offset := in_ptr.(fp_offset) + 32;
 - [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc] are variants of the same instruction.
 
  *)
- 
+
 End Defs.

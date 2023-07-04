@@ -19,7 +19,7 @@ Definition exception_handler := code_address.
 
 
 (* Definition update_active_pages (ps:mem_ctx): callframe -> callframe := *)
-(*  change_topmost_extframe (fun ef => ef <| ecf_memory := ps |> ). *)
+(*  change_active_extframe (fun ef => ef <| ecf_memory := ps |> ). *)
 Definition decommitter := decommitter instruction_invalid.
 Definition memory := @memory era_pages.
 
@@ -28,8 +28,8 @@ Definition event := @event contract_address.
 
 Record state_checkpoint := {
     gs_depot: depot;
-    gs_events: log query;
-    gs_l1_msgs: log event;
+    gs_events: @log query;
+    gs_l1_msgs: @log event;
   }.
 
 Definition callstack := @callstack state_checkpoint.
@@ -37,7 +37,7 @@ Definition callstack := @callstack state_checkpoint.
 Record global_state :=
   mk_gstate {
     gs_current_ergs_per_pubdata_byte: ergs;
-    gs_tx_number_in_block: tx_num; 
+    gs_tx_number_in_block: tx_num;
     gs_contracts: decommitter;
     gs_revertable: state_checkpoint;
     }.
@@ -79,7 +79,7 @@ Inductive global_state_new_depot: depot -> global_state -> global_state -> Prop 
 
 Inductive emit_event e: global_state -> global_state -> Prop :=
 | ee_apply: forall current_ergs_per_pubdata_byte tx codes d evs l1s d',
-  emit_event e 
+  emit_event e
   {|
     gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
     gs_tx_number_in_block := tx;
@@ -95,7 +95,7 @@ Inductive emit_event e: global_state -> global_state -> Prop :=
 
 Inductive emit_l1_msg e: global_state -> global_state -> Prop :=
 | eel1_apply: forall current_ergs_per_pubdata_byte tx codes d evs l1s d',
-  emit_l1_msg e 
+  emit_l1_msg e
   {|
     gs_current_ergs_per_pubdata_byte := current_ergs_per_pubdata_byte;
     gs_tx_number_in_block := tx;
@@ -149,7 +149,7 @@ Definition heap_variant_id (page_type: data_page_type)
   :  callstack -> page_id :=
   match page_type with
   | Heap => @active_heap_id
-  | AuxHeap => @active_auxheap_id 
+  | AuxHeap => @active_auxheap_id
   end state_checkpoint.
 
 Definition heap_variant_bound (page_type:data_page_type):  callstack -> mem_address :=

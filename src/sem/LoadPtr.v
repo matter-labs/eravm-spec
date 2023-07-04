@@ -12,7 +12,7 @@ Section Defs.
 
   Open Scope ZMod_scope.
   Inductive step_load_ptr : instruction -> xsmallstep :=
-                    
+
  (**
 # LoadPointer
 
@@ -70,22 +70,22 @@ fp_offset := 2
     forall enc_ptr (arg_dest: out_reg) (arg_enc_ptr: in_reg) result regs new_regs mem addr selected_page in_ptr slice cs flags page_id,
 
       load_reg regs arg_enc_ptr (PtrValue enc_ptr) ->
-      
+
       ABI.(decode) enc_ptr = Some in_ptr ->
 
       validate_in_bounds in_ptr = true ->
       Some page_id  =in_ptr.(fp_page) ->
       page_has_id mem page_id (@DataPage era_pages selected_page) ->
       slice_from_ptr selected_page in_ptr slice ->
-      
+
       (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
       mb_load_slice_result BigEndian slice addr result ->
-      
+
       store_reg regs arg_dest (IntValue result) new_regs ->
 
       step_load_ptr (OpLoadPointer arg_enc_ptr arg_dest)
         (mk_exec_state flags regs mem cs)
-        (mk_exec_state flags new_regs mem cs) 
+        (mk_exec_state flags new_regs mem cs)
   .
 
 (**

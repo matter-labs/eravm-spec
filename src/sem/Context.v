@@ -5,7 +5,7 @@ Require SemanticCommon.
 Import Addressing ABI Bool Coder Core Common Condition Ergs CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParameters.
 
-(**  
+(**
 
 # ContextThis
 
@@ -55,28 +55,28 @@ Inductive step: instruction -> smallstep :=
   forall flags mem cs regs (out_arg:out_reg) this_addr new_regs s1 s2,
 
     store_reg regs out_arg (IntValue this_addr) new_regs ->
-    
-    this_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_this_address) ->
 
-    
+    this_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_this_address) ->
+
+
     step_xstate_only
       {|
         gs_regs         := regs;
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextThis out_arg) s1 s2
-(**  
+(**
 
 # ContextCaller
 
@@ -84,7 +84,7 @@ Inductive step: instruction -> smallstep :=
 
 [OpContextCaller (out: out_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.caller out
@@ -124,30 +124,30 @@ See [OpContextThis], [OpContextCodeAddress].
     store_reg regs
       out_arg (IntValue sender_addr)
       new_regs ->
-    
-    sender_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_msg_sender) ->
+
+    sender_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_msg_sender) ->
 
     step_xstate_only
       {|
         gs_regs         := regs;
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
 
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextCaller out_arg) s1 s2
-(**  
+(**
 
 # ContextCodeAddress
 
@@ -155,7 +155,7 @@ See [OpContextThis], [OpContextCodeAddress].
 
 [OpContextCodeAddress (out: out_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.code_address out
@@ -177,7 +177,7 @@ Retrieves the address of the contract code that is actually being executed.
 
 ## Usage
 
-- In the execution frame created by [OpDelegateCall] this will be the address of the contract that was called by [OpDelegateCall]. 
+- In the execution frame created by [OpDelegateCall] this will be the address of the contract that was called by [OpDelegateCall].
 - Necessary to implement Solidity’s `immutable` under [OpDelegateCall].
 
 
@@ -193,30 +193,30 @@ See [OpContextThis], [OpContextCaller].
 | step_ContextCodeAddress:
   forall flags  cs regs (out:out_reg) code_addr new_regs mem s1 s2,
     store_reg regs out (IntValue code_addr) new_regs ->
-    
-    code_addr = resize contract_address_bits word_bits (topmost_extframe cs).(ecf_code_address) ->
-    
+
+    code_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_code_address) ->
+
     step_xstate_only
       {|
         gs_regs         := regs;
         gs_pages        := mem;
-        
+
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
 
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextCodeAddress out) s1 s2
 
-(**  
+(**
 
 # ContextErgsLeft
 
@@ -224,7 +224,7 @@ See [OpContextThis], [OpContextCaller].
 
 [OpContextErgsLeft (out: out_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.ergs_left out
@@ -253,7 +253,7 @@ Retrieves the balance in the current frame.
 
 ## Similar instructions
 
-The `context` instruction family. 
+The `context` instruction family.
 
 ## Encoding
 
@@ -263,29 +263,29 @@ The `context` instruction family.
 | step_ContextErgsLeft:
   forall flags mem cs regs (out_arg:out_reg) balance new_regs s1 s2,
     store_reg regs out_arg (IntValue balance) new_regs ->
-    
+
     balance = resize _ word_bits (ergs_remaining cs) ->
     step_xstate_only
       {|
         gs_regs         := regs;
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
 
     step (OpContextErgsLeft out_arg) s1 s2
-         
-(**  
+
+(**
 
 # ContextSP
 
@@ -321,7 +321,7 @@ Retrieves current stack pointer.
 
 ## Similar instructions
 
-The `context` instruction family. 
+The `context` instruction family.
 
 ## Encoding
 
@@ -331,31 +331,31 @@ The `context` instruction family.
 | step_ContextSP:
   forall flags  cs regs (out_arg:out_reg) sp new_regs mem s1 s2,
     store_reg regs out_arg (IntValue sp) new_regs ->
-    
+
     sp = resize _ word_bits (sp_get cs) ->
-    
+
     step_xstate_only
       {|
         gs_regs         := regs;
         gs_pages        := mem;
-        
+
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
 
-        
+
         gs_pages        := mem;
 
-        
+
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextSp out_arg) s1 s2
-(**  
-             
+(**
+
 # ContextGetContextU128
 
 
@@ -363,7 +363,7 @@ The `context` instruction family.
 
 [OpContextGetContextU128 (out: out_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.get_context_u128 out
@@ -390,40 +390,40 @@ Does not interact with the context register.
 
 ## Similar instructions
 
-- The `context` instruction family. 
+- The `context` instruction family.
 - Farcalls capture context. See [OpFarCall], [OpMimicCall], [OpDelegateCall].
 
 ## Encoding
 
 - Shares opcode with other `contextX` instructions.
 
- *) 
+ *)
 | step_ContextGetContextU128:
   forall flags cs regs (out_arg:out_reg) new_regs mem wcontext s1 s2,
     store_reg regs out_arg (IntValue wcontext) new_regs ->
 
-    wcontext = resize _ word_bits (gs_context_u128 s1) ->  
-    
+    wcontext = resize _ word_bits (gs_context_u128 s1) ->
+
     step_xstate_only
       {|
         gs_regs         := regs;
         gs_pages        := mem;
-        
+
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
         gs_pages        := mem;
 
-        
+
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextGetContextU128 out_arg) s1 s2
-(**  
-             
+(**
+
 # ContextSetContextU128
 
 - Only in kernel mode.
@@ -433,7 +433,7 @@ Does not interact with the context register.
 
 [OpContextSetContextU128 (in: in_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.set_context_u128 out
@@ -460,7 +460,7 @@ Does not interact with the captured context value in the active external frame.
 
 ## Similar instructions
 
-- The `context` instruction family. 
+- The `context` instruction family.
 - Farcalls capture context. See [OpFarCall], [OpMimicCall], [OpDelegateCall].
 
 ## Encoding
@@ -484,12 +484,12 @@ Does not interact with the captured context value in the active external frame.
          {|
            gs_context_u128 := new_context_u128;
 
-           
+
            gs_xstate := xstate;
            gs_global       := gs;
          |}
-(**  
-             
+(**
+
 # ContextMeta
 
 VM internal state introspection.
@@ -498,7 +498,7 @@ VM internal state introspection.
 
 [OpContextMeta (out: out_reg)]
 
-## Syntax 
+## Syntax
 
 ```
 context.meta out
@@ -506,7 +506,7 @@ context.meta out
 
 ## Summary
 
-Fetches 
+Fetches
 
 ## Semantic
 
@@ -532,7 +532,7 @@ Record params := {
 
 ## Similar instructions
 
-- The `context` instruction family. 
+- The `context` instruction family.
 
 ## Encoding
 
@@ -546,7 +546,7 @@ Record params := {
       out_arg (IntValue meta_encoded)
       new_regs ->
 
-    let shards := (topmost_extframe cs).(ecf_shards) in 
+    let shards := (active_extframe cs).(ecf_shards) in
     meta_encoded =
       MetaParameters.ABI.(encode)
                            {|
@@ -557,28 +557,28 @@ Record params := {
                              caller_shard_id := shard_caller shards;
                              code_shard_id := shard_code shards;
                            |} ->
-    
+
     step_xstate_only
       {|
         gs_regs         := regs;
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
-        
+
       |}
       {|
         gs_regs         := new_regs;
 
-        
+
         gs_pages        := mem;
         gs_callstack    := cs;
         gs_flags        := flags;
       |} s1 s2 ->
     step (OpContextMeta out_arg) s1 s2
-(**  
-             
+(**
+
 # ContextIncrementTxNumber
 
 - Kernel only.
@@ -611,21 +611,21 @@ Utility in system contracts.
 
 ## Similar instructions
 
-- The `context` instruction family. 
+- The `context` instruction family.
 
 ## Encoding
 
 - Shares opcode with other `contextX` instructions.
 
  *)
-         
+
 | step_ContextIncTx:
   forall context_u128 gs new_gs xstate,
-    global_state_increment_tx tx_inc gs new_gs -> 
+    global_state_increment_tx tx_inc gs new_gs ->
     step OpContextIncrementTxNumber
          {|
            gs_xstate       := xstate;
-           
+
            gs_context_u128 := context_u128;
            gs_global       := gs;
          |}
@@ -634,8 +634,8 @@ Utility in system contracts.
            gs_context_u128 := context_u128;
            gs_global       := new_gs;
          |}
-(**  
-             
+(**
+
 # SetErgsPerPubdataByte
 
 - Kernel only.
@@ -648,7 +648,7 @@ Utility in system contracts.
 ## Syntax  TODO
 
 ```
-context.??? in  
+context.??? in
 ```
 
 ## Summary
@@ -667,14 +667,14 @@ Utility in system contracts.
 
 ## Similar instructions
 
-- The `context` instruction family. 
+- The `context` instruction family.
 
 ## Encoding
 
 - Shares opcode with other `contextX` instructions.
 
  *)
-         
+
 | step_ContextSetErgsPerPubdata:
   forall gs new_gs context_u128 regs (in_arg:in_reg) any_tag new_val (new_val_arg:in_reg) xstate ,
 
@@ -682,7 +682,7 @@ Utility in system contracts.
 
     let new_ergs := resize _ ergs_bits new_val in
     new_gs = gs <| gs_global ::= (fun s => s <| gs_current_ergs_per_pubdata_byte := new_ergs |> ) |> ->
-                                 
+
     step (OpContextSetErgsPerPubdataByte new_val_arg)
         {|
           gs_xstate       := xstate;
@@ -696,4 +696,4 @@ Utility in system contracts.
           gs_global       := new_gs;
         |}
 
-.        
+.

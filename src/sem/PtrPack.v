@@ -33,12 +33,12 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
 
 | step_PtrPack :
   forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap regs mem cs new_regs new_mem new_cs flags,
-    
+
     fetch_apply21_swap swap
       (regs, mem, cs)
       (in1, PtrValue op1) (InReg in2, IntValue op2) (out, PtrValue (mix_lower 128 op2 (resize _ 128 op1)))
       (new_regs, new_mem, new_cs) ->
-    
+
     resize _ 128 op2 = zero128 ->
     step (OpPtrPack in1 in2 out swap)
       (mk_exec_state flags regs mem cs)

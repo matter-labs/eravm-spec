@@ -58,12 +58,12 @@ Section Def.
     - right.
       intro H. subst. apply eq_values in H. contradiction.
   Qed.
-    
+
   (** ** Conversions *)
 
   (** Interpreting [int_mod] as an unsigned integer modulo 2^N. *)
   Definition as_unsigned (n: int_mod) : Z := int_val n.
- 
+
   (** Interpreting [int_mod] as a signed [Z], where the leftmost bit encodes the
   sign. *)
   Definition as_signed (n: int_mod) : Z :=
@@ -114,7 +114,7 @@ Section Def.
 
   Definition min := liftZ BinIntDef.Z.min.
   Definition max := liftZ BinIntDef.Z.max.
-  
+
   Definition carry (z:Z) : bool := if gt_dec z unsigned_max then true else false.
 
   Definition uadd_overflow (x y: int_mod) : int_mod * bool :=
@@ -134,7 +134,7 @@ Section Def.
   Definition umul_overflow (x y: int_mod) : int_mod * bool :=
     let result := (as_unsigned x * as_unsigned y)%Z in
     (int_mod_of result, carry result).
-  
+
   Definition add_wrap (x y: int_mod) : int_mod :=
     match uadd_overflow x y with
     | (z, _) => z
@@ -148,16 +148,16 @@ Section Def.
   (** ### Logical shifts *)
   Definition shiftl_nat (x: int_mod) (bits: nat) : int_mod :=
     int_mod_of (Z.shiftl (int_val x) (Z.of_nat bits)).
-  
+
   Definition shiftl (x: int_mod) (bits: int_mod) : int_mod :=
     int_mod_of (Z.shiftl (int_val x) (int_val bits)).
-  
+
   Definition shiftr_nat (x: int_mod) (bits: nat): int_mod :=
     int_mod_of (Z.shiftr (int_val x) (Z.of_nat bits)).
 
   Definition shiftr (x: int_mod) (bits: int_mod) : int_mod :=
     int_mod_of (Z.shiftr (int_val x) (int_val bits)).
-  
+
   (** ### Circular shifts *)
   Definition rol (x: int_mod) (shift: int_mod): int_mod :=
     let shift := Z.modulo shift.(int_val) zbits in
@@ -165,14 +165,14 @@ Section Def.
     let low := Z.shiftl x shift in
     let high := Z.shiftr x (zbits - shift) in
     int_mod_of (Z.lor low high).
-  
+
   Definition ror (x: int_mod) (shift: int_mod): int_mod :=
     let shift := Z.modulo shift.(int_val) zbits in
     let x := int_val x in
     let low := Z.shiftr x shift in
     let high := Z.shiftl x (zbits - shift) in
     int_mod_of (Z.lor low high).
-  
+
 End Def.
 
 

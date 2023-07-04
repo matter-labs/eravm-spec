@@ -38,7 +38,7 @@ The operation follows a similar scheme as described below.
 Note that predicate [binop_effect_spec] is a relation that binds `in1`, `in2`, `out`, `op1`, `op2`, `result`, `flags_candidate`; the computations specific to the operation will be described in specific constructors like [step_Add].
  *)
 
-Inductive binop_effect_spec: 
+Inductive binop_effect_spec:
                         mod_swap -> mod_set_flags ->
                         in_any * primitive_value ->
                         in_reg * primitive_value ->
@@ -46,7 +46,7 @@ Inductive binop_effect_spec:
                         flags_state ->
                         exec_state -> exec_state -> Prop :=
 | bes_apply:
-  forall xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any) 
+  forall xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any)
     op1 op2 swap set_flags result flags_candidate flags new_flags ,
 
     fetch_apply21_swap swap

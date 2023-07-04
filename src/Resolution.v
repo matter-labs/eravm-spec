@@ -39,23 +39,23 @@ Inductive loc : Set :=
 
 Section Resolve.
   Import Addressing.Coercions.
-  
+
   Open Scope ZMod_scope.
-  
+
   Inductive resolve_effect := | NoEffect | NewSP (val: stack_address).
-  
+
   Record resolve_result :=
     mk_resolved {
         effect: resolve_effect;
         location:> loc;
       }.
-  
+
   Context {state_checkpoint}
     (callstack := @callstack state_checkpoint)
     (rs:regs_state)
     (cs: callstack)
     (sp:= sp_get cs).
-  
+
   Reserved Notation "[[ resolved ]]" (at level 9, no associativity).
   Reserved Notation "[[ resolved ; 'SP' <- newsp ]]" (at level 9, no associativity).
 
@@ -63,15 +63,15 @@ Section Resolve.
   Open Scope Resolution_scope.
 
   Inductive resolve : any -> resolve_result -> Prop :=
-  
+
   | rslv_reg : forall reg,
       resolve (Reg reg) [[ LocReg reg ]]
   | rslv_imm: forall imm,
       resolve  (Imm imm) [[ LocImm imm ]]
-              
+
   | rslv_stack_rel: forall reg ofs delta_sp sp_rel,
       sp_displ rs reg ofs delta_sp ->
-      
+
       (sp_rel, false) = sp - delta_sp->
       resolve  (RelSP reg ofs) [[ LocStackAddress sp_rel ]]
 
@@ -83,19 +83,19 @@ Section Resolve.
       sp_displ rs reg ofs delta_sp ->
       (new_sp, false) = sp - delta_sp->
       resolve  (RelSpPop reg ofs) [[ LocStackAddress new_sp ; SP <- new_sp ]]
-              
+
   | rslv_stack_gpush: forall reg ofs delta_sp new_sp,
       sp_displ rs reg ofs delta_sp ->
       (new_sp, false) = sp + delta_sp ->
       resolve  (RelSpPush reg ofs) [[ LocStackAddress sp ; SP <- new_sp ]]
-              
+
   | rslv_code: forall reg abs_imm addr,
       reg_rel_code rs reg abs_imm addr ->
       resolve  (CodeAddr reg abs_imm) [[ LocCodeAddr addr ]]
   | rslv_const: forall reg abs_imm addr,
       reg_rel_const rs reg abs_imm addr ->
       resolve  (ConstAddr reg abs_imm) [[ LocConstAddr addr ]]
-  where 
+  where
   "[[ resolved ]]" := (mk_resolved NoEffect resolved) : Resolution_scope
   and
   "[[ resolved ; 'SP' <- newsp ]]" := (mk_resolved (NewSP newsp) resolved) : Resolution_scope.
@@ -106,7 +106,7 @@ Section Resolve.
   | ae_sp: forall  cs' new_sp,
       cs' = sp_mod (fun _ => new_sp) cs ->
       apply_effects (NewSP new_sp) cs'.
-  
+
   Inductive resolve_apply
     : any -> (callstack * loc) -> Prop :=
   | ra_no_effect : forall arg loc,
@@ -116,8 +116,8 @@ Section Resolve.
       resolve arg [[ loc ; SP <- new_sp ]] ->
       cs' = sp_mod (fun _ => new_sp) cs ->
       resolve_apply arg (cs', loc).
-  
-End Resolve. 
+
+End Resolve.
 
 
 

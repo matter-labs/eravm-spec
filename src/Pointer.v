@@ -9,7 +9,7 @@ Section Definitions.
   (** # Fat Pointers
 
 A **fat pointer** defines an address inside a slice of a data memory page.
-     
+
 The slice begins on page with ID=[fp_page] starting at [fp_start] (inclusive) and ending at
 [fp_start]+[fp_length] (exclusive).
 *)
@@ -24,7 +24,7 @@ The slice begins on page with ID=[fp_page] starting at [fp_start] (inclusive) an
   #[export] Instance etaFatPointer: Settable _
     := settable! mk_fat_ptr < fp_page; fp_start; fp_length; fp_offset>.
 (** The absolute address encoded by a fat pointer is [fp_start + fp_offset].
-In order to dereference it, the address should be in bounds, therefore, 
+In order to dereference it, the address should be in bounds, therefore,
 **)
   Definition validate_in_bounds (p:fat_ptr) : bool := (lt_unsigned _ p.(fp_offset) p.(fp_length) ).
 
@@ -128,7 +128,7 @@ Data slice is a virtual memory page holding a read-only fragment of some memory 
     let contents := pmap_slice m from_key to_key in
     mk_mem data_page_slice_params contents.
 
-  
+
   (** Predicate [slice_from_ptr] describes a slice corresponding to a fat pointer pointer. *)
   Inductive slice_from_ptr (m:data_page) : fat_ptr -> data_slice -> Prop :=
   | sfp_apply:

@@ -1,9 +1,9 @@
-Require Addressing Common Condition Memory Ergs.
+Require Addressing Common Condition Memory .
 
-Import Addressing Common Condition Memory Ergs.
+Import Addressing Common Condition Memory.
 
 (** - This file describes the syntax of assembly instructions.
- - The instruction semantics is described in a different place; see [step]. 
+ - The instruction semantics is described in a different place; see [step].
  - This is a high-level instruction set, similar but not exactly matching machine instructions.
 
    For example, `xor`, `or`, and `and` bitwise operations are represented by
@@ -21,7 +21,7 @@ Two modifiers are commonly encountered:
 
   1. `swap`: if an instruction has two input operands, this modifier swaps
     them.
-   *) 
+   *)
   Inductive mod_swap := Swap | NoSwap.
 
   Definition apply_swap {T} (md: mod_swap) (a b:T) : T*T :=
@@ -49,7 +49,6 @@ Two modifiers are commonly encountered:
     | PreserveFlags => f
     end.
 
-  Inductive mod_inc32 := Inc32 | NoInc32.
   Inductive instruction: Set :=
   | OpInvalid
   | OpNoOp
@@ -69,16 +68,16 @@ Two modifiers are commonly encountered:
   | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
-  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
-  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard: bool)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
+  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
+  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
 
   (*               quasi fat pointer + forwarding mode *)
   | OpNearRet
   | OpNearRetTo      (label: code_address)
   | OpFarRet         (args: in_reg)
   (*               quasi fat pointer + forwarding mode *)
-  | OpNearRevert  
+  | OpNearRevert
   | OpNearRevertTo(label: code_address)
   | OpFarRevert   (args: in_reg)
   | OpNearPanicTo (label: code_address)
@@ -89,13 +88,13 @@ Two modifiers are commonly encountered:
   | OpPtrShrink   (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
   | OpPtrPack     (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
 
-                  
+
   | OpLoad        (ptr: in_regimm) (res: out_reg) (mem:data_page_type)
   | OpLoadInc     (ptr: in_regimm) (res: out_reg) (mem:data_page_type) (inc_ptr: out_reg)
-  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) 
+  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)
   | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg)
-                  
-                  
+
+
   | OpLoadPointer     (ptr: in_reg)  (res: out_reg)
   | OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
 
@@ -121,7 +120,10 @@ Two modifiers are commonly encountered:
 
   (** ## Common definitions
 
-An instruction type, including:
+The type [instruction_predicated] defines the predicated instruction.
+These are the instructions stored on [code_page]s.
+
+Such instruction contains two parts:
 
 - opcode-specific part;
 - execution conditions, describing under which conditions (flags) the instruction will be executed. *)
@@ -145,150 +147,3 @@ End Def.
 
 (** A helper definition to specialize a code page with a (just defined) instruction type. *)
 Definition code_page : Type := code_page instruction_invalid.
-(* Definition code_storage_type: Type := code_storage instruction_predicated instruction_invalid. *)
-
-
-Section Costs.
-  Import ZMod ZArith.
-
-(** # Costs
-
-Basic costs of all instructions. They get deducted when the instruction starts executing; see [Semantics.step]. *)
-  
-  Definition base_cost (ins:instruction) :=
-    (match ins with
-     | OpInvalid => INVALID_OPCODE_ERGS
-     | OpNoOp | OpModSP _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpAnd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpOr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-
-     | OpShl _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpShr _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpRol _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpRor _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-
-     | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
-     | OpFarCall _ _ _ _ _
-     | OpDelegateCall _ _ _ _ _
-     | OpMimicCall _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
-                             + RAM_PERMUTATION_COST_IN_ERGS
-                             + STORAGE_READ_IO_PRICE
-                             + CALL_LIKE_ERGS_COST
-                             + STORAGE_SORTER_COST_IN_ERGS
-                             + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
-
-     | OpNearRet | OpNearRetTo _ | OpNearRevert | OpNearRevertTo _ | OpNearPanicTo _
-     | OpFarRet _ | OpFarRevert _
-     | OpPanic
-       => AVERAGE_OPCODE_ERGS
-     | OpPtrAdd _ _ _ _
-     | OpPtrSub _ _ _ _
-     | OpPtrShrink _ _ _ _
-     | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     |
-       OpStore _ _ _
-     | OpStoreInc _ _ _ _ 
-       => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
-
-     | OpLoad _ _ _
-     | OpLoadInc _ _ _ _
-     | OpLoadPointer _ _
-     | OpLoadPointerInc _ _ _
-       => VM_CYCLE_COST_IN_ERGS + 3 * RAM_PERMUTATION_COST_IN_ERGS
-
-     | OpContextThis _
-     | OpContextCaller _
-     | OpContextCodeAddress _
-     | OpContextMeta _
-     | OpContextErgsLeft _
-     | OpContextSp _
-     | OpContextGetContextU128 _
-     | OpContextSetContextU128 _
-     | OpContextSetErgsPerPubdataByte _
-     | OpContextIncrementTxNumber => AVERAGE_OPCODE_ERGS
-     | OpSLoad _ _=> STORAGE_READ_IO_PRICE
-                 + VM_CYCLE_COST_IN_ERGS
-                 + RAM_PERMUTATION_COST_IN_ERGS
-                 + LOG_DEMUXER_COST_IN_ERGS
-                 + STORAGE_SORTER_COST_IN_ERGS
-     | OpSStore _ _ =>
-                Z.max MIN_STORAGE_WRITE_COST (
-                    STORAGE_WRITE_IO_PRICE
-                    + 2 * VM_CYCLE_COST_IN_ERGS
-                    + RAM_PERMUTATION_COST_IN_ERGS
-                    + 2 * LOG_DEMUXER_COST_IN_ERGS
-                    + 2 * STORAGE_SORTER_COST_IN_ERGS)
-     | OpToL1Message _ _ _ =>
-                let intrinsic_cost := L1_MESSAGE_IO_PRICE
-                    + 2 * VM_CYCLE_COST_IN_ERGS
-                    + RAM_PERMUTATION_COST_IN_ERGS
-                    + 2 * LOG_DEMUXER_COST_IN_ERGS
-                    + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS in
-                Z.max intrinsic_cost L1_MESSAGE_MIN_COST_IN_ERGS
-     | OpEvent _ _ _ => EVENT_IO_PRICE
-                     + 2 * VM_CYCLE_COST_IN_ERGS
-                     + RAM_PERMUTATION_COST_IN_ERGS
-                     + 2 * LOG_DEMUXER_COST_IN_ERGS
-                     + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
-     | OpPrecompileCall _ _ =>
-         VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
-     end)%Z.
-End Costs.
-
-(** Function [allowed_static_ctx] returns [true] if instruction [ins] is allowed
-in a static context. *)
-Definition allowed_static_ctx (ins:instruction) : bool :=
-  match ins with
-  | OpContextSetContextU128 _
-  | OpContextSetErgsPerPubdataByte _
-  | OpContextIncrementTxNumber
-  | OpSStore _ _
-  | OpEvent _ _ _
-  | OpToL1Message _ _ _
-    => false
-  | _ => true
-  end.
-
-(** Function [check_allowed_static_ctx] returns [false] if:
-
-- an instruction [ins] is not allowed in static context, and
-- the current context is static, as indicated by [current_ctx_is_static].
-*)
-Definition check_allowed_static_ctx
-  (ins: instruction)
-  (current_ctx_is_static: bool) : bool :=
-  if current_ctx_is_static
-  then allowed_static_ctx ins
-  else true.
-
-(** Is instruction only allowed in kernel mode? *)
-Definition requires_kernel (ins: instruction) : bool :=
-  match ins with
-  | OpMimicCall _ _ _ _ _
-  | OpContextSetContextU128 _
-  | OpContextSetErgsPerPubdataByte _
-  | OpContextIncrementTxNumber
-  | OpEvent _ _ _
-  | OpToL1Message _ _ _
-  | OpPrecompileCall _ _
-    => true
-  | _ => false
-  end.
-
-(** Function [check_requires_kernel] returns [false] if:
-
-- an instruction [ins] requires kernel mode, and 
-- not in kernel mode, as indicated by [in_kernel].
-*)
-Definition check_requires_kernel
-  (ins: instruction)
-  (in_kernel: bool) : bool :=
-  if negb in_kernel
-  then negb (requires_kernel ins)
-  else true.

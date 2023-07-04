@@ -5,7 +5,7 @@ Import Common Memory GPR.
 (* Create a namespace for argument format description. *)
 
 (** # Addressing modes
-      
+
 There are 8 main types of addressing the instruction arguments. Some of them
     only support reading (indicated by "in"), or writing (indicated by "out").
 
@@ -68,7 +68,7 @@ Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
  *)
 Inductive stack_io : Set :=
 | Absolute (reg:reg_name) (imm: stack_address)
-           
+
 (** ## Address on a stack page, relative to SP and GPR.
 
  Resolved to $\mathit{(SP - reg + imm)}$.
@@ -250,7 +250,7 @@ Module Coercions.
   Coercion OutReg : reg_io >-> out_any.
   Coercion OutStack: stack_out >-> out_any.
   Coercion AnyStack: stack_any >-> any.
-  Coercion StackOutOnly: stack_out_only >-> stack_out. 
+  Coercion StackOutOnly: stack_out_only >-> stack_out.
   Coercion in_regimm_incl: in_regimm >-> in_any.
   Coercion StackInAny : stack_io >-> stack_in.
 End Coercions.

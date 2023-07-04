@@ -184,7 +184,7 @@ Proof.
   unfold add_prog1, init_state_from, ef0, regs_zero, mem_ctx0; simpl.
   ABI.NearCall.nca_get_ergs_passed
     (ABI.decode ABI.NearCall.params ABI.NearCall.ABI zero256)
-    
+
   destruct swap  eqn:Hsw, sflags eqn:Hsf; eexists; eapply step_NearCall_underflow_pass_all_ergs
   ; try solve [repeat econstructor].
 Qed.

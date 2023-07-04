@@ -9,7 +9,7 @@ Section Stack.
   Context (CALLSTACK_LIMIT : nat).
   Context {state_checkpoint: Type} {ins: Type} (ins_invalid: ins)
     (pages := @era_pages _ ins_invalid).
-  
+
   Definition exception_handler := code_address.
 
   Record callstack_common := mk_cf {
@@ -35,7 +35,7 @@ Section Stack.
         ecf_this_address: contract_address;
         ecf_msg_sender: contract_address;
         ecf_code_address: contract_address;
-        ecf_mem_ctx: mem_ctx; 
+        ecf_mem_ctx: mem_ctx;
         ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
         ecf_context_u128_value: u128;
         ecf_shards:> active_shards;
@@ -78,7 +78,7 @@ Section Stack.
 
     Import ZMod.
     Open Scope ZMod_scope.
-    
+
     Definition ergs_remaining (ef:callstack) : ergs := (cfc ef).(cf_ergs_remaining).
     Definition ergs_map (f: ergs->ergs) (ef:callstack) : callstack
       := cfc_map (fun x => x <| cf_ergs_remaining ::= f |>) ef.
@@ -219,40 +219,40 @@ Section Stack.
 
   Section TopmostExternalFrame.
 
-    Fixpoint topmost_extframe (ef : callstack) : callstack_external :=
+    Fixpoint active_extframe (ef : callstack) : callstack_external :=
       match ef with
-      | InternalCall _ tail => topmost_extframe tail
+      | InternalCall _ tail => active_extframe tail
       | ExternalCall x tail => x
       end.
 
-    Inductive topmost_extframe_spec : callstack -> callstack_external -> Prop :=
-    | te_Top: forall x t, topmost_extframe_spec (ExternalCall x t) x
+    Inductive active_extframe_spec : callstack -> callstack_external -> Prop :=
+    | te_Top: forall x t, active_extframe_spec (ExternalCall x t) x
     | te_Deeper: forall c t f,
-        topmost_extframe_spec t f -> topmost_extframe_spec (InternalCall c t) f
+        active_extframe_spec t f -> active_extframe_spec (InternalCall c t) f
     .
-    Theorem topmost_extframe_correct:
-      forall ef, topmost_extframe_spec ef (topmost_extframe ef).
+    Theorem active_extframe_correct:
+      forall ef, active_extframe_spec ef (active_extframe ef).
     Proof.
       induction ef; constructor; auto.
     Qed.
 
 
-    Fixpoint change_topmost_extframe f (ef:callstack) : callstack :=
+    Fixpoint change_active_extframe f (ef:callstack) : callstack :=
       match ef with
-      | InternalCall x tail => InternalCall x (change_topmost_extframe f tail)
+      | InternalCall x tail => InternalCall x (change_active_extframe f tail)
       | ExternalCall x tail => ExternalCall (f x) tail
       end.
 
-    Inductive change_topmost_extframe_spec f : callstack -> callstack -> Prop :=
+    Inductive change_active_extframe_spec f : callstack -> callstack -> Prop :=
     | ct_base: forall cf t,
-        change_topmost_extframe_spec f (ExternalCall cf t) (ExternalCall (f cf) t)
+        change_active_extframe_spec f (ExternalCall cf t) (ExternalCall (f cf) t)
     | ct_ind: forall cf t t',
-        change_topmost_extframe_spec f t t' ->
-        change_topmost_extframe_spec f (InternalCall cf t) (InternalCall cf t')
+        change_active_extframe_spec f t t' ->
+        change_active_extframe_spec f (InternalCall cf t) (InternalCall cf t')
     .
 
-    Lemma change_topmost_extframe_correct : forall f ef,
-        change_topmost_extframe_spec f ef (change_topmost_extframe f ef).
+    Lemma change_active_extframe_correct : forall f ef,
+        change_active_extframe_spec f ef (change_active_extframe f ef).
     Proof.
       intros f ef.
       induction ef as [x tail | x tail]; simpl.
@@ -262,32 +262,32 @@ Section Stack.
     Qed.
 
     Definition update_memory_context (ctx:mem_ctx): callstack -> callstack :=
-      change_topmost_extframe (fun ef => ef <| ecf_mem_ctx := ctx |> ).
+      change_active_extframe (fun ef => ef <| ecf_mem_ctx := ctx |> ).
 
     Definition revert_state (ef:callstack_external) : state_checkpoint :=
       ef.(ecf_saved_checkpoint).
 
-    
-    Definition current_shard xstack : shard_id := (topmost_extframe xstack).(ecf_shards).(shard_this).
 
-    Definition current_contract xstack : contract_address := (topmost_extframe xstack).(ecf_this_address).
+    Definition current_shard xstack : shard_id := (active_extframe xstack).(ecf_shards).(shard_this).
+
+    Definition current_contract xstack : contract_address := (active_extframe xstack).(ecf_this_address).
 
   End TopmostExternalFrame.
 
 
   Section ActiveMemory.
-    
+
     Section ActivePageId.
 
-      Context (ef:callstack) (active_extframe := topmost_extframe ef).
-     
-      
-      Definition get_mem_ctx: mem_ctx := (topmost_extframe ef).(ecf_mem_ctx).
-      
+      Context (ef:callstack) (active_extframe := active_extframe ef).
+
+
+      Definition get_mem_ctx: mem_ctx := active_extframe.(ecf_mem_ctx).
+
       Definition active_code_id: page_id := get_mem_ctx.(ctx_code_page_id).
-      
+
       Definition active_stack_id: page_id := get_mem_ctx.(ctx_stack_page_id).
-      
+
       Definition active_const_id: page_id := get_mem_ctx.(ctx_const_page_id).
 
       Definition active_heap_id : page_id := get_mem_ctx.(ctx_heap_page_id).
@@ -295,27 +295,27 @@ Section Stack.
       Definition active_auxheap_id : page_id := get_mem_ctx.(ctx_auxheap_page_id).
 
       Definition heap_bound := get_mem_ctx.(ctx_heap_bound).
-      
+
       Definition auxheap_bound := get_mem_ctx.(ctx_auxheap_bound).
-      
+
     End ActivePageId.
-    
+
 
 
     Section ActivePages.
       Context (page_has_id: page_id -> @page pages -> Prop).
-      
+
       Definition active_exception_handler (ef: callstack) : exception_handler :=
         (cfc ef).(cf_exception_handler_location).
 
-      
+
       Context (ef: callstack) (page_id := fun i => page_has_id (i ef)).
-      
+
       Inductive active_codepage : code_page _ -> Prop :=
       | ap_active_code: forall codepage,
           page_id active_code_id (CodePage codepage) ->
           active_codepage codepage.
-      
+
       Inductive active_constpage : const_page -> Prop :=
       | ap_active_const: forall constpage,
           page_id  active_const_id (ConstPage constpage) ->
@@ -338,4 +338,4 @@ Section Stack.
     End ActivePages.
 
   End ActiveMemory.
-End Stack.  
+End Stack.

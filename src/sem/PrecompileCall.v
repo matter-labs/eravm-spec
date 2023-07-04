@@ -10,9 +10,9 @@ Section Def.
   Open Scope ZMod_scope.
   Inductive step_precompile: instruction -> smallstep :=
   | step_PrecompileCall_unaffordable:
-    forall flags pages cs regs (arg_params arg_extra_ergs: in_reg) (arg_dest: out_reg) 
+    forall flags pages cs regs (arg_params arg_extra_ergs: in_reg) (arg_dest: out_reg)
       new_regs params extra_ergs __ ___ s1 s2,
-      
+
       load_regs regs [
           (arg_params, mk_pv __ params);
           (arg_extra_ergs, mk_pv ___ extra_ergs)
@@ -26,24 +26,24 @@ Section Def.
         {|
           gs_regs         := regs;
           gs_callstack    := cs;
-          
+
           gs_flags        := flags;
           gs_pages        := pages;
         |}
         {|
           gs_regs         := new_regs;
           gs_callstack    := ergs_reset cs;
-          
+
           gs_flags        := flags;
           gs_pages        := pages;
-        |} s1 s2 -> 
+        |} s1 s2 ->
       step_precompile (OpPrecompileCall arg_params arg_extra_ergs) s1 s2
-                      
+
   | step_PrecompileCall_affordable:
     forall flags pages cs regs (arg_params arg_extra_ergs: in_reg) (arg_dest: out_reg)
       regs1 new_cs ext_params enc_params extra_ergs gs new_gs context_u128 __ ___ new_xs,
       let heap_id := active_heap_id cs in
-      
+
       load_regs regs [
           (arg_params, mk_pv __ enc_params);
           (arg_extra_ergs, mk_pv ___ extra_ergs)
@@ -59,7 +59,7 @@ Section Def.
 
       let xs := {|
                      gs_callstack    := new_cs;
-                 
+
                      gs_regs         := regs;
                      gs_pages        := pages;
                      gs_flags        := flags;
@@ -67,7 +67,7 @@ Section Def.
       Precompiles.precompile_processor (current_contract cs) in_params
         xs
         new_xs ->
-      
+
       emit_event (PrecompileQuery {|
                       q_contract_address := current_contract cs;
                       q_tx_number_in_block := gs_tx_number_in_block gs;
@@ -82,7 +82,7 @@ Section Def.
                                       gs_flags        := flags;
                                     |};
                         gs_global       := gs;
-                        
+
                         gs_context_u128 := context_u128;
                       |}
                       {|

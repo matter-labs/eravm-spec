@@ -49,9 +49,9 @@ Store word in current storage by key.
 
 
     pay (ergs_of (net_pubdata xstack)) xstack new_xstack ->
-    
+
     store_reg regs arg_dest_value (IntValue write_value) new_regs ->
-    
+
     step (OpSLoad arg_key arg_dest_value)
          {|
            gs_xstate := {|
@@ -62,7 +62,7 @@ Store word in current storage by key.
                        |};
            gs_global       := gs;
 
-           
+
            gs_context_u128 := context_u128;
          |}
          {|

@@ -6,7 +6,7 @@ Import Addressing Bool Core Common Condition GPR CallStack Memory MemoryOps Inst
   Addressing.Coercions SemanticCommon RecordSetNotations.
 
 Section Def.
-  
+
 Context (regs: regs_state) (mem:memory) (cs: callstack).
 
 Inductive step_jump: instruction -> callstack -> Prop :=
@@ -39,7 +39,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
     load_int _ regs cs mem dest new_cs dest_val ->
     let dest_addr := resize _ code_address_bits dest_val in
     new_cs = pc_set dest_addr cs ->
-    
+
     step_jump (OpJump dest) new_cs.
 
 (**
@@ -62,7 +62,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 *)
 
 End Def.
- 
+
 Inductive step: instruction -> smallstep :=
 | step_Jump: forall ins (s1 s2:state),
     let regs := gs_regs s1 in

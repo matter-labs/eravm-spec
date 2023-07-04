@@ -50,8 +50,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
         (regs, mem, cs)
         (in1, PtrValue op1) (InReg in2, IntValue op2) (out, PtrValue result)
         (new_regs, new_mem, new_cs) ->
-      
-      
+
+
       FatPointer.ABI.(decode) op1 = Some ptr_in   ->
       let diff := resize _ 32 op2 in
       (new_ofs, false) = ptr_in.(fp_offset) - diff ->
@@ -65,19 +65,19 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
              gs_callstack    := cs;
              gs_regs         := regs;
              gs_pages        := mem;
-             
-             
+
+
              gs_flags        := flags;
            |}
            {|
              gs_callstack    := new_cs;
              gs_regs         := new_regs;
              gs_pages        := new_mem;
-             
-             
+
+
              gs_flags        := flags;
            |}
-  .      
+  .
 (**
 
 ## Affected parts of VM state

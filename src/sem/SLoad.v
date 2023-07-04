@@ -44,10 +44,10 @@ Access word in current storage by key.
     load_reg regs arg_key (mk_pv __ key) ->
 
     let fqa_storage := mk_fqa_key (current_storage_fqa xstack) key in
-     
+
     storage_read (gs_revertable s1).(gs_depot) fqa_storage read_value ->
     store_reg regs arg_dest_value (IntValue read_value) new_regs ->
-    step_xstate_only 
+    step_xstate_only
       {|
            gs_regs         := regs;
 

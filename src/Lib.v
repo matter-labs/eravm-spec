@@ -43,7 +43,7 @@ Ltac exploit x :=
 
 
 Section Arithmetics.
-  
+
 Import Error ZMod.
 Import String.
 Open Scope error_monad_scope.

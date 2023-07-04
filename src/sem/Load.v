@@ -11,7 +11,7 @@ Import List ListNotations.
 Section Defs.
 
   Open Scope ZMod_scope.
-  
+
   Generalizable Variables cs flags regs mem .
   Inductive xstep: instruction -> xsmallstep :=
   (**
@@ -69,14 +69,14 @@ Record fat_ptr :=
       (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
-      
+
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
       word_upper_bound used_ptr query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      store_reg regs 
+      store_reg regs
           arg_dest (IntValue result)
         new_regs ->
 
@@ -85,7 +85,7 @@ Record fat_ptr :=
            gs_callstack    := cs;
            gs_regs         := regs;
 
-           
+
            gs_pages        := mem;
            gs_flags        := flags;
          |}
@@ -93,10 +93,10 @@ Record fat_ptr :=
            gs_callstack    := new_cs;
            gs_regs         := new_regs;
 
-           
+
            gs_pages        := mem;
            gs_flags        := flags;
-         |}   
+         |}
         )
   .
 (**

@@ -10,7 +10,7 @@ Import List ListNotations.
 
 Section Defs.
   Open Scope ZMod_scope.
-  
+
   (**
 # LoadPointer
 
@@ -71,7 +71,7 @@ fp_page := in_ptr.(fp_page);
 fp_start := in_ptr.(fp_page);
 fp_length := in_ptr.(fp_length);
 fp_offset := in_ptr.(fp_offset) + 32;
-```   
+```
 *)
   Inductive step_load_ptr : instruction -> xsmallstep :=
   | step_LoadPointerInc:
@@ -82,14 +82,14 @@ fp_offset := in_ptr.(fp_offset) + 32;
       ABI.(decode) enc_ptr = Some in_ptr ->
 
       validate_in_bounds in_ptr = true ->
-      
+
       Some page_id  =in_ptr.(fp_page) ->
       page_has_id mem page_id (@DataPage era_pages selected_page) ->
       slice_from_ptr selected_page in_ptr slice ->
-      
+
       (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
       mb_load_slice_result BigEndian slice addr result ->
-      
+
       ptr_inc in_ptr out_ptr ->
 
       store_regs regs [
@@ -99,6 +99,6 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
       step_load_ptr (OpLoadPointerInc arg_enc_ptr arg_dest arg_modptr)
         (mk_exec_state flags regs mem cs)
-        (mk_exec_state flags new_regs mem cs) 
+        (mk_exec_state flags new_regs mem cs)
   .
 End Defs.

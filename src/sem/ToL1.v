@@ -13,7 +13,7 @@ Section Def.
 Inductive step: instruction -> smallstep :=
 
 | step_ToL1:
-  forall flags pages xstack new_xstack context_u128 regs (arg_key: in_reg) (arg_value: in_reg) is_first 
+  forall flags pages xstack new_xstack context_u128 regs (arg_key: in_reg) (arg_value: in_reg) is_first
     new_regs new_pages key value gs new_gs cost __ ___,
     load_regs regs [
         (arg_key, mk_pv __ key);
@@ -31,7 +31,7 @@ Inductive step: instruction -> smallstep :=
         ev_key := key;
         ev_value := value;
       |} gs new_gs ->
-    
+
     step (OpToL1Message arg_key arg_value is_first)
          {|
            gs_xstate := {|
@@ -41,7 +41,7 @@ Inductive step: instruction -> smallstep :=
 
                          gs_flags        := flags;
                          |};
-           
+
            gs_global       := gs;
            gs_context_u128 := context_u128;
          |}
@@ -53,7 +53,7 @@ Inductive step: instruction -> smallstep :=
 
                          gs_flags        := flags;
                        |};
-           
+
            gs_global       := new_gs;
            gs_context_u128 := context_u128;
          |}

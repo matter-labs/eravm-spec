@@ -13,7 +13,7 @@ Import
 Import
   Addressing
     ABI ABI.FarCall ABI.FatPointer
-    Decommitter 
+    Decommitter
     Common
     Core
     Coder
@@ -182,7 +182,7 @@ A system call is a far call that satisfies the following conditions:
 (** # Far call instructions
 
 ## Summary
- 
+
 - Far calls are calls to the code outside the current contract space.
 
 - Mimic calls are a kernel-only variation of far calls allowing to mimic a call
@@ -201,28 +201,28 @@ A system call is a far call that satisfies the following conditions:
 ## Syntax
 
 - [OpFarCall] `abi_params address handler is_static`
-   + `farcall        abi_reg, dest_addr` 
-   + `farcall        abi_reg, dest_addr, handler ` 
-   + `farcall.static abi_reg, dest_addr` 
-   + `farcall.static abi_reg, dest_addr, handler` 
-   + `farcall.shard  abi_reg, dest_addr` 
-   + `farcall.shard  abi_reg, dest_addr, handler` 
+   + `farcall        abi_reg, dest_addr`
+   + `farcall        abi_reg, dest_addr, handler `
+   + `farcall.static abi_reg, dest_addr`
+   + `farcall.static abi_reg, dest_addr, handler`
+   + `farcall.shard  abi_reg, dest_addr`
+   + `farcall.shard  abi_reg, dest_addr, handler`
 
 - [OpDelegateCall] abi_params address handler is_static`
-   + `delegatecall        abi_reg, dest_addr` 
-   + `delegatecall        abi_reg, dest_addr, handler` 
-   + `delegatecall.static abi_reg, dest_addr` 
-   + `delegatecall.static abi_reg, dest_addr, handler` 
-   + `delegatecall.shard  abi_reg, dest_addr` 
-   + `delegatecall.shard  abi_reg, dest_addr, handler` 
+   + `delegatecall        abi_reg, dest_addr`
+   + `delegatecall        abi_reg, dest_addr, handler`
+   + `delegatecall.static abi_reg, dest_addr`
+   + `delegatecall.static abi_reg, dest_addr, handler`
+   + `delegatecall.shard  abi_reg, dest_addr`
+   + `delegatecall.shard  abi_reg, dest_addr, handler`
 
 - [OpMimicCall] `abi_params address handler is_static`
-   + `mimic        abi_reg, dest_addr` 
-   + `mimic        abi_reg, dest_addr, handler` 
-   + `mimic.static abi_reg, dest_addr` 
-   + `mimic.static abi_reg, dest_addr, handler` 
-   + `mimic.shard  abi_reg, dest_addr` 
-   + `mimic.shard  abi_reg, dest_addr, handler` 
+   + `mimic        abi_reg, dest_addr`
+   + `mimic        abi_reg, dest_addr, handler`
+   + `mimic.static abi_reg, dest_addr`
+   + `mimic.static abi_reg, dest_addr, handler`
+   + `mimic.shard  abi_reg, dest_addr`
+   + `mimic.shard  abi_reg, dest_addr, handler`
 
 
 - **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.
@@ -232,7 +232,7 @@ A system call is a far call that satisfies the following conditions:
 
 ## Semantic
 
-The semantics of all three 
+The semantics of all three
 First two steps are formalized by predicates [Semantics.step] and [fetch_operands].
 
 1. Fetch the instruction, adjust PC and perform the usual checks (such as kernel
@@ -241,7 +241,7 @@ First two steps are formalized by predicates [Semantics.step] and [fetch_operand
    See [Semantics.step] for details.
 
 2. Retrieve the operands and decode the following structure from `abi_reg`:
-   
+
 ```
    Record params := {
        memory_quasi_fat_ptr: fat_ptr;
@@ -254,7 +254,7 @@ First two steps are formalized by predicates [Semantics.step] and [fetch_operand
 ```
 
    See [fetch_operands] for details.
-   
+
    The [farcall] predicate encodes the important part of instruction semantics for
    [OpFarCall], [OpDelegateCall], and [OpMimicCall].
 
@@ -367,17 +367,17 @@ Inductive farcall_type : Set := Normal | Mimic | Delegate.
         * `this_address` <- destination address;
         * `msg_sender` <- caller address;
         * `context` <- value of context register [gs_context_u128].
-      
+
       + Delegate call sets:
         * `this_address` <- [this_address] of the current frame;
         * `msg_sender` <- [msg_sender] of the current frame;
         * `context` <- [context_u128] of the current frame.
-      
+
       + Mimic call sets:
         * `this_address` <- destination address;
         * `msg_sender` <- value of `r3`;
         * `context` <- value of context register [gs_context_u128].
-      
+
  *)
 Definition select_this_address type (caller dest: contract_address) :=
   match type with
@@ -415,8 +415,8 @@ Definition select_shards (type: farcall_type) (is_call_shard: bool) (provided: s
         shard_this := new_this;
         shard_caller := new_caller;
         shard_code := new_code;
-      |}       
-  end. 
+      |}
+  end.
 
 Section Def.
 
@@ -424,18 +424,18 @@ Section Def.
     (call_as_static: bool) (to_abi_shard: bool) (abi_ptr_tag: bool).
 
   Context (xstack0: callstack)
-    (old_extframe := topmost_extframe xstack0)
+    (old_extframe := active_extframe xstack0)
     (mem_ctx0 := old_extframe.(ecf_mem_ctx))
     (current_contract := old_extframe.(ecf_this_address))
   .
-  
+
   Inductive farcall : FarCall.params -> state -> state -> Prop :=
   | farcall_fwd_fatptr: forall flags old_regs old_pages xstack0 xstack1 xstack2 new_caller_stack gs reg_context_u128 new_pages new_code_page new_mem_ctx in_ptr abi_shard ergs_query ergs_actual fwd_mode is_syscall_query out_ptr,
       let is_system := addr_is_kernel dest_addr && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if to_abi_shard then abi_shard else old_extframe.(ecf_shards).(shard_this) in
       abi_ptr_tag = true ->
-      
+
       paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward Ret.ForwardFatPointer (in_ptr, xstack1) (out_ptr, xstack2) ->
       alloc_pages_extframe (old_pages,mem_ctx0) new_code_page (new_pages, new_mem_ctx) ->
@@ -498,8 +498,8 @@ Section Def.
 
       paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr xstack0 (xstack1, new_code_page) ->
       paid_forward (Ret.UseMemory page_type) (in_ptr, xstack1) (out_ptr, xstack2) ->
-      
-      let mem_ctx1 := (topmost_extframe xstack2).(ecf_mem_ctx) in
+
+      let mem_ctx1 := (active_extframe xstack2).(ecf_mem_ctx) in
       alloc_pages_extframe (old_pages, mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,xstack2) (ergs_actual, new_caller_stack) ->
 
@@ -521,7 +521,7 @@ Section Def.
                                         |};
                          |} (Some new_caller_stack) in
 
-      farcall 
+      farcall
         {|
           memory_quasi_fat_ptr := in_ptr;
           ergs_passed          := ergs_query;
@@ -562,7 +562,7 @@ Inductive fetch_operands abi dest handler:
 | farcall_fetch: forall handler_location dest_val abi_val (abi_ptr_tag:bool) abi_params gs abi_ptr_tag cs1,
     load_regs (gs_regs gs) [
         (dest,dest_val);
-        (abi, mk_pv abi_ptr_tag abi_val)] 
+        (abi, mk_pv abi_ptr_tag abi_val)]
     ->
       handler = Imm handler_location ->
     FarCall.ABI.(decode) abi_val = Some abi_params ->
@@ -572,7 +572,7 @@ Inductive fetch_operands abi dest handler:
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1).
 
 Inductive step : instruction -> smallstep :=
-  
+
 | step_farcall_normal: forall (handler:imm_in) (abi dest:in_reg) call_shard call_as_static dest_addr handler_addr abi_ptr_tag abi_params (gs gs':state) cs1,
 
     fetch_operands abi dest handler (dest_addr, handler_addr, abi_ptr_tag, abi_params, cs1)->

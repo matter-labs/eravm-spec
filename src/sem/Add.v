@@ -5,7 +5,7 @@ Import Addressing Bool Common Condition Instruction Memory State ZMod
 
 Section Def.
   Open Scope ZMod_scope.
-  
+
   Inductive step: instruction -> xsmallstep :=
   (**
 # Add
@@ -71,7 +71,7 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
       let new_EQ := result == zero256 in
       let new_GT := negb new_EQ && negb new_OF in
       flags_candidate = bflags new_OF new_EQ new_GT ->
-      
+
       step (OpAdd in1 in2 out mod_swap mod_sf) xs xs'
   .
 End Def.

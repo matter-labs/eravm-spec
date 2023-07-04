@@ -28,5 +28,5 @@ Inductive query :=
   (* | L1MsgQuery : event -> query *)
   | PrecompileQuery : precompile_query -> query.
 
-         
+
 End Definitions.

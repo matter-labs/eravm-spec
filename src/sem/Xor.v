@@ -33,7 +33,7 @@ Follows the scheme described in [binop_effect_spec].
 
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
-- result is computed as a bitwise XOR of two operands. 
+- result is computed as a bitwise XOR of two operands.
 - flags are computed as follows:
    - `EQ` is set if $result = 0$.
    - `OF_LT` and `GT` are cleared
@@ -56,7 +56,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
 - `and`, `or` and `xor` are encoded as variants of the same instruction.
 
    *)
-    
+
   | step_Xor:
     forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs',
       binop_bitwise_effect_spec in1 in2 out mod_swap mod_sf

@@ -19,12 +19,12 @@ Inductive storage_get (d: depot): fqa_storage -> storage -> Prop :=
 
 Inductive storage_read (d: depot): fqa_key -> word -> Prop :=
 | sr_apply: forall storage sk c w,
-    storage_get d sk storage -> 
+    storage_get d sk storage ->
     storage_read d (mk_fqa_key sk c) w.
 
 Inductive storage_write (d: depot): fqa_key -> word -> depot -> Prop :=
 | sw_apply: forall storage shard sk s c k w  shard' depot' storage',
-    storage_get d sk storage -> 
+    storage_get d sk storage ->
     MemoryBase.store_result storage_params k storage w storage' ->
     MemoryBase.store_result shard_params c shard storage' shard'  ->
     MemoryBase.store_result depot_params s d shard' depot' ->

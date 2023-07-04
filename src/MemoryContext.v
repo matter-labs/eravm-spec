@@ -2,11 +2,11 @@ From RecordUpdate Require Import RecordSet.
 
 Require Memory lib.ZMod.
 
-Import List Memory ZMod. 
+Import List Memory ZMod.
 
 Section Definitions.
   Import ListNotations RecordSetNotations.
-  
+
   Record mem_ctx :=
     mk_mem_ctx
       {
@@ -24,14 +24,14 @@ Section Definitions.
     | mk_mem_ctx code_id const_id stack_id heap_id auxheap_id _ _ =>
         [code_id;const_id;stack_id;heap_id;auxheap_id]
     end.
-  
+
   Definition page_older (id: page_id) (mps: mem_ctx) : bool :=
     List.forallb (page_older id) (list_mem_ctx mps).
   Definition is_active_page (ap:mem_ctx) (id: page_id) : bool :=
     List.existsb (page_eq id) (list_mem_ctx ap).
 
   Open Scope ZMod_scope.
-  
+
   #[export] Instance etaAP: Settable _ := settable! mk_mem_ctx< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
 
   Inductive grow_heap_page: mem_address -> mem_ctx -> mem_ctx -> Prop :=

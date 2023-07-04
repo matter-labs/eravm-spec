@@ -5,7 +5,7 @@ Require SemanticCommon.
 Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
   ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 (**
-# Returns 
+# Returns
 
 These three instructions return control from a currently executing function:
 
@@ -58,7 +58,7 @@ regs in current frame, set OF flag, return no data.
   Restores storage to the state before external call.
 
   The assembler expands `panic` to `panicr1`, but `r1` is ignored by returns from near calls.
-  
+
 
 ### Semantic
 
@@ -84,11 +84,11 @@ regs in current frame, set OF flag, return no data.
 
       (* no reimbursement, ergs are lost *)
       let handler := active_exception_handler (InternalCall cf caller_stack) in
-      
+
       step_panic OpPanic {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-          
+
           gs_regs         := regs;
           gs_pages        := pages;
           |}
@@ -98,7 +98,7 @@ regs in current frame, set OF flag, return no data.
 
           gs_regs         := regs;
           gs_pages        := pages;
-          |} 
+          |}
         (**
 
 #### Case 2: `panic` from near call, label provided
@@ -159,11 +159,11 @@ regs in current frame, set OF flag, return no data.
                           gs_callstack    := cs0;
                           gs_regs         := regs;
 
-                          
+
                           gs_pages        := pages;
                         |};
             gs_context_u128 := context_u128;
-            
+
             gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
@@ -184,7 +184,7 @@ regs in current frame, set OF flag, return no data.
                           gs_pages        := pages;
                           |};
 
-                          
+
           gs_context_u128 := zero128;
 
           gs_global       := {|
@@ -211,7 +211,7 @@ regs in current frame, set OF flag, return no data.
       external calls ignore label, even if it is explicitly provided.
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
- 
+
 ### Usage
 
 - Abnormal returns from near/far calls when an irrecoverable error has happened.

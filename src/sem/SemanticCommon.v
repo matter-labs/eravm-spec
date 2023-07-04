@@ -64,7 +64,7 @@ Section Payment.
       let current_bound := heap_variant_bound heap_type xstack0 in
       (diff, false) = query - current_bound ->
       grow_and_pay heap_type query xstack0 xstack0.
-  
+
   Inductive paid_forward: forward_page_type -> fat_ptr * callstack -> fat_ptr * callstack -> Prop :=
   |pf_useheapvariant: forall type in_ptr xstack0 xstack1 query,
       validate_fresh in_ptr = no_exceptions ->
@@ -85,7 +85,7 @@ Definition addr_is_kernel (addr:contract_address) : bool :=
   lt_unsigned _ addr KERNEL_MODE_MAXADDR.
 
 Definition in_kernel_mode (ef:callstack) : bool :=
-  let ef := topmost_extframe ef in
+  let ef := active_extframe ef in
   addr_is_kernel ef.(ecf_this_address).
 
 
@@ -93,7 +93,7 @@ Section Depot.
 
   Open Scope ZMod_scope.
   Definition is_rollup (xstack: callstack) : bool := zero8 == current_shard xstack.
-  
+
   Definition net_pubdata xstack : Z := if is_rollup xstack then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0.
 
 End Depot.
@@ -114,7 +114,7 @@ to [fp_start + fp_length + 32] inclusive to be within heap bounds. *)
       start + length = (addr, false) ->
       addr + bytes_in_word  = (upper_bound, false) ->
       word_upper_bound (mk_fat_ptr page start length ofs) upper_bound.
-  
+
 End UMA.
 (** # Helpers *)
 
@@ -148,21 +148,21 @@ Inductive step_xstate_callstack (S: callstack -> callstack -> Prop) : exec_state
     S cs1 cs1 ->
     xs1 = {|
             gs_callstack    := cs1;
-            
-            
+
+
             gs_flags        := flags;
             gs_regs         := regs;
             gs_pages        := pages;
           |} ->
     xs2 = {|
             gs_callstack    := cs2;
-            
-            
+
+
             gs_flags        := flags;
             gs_regs         := regs;
             gs_pages        := pages;
           |} ->
-    
+
     step_xstate_callstack S xs1 xs2.
 
 Inductive step_callstack (S: callstack -> callstack -> Prop) : smallstep :=
@@ -221,13 +221,13 @@ Inductive fetch_apply22 :
         loads _ regs0 cs0 mem0 [(arg1, value1) ; (arg2, value2)] cs1 ->
         stores _ regs0 cs1 mem0 [ (out1, result1); (out2, result2)]
           (new_regs , new_mem, new_cs) ->
-        
+
         fetch_apply22 (regs0,mem0,cs0)
           (arg1, value1) (arg2, value2) (out1, result1) (out2, result2)
           (new_regs,new_mem,new_cs)
       )
 .
-Generalizable No Variables. 
+Generalizable No Variables.
 
 Generalizable Variables s i o.
 Inductive fetch_apply22_swap swap:

@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Addressing Common CallStack Event MemoryOps Instruction State 
+Import Addressing Common CallStack Event MemoryOps Instruction State
   Addressing.Coercions PrimitiveValue SemanticCommon.
 Import List ListNotations.
 
@@ -26,8 +26,8 @@ Emit an event with provided key and value. See [event] for more details on event
 ## Semantic
 
 - Fetch key and value from `key` and `value`.
-- If `is_first` is `true`, mark the event as the first in a chain of events. 
-- Emit event. 
+- If `is_first` is `true`, mark the event as the first in a chain of events.
+- Emit event.
 
  *)
 | step_Event:
@@ -49,8 +49,8 @@ Emit an event with provided key and value. See [event] for more details on event
                     ev_key := key;
                     ev_value := value;
                   |}) gs new_gs ->
-    
-    
+
+
     step (OpEvent arg_key arg_value is_first)
          {|
            gs_global       := gs;
@@ -70,7 +70,7 @@ Emit an event with provided key and value. See [event] for more details on event
 
 - Event queue.
 
-## Usage TODO 
+## Usage TODO
 
 
 ## Similar instructions

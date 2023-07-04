@@ -3,7 +3,7 @@ Require SemanticCommon.
 Import Addressing Addressing.Coercions Instruction Resolution State SemanticCommon.
 
 Section Def.
-  (**  
+  (**
 
 # ModSP
 
@@ -86,9 +86,9 @@ Section Ex1.
   (* Coercion int_mod_of : Z >-> int_mod. *)
   (* Let ex := OpModSP (RelSpPop R0 23) (RelSpPush R0 88) : instruction. *)
 (* Import ZMod.
-Goal 
+Goal
   forall codes flags depot pages xstack0 context_u128 regs,
-    step ex 
+    step ex
           {|
           gs_callstack    := xstack0;
           gs_flags        := flags;

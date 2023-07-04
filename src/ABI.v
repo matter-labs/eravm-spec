@@ -1,7 +1,9 @@
 Require Coder Ergs Pointer GPR.
 Import Core Common Coder Bool ZMod GPR Ergs Memory Pointer.
 
-(** ABIs are described here:
+(** # ABI
+
+ABIs are described here:
 https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
  *)
 
@@ -86,7 +88,7 @@ Module PrecompileParameters.
         output_memory_length: mem_address;
         per_precompile_interpreted: u64;
       }.
-  
+
   Record inner_params :=
     mk_priv_params
       {
@@ -111,14 +113,14 @@ Module PrecompileParameters.
           priv_input_memory_offset := input_memory_offset;
           priv_input_memory_length := input_memory_length;
           priv_output_memory_offset := output_memory_offset;
-          priv_output_memory_length := output_memory_length; 
+          priv_output_memory_length := output_memory_length;
           priv_memory_page_to_read := read_page;
           priv_memory_page_to_write := write_page;
           priv_precompile_interpreted_data := per_precompile_interpreted;
         |}
     end.
-  
+
   Axiom pub_ABI: @coder params.
   Axiom priv_ABI: @coder inner_params.
 
-End PrecompileParameters. 
+End PrecompileParameters.

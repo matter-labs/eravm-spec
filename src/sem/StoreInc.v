@@ -12,7 +12,7 @@ Import Addressing.Coercions.
 
 
 Section Defs.
- Open Scope ZMod_scope. 
+ Open Scope ZMod_scope.
 
  Inductive step: instruction -> xsmallstep :=
 (**
@@ -64,34 +64,34 @@ fp_page := (aux_)heap page id;
 fp_start := zero32;
 fp_length := in_ptr.(fp_length);
 fp_offset := in_ptr.(fp_offset) + 32;
-```   
+```
 *)
   | step_StoreInc:
     forall flags regs mem cs new_cs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs selected_page in_ptr ptr_incremented query modified_page new_mem __ ___,
 
       let selected_page_id := heap_variant_id heap_variant cs in
-      
+
       loads _ regs cs mem [
          (in_regimm_incl arg_enc_ptr, mk_pv __ enc_ptr) ;
-         (InReg          arg_val, mk_pv ___ value) 
+         (InReg          arg_val, mk_pv ___ value)
           ] cs ->
-      
+
       ABI.(decode) enc_ptr = Some in_ptr ->
-      
+
       let used_ptr := in_ptr <| fp_page := Some selected_page_id |> in
-      
+
       (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
       let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
-      
+
       heap_variant_page heap_variant cs mem selected_page ->
-      
+
       word_upper_bound used_ptr query ->
       grow_and_pay heap_variant query cs new_cs ->
 
-      
+
       ptr_inc used_ptr ptr_incremented  ->
-      
+
       store_reg regs arg_modptr (PtrValue (ABI.(encode) ptr_incremented))
         new_regs ->
 
@@ -104,17 +104,17 @@ fp_offset := in_ptr.(fp_offset) + 32;
                    gs_regs         := regs;
                    gs_pages        := mem;
 
-                   
+
                    gs_flags        := flags;
                  |}
                  {|
                    gs_callstack    := new_cs;
                    gs_regs         := new_regs;
                    gs_pages        := new_mem;
-                   
-                   
+
+
                    gs_flags        := flags;
-                 |}   
+                 |}
 
   .
 (**
@@ -138,4 +138,4 @@ fp_offset := in_ptr.(fp_offset) + 32;
 - [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc] are variants of the same instruction.
 
  *)
-End Defs. 
+End Defs.

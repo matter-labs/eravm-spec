@@ -49,7 +49,7 @@ Section Types.
   Definition one128 := u128_of 1.
   Definition one160 := u160_of 1.
   Definition one256 := u256_of 1.
-  
+
 End Types.
 
 Definition bits_in_byte : nat  := 8%nat.

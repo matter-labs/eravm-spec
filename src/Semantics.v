@@ -9,7 +9,7 @@ Inductive step_ins: instruction -> smallstep :=
 | step_ins_noop: forall gs, step_ins OpNoOp gs gs
 | step_ins_op: forall ins gs gs',
     match ins with
-| OpInvalid => 
+| OpInvalid =>
 | OpNoOp => _
 | OpModSP in1 out1 => _
 | OpJump dest => _
@@ -74,7 +74,7 @@ end
 
 
 
-Inductive step: smallstep := 
+Inductive step: smallstep :=
    | step_correct:
     forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs,
       let gs0 := {|
@@ -84,19 +84,19 @@ Inductive step: smallstep :=
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
+                      |};
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       let gs1 := {|
           gs_xstate := {|
                         gs_callstack    := new_xstack;
-                        
+
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
                         |};
-          
+
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
@@ -104,7 +104,7 @@ Inductive step: smallstep :=
 
       stack_overflow xstack0 = false ->
       check_requires_kernel ins (is_kernel xstack0) = true ->
-      check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = true ->
+      check_allowed_static_ctx ins (active_extframe xstack0).(ecf_is_static) = true ->
       fetch_instr regs xstack0 pages (Ins ins cond) ->
 
       update_pc_regular xstack0 xstack1 ->
@@ -116,18 +116,18 @@ Inductive step: smallstep :=
       let gs0 := {|
           gs_xstate := {|
                         gs_callstack    := xstack0;
-                        
+
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
+                      |};
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       stack_overflow xstack0 = false ->
       fetch_instr regs xstack0 pages (Ins ins cond) ->
       check_requires_kernel ins (is_kernel xstack0) = false ->
-      
+
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs
 | step_incompatible_static:
@@ -135,21 +135,21 @@ Inductive step: smallstep :=
       let gs0 := {|
                   gs_xstate := {|
                         gs_callstack    := xstack0;
-                                
+
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
-          
+                      |};
+
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
 
-      check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = false ->
+      check_allowed_static_ctx ins (active_extframe xstack0).(ecf_is_static) = false ->
       stack_overflow xstack0 = false ->
       fetch_instr regs xstack0 pages (Ins ins cond) ->
       check_requires_kernel ins (is_kernel xstack0) = true ->
-      
+
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs
 
@@ -162,20 +162,20 @@ Inductive step: smallstep :=
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
-          
+                      |};
+
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       let gs1 := {|
           gs_xstate := {|
                         gs_callstack    := new_xstack;
-                        
+
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
-          
+                      |};
+
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
@@ -183,7 +183,7 @@ Inductive step: smallstep :=
       cond_holds cond flags = false ->
       stack_overflow xstack0 = false ->
       check_requires_kernel ins (is_kernel xstack0) = true ->
-      check_allowed_static_ctx ins (topmost_extframe xstack0).(ecf_is_static) = true ->
+      check_allowed_static_ctx ins (active_extframe xstack0).(ecf_is_static) = true ->
 
       fetch_instr regs xstack0 pages (Ins ins cond) ->
 
@@ -202,14 +202,14 @@ Inductive step: smallstep :=
                         gs_flags        := flags;
                         gs_regs         := regs;
                         gs_pages        := pages;
-                      |}; 
-          
+                      |};
+
           gs_context_u128 := context_u128;
           gs_global       := gs;
           |} in
       stack_overflow xstack0 = true ->
       step_ins (OpPanic None) gs0 new_gs->
       step gs0 new_gs.
-  
+
 *)
- 
+

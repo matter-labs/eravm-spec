@@ -5,7 +5,7 @@ Require SemanticCommon.
 Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
   ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 (**
-# Returns 
+# Returns
 
 These three instructions return control from a currently executing function:
 
@@ -60,7 +60,7 @@ Return from a function signaling an error; execute exception handler, possibly r
   Restores storage to the state before external call.
 
   The assembler expands `revert` to `revert r1`, but `r1` is ignored by reverts from near calls.
-  
+
 
 ### Semantic
 
@@ -73,7 +73,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 #### Case 1: `revert` from near call, no label
 
 1. Pass all ergs from the current frame to the parent frame.
-2. Drop current frame. 
+2. Drop current frame.
 3. Set PC to the exception handler of a dropped frame.
 4. Clear flags
 
@@ -87,8 +87,8 @@ Return from a function signaling an error; execute exception handler, possibly r
       step_revert OpNearRevert {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-          
-          
+
+
           gs_regs         := regs;
           gs_pages        := pages;
         |}
@@ -106,7 +106,7 @@ Return from a function signaling an error; execute exception handler, possibly r
 #### Case 2: `revert label` from near call, label provided
 
 1. Pass all ergs from the current frame to the parent frame.
-2. Drop current frame. 
+2. Drop current frame.
 3. Set PC to the label provided
 4. Clear flags
 
@@ -115,12 +115,12 @@ Return from a function signaling an error; execute exception handler, possibly r
     forall flags pages cf caller_stack caller_reimbursed regs label,
 
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
-      
+
       step_revert (OpNearRevertTo label) {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
-          
-          
+
+
           gs_regs         := regs;
           gs_pages        := pages;
         |}
@@ -187,7 +187,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 | step_RevertExt:
    forall __ pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr page tx_num codes cergs rev,
     let cs0 := ExternalCall cf (Some caller_stack) in
-    
+
     (* Panic if not a pointer *)
     load_reg regs arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
 
@@ -205,11 +205,11 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
                           gs_callstack    := cs0;
                           gs_regs         := regs;
 
-                          
+
                           gs_pages        := pages;
                         |};
             gs_context_u128 := ___;
-            
+
             gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
@@ -230,7 +230,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
                           gs_pages        := pages;
                           |};
 
-                          
+
           gs_context_u128 := zero128;
 
           gs_global       := {|
@@ -257,7 +257,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
       external calls ignore label, even if it is explicitly provided.
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
- 
+
 ### Usage
 
 - Abnormal returns from near/far calls when a recoverable error happened.

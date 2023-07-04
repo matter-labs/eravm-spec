@@ -8,7 +8,7 @@ Section Def.
 
   Generalizable Variables arg_op arg_out any_tag .
   Inductive step_div: instruction -> xsmallstep :=
-    
+
   (**
 # Div
 
@@ -46,22 +46,22 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
    - `GT` is cleared.
 
    Reminder: flags are only set if `set_flags` modifier is set.
-   *) 
+   *)
   | step_Div_no_overflow:
-    
+
     forall (mod_swap: mod_swap) (mod_flags: mod_set_flags)
       (x y:Z) wx wy
       flags regs mem cs new_regs new_mem new_flags new_cs
       (quot rem: Z) wquot wrem,
-      `(   
+      `(
           fetch_apply22_swap mod_swap (regs,mem,cs)
-                             
+
             (      arg_op1, mk_pv any_tag1 wx)
             (InReg arg_op2, mk_pv any_tag2 wy)
 
             (       arg_out1, IntValue wquot)
             (OutReg arg_out2, IntValue wrem)
-            
+
             (new_regs, new_mem, new_cs) ->
 
           y <> 0 ->
@@ -69,9 +69,9 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
           rem = Z.rem x y ->
 
           let new_EQ := Z.eqb quot 0 in
-          let new_GT := Z.eqb rem 0 in 
+          let new_GT := Z.eqb rem 0 in
           new_flags = apply_set_flags mod_flags flags (bflags false new_EQ new_GT) ->
-          
+
           step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
             (mk_exec_state flags regs mem cs)
             (mk_exec_state flags new_regs new_mem new_cs)
@@ -91,20 +91,20 @@ Reminder: flags are only set if `set_flags` modifier is set.
   | step_Div_overflow:
 
     forall (mod_swap: mod_swap) (mod_flags: mod_set_flags)
-      wx 
+      wx
       flags regs mem cs new_regs new_mem new_flags new_cs,
-      
-      `(   
+
+      `(
           fetch_apply22_swap mod_swap (regs,mem,cs)
-                             
+
             (      arg_op1, mk_pv any_tag1 wx)
             (InReg arg_op2, mk_pv any_tag2 zero256)
 
             (       arg_out1, IntValue zero256)
             (OutReg arg_out2, IntValue zero256)
-            
+
             (new_regs, new_mem, new_cs) ->
-          
+
           new_flags = apply_set_flags mod_flags flags (bflags true false false) ->
           step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
             (mk_exec_state flags regs mem cs)
@@ -131,4 +131,4 @@ Arithmetic operations.
 - See [OpMul].
 
  *)
-End Def. 
+End Def.
