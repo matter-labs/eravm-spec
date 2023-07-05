@@ -1,20 +1,21 @@
 From RecordUpdate Require Import RecordSet.
 Require Core List PrimitiveValue.
 
-Import Core PrimitiveValue RecordSetNotations.
+Import Core PrimitiveValue .
 
 Section Regs.
 
-  Let pv := @primitive_value word.
-  Import List.ListNotations.
+  Context (pv := @primitive_value word).
 
-  Section GPR.
-    Inductive reg_name : Set :=
-      R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13
-    | R14 | R15.
+  (** # General purpose registers
 
-
-  End GPR.
+EraVM has 15 mutable general purpose registers R1, R2, ..., R15.
+They hold [primitive_value word], so they are tagged 256-bit words.
+The tag is set when the register contains a fat pointer.
+   *)
+  Inductive reg_name : Set :=
+    R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13
+  | R14 | R15.
 
   Record regs_state :=  mk_regs {
                             r1  : pv;
@@ -39,16 +40,8 @@ Section Regs.
   Definition regs_state_zero := let z := reg_zero in
                                 mk_regs z z z z z z z z z z z z z z z.
 
-  (* begin hide *)
-  #[export] Instance etaGPRs : Settable _ := settable! mk_regs < r1  ; r2  ; r3  ; r4  ; r5  ; r6  ; r7  ; r8  ; r9  ; r10  ; r11  ; r12  ; r13  ; r14  ; r15  >.
-  (* end hide *)
 
-  Definition reg_map f (rs:regs_state) : regs_state :=
-    match rs with
-    | mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 =>
-        ( mk_regs (f r1) (f r2) (f r3) (f r4) (f r5) (f r6) (f r7) (f r8) (f r9) (f r10) (f r11) (f r12) (f r13) (f r14) (f r15))
-    end.
-
+  (** Additionally, it has one reserved read-only register R0 which evaluates to [IntValue 0], that is, an untagged integer 0. Function [fetch_gpr] loads a value from register. *)
   Definition fetch_gpr (rs:regs_state) (r:reg_name) : pv :=
     match r with
     | R0 => IntValue word0
@@ -69,7 +62,7 @@ Section Regs.
     | R15 => r15 rs
     end.
 
-  (** Storing value to general purpose registers. *)
+  (** Predicate [store_gpr] stores value to a general purpose register. It is not defined for [R0] *)
   Inductive store_gpr : regs_state -> reg_name -> pv -> regs_state -> Prop :=
   | fr_store1 :
     forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
@@ -148,4 +141,11 @@ Section Regs.
         (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 pv)
   .
 
+  #[export] Instance etaGPRs : Settable _ := settable! mk_regs < r1; r2; r3; r4; r5; r6; r7; r8; r9; r10; r11; r12; r13; r14; r15 >.
+
+  Definition reg_map f (rs:regs_state) : regs_state :=
+    match rs with
+    | mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 =>
+        ( mk_regs (f r1) (f r2) (f r3) (f r4) (f r5) (f r6) (f r7) (f r8) (f r9) (f r10) (f r11) (f r12) (f r13) (f r14) (f r15))
+    end.
 End Regs.
