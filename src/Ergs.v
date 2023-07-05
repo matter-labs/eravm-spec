@@ -1,13 +1,85 @@
 Require lib.ZMod Common Instruction Memory.
 Import Common Instruction Memory ZMod ZArith.
 
-(** * Ergs *)
 Section Ergs.
 Open Scope Z_scope.
+
+(** # Ergs
+
+**Ergs** is the resource spent on executing actions in EraVM.
+
+The most common action consuming ergs is executing an instruction.
+Executing an instruction has a fixed [base_cost]; if the current balance is lower than the cost, VM panics.
+If an instruction is not executed because of mismatch between their execution condition with the current flags state, its base cost is still paid.
+Therefore it is cheaper to jump over expensive instructions like `farcall` than to predicate them.
+
+Additionally, actions like decommitting code for execution, accessing contract storage, or growing memory bounds, also cost ergs.
+
+Internally, ergs are 32-bit unsigned numbers.
+ *)
 
 Definition ergs_bits := 32%nat.
 Definition ergs := int_mod ergs_bits.
 Definition ergs_of := int_mod_of ergs_bits.
+
+(** ## Ergs balance in callstack
+
+Every frame in [callstack], whether external or internal, keeps its proper independent ergs balance in the field [cf_ergs_remaining].
+
+Calling functions/contracts requires passing ergs to the new calling frame, so that the callee's code would be able to function by spending ergs (see e.g. [step_nearcall]).
+
+For far calls, it is not possible to pass more than [FarCall.max_passable] ergs (currently 63/64 of the balance in current frame).
+For near calls, passing 0 ergs leads to passing all ergs in the current frame.
+
+If a function panics, all its ergs are burned (see [sem.Panic.step_panic]).
+Panic does not burn ergs of parent frames.
+
+If the function returns without panic, the remaining ergs are returned to its parent frame i.e. added to the parent frame's [cf_ergs_remaining].
+
+The following return instructions lead to returning remaining ergs to the caller:
+
+- [OpNearRet]
+- [OpNearRetTo]
+- [OpFarRet]
+- [OpNearRevert]
+- [OpNearRevertTo]
+- [OpFarRevert]
+- [OpNearPanicTo]
+
+
+
+## Actions consuming ergs
+
+Each instruction has a fixed based cost that gets deducted before executing it (see [base_cost]).
+
+Additionally, the following actions lead to spending ergs:
+
+1. Decommitting contract code. Performing far call to a contract which was not called during the construction of the current block costs ergs per each word of contract code. See [Decommitter], [FarCall].
+2. TODO Accessing storage
+3. Memory growth. Data pages holding heap variants are bound, and only accesses to addresses within these bounds are free. Reading or writing to these pages leads to bound being increased; the difference between [grow_and_pay] growth.
+- message
+
+
+## Burning ergs
+
+Burning ergs refers to setting erg balance to zero for the current frame, and executing [OpPanic].
+
+The general rule is: if some invariant of execution breaks, VM panics, burning all ergs in the current frame.
+This is a fail-fast behavior in case of irrecoverable errors.
+An exemplary case would be trying to use an integer value where pointer values is expected.
+
+Some situations that provoke panic are:
+
+- having not enough ergs to pay, e.g. for memory growth;
+- attempting to execute an instruction with an invalid encoding;
+- attempting to execute kernel-only instruction in user mode.
+
+
+## Parameters
+
+The following definitions are used to derive the costs of instructions and other actions.
+ *)
+
 #[reversible]
 Local Coercion ergs_of : Z >-> int_mod.
 
@@ -71,6 +143,7 @@ End Ergs.
 Section Costs.
   Import ZMod ZArith.
 
+  Open Scope Z_scope.
 (** # Costs
 
 Basic costs of all instructions. They get deducted when the instruction starts
@@ -163,4 +236,50 @@ Instructions may also impose additional costs e.g. far returns and far calls may
      | OpPrecompileCall _ _ =>
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
      end)%Z.
+
+(** Coq allows partially evaluating [base_cost] to get the absolute erg costs for each instruction:
+
+```
+Compute base_costs.
+```
+
+Current costs are:
+```
+| Invalid => 4294967295
+| NearCall => 25
+| FarCall
+| MimicCall
+| DelegateCall => 182
+| Store
+| StoreInc => 13
+| Load
+| LoadInc
+| LoadPointer
+| LoadPointerInc => 7
+| NearRet
+| NearRetTo
+| FarRet
+| NearRevert
+| NearRevertTo
+| FarRevert
+| NearPanicTo
+| Panic
+| ContextThis
+| ContextCaller
+| ContextCodeAddress
+| ContextMeta
+| ContextErgsLeft
+| ContextSp
+| ContextGetContextU128
+| ContextSetContextU128
+| ContextSetErgsPerPubdataByte
+| ContextIncrementTxNumber => 5
+| SLoad => 158
+| SStore => 3501
+| ToL1Message => 156250
+| Event => 38
+| <otherwise> => 6
+```
+ *)
 End Costs.
+
