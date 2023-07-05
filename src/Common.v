@@ -7,6 +7,14 @@ Section Types.
   Import ZArith lib.ZMod.
   Let mk n := int_mod_of n.
 
+  (** ## Unsigned numbers
+
+Unsigned integers modulo $2^n$.
+
+Type $u_N$ holds integers in range from 0 inclusive to $2^N$ exclusive.
+
+Definitions [uN_of] are constructors of [uN] types; they accept an integer and return its value modulo $2^N$ packed in a type [int_mod N].
+   *)
   Definition u8 := int_mod 8.
   Definition u8_of := mk 8.
 
@@ -32,6 +40,7 @@ Section Types.
   Definition u256_of := mk 256.
 
 
+  (** Definitions of zeros and ones for each fixed-width unsigned integer type. *)
   Definition zero8   := u8_of 0.
   Definition zero16  := u16_of 0.
   Definition zero24  := u24_of 0.
@@ -52,5 +61,6 @@ Section Types.
 
 End Types.
 
+(** The definition [bits_in_byte] is provided for readability.*)
 Definition bits_in_byte : nat  := 8%nat.
 
