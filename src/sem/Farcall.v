@@ -439,7 +439,7 @@ Section Def.
 
       paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr cs0 (cs1, new_code_page) ->
 
-      validate_non_fresh in_ptr = no_exceptions ->
+      validate in_ptr = no_exceptions ->
       (fp_lift free_ptr_shrink) in_ptr out_ptr ->
 
       alloc_pages_extframe (old_pages,mem_ctx0) new_code_page (new_pages, new_mem_ctx) ->

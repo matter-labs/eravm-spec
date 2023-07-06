@@ -1,6 +1,6 @@
-Require Addressing Core Common Condition CallStack Memory List Pointer Resolution.
+Require Addressing Core Common Condition CallStack Memory List Pointer Resolution Slice.
 
-Import Addressing Core ZArith ZMod Common Condition CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution.
+Import Addressing Core ZArith ZMod Common Condition CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution Slice.
 
 Section Definitions.
 

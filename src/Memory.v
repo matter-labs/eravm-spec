@@ -4,7 +4,6 @@ Import Bool Common Core MemoryBase BinInt List PrimitiveValue PMap_ext.
 
 Import ListNotations.
 
-
 (**
 # Informal overview
 
@@ -85,8 +84,7 @@ Definition storage: Type := mem_parameterized storage_params.
 (**  Storage start blanks. *)
 Definition storage_empty : storage := empty storage_params.
 
-(**
-Storage does not hold contract code, it is a responsibility of decommittment processor [%decommitter].
+(** Storage does not hold contract code, it is a responsibility of decommittment processor [%decommitter].
 
 Storage is a part of a [%shard], which is a part of [%depot].
 
@@ -157,8 +155,7 @@ Inductive shard_exists: shard_id -> Prop :=
 Section Memory.
 
   Section Pages.
-    (**
-# Main memory (transient)
+    (** # Main memory (transient)
 ## Memory structure
 
 Contract execution routinely uses **main memory** to hold instructions, stack, heaps, and constants.
@@ -255,7 +252,12 @@ A **data page** contains individually addressable bytes. Each data page holds $2
   quite similar. *)
   Inductive data_page_type := Heap | AuxHeap.
 
-
+  Import ZMod.
+  Open Scope ZMod_scope.
+  Definition growth (current_bound: mem_address) (query_bound: mem_address)
+    : mem_address :=
+    if query_bound < current_bound then zero32 else
+      fst (query_bound - current_bound).
 (** Note: only instructions from UMA (unaligned memory access) instruction family can access data pages ([%OpLoad]/[%OpLoadInc], [%OpStore]/[%OpStoreInc], [%OpLoadPointer]/OpLoadPointerInc]).
 Every byte on data pages has an address, but the instructions from UMA family read or store 32-byte words.
 

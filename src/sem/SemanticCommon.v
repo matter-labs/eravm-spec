@@ -74,12 +74,6 @@ Section Payment.
       heap_id = Some (active_heap_id xstack0) ->
       paid_forward_heap_span type (span, xstack0) (mk_fat_ptr heap_id (fresh_ptr span), xstack1).
 
-  (* Inductive forward_ptr: fat_ptr -> fat_ptr -> Prop := *)
-  (* |pf_forwardfatpointer: forall (in_ptr:fat_ptr) xstack out_ptr, *)
-  (*     validate_non_fresh in_ptr = no_exceptions -> *)
-  (*     (fp_lift free_ptr_shrink) in_ptr out_ptr -> *)
-  (*     paid_forward_ptr in_ptr, xstack) (out_ptr, xstack) *)
-
 End Payment.
 
 Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).

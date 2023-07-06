@@ -1,8 +1,8 @@
-Require SemanticCommon Addressing.
+Require SemanticCommon Addressing Slice.
 
 
-Import ABI Addressing Common Coder Condition CallStack Memory MemoryOps Instruction ZMod
-  Addressing.Coercions SemanticCommon MemoryContext PrimitiveValue Pointer State ZMod.
+Import ABI Addressing Common Coder Condition CallStack Memory MemoryOps Instruction 
+  Addressing.Coercions SemanticCommon MemoryContext PrimitiveValue Pointer State Slice ZMod.
 
 Import FatPointer.
 Import List ListNotations.

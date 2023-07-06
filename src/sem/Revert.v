@@ -253,7 +253,7 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
     MemoryContext.page_older page (get_mem_ctx cs0) = false ->
 
-    validate_non_fresh in_ptr = no_exceptions ->
+    validate in_ptr = no_exceptions ->
 
     fp_shrink in_ptr out_ptr ->
 
