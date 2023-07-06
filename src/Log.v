@@ -4,7 +4,7 @@ Import Decidability.
 Section Log.
 
   (** # Log
-**Log** is a data structure supporting appending elements of type [T] to it.
+**Log** is a data structure supporting appending elements of type [%T] to it.
    *)
   Context (T:Type) (elem_dec: Decidability.eq_dec T).
 
@@ -12,7 +12,7 @@ Section Log.
 
   Context (l:log).
 
-  (** [log] supports checking if an element is contained in it. *)
+  (** [%log] supports checking if an element is contained in it. *)
   Definition contains (elem:T): bool := if List.in_dec elem_dec elem l then true else false.
 
   Inductive contains_spec (elem: T) : bool -> Prop :=

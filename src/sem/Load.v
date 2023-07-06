@@ -59,30 +59,26 @@ Record fat_ptr :=
 5. Store this word to `res`.
 *)
   | step_Load:
-    forall new_cs heap_variant enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs (mem: memory) selected_page in_ptr query,
+    forall new_cs heap_variant enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs (mem: memory) selected_page query addr limit,
 
       `(
-      load _ regs cs0 mem (in_regimm_incl arg_enc_ptr) (cs1, PtrValue enc_ptr) ->
-      ABI.(decode) enc_ptr = Some in_ptr ->
-      let used_ptr := in_ptr <| fp_page := Some (heap_variant_id heap_variant cs1) |> in
+      load _  regs cs0 mem arg_enc_ptr (cs1, PtrValue enc_ptr) ->
+      let hptr := mk_hptr addr limit in
+      decode_heap_ptr enc_ptr = Some hptr ->
 
-      (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-      let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound used_ptr query ->
+      word_upper_bound hptr query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      store_reg regs
-          arg_dest (IntValue result)
-        new_regs ->
+      store_reg regs arg_dest (IntValue result) new_regs ->
 
       xstep (OpLoad arg_enc_ptr arg_dest heap_variant)
          {|
-           gs_callstack    := cs;
+           gs_callstack    := cs0;
            gs_regs         := regs;
 
 

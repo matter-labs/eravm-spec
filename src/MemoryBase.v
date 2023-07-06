@@ -31,7 +31,7 @@ Section Mem.
   Definition addr_to_key (addr: address): positive :=
     Z.to_pos ((int_val address_bits addr) + 1).
 
-  (** [load] assumes mem is initialized with a known default_value value. *)
+  (** [%load] assumes mem is initialized with a known default_value value. *)
   Definition load (addr : address) (m : mem_parameterized) : addressable_block :=
     match PositiveMap.find (addr_to_key addr) m.(contents) with
     | None => default_value

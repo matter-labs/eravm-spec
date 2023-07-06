@@ -13,7 +13,7 @@ Import Addressing.Coercions.
 
 Section Defs.
  Open Scope ZMod_scope.
-
+ Import Pointer.Coercions.
  Inductive step: instruction -> xsmallstep :=
 (**
 # StoreInc
@@ -67,7 +67,8 @@ fp_offset := in_ptr.(fp_offset) + 32;
 ```
 *)
   | step_StoreInc:
-    forall flags regs mem cs new_cs heap_variant enc_ptr (arg_modptr:out_reg) (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs selected_page in_ptr ptr_incremented query modified_page new_mem __ ___,
+    
+    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page query modified_page cs regs mem __ ___ addr limit arg_modptr hptr_mod,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
@@ -76,30 +77,24 @@ fp_offset := in_ptr.(fp_offset) + 32;
          (InReg          arg_val, mk_pv ___ value)
           ] cs ->
 
-      ABI.(decode) enc_ptr = Some in_ptr ->
+      let hptr := mk_hptr addr limit in
+      decode_heap_ptr enc_ptr = Some hptr ->
 
-      let used_ptr := in_ptr <| fp_page := Some selected_page_id |> in
-
-      (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-      let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs mem selected_page ->
 
-      word_upper_bound used_ptr query ->
+      word_upper_bound hptr query ->
       grow_and_pay heap_variant query cs new_cs ->
-
-
-      ptr_inc used_ptr ptr_incremented  ->
-
-      store_reg regs arg_modptr (PtrValue (ABI.(encode) ptr_incremented))
-        new_regs ->
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->
       page_replace selected_page_id (@DataPage era_pages modified_page) mem new_mem ->
 
+      hptr_inc hptr hptr_mod ->
+      let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None hptr_mod) in
+
       step (OpStoreInc arg_enc_ptr arg_val heap_variant arg_modptr)
-         {|
+                 {|
                    gs_callstack    := cs;
                    gs_regs         := regs;
                    gs_pages        := mem;
@@ -114,9 +109,7 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
 
                    gs_flags        := flags;
-                 |}
-
-  .
+                 |}.
 (**
 ## Affected parts of VM state
 

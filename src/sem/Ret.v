@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
-  ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
+  ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations MemoryContext.
 (**
 # Returns
 
@@ -128,8 +128,9 @@ Inductive step_ret: instruction -> xsmallstep :=
         |}
         )
 .
-
+Open Scope ZMod_scope.
 Generalizable Variables cs.
+
 Inductive step_retext : instruction -> smallstep :=
 (**
 
@@ -141,7 +142,7 @@ Inductive step_retext : instruction -> smallstep :=
 Inductive forward_page_type := UseHeap | ForwardFatPointer | UseAuxHeap.
 
 Record fat_ptr := {
-   fp_page:   page_id;
+   fp_page:   option page_id;
    fp_start:  mem_address;
    fp_length: mem_address;
    fp_offset: mem_address;
@@ -178,18 +179,66 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 
 
 *)
-| step_RetExt:
-  forall __ gs pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr page,
+| step_RetExt_heapvar:
+  forall gs pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) heap_span_enc out_ptr ____ heap_type hspan,
+    let cs0 := ExternalCall cf (Some caller_stack) in
+
+    load_reg_any regs arg heap_span_enc ->
+
+    decode FarRet.ABI heap_span_enc = Some (ForwardNewHeapPointer heap_type hspan) ->
+
+    paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
+    ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
+
+    step_retext (OpFarRet arg)
+          {|
+            gs_xstate := {|
+                          gs_flags        := ___ ;
+                          gs_callstack    := cs0;
+                          gs_regs         := regs;
+
+
+                          gs_pages        := pages;
+                        |};
+            gs_context_u128 := ____;
+
+            gs_global       := gs;
+          |}
+          {|
+            gs_xstate := {|
+                          gs_flags        := flags_clear;
+                          gs_callstack    := caller_reimbursed;
+                          gs_regs         := regs_state_zero
+                             <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |>
+                             <| r2 := reserved |>
+                             <| r3 := reserved |>
+                             <| r4 := reserved |> ;
+
+
+                          gs_pages        := pages;
+                          |};
+
+
+          gs_context_u128 := zero128;
+
+          gs_global       := gs;
+          |}
+| step_RetExt_ForwardFatPointer:
+  forall __ gs pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr out_ptr page,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     (* Panic if not a pointer *)
-    load_reg regs arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+    load_reg regs arg (PtrValue in_ptr_encoded) ->
 
-    Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
+    FarRet.ABI.(decode) in_ptr_encoded = Some (ForwardFatPointer in_ptr) ->
     in_ptr.(fp_page) = Some page ->
-    (fwd_mode = ForwardFatPointer -> abi_ptr_tag && negb ( MemoryContext.page_older page (get_mem_ctx cs0)) = true) ->
 
-    paid_forward fwd_mode (in_ptr, cs0) (out_ptr, cs1) ->
+    negb ( page_older page (get_mem_ctx cs0)) = true ->
+
+    validate_non_fresh in_ptr = no_exceptions ->
+
+    fp_shrink in_ptr out_ptr ->
+
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
     step_retext (OpFarRet arg)

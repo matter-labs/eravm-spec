@@ -7,7 +7,7 @@ Import Coder Log VersionedHash Common Decidability Ergs Memory MemoryBase Storag
 Definition DEPLOYER_SYSTEM_CONTRACT_ADDRESS : contract_address
   := (ZMod.int_mod_of _ (2^15))%Z.
 
-Section Defs.
+Section Decommitter.
   Context {ins_type: Type} (invalid_ins: ins_type).
 
   Let code_page := code_page invalid_ins.
@@ -24,11 +24,11 @@ Section Defs.
   Record decommitter :=
     mk_code_mgr {
         cm_storage: code_storage;
-        cm_fresh: @log versioned_hash;
+        cm_accessed: @log versioned_hash;
       }.
 
 
-  Definition is_fresh cm vh := negb (contains _ VersionedHash.eq_dec (cm_fresh cm) vh).
+  Definition is_first_access cm vh := negb (contains _ VersionedHash.eq_dec (cm_accessed cm) vh).
 
   Definition code_hash_location (for_contract: contract_address) (sid:shard_id): fqa_key :=
       mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (resize _ 256 for_contract).
@@ -60,6 +60,4 @@ Section Defs.
 
 
 
-End Defs.
-
-
+End Decommitter.

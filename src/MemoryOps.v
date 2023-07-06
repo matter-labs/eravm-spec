@@ -79,10 +79,21 @@ Section Definitions.
         fetch loc (FetchPV res) ->
         load arg (new_cs, res).
 
-    Inductive load_reg: in_reg-> primitive_value -> Prop :=
+    Inductive load_any: in_any -> callstack * word -> Prop :=
+    | lda_apply : forall (arg:in_any) loc res new_cs __,
+        resolve_apply regs cs arg (new_cs, loc) ->
+        fetch loc (FetchPV (mk_pv __ res)) ->
+        load_any arg (new_cs, res).
+
+    Inductive load_reg: in_reg -> primitive_value -> Prop :=
     | ldr_apply : forall  loc res,
         fetch_gpr regs loc = res ->
         load_reg (Reg loc) res.
+
+    Inductive load_reg_any: in_reg -> word -> Prop :=
+    | ldra_apply : forall  loc res __,
+        fetch_gpr regs loc = (mk_pv __ res) ->
+        load_reg_any (Reg loc) res.
 
     Definition load_int a cs w := load a (cs, IntValue w).
     Definition load_reg_int a w := load_reg a (IntValue w).

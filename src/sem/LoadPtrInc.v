@@ -9,6 +9,7 @@ Import List ListNotations.
 
 
 Section Defs.
+  Import Pointer.Coercions.
   Open Scope ZMod_scope.
 
   (**
@@ -79,22 +80,23 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
       load_reg regs arg_enc_ptr (PtrValue enc_ptr) ->
 
-      ABI.(decode) enc_ptr = Some in_ptr ->
+      decode_fat_ptr enc_ptr = Some in_ptr ->
 
       validate_in_bounds in_ptr = true ->
 
-      Some page_id  =in_ptr.(fp_page) ->
-      page_has_id mem page_id (@DataPage era_pages selected_page) ->
-      slice_from_ptr selected_page in_ptr slice ->
+      Some page_id  = in_ptr.(fp_page) ->
 
-      (addr, false) = in_ptr.(fp_start) + in_ptr.(fp_offset) ->
+      page_has_id mem page_id (@DataPage era_pages selected_page) ->
+      slice_page selected_page in_ptr slice ->
+
+      ptr_resolves_to in_ptr addr ->
       mb_load_slice_result BigEndian slice addr result ->
 
-      ptr_inc in_ptr out_ptr ->
+      fp_inc in_ptr out_ptr ->
 
       store_regs regs [
           (arg_dest,    IntValue result);
-          (arg_enc_ptr, PtrValue (ABI.(encode) out_ptr))
+          (arg_enc_ptr, PtrValue (encode_fat_ptr out_ptr))
         ] new_regs ->
 
       step_load_ptr (OpLoadPointerInc arg_enc_ptr arg_dest arg_modptr)

@@ -3,6 +3,9 @@ Require SemanticCommon.
 Import Addressing Common Coder CallStack Memory Instruction State ZMod
   ABI ABI.FatPointer Addressing.Coercions PrimitiveValue Pointer SemanticCommon ZArith.
 
+Section PtrShrink.
+  Import Pointer.Coercions.
+
 Inductive step: instruction -> xsmallstep :=
 (**
 # PtrShrink
@@ -34,19 +37,20 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrShrink :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap result ptr_in ptr_out regs mem cs new_regs new_mem new_cs flags,
+  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap result ptr_in regs mem cs new_regs new_mem new_cs flags hptr ptr_out,
 
     fetch_apply21_swap swap
       (regs, mem, cs)
       (in1, PtrValue op1) (InReg in2, IntValue op2) (out,PtrValue result)
       (new_regs, new_mem, new_cs) ->
 
-    FatPointer.ABI.(decode) op1 = Some ptr_in ->
+    decode_heap_ptr op1 = Some hptr ->
 
     let diff := resize _ 32 op2 in
-    fat_ptr_trim_length ptr_in diff  ptr_out ->
+    hptr_trim_length diff ptr_in ptr_out ->
 
-    let res_low := resize _ 128 (FatPointer.ABI.(encode) ptr_out) in
+    let ptr_out_enc := encode_fat_ptr (mk_fat_ptr None ptr_out) in
+    let res_low := resize _ 128 ptr_out_enc in
     result = mix_lower 128 op1 res_low ->
 
     step (OpPtrPack in1 in2 out swap)
@@ -95,3 +99,4 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 
 Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
 *)
+End PtrShrink.

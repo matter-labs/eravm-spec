@@ -13,7 +13,7 @@ Unsigned integers modulo $2^n$.
 
 Type $u_N$ holds integers in range from 0 inclusive to $2^N$ exclusive.
 
-Definitions [uN_of] are constructors of [uN] types; they accept an integer and return its value modulo $2^N$ packed in a type [int_mod N].
+Definitions [%uN_of] are constructors of [%uN] types; they accept an integer and return its value modulo $2^N$ packed in a type [%int_mod N].
    *)
   Definition u8 := int_mod 8.
   Definition u8_of := mk 8.
@@ -61,6 +61,6 @@ Definitions [uN_of] are constructors of [uN] types; they accept an integer and r
 
 End Types.
 
-(** The definition [bits_in_byte] is provided for readability.*)
+(** The definition [%bits_in_byte] is provided for readability.*)
 Definition bits_in_byte : nat  := 8%nat.
 

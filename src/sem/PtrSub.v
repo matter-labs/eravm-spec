@@ -7,6 +7,8 @@ Import Addressing Common Coder CallStack Memory Instruction State ZMod
 
 Section Def.
   Open Scope ZMod_scope.
+  Import Pointer.Coercions.
+
 
   (**
 # PtrSub
@@ -41,24 +43,26 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset - diff}$$
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
 
    *)
-
   Inductive step : instruction -> xsmallstep :=
   | step_PtrSub:
-    forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result ptr_in regs mem cs new_regs new_mem new_cs flags,
+    forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result regs mem cs new_regs new_mem new_cs flags limit ofs,
+      fetch_apply21_swap swap (regs, mem, cs)
 
-      fetch_apply21_swap swap
-        (regs, mem, cs)
-        (in1, PtrValue op1) (InReg in2, IntValue op2) (out, PtrValue result)
+        (      in1, PtrValue op1)
+        (InReg in2, IntValue op2)
+        (      out, PtrValue result)
+
         (new_regs, new_mem, new_cs) ->
 
-
-      FatPointer.ABI.(decode) op1 = Some ptr_in   ->
+      decode_heap_ptr op1 = Some (mk_hptr ofs limit) ->
       let diff := resize _ 32 op2 in
-      (new_ofs, false) = ptr_in.(fp_offset) - diff ->
+      (new_ofs, false) = ofs - diff ->
 
-      let ptr := FatPointer.ABI.(encode) (ptr_in <| fp_offset := new_ofs |>) in
+      let ptr := encode_fat_ptr (mk_fat_ptr None (mk_hptr new_ofs limit)) in
       let low := resize _ 128 ptr in
-      mix_lower 128 op1 low = result ->
+
+      result = mix_lower 128 op1 low ->
+
 
       step (OpPtrSub in1 in2 out swap)
            {|

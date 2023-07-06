@@ -4,7 +4,7 @@ Import Core Common Coder Bool ZMod GPR Ergs Memory Pointer.
 (** # ABI
 
 ABIs are described here:
-https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.rs
+https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.as
  *)
 
 
@@ -14,21 +14,26 @@ Local Definition coder := @coder word.
 (** ## Fat pointers *)
 Module FatPointer.
   Axiom ABI  : @coder fat_ptr.
+
+  Definition decode_fat_ptr (w:word) : option fat_ptr := ABI.(decode) w.
+
+  Definition decode_heap_ptr (w:word) : option heap_ptr :=
+    match decode_fat_ptr w with
+    | Some (mk_fat_ptr _ (mk_ptr (mk_span _ length) offset)) =>
+        Some (mk_hptr offset length)
+    | None => None
+   end.
+
+  Definition decode_span (w:word) : option span :=
+    match decode_fat_ptr w with
+    | Some (mk_fat_ptr _ (mk_ptr s _ ))=> Some s
+    | None => None
+   end.
+
+  Definition encode_fat_ptr (fp: fat_ptr) : word := ABI.(encode) fp.
+
 End FatPointer.
 
-(** ## Ret *)
-Module Ret.
-  Inductive forward_page_type := ForwardFatPointer | UseMemory (type: data_page_type).
-
-  Record params :=
-    mk_params {
-        memory_quasi_fat_ptr: fat_ptr;
-        page_forwarding_mode: forward_page_type;
-      }.
-
-  Axiom ABI: @coder params.
-  Axiom ABI_decode_zero: ABI.(decode) word0 = Some (mk_params fat_ptr_empty (UseMemory Heap) ).
-End Ret.
 
 (** ## Near call *)
 Module NearCall.
@@ -42,19 +47,31 @@ Module NearCall.
 
 End NearCall.
 
+(* Inductive forward_page_type := ForwardFatPointer | UseMemory (type: data_page_type). *)
+
+Inductive fwd_memory :=
+  ForwardFatPointer (p:fat_ptr)
+| ForwardNewHeapPointer (heap_var: data_page_type) (s:span).
+
+
+(** ## Ret *)
+Module FarRet.
+  Axiom ABI: @coder fwd_memory.
+  Axiom ABI_decode_zero: ABI.(decode) word0 = Some (ForwardNewHeapPointer Heap span_empty) .
+End FarRet.
+
 (** ## Far call *)
 Module FarCall.
-  Import FatPointer Ret.
+  Import FatPointer.
+
   Record params :=
     mk_params {
-        memory_quasi_fat_ptr: fat_ptr;
+        fwd_memory: fwd_memory;
         ergs_passed: ergs;
         shard_id: shard_id;
-        forwarding_mode: forward_page_type;
         constructor_call: bool;
         to_system: bool;
       }.
-
 
   Axiom ABI: @coder params.
 

@@ -61,7 +61,7 @@ Record fat_ptr :=
 *)
 
   | step_Store:
-    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page in_ptr query modified_page cs regs mem __ ___,
+    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page query modified_page cs regs mem __ ___ addr limit,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
@@ -70,15 +70,14 @@ Record fat_ptr :=
          (InReg          arg_val, mk_pv ___ value)
           ] cs ->
 
-      ABI.(decode) enc_ptr = Some in_ptr ->
+      let hptr := mk_hptr addr limit in
+      decode_heap_ptr enc_ptr = Some hptr ->
 
-      (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-      let addr := in_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs mem selected_page ->
 
-      word_upper_bound in_ptr query ->
+      word_upper_bound hptr query ->
       grow_and_pay heap_variant query cs new_cs ->
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->

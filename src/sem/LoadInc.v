@@ -12,6 +12,7 @@ Import List ListNotations.
 Section Defs.
 
   Open Scope ZMod_scope.
+  Import Pointer.Coercions.
   Generalizable Variables cs flags.
   Inductive step_load : instruction -> xsmallstep :=
     (**
@@ -67,28 +68,26 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
 *)
   | step_LoadInc:
-    forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page in_ptr ptr_incremented query new_cs regs,
+    forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page ptr_inc query new_cs regs addr limit,
       `(
       load _  regs cs0 mem arg_enc_ptr (cs1, PtrValue enc_ptr) ->
-      ABI.(decode) enc_ptr = Some in_ptr ->
-      let used_ptr := in_ptr <| fp_page := Some (heap_variant_id heap_variant cs1) |> in
+      let hptr := mk_hptr addr limit in
+      decode_heap_ptr enc_ptr = Some hptr ->
 
-      (* In Heap/Auxheap, 'start' of the pointer is always 0, so offset = absolute address *)
-      let addr := used_ptr.(fp_offset) in
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound used_ptr query ->
+      word_upper_bound hptr query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      ptr_inc used_ptr ptr_incremented  ->
-      let out_ptr_enc := ABI.(encode) used_ptr in
+      hptr_inc hptr ptr_inc ->
+      let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None ptr_inc) in
 
       store_regs regs [
           (arg_dest, IntValue result);
-          (arg_modptr, PtrValue out_ptr_enc)
+          (arg_modptr, PtrValue ptr_inc_enc)
         ] new_regs ->
 
       step_load (OpLoadInc arg_enc_ptr arg_dest heap_variant arg_modptr)

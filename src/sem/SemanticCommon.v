@@ -7,7 +7,7 @@ Import
     ABI.FarCall
     ABI.FatPointer
     ABI.NearCall
-    ABI.Ret
+    ABI.FarRet
     Bool
     Common
     Condition
@@ -65,17 +65,20 @@ Section Payment.
       (diff, false) = query - current_bound ->
       grow_and_pay heap_type query xstack0 xstack0.
 
-  Inductive paid_forward: forward_page_type -> fat_ptr * callstack -> fat_ptr * callstack -> Prop :=
-  |pf_useheapvariant: forall type in_ptr xstack0 xstack1 query,
-      validate_fresh in_ptr = no_exceptions ->
-      in_ptr.(fp_start) + in_ptr.(fp_length) = (query, false) ->
+
+  Inductive paid_forward_heap_span: data_page_type -> span * callstack -> fat_ptr * callstack -> Prop :=
+  |pf_useheapvariant: forall start length heap_id type xstack0 xstack1 query,
+      let span := mk_span start length in
+      start + length = (query, false) ->
       grow_and_pay type query xstack0 xstack1 ->
-      paid_forward (UseMemory type) (in_ptr, xstack0) (in_ptr <| fp_page := Some (active_heap_id xstack0) |>, xstack1)
-  |pf_forwardfatpointer: forall in_ptr xstack out_ptr,
-      validate_non_fresh in_ptr = no_exceptions ->
-      fat_ptr_shrink in_ptr out_ptr ->
-      paid_forward ForwardFatPointer (in_ptr, xstack) (out_ptr, xstack)
-  .
+      heap_id = Some (active_heap_id xstack0) ->
+      paid_forward_heap_span type (span, xstack0) (mk_fat_ptr heap_id (fresh_ptr span), xstack1).
+
+  (* Inductive forward_ptr: fat_ptr -> fat_ptr -> Prop := *)
+  (* |pf_forwardfatpointer: forall (in_ptr:fat_ptr) xstack out_ptr, *)
+  (*     validate_non_fresh in_ptr = no_exceptions -> *)
+  (*     (fp_lift free_ptr_shrink) in_ptr out_ptr -> *)
+  (*     paid_forward_ptr in_ptr, xstack) (out_ptr, xstack) *)
 
 End Payment.
 
@@ -105,15 +108,12 @@ Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
 
 Section UMA.
   Open Scope ZMod_scope.
-  (** [word_upper_bound] describes an upper bound expected from heap or auxheap by
-a fat pointer. Reading a word from [fp_start + fp_length] requires addresses up
-to [fp_start + fp_length + 32] inclusive to be within heap bounds. *)
-  Inductive word_upper_bound : fat_ptr -> mem_address -> Prop :=
-  | qbu_apply : forall start length addr upper_bound ofs page,
+
+  Inductive word_upper_bound : heap_ptr -> mem_address -> Prop :=
+  | qbu_apply : forall start limit upper_bound,
       let bytes_in_word := int_mod_of _ Core.z_bytes_in_word in
-      start + length = (addr, false) ->
-      addr + bytes_in_word  = (upper_bound, false) ->
-      word_upper_bound (mk_fat_ptr page start length ofs) upper_bound.
+      limit + bytes_in_word  = (upper_bound, false) ->
+      word_upper_bound (mk_hptr start limit) upper_bound.
 
 End UMA.
 (** # Helpers *)

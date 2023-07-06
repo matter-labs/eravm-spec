@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
-  ABI ABI.Ret ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
+  ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 (**
 # Returns
 
@@ -184,48 +184,47 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
 7. All storages are reverted to the state prior to the current contract call.
 
 *)
-| step_RevertExt:
-   forall __ pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr fwd_mode abi_ptr_tag out_ptr page tx_num codes cergs rev,
+
+| step_RevertExt_ForwardHeap:
+  forall pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) heap_span_enc out_ptr ____ heap_type hspan cergs tx_num codes ______,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
-    (* Panic if not a pointer *)
-    load_reg regs arg (mk_pv abi_ptr_tag in_ptr_encoded) ->
+    load_reg_any regs arg heap_span_enc ->
 
-    Ret.ABI.(decode) in_ptr_encoded = Some (Ret.mk_params in_ptr fwd_mode) ->
-    in_ptr.(fp_page) = Some page ->
-    (fwd_mode = ForwardFatPointer -> abi_ptr_tag && negb ( MemoryContext.page_older page (get_mem_ctx cs0)) = true) ->
+    decode FarRet.ABI heap_span_enc = Some (ForwardNewHeapPointer heap_type hspan) ->
 
-    paid_forward fwd_mode (in_ptr, cs0) (out_ptr, cs1) ->
+    paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
     step_revertext (OpFarRevert arg)
           {|
             gs_xstate := {|
-                          gs_flags        := __;
+                          gs_flags        := ___ ;
                           gs_callstack    := cs0;
                           gs_regs         := regs;
 
 
                           gs_pages        := pages;
                         |};
-            gs_context_u128 := ___;
+            gs_context_u128 := ____;
 
             gs_global       := {|
                               gs_current_ergs_per_pubdata_byte := cergs;
                               gs_tx_number_in_block := tx_num;
                               gs_contracts := codes;
-                              gs_revertable := rev;
+                              gs_revertable := ______;
                             |};
           |}
           {|
             gs_xstate := {|
                           gs_flags        := flags_clear;
+                          gs_callstack    := pc_set (active_exception_handler cs0) caller_reimbursed ;
                           gs_regs         := regs_state_zero
-                             <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                             <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |>
                              <| r2 := reserved |>
                              <| r3 := reserved |>
                              <| r4 := reserved |> ;
-                          gs_callstack    := pc_set (active_exception_handler cs0) caller_reimbursed ;
+
 
                           gs_pages        := pages;
                           |};
@@ -239,8 +238,70 @@ All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved and m
                               gs_contracts := codes;
                               gs_revertable := revert_state cf;
                             |}
+
           |}
 
+| step_RevertExt_ForwardFatPointer:
+  forall __ pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr out_ptr page cergs tx_num codes ____,
+    let cs0 := ExternalCall cf (Some caller_stack) in
+
+    (* Panic if not a pointer *)
+    load_reg regs arg (PtrValue in_ptr_encoded) ->
+
+    FarRet.ABI.(decode) in_ptr_encoded = Some (ForwardFatPointer in_ptr) ->
+    in_ptr.(fp_page) = Some page ->
+
+    MemoryContext.page_older page (get_mem_ctx cs0) = false ->
+
+    validate_non_fresh in_ptr = no_exceptions ->
+
+    fp_shrink in_ptr out_ptr ->
+
+    ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
+
+    step_revertext (OpFarRet arg)
+          {|
+            gs_xstate := {|
+                          gs_flags        := __ ;
+                          gs_callstack    := cs0;
+                          gs_regs         := regs;
+
+
+                          gs_pages        := pages;
+                        |};
+            gs_context_u128 := ___;
+
+            gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_revertable := ____;
+                            |};
+          |}
+          {|
+            gs_xstate := {|
+                          gs_flags        := flags_clear;
+                          gs_callstack    := pc_set (active_exception_handler cs0) caller_reimbursed ;
+                          gs_regs         := regs_state_zero
+                             <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                             <| r2 := reserved |>
+                             <| r3 := reserved |>
+                             <| r4 := reserved |> ;
+
+
+                          gs_pages        := pages;
+                          |};
+
+
+          gs_context_u128 := zero128;
+
+          gs_global       := {|
+                              gs_current_ergs_per_pubdata_byte := cergs;
+                              gs_tx_number_in_block := tx_num;
+                              gs_contracts := codes;
+                              gs_revertable := revert_state cf;
+                            |};
+          |}
 .
 (**
 

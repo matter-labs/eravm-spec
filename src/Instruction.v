@@ -3,7 +3,7 @@ Require Addressing Common Condition Memory .
 Import Addressing Common Condition Memory.
 
 (** - This file describes the syntax of assembly instructions.
- - The instruction semantics is described in a different place; see [step].
+ - The instruction semantics is described in a different place; see [%step].
  - This is a high-level instruction set, similar but not exactly matching machine instructions.
 
    For example, `xor`, `or`, and `and` bitwise operations are represented by
@@ -120,8 +120,8 @@ Two modifiers are commonly encountered:
 
   (** ## Common definitions
 
-The type [instruction_predicated] defines the predicated instruction.
-These are the instructions stored on [code_page]s.
+The type [%instruction_predicated] defines the predicated instruction.
+These are the instructions stored on [%code_page]s.
 
 Such instruction contains two parts:
 
@@ -134,7 +134,7 @@ Such instruction contains two parts:
       }.
 
   (** Invalid instruction. It is a default value on code memory pages. See
-  [code_page]. It is parameterized by an instruction type for convenience of
+  [%code_page]. It is parameterized by an instruction type for convenience of
   defining it. *)
 
   Definition instruction_invalid : instruction_predicated :=

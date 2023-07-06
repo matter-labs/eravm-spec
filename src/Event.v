@@ -1,7 +1,7 @@
 Require Core Memory.
 Import Core Memory.
 
-Section Definitions.
+Section Events.
 Context {contract_address precompile_params: Type}.
 (* For later: probably these structures can be redesigned *)
 
@@ -29,4 +29,4 @@ Inductive query :=
   | PrecompileQuery : precompile_query -> query.
 
 
-End Definitions.
+End Events.
