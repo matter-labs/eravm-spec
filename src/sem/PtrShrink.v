@@ -47,7 +47,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
     decode_heap_ptr op1 = Some hptr ->
 
     let diff := resize _ 32 op2 in
-    hptr_trim_length diff ptr_in ptr_out ->
+    hp_shrink diff ptr_in ptr_out ->
 
     let ptr_out_enc := encode_fat_ptr (mk_fat_ptr None ptr_out) in
     let res_low := resize _ 128 ptr_out_enc in

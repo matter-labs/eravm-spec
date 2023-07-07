@@ -10,7 +10,7 @@ Section Regs.
   (** # General purpose registers
 
 EraVM has 15 mutable general purpose registers R1, R2, ..., R15.
-They hold [primitive_value word], so they are tagged 256-bit words.
+They hold [%primitive_value word], so they are tagged 256-bit words.
 The tag is set when the register contains a fat pointer.
    *)
   Inductive reg_name : Set :=
@@ -18,15 +18,15 @@ The tag is set when the register contains a fat pointer.
   | R14 | R15.
 
   Record regs_state :=  mk_regs {
-                            r1  : pv;
-                            r2  : pv;
-                            r3  : pv;
-                            r4  : pv;
-                            r5  : pv;
-                            r6  : pv;
-                            r7  : pv;
-                            r8  : pv;
-                            r9  : pv;
+                            r1   : pv;
+                            r2   : pv;
+                            r3   : pv;
+                            r4   : pv;
+                            r5   : pv;
+                            r6   : pv;
+                            r7   : pv;
+                            r8   : pv;
+                            r9   : pv;
                             r10  : pv;
                             r11  : pv;
                             r12  : pv;
@@ -35,13 +35,14 @@ The tag is set when the register contains a fat pointer.
                             r15  : pv;
                           }.
 
+  (* begin hide *)
   Definition reg_zero := IntValue word0.
   Definition reserved := reg_zero.
   Definition regs_state_zero := let z := reg_zero in
                                 mk_regs z z z z z z z z z z z z z z z.
+  (* end hide *)
 
-
-  (** Additionally, it has one reserved read-only register R0 which evaluates to [IntValue 0], that is, an untagged integer 0. Function [fetch_gpr] loads a value from register. *)
+  (** Additionally, it has one reserved read-only register R0 which evaluates to [%IntValue 0], that is, an untagged integer 0. Function [%fetch_gpr] loads a value from register. *)
   Definition fetch_gpr (rs:regs_state) (r:reg_name) : pv :=
     match r with
     | R0 => IntValue word0
@@ -62,7 +63,7 @@ The tag is set when the register contains a fat pointer.
     | R15 => r15 rs
     end.
 
-  (** Predicate [store_gpr] stores value to a general purpose register. It is not defined for [R0] *)
+  (** Predicate [%store_gpr] stores value to a general purpose register. It is not defined for [%R0] *)
   Inductive store_gpr : regs_state -> reg_name -> pv -> regs_state -> Prop :=
   | fr_store1 :
     forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,

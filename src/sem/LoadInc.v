@@ -68,9 +68,9 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
 *)
   | step_LoadInc:
-    forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page ptr_inc query new_cs regs addr limit,
+    forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page ptr_inc query new_cs regs addr limit src_tag,
       `(
-      load _  regs cs0 mem arg_enc_ptr (cs1, PtrValue enc_ptr) ->
+      load _  regs cs0 mem arg_enc_ptr (cs1, mk_pv src_tag enc_ptr) ->
       let hptr := mk_hptr addr limit in
       decode_heap_ptr enc_ptr = Some hptr ->
 
@@ -82,12 +82,12 @@ fp_offset := in_ptr.(fp_offset) + 32;
       word_upper_bound hptr query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      hptr_inc hptr ptr_inc ->
+      hp_inc hptr ptr_inc ->
       let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None ptr_inc) in
 
       store_regs regs [
           (arg_dest, IntValue result);
-          (arg_modptr, PtrValue ptr_inc_enc)
+          (arg_modptr, mk_pv src_tag ptr_inc_enc)
         ] new_regs ->
 
       step_load (OpLoadInc arg_enc_ptr arg_dest heap_variant arg_modptr)

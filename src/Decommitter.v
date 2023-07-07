@@ -1,6 +1,6 @@
-Require Common ABI lib.Decidability Log MemoryOps VersionedHash Storage.
+Require Common ABI lib.Decidability Log MemoryOps VersionedHash.
 
-Import Coder Log VersionedHash Common Decidability Ergs Memory MemoryBase Storage ZArith ZMod ABI.
+Import Coder Log VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ZMod ABI.
 (** A separate code storage. It is an abstraction, because in the current *)
 (** implementation it is a part of a decommitter. *)
 

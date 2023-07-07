@@ -35,15 +35,34 @@ The main components of EraVM's execution state are:
 - 256-bit tagged general-purpose registers R1--R15 and a reserved register R0 holding a constant 0. See [%GPR.regs_state].
 - Three flags: overflow/less-than, equals, greater-than. See [%Condition.flags_state].
 - Callstack, holding callframes, which include program counter, stack pointer, current ergs balance, current contract's address, and so on. See [%CallStack].
+- Frames in callstack can be internal (belong to a function, near called) frames or external frames (belong to a contract, far called, richer state).
 - Stack holding tagged words.
 - Read-only pages for constants and code, one per contract stack frame.
 
-First contracts are marked as system, so VM executes them in kernel mode, allowing an access to a richer instruction set. See [%KernelMode].
 
+## Operation
+
+Refer to the section [%Instructions] for the list of supported instructions.
+
+All instructions contain an encoded execution condition ([%instruction_predicated]). It means that before executing any instruction flags are checked, and if they do not match the required condition, the instruction is skipped.
+
+VM has two modes which can be independently turned on and off.
+
+1. Kernel mode
+
+  First [%KERNEL_MODE_MAXADDR_LIMIT] contracts are marked as system contracts.
+  VM executes them in kernel mode, allowing an access to a richer instruction set, containing instructions potentially harmful to the global state e.g. [%OpContextIncrementTxNumber]. See [%KernelMode].
+
+2. Static mode
+
+   Intuitively, executing code in static mode aims at limiting its effects on
+   the global state, similar to executing pure functions. Globally visible
+   actions like emitting events or writing to storage are forbidden in static
+   mode. See [%StaticMode].
+
+## Contracts
 
 Instructions and some other actions should be paid for with **ergs**, an analogue of gas. See the overview in [%Ergs].
-
-All instructions contain an encoded execution condition. It means that before executing any instruction flags are checked, and if they do not match the required condition, the instruction is skipped.
 
 
 

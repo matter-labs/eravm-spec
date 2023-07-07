@@ -62,7 +62,7 @@ Record fat_ptr :=
     forall new_cs heap_variant enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs (mem: memory) selected_page query addr limit,
 
       `(
-      load _  regs cs0 mem arg_enc_ptr (cs1, PtrValue enc_ptr) ->
+      load_any _  regs cs0 mem arg_enc_ptr (cs1, enc_ptr) ->
       let hptr := mk_hptr addr limit in
       decode_heap_ptr enc_ptr = Some hptr ->
 

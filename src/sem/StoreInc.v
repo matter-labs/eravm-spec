@@ -67,7 +67,7 @@ fp_offset := in_ptr.(fp_offset) + 32;
 ```
 *)
   | step_StoreInc:
-    
+ 
     forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page query modified_page cs regs mem __ ___ addr limit arg_modptr hptr_mod,
 
       let selected_page_id := heap_variant_id heap_variant cs in
@@ -90,7 +90,7 @@ fp_offset := in_ptr.(fp_offset) + 32;
       mb_store_word_result BigEndian selected_page addr value modified_page ->
       page_replace selected_page_id (@DataPage era_pages modified_page) mem new_mem ->
 
-      hptr_inc hptr hptr_mod ->
+      hp_inc hptr hptr_mod ->
       let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None hptr_mod) in
 
       step (OpStoreInc arg_enc_ptr arg_val heap_variant arg_modptr)

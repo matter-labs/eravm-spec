@@ -26,17 +26,19 @@ future to up to 256 bits) to contract [%storage].
 
 Each contract [%storage] is a linear mapping from $2^{256}$ **keys** to 256-bit untagged words.
 
-Therefore, the **fully qualified address** of a word in depot is:
+To address a word in any contract's storage, it is sufficient to know:
 
+- shard
+- contract address
+- key
 
-$(\texttt{shard\_id}, \texttt{contract\_id} , \texttt{key})$
-
+See [%fqa_key].
 
 Contract has one independent storage per shard.
 
 One shard is selected as currently active in [%State].
 
-Contract code is shared between shards.
+Contract code is global and shared between shards.
 
 ## Transient memory
 
@@ -87,6 +89,8 @@ Definition storage_empty : storage := empty storage_params.
 (** Storage does not hold contract code, it is a responsibility of decommittment processor [%decommitter].
 
 Storage is a part of a [%shard], which is a part of [%depot].
+
+See [%Storage] for additional details on storage operation.
 
 ## Instructions
 
@@ -151,6 +155,43 @@ Inductive shard_exists: shard_id -> Prop :=
 | se_porter: shard_exists (ZMod.int_mod_of _ 1%Z)
 .
 
+
+(** The **fully qualified address** of a word in depot is a triple:
+
+
+$(\texttt{shard\_id}, \texttt{contract\_id} , \texttt{key})$
+
+It is formalized by [%fqa_key].
+*)
+
+  Record fqa_storage := mk_fqa_storage {
+                          k_shard: shard_id;
+                          k_contract: contract_address;
+                        }.
+  Record fqa_key := mk_fqa_key {
+                        k_storage :> fqa_storage;
+                        k_key: storage_address
+                      }.
+
+  Inductive storage_get (d: depot): fqa_storage -> storage -> Prop :=
+  | sg_apply: forall storage shard s c st,
+      shard_exists s ->
+      MemoryBase.load_result depot_params s d shard ->
+      MemoryBase.load_result shard_params c shard storage  ->
+      storage_get d (mk_fqa_storage s c) st .
+
+  Inductive storage_read (d: depot): fqa_key -> word -> Prop :=
+  | sr_apply: forall storage sk c w,
+      storage_get d sk storage ->
+      storage_read d (mk_fqa_key sk c) w.
+
+  Inductive storage_write (d: depot): fqa_key -> word -> depot -> Prop :=
+  | sw_apply: forall storage shard sk s c k w  shard' depot' storage',
+      storage_get d sk storage ->
+      MemoryBase.store_result storage_params k storage w storage' ->
+      MemoryBase.store_result shard_params c shard storage' shard'  ->
+      MemoryBase.store_result depot_params s d shard' depot' ->
+      storage_write d (mk_fqa_key sk k) w depot'.
 
 Section Memory.
 

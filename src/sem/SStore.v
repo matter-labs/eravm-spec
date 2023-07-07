@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing ABI Bool Common Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions PrimitiveValue Storage SemanticCommon RecordSetNotations MetaParameters.
+  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
 

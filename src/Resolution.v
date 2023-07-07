@@ -24,10 +24,30 @@ Section AddressingUtils.
   Definition reg_rel_stack : regs_state -> reg_name -> u16 -> stack_address -> Prop
     := reg_rel stack_page_params.(address_bits).
 
-  (** delta = reg + imm *)
+  (** Note: in [%sp_displ], [%delta = reg + imm]. *)
   Definition sp_displ: regs_state -> reg_name -> u16 -> stack_address -> Prop := reg_rel_stack.
 End AddressingUtils.
 
+
+  (** # Address resolution
+
+Instructions have multiple ways of addressing data, i.e. immediate 16-bit
+values, GPRs, absolute or relative addresses in stack etc. They are described in
+section [%Addressing] by types such as [%in_any], [%out_reg], and so on.
+
+**Location** stands for a source and/or destination for data, addressable by instructions.
+
+**Address resolution** is a matching between instruction operands and locations using the supported address modes.
+
+There are five main locations that instructions can address:
+
+1. Immediate data: the operand is provided directly as an unsigned 16-bit integer value.
+2. Register: data can be fetched or stored to general purpose registers [r1]--[r15].
+3. Stack address: data can be fetched or stored to stack.
+4. Code address: instructions can be fetched from a code page.
+5. Constant address: data can be fetched from a read-only page holding constant words.
+
+   *)
 Inductive loc : Set :=
 | LocImm: u16 ->  loc
 | LocReg : reg_name ->  loc
@@ -35,13 +55,20 @@ Inductive loc : Set :=
 | LocCodeAddr: code_address -> loc
 | LocConstAddr: const_address ->  loc
 .
-
+(** Additionally, data can be fetched and stored to data pages; this process is
+more complicated and requires putting in registers specially formed pointers
+[%heap_ptr]. *)
 
 Section Resolve.
   Import Addressing.Coercions.
 
   Open Scope ZMod_scope.
 
+  (** Resolution of [%RelSpPop] and [%RelSpPush] addressing modes modifies the
+  stack pointer. This, and possible future effects, is described by
+  [%resolve_effect] predicate.
+  effects
+   *)
   Inductive resolve_effect := | NoEffect | NewSP (val: stack_address).
 
   Record resolve_result :=
@@ -62,28 +89,71 @@ Section Resolve.
   Declare Scope Resolution_scope.
   Open Scope Resolution_scope.
 
-  Inductive resolve : any -> resolve_result -> Prop :=
 
+  (** Address resolution is formalized by the predicate [%resolve]. *)
+  Inductive resolve : any -> resolve_result -> Prop :=
+    (** - Registers and immediate values are resolved to themselves. *)
   | rslv_reg : forall reg,
       resolve (Reg reg) [[ LocReg reg ]]
   | rslv_imm: forall imm,
       resolve  (Imm imm) [[ LocImm imm ]]
-
+(**
+- [%Absolute] : Absolute stack addressing with a general purpose register and an immediate
+  displacement is resolved to $\mathit{reg}+\mathit{imm}$.
+*)
+  | rslv_stack_abs: forall regs reg imm abs,
+      reg_rel_stack regs reg imm abs ->
+      resolve  (Absolute reg imm) [[ LocStackAddress abs ]]
+(**
+- [%RelSP] : Addressing relative to SP with a general purpose register and an immediate
+  displacement is resolved to $\mathit{sp}-(\mathit{reg}+\mathit{imm})$.
+*)
   | rslv_stack_rel: forall reg ofs delta_sp sp_rel,
       sp_displ rs reg ofs delta_sp ->
 
       (sp_rel, false) = sp - delta_sp->
       resolve  (RelSP reg ofs) [[ LocStackAddress sp_rel ]]
 
-  | rslv_stack_abs: forall regs reg imm abs,
-      reg_rel_stack regs reg imm abs ->
-      resolve  (Absolute reg imm) [[ LocStackAddress abs ]]
+(**
+- [%RelSpPop] : **Reading** relative to SP with a general purpose register and
+  an immediate displacement, **and SP adjustment**, is resolved to
+  $\mathit{sp}-(\mathit{reg}+\mathit{imm})$; additionally, SP is assigned the
+  same value $\mathit{sp}-(\mathit{reg}+\mathit{imm})$. The new SP value will
+  then be used for the resolution of other operands.
 
+   In other words, it is equivalent to:
+
+   1. SP = SP - (reg + imm)
+   2. [SP] -> result
+
+   In other words, it is equivalent to:
+
+   1. pop the stack (reg + imm - 1) times, discard these values
+   2. pop value from stack and return it
+*)
   | rslv_stack_gpop: forall reg ofs delta_sp new_sp,
       sp_displ rs reg ofs delta_sp ->
       (new_sp, false) = sp - delta_sp->
       resolve  (RelSpPop reg ofs) [[ LocStackAddress new_sp ; SP <- new_sp ]]
 
+(**
+- [%RelSpPush] : **Writing** relative to SP with a general purpose register and
+  an immediate displacement, **and SP adjustment**, is resolved to **the current
+  value of SP**. Additionally, SP is assigned a new value
+  $\mathit{sp}-(\mathit{reg}+\mathit{imm})$. The new SP value will then be used
+  for the resolution of other operands.
+
+  In other words, it is equivalent to:
+
+  1. [SP] <- input value
+  2. SP = SP + (reg + imm)
+
+
+  In other words, it is equivalent to:
+
+  1. push the input value to the stack
+  2. allocate (reg+imm-1) slots in stack
+*)
   | rslv_stack_gpush: forall reg ofs delta_sp new_sp,
       sp_displ rs reg ofs delta_sp ->
       (new_sp, false) = sp + delta_sp ->
@@ -100,6 +170,38 @@ Section Resolve.
   and
   "[[ resolved ; 'SP' <- newsp ]]" := (mk_resolved (NewSP newsp) resolved) : Resolution_scope.
 
+  (** Note: the reason of the asymmetry between [%RelSpPush] and [%RelSpPop] is because they are generalizations of `push` and `pop` operations.
+
+Consider a stack implemented as an array with a pointer. Suppose that, like in EraVM, SP points the the next address after the last value in stack; in other words, the topmost element in the stack is located at $\mathit{sp}-1$. Then `push` and `pop` can be implemented in the following way:
+
+- Push:
+
+  1. [SP] <- new_value
+  2. SP = SP + 1
+
+- Pop:
+
+  1. SP = SP - 1
+  2. [SP] -> result
+
+This asymmetry naturally generalizes to [%RelSpPush] and [%RelSpPop].
+
+
+## Using [%RelSpPop] and [%RelSpPush] in one instruction
+
+Suppose an instruction is using both [%RelSpPop] and [%RelSpPush], then both
+effects are applied in order:
+
+- First, the "in" effect of [%RelSpPop].
+- Then, the "out" effect of [%RelSpPush], where SP is already changed by [%RelSpPop].
+- If the instruction accesses SP, both effects will be applied prior to the instruction-specific logic.
+
+See an example in [%sem.ModSP.step].
+
+
+Predicate [%apply_effects] formalizes the application of address resolution side effects to the state.
+In the current state of EraVM, only SP modifications are allowed, therefore the effect is limited to the topmost frame of callstack, which holds the current value of sp in [%cf_sp].
+   *)
   Inductive apply_effects : resolve_effect -> callstack -> Prop :=
   | ae_none: forall s,
       apply_effects NoEffect s
@@ -118,17 +220,4 @@ Section Resolve.
       resolve_apply arg (cs', loc).
 
 End Resolve.
-
-
-
-  (**
-If in instruction `in1` is using [RelSpPop] And `out1` is using [RelSpPush], then both
-effects are applied in order:
-
-- first, the `in` effect,
-- then, the `out` effect.
-- then, if the instruction accesses SP, it will observe the value after both effects are applied.
-
-See an example in [sem.ModSP.step].
-   *)
 

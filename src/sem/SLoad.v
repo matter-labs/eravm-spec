@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
 Import Addressing ABI Bool Common Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon Storage RecordSetNotations MetaParameters.
+  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
 Definition current_storage_fqa (xstack:callstack) : fqa_storage :=

@@ -11,7 +11,7 @@ Import Addressing Common Condition Memory.
    instructions with the same opcode and different modifiers.
 
 *)
-Section Def.
+Section Instructions.
 (** # Instruction modifiers
 
 Modifiers alter the meaning of instruction.
@@ -143,7 +143,7 @@ Such instruction contains two parts:
       ins_cond:= IfAlways
     |}.
 
-End Def.
+End Instructions.
 
 (** A helper definition to specialize a code page with a (just defined) instruction type. *)
 Definition code_page : Type := code_page instruction_invalid.

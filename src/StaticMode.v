@@ -10,9 +10,9 @@ Section StaticMode.
 Intuitively, executing code in static mode aims at limiting its effects on the global state, similar to executing pure functions.
 
 If VM is in static mode, attempting to execute instructions affecting global system state results in panic.
-Refer to [forbidden_static] for a full list of instructions forbidden in static mode.
+Refer to [%forbidden_static] for a full list of instructions forbidden in static mode.
 
-Current mode is determined by the flag [ecf_is_static] in the [active_extframe] in [callstack].
+Current mode is determined by the flag [%ecf_is_static] in the [%active_extframe] in [%callstack].
 
 ## Entering static mode
 
@@ -23,7 +23,7 @@ instructions with a static modifier, for example:
 OpFarCall (Reg R1) (Reg R2) (Imm zero16) true false
 ```
 
-The same applies to [OpMimicCall] and [OpDelegateCall].
+The same applies to [%OpMimicCall] and [%OpDelegateCall].
 
 ## Exiting static mode
 
@@ -39,11 +39,11 @@ Static mode is unrelated and orthogonal to kernel mode.
 Executing a contract $C$ in static mode restricts the changes to the state produced by $C$ or any other code that it might call.
 
 
-Static calls are guaranteed to preserve the state of storage, will not emit events, or modify the [gs_context_u128] register.
+Static calls are guaranteed to preserve the state of storage, will not emit events, or modify the [%gs_context_u128] register.
 *)
 
 
-(** Function [forbidden_static] returns [true] if instruction [ins] is forbidden in static mode. *)
+(** Function [%forbidden_static] returns [%true] if instruction [%ins] is forbidden in static mode. *)
   Context (forbidden := true) (allowed := false).
   Definition forbidden_static (ins:instruction) : bool :=
     match ins with
@@ -57,10 +57,10 @@ Static calls are guaranteed to preserve the state of storage, will not emit even
     | _ => allowed
     end.
 
-  (** Function [check_forbidden_static] returns [false] if:
+  (** Function [%check_forbidden_static] returns [%false] if:
 
-- an instruction [ins] is not allowed in static mode, and
-- the current mode is static, as indicated by [static_mode_active].
+- an instruction [%ins] is not allowed in static mode, and
+- the current mode is static, as indicated by [%static_mode_active].
    *)
   Definition check_forbidden_static
     (ins: instruction)
