@@ -10,7 +10,7 @@ Section Parameters.
 # EraVM architecture overview
 
 
-EraVM is a 256-bit register-based language machine with stack, dedicated memory for code, data, stack and constants.
+EraVM is a 256-bit register-based language machine with two stacks, and dedicated memory for code, data, stack and constants.
    *)
   Definition word_bits: nat := 256.
 
@@ -20,7 +20,7 @@ EraVM is a 256-bit register-based language machine with stack, dedicated memory 
 
 
 - **Memory**, provides access to transient memory, consisting of pages. See [%Memory].
-- **Storage**, provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage. See [%Memory] and [%Storage].
+- **Storage**, provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage. See [%Memory].
 - **EventSink**, collects events and L2→L1 messages. See [%Events].
 - **Precompile processor** executes precompiles e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
 - **Decommittement processor**, stores and decommits the code of contracts. See [%Decommitter].
@@ -34,9 +34,9 @@ The main components of EraVM's execution state are:
 
 - 256-bit tagged general-purpose registers R1--R15 and a reserved register R0 holding a constant 0. See [%GPR.regs_state].
 - Three flags: overflow/less-than, equals, greater-than. See [%Condition.flags_state].
-- Callstack, holding callframes, which include program counter, stack pointer, current ergs balance, current contract's address, and so on. See [%CallStack].
+- Data stack holding tagged words. It is located on a dedicated [%stack_page].
+- Callstack, holding callframes, which contain such information as the program counter, data stack pointer, current ergs balance, current contract's address, and so on. See [%CallStack].
 - Frames in callstack can be internal (belong to a function, near called) frames or external frames (belong to a contract, far called, richer state).
-- Stack holding tagged words.
 - Read-only pages for constants and code, one per contract stack frame.
 
 
@@ -46,6 +46,14 @@ Refer to the section [%Instructions] for the list of supported instructions.
 
 All instructions contain an encoded execution condition ([%instruction_predicated]). It means that before executing any instruction flags are checked, and if they do not match the required condition, the instruction is skipped.
 
+Instruction can accept data and return results in various formats.
+
+- The formats of instruction operands are described in [%Addressing].
+- The address resolution to locations in memory is described in [%Resolution]
+- Reading and writing to memory is described in [%MemoryOps]
+
+
+### Modes
 VM has two modes which can be independently turned on and off.
 
 1. Kernel mode
@@ -63,8 +71,6 @@ VM has two modes which can be independently turned on and off.
 ## Contracts
 
 Instructions and some other actions should be paid for with **ergs**, an analogue of gas. See the overview in [%Ergs].
-
-
 
    *)
 

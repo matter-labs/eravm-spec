@@ -31,6 +31,8 @@ e.g. mode 7 and mode 8 only differ by in or out position.
 Predicate [%resolve] formalizes resolving operands to immediate values, registers
 and memory locations.
 
+[%MemoryOps] formalizes reading and writing to locations.
+
 ## Register addressing
 
 Register addressing takes value from one of General Purpose Registers (GPR).

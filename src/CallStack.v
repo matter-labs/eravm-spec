@@ -12,14 +12,55 @@ Section Stack.
 
   Definition exception_handler := code_address.
 
+  (** # Callstack
+
+There are two stacks in EraVM: call stack to support the execution of functions
+and contracts, and data stack to facilitate computations. This section only
+describes call stack.
+
+**Stack frame**, or **call frame** is a structure holding a piece of current
+  execution environment.
+Stack frame is specific to a running instance of a contract, or to a running
+instance of a function belonging to currently running contract.
+By running instance we mean a piece of VM runtime state associated with the
+current execution of a function or a contract.
+
+There are two types of stack frames:
+
+- External frames [%InternalCall]: created on far calls (by instructions [%OpFarCall],
+  [%OpMimicCall], [%OpDelegateCall]).
+- Internal frames [%ExternalCall]: created by near calls (by instruction [%OpNearCall]).
+
+Each external frame is **associated** with a contract address. It means that it
+was created when the associated contract address was far called.
+Naturally, each contract may be called many times recursively, therefore at each
+moment of time any contract may have multiple external frames associated.
+
+
+**Callstack** is a stack of a maximum of [%CALLSTACK_LIMIT] **stack frames**.
+It is unrelated to the [%stack_page] which holds data stack.
+
+Internal call frames hold the following information:
+
+- [%cf_exception_handler_location]: a [%code_address] of an exception handler.
+  If the current function reverts or panics, VM will destroy the topmost frame
+  and jump to this handler.
+- [%cf_sp]: current data stack pointer. The topmost element in stack is located
+  at [%cf_sp-1].
+- [%cf_ergs_remaining]: current balance. Price of all actions in ergs is
+  deducted from it.
+*)
   Record callstack_common := mk_cf {
                                  cf_exception_handler_location: exception_handler;
                                  cf_sp: stack_address;
                                  cf_pc: code_address;
                                  cf_ergs_remaining: ergs;
                                }.
+
+  (* begin hide *)
   #[export] Instance etaCFC : Settable _ :=
     settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
+  (* end hide *)
 
   Record active_shards := mk_shards {
                               shard_this: shard_id;
@@ -27,9 +68,24 @@ Section Stack.
                               shard_code: shard_id;
                             }.
 
+  (* begin hide *)
   #[export] Instance etaSH: Settable _ :=
     settable! mk_shards < shard_this; shard_caller; shard_code>.
+  (* end hide *)
+(** External call frames hold the same information as internal. Additionally, they
+hold:
 
+- [%ecf_this_address] : the stack frame was created when this contract was
+  called.
+- [%ecf_msg_sender] : the stack frame was created when this contract invoked one
+  of far call instructions.
+- [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
+- [%ecf_mem_ctx] : current [mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
+- [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
+- [%ecf_context_u128_value] : captured value of [%gs_context_u128].
+- [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].
+- [%ecf_saved_checkpoint] : a snapshot of the state for a rollback. In case of panic or [%OpFarRevert] the state of storage and event queues will be restored.
+ *)
   Record callstack_external :=
     mk_extcf {
         ecf_this_address: contract_address;
@@ -43,13 +99,14 @@ Section Stack.
         ecf_common :> callstack_common
       }.
 
+  (* begin hide *)
   #[export] Instance etaCFE : Settable _ :=
     settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
+  (* end hide *)
 
   Inductive callstack :=
   | InternalCall (_: callstack_common) (tail: callstack): callstack
   | ExternalCall (_: callstack_external) (tail: option callstack): callstack.
-
 
   Fixpoint callstack_depth cf :=
     (match cf with
@@ -58,6 +115,8 @@ Section Stack.
      | ExternalCall x None => 1
      end)%nat.
 
+  (** Attempting to have more than [%CALLSTACK_LIMIT] elements in callstack will
+  force the VM into panic. *)
   Definition stack_overflow (xstack:callstack) : bool :=
     Nat.ltb CALLSTACK_LIMIT (callstack_depth xstack).
 
