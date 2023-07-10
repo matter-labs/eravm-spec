@@ -1,6 +1,6 @@
 Require sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Flags Instruction CallStack Memory MemoryOps State ZMod
   ZBits Addressing.Coercions PrimitiveValue SemanticCommon.
 (**
 #  Common binary operation semantic

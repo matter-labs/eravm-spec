@@ -20,7 +20,7 @@ EraVM is a 256-bit register-based language machine with two stacks, and dedicate
 
 
 - **Memory**, provides access to transient memory, consisting of pages. See [%Memory].
-- **Storage**, provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage. See [%Memory].
+- **Storage**, provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage.   See [%Memory].
 - **EventSink**, collects events and L2→L1 messages. See [%Events].
 - **Precompile processor** executes precompiles e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
 - **Decommittement processor**, stores and decommits the code of contracts. See [%Decommitter].
@@ -33,7 +33,7 @@ EraVM's functionality is to sequentially execute instructions.
 The main components of EraVM's execution state are:
 
 - 256-bit tagged general-purpose registers R1--R15 and a reserved register R0 holding a constant 0. See [%GPR.regs_state].
-- Three flags: overflow/less-than, equals, greater-than. See [%Condition.flags_state].
+- Three flags: overflow/less-than, equals, greater-than. See [%Predication.flags_state].
 - Data stack holding tagged words. It is located on a dedicated [%stack_page].
 - Callstack, holding callframes, which contain such information as the program counter, data stack pointer, current ergs balance, current contract's address, and so on. See [%CallStack].
 - Frames in callstack can be internal (belong to a function, near called) frames or external frames (belong to a contract, far called, richer state).
@@ -50,7 +50,7 @@ Instruction can accept data and return results in various formats.
 
 - The formats of instruction operands are described in [%Addressing].
 - The address resolution to locations in memory is described in [%Resolution]
-- Reading and writing to memory is described in [%MemoryOps]
+- Reading and writing to memory is described in [%MemoryOps].
 
 
 ### Modes
@@ -68,9 +68,12 @@ VM has two modes which can be independently turned on and off.
    actions like emitting events or writing to storage are forbidden in static
    mode. See [%StaticMode].
 
-## Contracts
+## Ergs
 
-Instructions and some other actions should be paid for with **ergs**, an analogue of gas. See the overview in [%Ergs].
+Instructions and some other actions should be paid for with a resource called
+**ergs**, analogous to Ethereum's gas. See the overview in [%Ergs].
+
+
 
    *)
 

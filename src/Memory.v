@@ -64,8 +64,7 @@ Pages hold one of:
 - stack: word-addressable, tagged words;
 
 
-In the next section we describe all types of memory formally and with greater
-detail.
+The following describes all types of memory formally and with greater detail.
 
 # Storage of a contract
 
@@ -139,6 +138,9 @@ Definition shard := mem_parameterized shard_params.
 (** Contracts are also associated with code. The association is global per depot
 and implemented by [%Decommitter]. Therefore, the contract code is the same for
 all shards, but the storages of a contract in different shards differ.
+
+Unlike in Ethereum, there is only type of accounts capable of both transacting
+coins and executing contracts.
 
 Contracts with addresses in range from 0 (inclusive) to [%KERNEL_MODE_MAXADDR]
 (exclusive) are **system contracts**; they are allowed to execute all

@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Coder Common Condition CallStack GPR Memory MemoryOps Instruction State ZMod
+Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps Instruction State ZMod
   ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 (**
 # Returns

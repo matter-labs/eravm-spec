@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Addressing Common Coder Core Condition CallStack GPR Ergs MemoryOps Memory Instruction State ZMod
+Import Addressing Common Coder Core Flags CallStack GPR Ergs MemoryOps Memory Instruction State ZMod
   ABI ABI.NearCall Addressing.Coercions PrimitiveValue SemanticCommon.
 
 Section Def.

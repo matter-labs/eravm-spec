@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Core Common Condition GPR CallStack Memory MemoryOps Instruction State ZMod
+Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps Instruction State ZMod
   Addressing.Coercions SemanticCommon RecordSetNotations.
 
 Section Def.
@@ -52,7 +52,7 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 
 - Unconditional jumps
 
-- In zkEVM, all instructions are predicated (see [Condition.cond]), therefore in conjunction with a required
+- In zkEVM, all instructions are predicated (see [Predication.cond]), therefore in conjunction with a required
   condition type [jump] implements a conditional jump instruction.
 
 ### Similar instructions

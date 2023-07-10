@@ -1,7 +1,7 @@
 Require SemanticCommon Addressing Slice.
 
 
-Import ABI Addressing Common Coder Condition CallStack Memory MemoryOps Instruction 
+Import ABI Addressing Common Coder Predication CallStack Memory MemoryOps Instruction 
   Addressing.Coercions SemanticCommon MemoryContext PrimitiveValue Pointer State Slice ZMod.
 
 Import FatPointer.

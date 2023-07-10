@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require  sem.SemanticCommon.
 
-Import Addressing Bool Core ZArith Common Condition Instruction CallStack Memory MemoryOps State ZMod
+Import Addressing Bool Core ZArith Common Flags Instruction CallStack Memory MemoryOps State ZMod
   ZBits  PrimitiveValue RecordSetNotations SemanticCommon List ListNotations.
 
 Section Def.

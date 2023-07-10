@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Common Decommitter Ergs Condition CallStack Memory Instruction State MemoryOps ABI Pointer SemanticCommon.
+Require Common Decommitter Ergs CallStack Memory Instruction State MemoryOps ABI Pointer SemanticCommon.
 
 Import
   BinIntDef.Z
@@ -17,7 +17,7 @@ Import
     Common
     Core
     Coder
-    Condition
+    Flags
     GPR
     Ergs
     CallStack

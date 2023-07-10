@@ -1,5 +1,5 @@
 Require sem.BinOps.
-Import Addressing Bool BinOps ZArith Common Condition Instruction Memory ZMod
+Import Addressing Bool BinOps ZArith Common Flags Instruction Memory ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon.
 
 Section Def.

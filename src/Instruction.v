@@ -1,6 +1,6 @@
-Require Addressing Common Condition Memory .
+Require Addressing Common Memory Predication.
 
-Import Addressing Common Condition Memory.
+Import Addressing Common Memory Predication Flags.
 
 (** - This file describes the syntax of assembly instructions.
  - The instruction semantics is described in a different place; see [%step].
@@ -130,7 +130,7 @@ Such instruction contains two parts:
   Record instruction_predicated: Set :=
     Ins {
         ins_spec: instruction;
-        ins_cond: cond;
+        ins_cond: predicate;
       }.
 
   (** Invalid instruction. It is a default value on code memory pages. See

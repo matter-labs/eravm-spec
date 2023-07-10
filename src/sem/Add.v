@@ -1,6 +1,6 @@
 Require sem.BinOps.
 
-Import Addressing Bool Common Condition Instruction Memory State ZMod
+Import Addressing Bool Common Flags Instruction Memory State ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon BinOps.
 
 Section Def.

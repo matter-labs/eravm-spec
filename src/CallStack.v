@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Condition Memory Ergs Log MemoryContext.
+Require Common Memory Ergs MemoryContext.
 
-Import ZArith Condition Common Ergs Log MemoryBase MemoryContext Memory ZMod List ListNotations.
+Import ZArith Common Ergs Instruction MemoryBase MemoryContext Memory ZMod List ListNotations.
 
 Section Stack.
 
@@ -12,18 +12,19 @@ Section Stack.
 
   Definition exception_handler := code_address.
 
-  (** # Callstack
+  (** # Call stack
 
 There are two stacks in EraVM: call stack to support the execution of functions
-and contracts, and data stack to facilitate computations. This section only
-describes call stack.
+and contracts, and data stack to facilitate computations. This section
+describes the call stack.
 
-**Stack frame**, or **call frame** is a structure holding a piece of current
+**Stack frame**, or **call frame** is a structure holding a fragment of current
   execution environment.
 Stack frame is specific to a running instance of a contract, or to a running
 instance of a function belonging to currently running contract.
-By running instance we mean a piece of VM runtime state associated with the
-current execution of a function or a contract.
+By running instance of a function or a contract we mean a piece of VM runtime
+state associated with the current execution of a function or a contract, as
+described by [%callstack].
 
 There are two types of stack frames:
 
@@ -34,18 +35,20 @@ There are two types of stack frames:
 Each external frame is **associated** with a contract address. It means that it
 was created when the associated contract address was far called.
 Naturally, each contract may be called many times recursively, therefore at each
-moment of time any contract may have multiple external frames associated.
+moment of time any contract may have multiple external frames associated to it.
 
 
-**Callstack** is a stack of a maximum of [%CALLSTACK_LIMIT] **stack frames**.
+**[%callstack]** is a stack of a maximum of [%CALLSTACK_LIMIT] stack frames.
 It is unrelated to the [%stack_page] which holds data stack.
+
+Global [%state] holds the call stack; there is one call stack per execution.
 
 Internal call frames hold the following information:
 
 - [%cf_exception_handler_location]: a [%code_address] of an exception handler.
   If the current function reverts or panics, VM will destroy the topmost frame
   and jump to this handler.
-- [%cf_sp]: current data stack pointer. The topmost element in stack is located
+- [%cf_sp]: current data stack pointer. The topmost element in data stack is located
   at [%cf_sp-1].
 - [%cf_ergs_remaining]: current balance. Price of all actions in ergs is
   deducted from it.
@@ -115,8 +118,32 @@ hold:
      | ExternalCall x None => 1
      end)%nat.
 
-  (** Attempting to have more than [%CALLSTACK_LIMIT] elements in callstack will
-  force the VM into panic. *)
+  (** ## Operation
+
+Server starts VM with a callstack holding one external frame, belonging to the
+bootloader contract.
+Server interfaces with the bootloader through bootloader's heap, filling it with information about transactions in a way transparent to VM; bootloader executes transactions one by one, forming the new block.
+
+Handling each transaction requires executing [%OpFarCall], which pushes another call frame to the callstack.
+
+As the transaction is executed, call stack changes as follows:
+
+- [%OpNearCall] pushes an [%InternalCall] frame to callstack.
+- [%OpFarCall], [%OpDelegateCall], or [%OpMimicCall] push an [%ExternalCall] frame to callstack.
+- [%OpNearRet], [%OpNearRetTo], [%OpNearRevert], [%OpNearRevertTo], [%OpPanic], [%OpFarRet], [%OpFarRevert] pop a frame from callstack.
+
+Attempting to have more than [%CALLSTACK_LIMIT] elements in callstack will force the VM into panic.
+
+Panics are equivalent to executing [%OpPanic], so they pop up the topmost stack frame and pass the control to the exception handler, specified in the popped frame.
+
+Executing any instruction $I$ changes the topmost frame:
+  - [%cf_pc] is incremented, unless $I$ is [%OpJump].
+  - [%cf_sp] may be modified if $I$ affects the data stack pointer.
+  - [%cf_ergs_remaining] is decreased by the **total cost** of $I$. Total cost
+    is a sum of [base_cost] and additional costs, described by the small step
+    predicates like [%sem.FarCall.step].
+
+   *)
   Definition stack_overflow (xstack:callstack) : bool :=
     Nat.ltb CALLSTACK_LIMIT (callstack_depth xstack).
 

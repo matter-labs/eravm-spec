@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Addressing Common Condition CallStack Memory MemoryContext Instruction State MemoryOps ABI.
+Require Addressing Common Flags CallStack Memory MemoryContext Instruction State MemoryOps ABI.
 
 Import
   Addressing
@@ -10,7 +10,7 @@ Import
     ABI.FarRet
     Bool
     Common
-    Condition
+    Flags
     CallStack
     Decommitter
     Ergs

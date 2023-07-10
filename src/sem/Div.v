@@ -1,6 +1,6 @@
 Require  sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Condition GPR Instruction CallStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Flags GPR Instruction CallStack Memory MemoryOps State ZMod
   ZBits Addressing.Coercions PrimitiveValue SemanticCommon List ListNotations.
 
 Section Def.

@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require ABI Core Decommitter GPR Ergs Event Memory Log Instruction CallStack .
 
-Import Core Condition ZArith ABI Common GPR Ergs Event CallStack Log MemoryBase Memory Instruction ZMod List Decommitter.
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack Log MemoryBase Memory Instruction ZMod List Decommitter.
 Import ListNotations RecordSetNotations.
 
 Section Definitions.

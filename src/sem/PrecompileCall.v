@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon Precompiles.
 
-Import Addressing ABI Bool Common Coder Condition Ergs CallStack Event Memory MemoryOps Instruction State ZMod
+Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Memory MemoryOps Instruction State ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
