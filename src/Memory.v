@@ -42,7 +42,7 @@ See [%fqa_key].
 
 Contract has one independent storage per shard.
 
-One shard is selected as currently active in [%State].
+One shard is selected as currently active in [%state].
 
 Contract code is global and shared between shards.
 
@@ -428,3 +428,4 @@ End Memory.
 (** The definition [%era_pages] collects the specific types of pages used by
 EraVM semantic. *)
 Definition era_pages {instr} {inv:instr} := Build_pages_config (code_page inv) const_page data_page stack_page.
+

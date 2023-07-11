@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require sem.Ret sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.PtrAdd sem.PtrSub sem.PtrPack sem.PtrShrink sem.Context sem.Div sem.Mul sem.NearCall.
+Require sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.PtrAdd sem.PtrSub sem.PtrPack sem.PtrShrink sem.Context sem.Div sem.Mul sem.NearCall.
 
 Import Bool ZArith Common Decommitter Predication Ergs CallStack MemoryBase Memory MemoryOps Instruction State ZMod
   ZBits SemanticCommon RecordSetNotations.

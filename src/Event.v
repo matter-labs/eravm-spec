@@ -3,8 +3,17 @@ Import Core Memory.
 
 Section Events.
 Context {contract_address precompile_params: Type}.
-(* For later: probably these structures can be redesigned *)
 
+(** # Events
+
+VM interfaces with two queues:
+
+1. L2 [%events] events (see [%gs_events]),  emitted by [%OpEvent].
+2. L1 [%l1_msg] events (see [%gs_l1_msgs]), emitted by [%OpToL1Message].
+
+These queues are subject to rollbacks: if a contract code reverts or panics, the
+events emitted in its current run are rolled back.
+ *)
 Record event := {
     ev_shard_id: shard_id;
     ev_is_first: bool;
@@ -14,6 +23,7 @@ Record event := {
     ev_value: word;
 }.
 
+Definition l1_msg := event.
 
 Record precompile_query := {
     q_tx_number_in_block: tx_num;
@@ -23,10 +33,10 @@ Record precompile_query := {
 }.
 
 Inductive query :=
-  (* | StorageQuery : query *)
   | EventQuery : event -> query
-  (* | L1MsgQuery : event -> query *)
+  | L1MsgQuery : l1_msg -> query
   | PrecompileQuery : precompile_query -> query.
 
 
+(* For later: probably these structures can be redesigned *)
 End Events.

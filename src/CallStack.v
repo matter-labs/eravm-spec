@@ -52,17 +52,19 @@ Internal call frames hold the following information:
   at [%cf_sp-1].
 - [%cf_ergs_remaining]: current balance. Price of all actions in ergs is
   deducted from it.
+- [%cf_saved_checkpoint] : a snapshot of the state for a rollback. In case of panic or revert, the state of storage and event queues will be restored.
 *)
   Record callstack_common := mk_cf {
                                  cf_exception_handler_location: exception_handler;
                                  cf_sp: stack_address;
                                  cf_pc: code_address;
                                  cf_ergs_remaining: ergs;
+                                 cf_saved_checkpoint: state_checkpoint;
                                }.
 
   (* begin hide *)
   #[export] Instance etaCFC : Settable _ :=
-    settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining >.
+    settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining; cf_saved_checkpoint >.
   (* end hide *)
 
   Record active_shards := mk_shards {
@@ -87,7 +89,6 @@ hold:
 - [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
 - [%ecf_context_u128_value] : captured value of [%gs_context_u128].
 - [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].
-- [%ecf_saved_checkpoint] : a snapshot of the state for a rollback. In case of panic or [%OpFarRevert] the state of storage and event queues will be restored.
  *)
   Record callstack_external :=
     mk_extcf {
@@ -98,13 +99,12 @@ hold:
         ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
         ecf_context_u128_value: u128;
         ecf_shards:> active_shards;
-        ecf_saved_checkpoint: state_checkpoint;
         ecf_common :> callstack_common
       }.
 
   (* begin hide *)
   #[export] Instance etaCFE : Settable _ :=
-    settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_saved_checkpoint; ecf_common>.
+    settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_common>.
   (* end hide *)
 
   Inductive callstack :=
@@ -120,11 +120,12 @@ hold:
 
   (** ## Operation
 
-Server starts VM with a callstack holding one external frame, belonging to the
-bootloader contract.
-Server interfaces with the bootloader through bootloader's heap, filling it with information about transactions in a way transparent to VM; bootloader executes transactions one by one, forming the new block.
+When the server starts forming a new block, it starts a new instance of VM to execute the code called bootloader (see [Core]).
+Bootloader is a contract with an address [%BOOTLOADER_SYSTEM_CONTRACT_ADDRESS].
+To support its execution, an [%ExternalCall] frame is pushed to the call stack.
 
-Handling each transaction requires executing [%OpFarCall], which pushes another call frame to the callstack.
+Handling each transaction requires executing [%OpFarCall], which pushes another
+call frame to the callstack.
 
 As the transaction is executed, call stack changes as follows:
 
@@ -213,8 +214,8 @@ Executing any instruction $I$ changes the topmost frame:
 
     Inductive sp_mod_extcall_spec f: callstack_external -> callstack_external -> Prop :=
     | sme_apply: forall a b c d e g h eh sp pc ss ergs,
-        sp_mod_extcall_spec f (mk_extcf a b c d e g h ss (mk_cf eh sp pc ergs))
-          (mk_extcf a b c d e g h ss (mk_cf eh (f sp) pc ergs)).
+        sp_mod_extcall_spec f (mk_extcf a b c d e g h (mk_cf eh sp pc ergs ss))
+          (mk_extcf a b c d e g h (mk_cf eh (f sp) pc ergs ss)).
 
     Theorem sp_mod_extcall_correct:
       forall f ef, sp_mod_extcall_spec f ef (sp_mod_extcall f ef).
@@ -238,8 +239,8 @@ Executing any instruction $I$ changes the topmost frame:
         sp_mod_extcall_spec f ecf ecf' ->
         sp_mod_spec f (ExternalCall ecf tail) (ExternalCall ecf' tail)
     | usp_int:
-      forall  eh sp pc ergs tail,
-        sp_mod_spec f (InternalCall (mk_cf eh sp pc ergs) tail) (InternalCall (mk_cf eh (f sp) pc ergs) tail).
+      forall  eh sp pc ergs tail ss,
+        sp_mod_spec f (InternalCall (mk_cf eh sp pc ergs ss ) tail) (InternalCall (mk_cf eh (f sp) pc ergs ss) tail).
 
     Theorem sp_mod_spec_correct f:
       forall ef, sp_mod_spec f ef (sp_mod f ef).
@@ -270,19 +271,19 @@ Executing any instruction $I$ changes the topmost frame:
     Inductive update_pc_cfc : code_address -> callstack_common -> callstack_common
                               -> Prop :=
     | uupdate_pc:
-      forall ehl sp ergs pc pc',
-        update_pc_cfc pc' (mk_cf ehl sp pc ergs) (mk_cf ehl sp pc' ergs).
+      forall ehl sp ergs pc pc' ss,
+        update_pc_cfc pc' (mk_cf ehl sp pc ergs ss) (mk_cf ehl sp pc' ergs ss).
 
     Inductive update_pc_extcall: code_address -> callstack_external -> callstack_external
                                  -> Prop :=
     | upe_update:
-      forall pc' cf cf' this_address msg_sender code_address memory is_static context_u128_value saved_storage_state ss,
+      forall pc' cf cf' this_address msg_sender code_address memory is_static context_u128_value cc,
         update_pc_cfc pc' cf cf' ->
         update_pc_extcall pc'
           (mk_extcf this_address msg_sender code_address memory is_static
-             context_u128_value saved_storage_state ss cf)
+             context_u128_value cc cf)
           (mk_extcf this_address msg_sender code_address memory is_static
-             context_u128_value saved_storage_state ss cf')
+             context_u128_value cc cf')
     .
 
     Inductive update_pc : code_address -> callstack -> callstack -> Prop :=
@@ -350,8 +351,11 @@ Executing any instruction $I$ changes the topmost frame:
     Definition update_memory_context (ctx:mem_ctx): callstack -> callstack :=
       change_active_extframe (fun ef => ef <| ecf_mem_ctx := ctx |> ).
 
-    Definition revert_state (ef:callstack_external) : state_checkpoint :=
-      ef.(ecf_saved_checkpoint).
+    Definition revert_state (cs:callstack) : state_checkpoint :=
+      match cs with
+      | InternalCall x tail => x.(cf_saved_checkpoint)
+      | ExternalCall x tail => x.(ecf_common).(cf_saved_checkpoint)
+      end .
 
 
     Definition current_shard xstack : shard_id := (active_extframe xstack).(ecf_shards).(shard_this).

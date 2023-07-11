@@ -102,7 +102,7 @@ the caller.
 
      *)
 
-    Context (regs: regs_state) (mem: memory) (cs: callstack).
+    Context (regs: regs_state) (mem: memory) (cs: callstack) (ss:state_checkpoint).
 
     Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
     | step_NearCall_pass_some_ergs:
@@ -118,7 +118,7 @@ the caller.
         (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
 
         new_caller = ergs_set caller_ergs cs ->
-        new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs ->
+        new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs ss ->
 
         step_nearcall (OpNearCall abi_params_arg (Imm call_addr) (Imm expt_handler))
           (flags_clear, InternalCall new_frame new_caller).
@@ -162,12 +162,12 @@ the caller.
    *)
   End Defs.
 
-  Inductive xstep: instruction -> xsmallstep :=
+  Inductive xstep ss: instruction -> xsmallstep :=
   | step_NearCall:
     forall flags memory cs regs (abi_params_op:in_reg) new_flags new_cs ins,
 
-      step_nearcall regs cs ins (new_flags, new_cs) ->
-      xstep  ins
+      step_nearcall regs cs ss ins (new_flags, new_cs) ->
+      xstep ss ins
         {|
           gs_flags        := flags;
           gs_callstack    := cs;

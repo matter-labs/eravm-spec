@@ -46,7 +46,7 @@ Definition [%span_induced_growth]
     (** # Heap pointer
 
 A **heap pointer** is a pair of an absolute address [%hp_addr] on some data page
-and a limit [%hp_limit].
+and a limit [%hp_limit]. They are used in UMA instructions: [%OpLoad]/[%OpLoadInc], [%OpStore]/[%OpStoreInc].
 *)
 
     Record heap_ptr :=

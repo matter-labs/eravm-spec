@@ -15,6 +15,12 @@ EraVM is a 256-bit register-based language machine with two stacks, and dedicate
   Definition word_bits: nat := 256.
 
   Definition word: Set := int_mod word_bits.
+  (** [%word0] is a word with a zero value. *)
+  Definition word0: word := int_mod_of word_bits 0%Z.
+  Import Nat.
+  Definition bytes_in_word : nat := word_bits/bits_in_byte.
+  Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
+End Parameters.
   (**
 ![](img/arch-overview.png)
 
@@ -32,19 +38,27 @@ EraVM's functionality is to sequentially execute instructions.
 
 The main components of EraVM's execution state are:
 
-- 256-bit tagged general-purpose registers R1--R15 and a reserved register R0 holding a constant 0. See [%GPR.regs_state].
-- Three flags: overflow/less-than, equals, greater-than. See [%Predication.flags_state].
+- 256-bit tagged general-purpose registers R1--R15 and a reserved register R0
+  holding a constant 0. See [%regs_state].
+- Three flags: overflow/less-than, equals, greater-than. See
+  [%Predication.flags_state].
 - Data stack holding tagged words. It is located on a dedicated [%stack_page].
-- Callstack, holding callframes, which contain such information as the program counter, data stack pointer, current ergs balance, current contract's address, and so on. See [%CallStack].
-- Frames in callstack can be internal (belong to a function, near called) frames or external frames (belong to a contract, far called, richer state).
+- Callstack, holding callframes, which contain such information as the program
+  counter, data stack pointer, current ergs balance, current contract's address,
+  and so on. See [%CallStack].
+- Frames in callstack can be internal (belong to a function, near called) frames
+  or external frames (belong to a contract, far called, richer state).
 - Read-only pages for constants and code, one per contract stack frame.
 
 
-## Operation
+## Instructions
 
 Refer to the section [%Instructions] for the list of supported instructions.
 
-All instructions contain an encoded execution condition ([%instruction_predicated]). It means that before executing any instruction flags are checked, and if they do not match the required condition, the instruction is skipped.
+All instructions contain an encoded execution condition
+([%instruction_predicated]). It means that before executing any instruction
+flags are checked, and if they do not match the required condition, the
+instruction is skipped.
 
 Instruction can accept data and return results in various formats.
 
@@ -53,13 +67,15 @@ Instruction can accept data and return results in various formats.
 - Reading and writing to memory is described in [%MemoryOps].
 
 
-### Modes
+## Modes
 VM has two modes which can be independently turned on and off.
 
 1. Kernel mode
 
   First [%KERNEL_MODE_MAXADDR_LIMIT] contracts are marked as system contracts.
-  VM executes them in kernel mode, allowing an access to a richer instruction set, containing instructions potentially harmful to the global state e.g. [%OpContextIncrementTxNumber]. See [%KernelMode].
+  VM executes them in kernel mode, allowing an access to a richer instruction
+  set, containing instructions potentially harmful to the global state e.g.
+  [%OpContextIncrementTxNumber]. See [%KernelMode].
 
 2. Static mode
 
@@ -73,17 +89,23 @@ VM has two modes which can be independently turned on and off.
 Instructions and some other actions should be paid for with a resource called
 **ergs**, analogous to Ethereum's gas. See the overview in [%Ergs].
 
+## Operation
 
+Context of EraVM
 
-   *)
+When the server needs to build a new block, it starts an instance of EraVM.
 
+EraVM accepts three parameters:
 
-  (** [%word0] is a word with a zero value. *)
-  Definition word0: word := int_mod_of word_bits 0%Z.
-  Import Nat.
-  Definition bytes_in_word : nat := word_bits/bits_in_byte.
-  Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
-End Parameters.
+1. Bootloader's [%versioned_hash].
+2. Default code hash [%DEFAULT_AA_VHASH].
+3. A boolean flag `is_porter_available`, to determine the number of shards (two
+   if zkPorter is available, one otherwise).
+
+Bootloader is a contract written in YUL in charge of block construction. See
+[%Bootloader].
+*)
+
 
 
 Definition timestamp := nat.

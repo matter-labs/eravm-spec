@@ -119,18 +119,18 @@ Far call creates a new execution context with new pages for:
 
 The initial bounds for the new heap and auxheap pages are set to [%NEW_FRAME_MEMORY_STIPEND].
  *)
-Inductive alloc_pages_extframe:  (memory * mem_ctx) -> code_page -> memory * mem_ctx -> Prop :=
-| ape_alloc: forall code mm ctx code_id const_id stack_id heap_id heap_aux_id,
+Inductive alloc_pages_extframe:  (memory * mem_ctx) -> code_page -> const_page -> memory * mem_ctx -> Prop :=
+| ape_alloc: forall code const mm ctx code_id const_id stack_id heap_id heap_aux_id,
     code_id = length mm ->
     (const_id = code_id + 1)%nat ->
     (stack_id = code_id + 2)%nat ->
     (heap_id = code_id + 3)%nat ->
     (heap_aux_id = code_id + 4)%nat ->
-    alloc_pages_extframe (mm,ctx) code
+    alloc_pages_extframe (mm,ctx) code const
       ( (heap_aux_id, (@DataPage era_pages (empty _)))::
           (heap_id, (@DataPage era_pages (empty _)))::
           (stack_id, (@StackPage era_pages (empty _)))::
-          (const_id,(@ConstPage era_pages (empty _)))::
+          (const_id,(@ConstPage era_pages const))::
           (code_id,(@CodePage era_pages  code))::mm,
         {|
           ctx_code_page_id := code_id;
@@ -142,33 +142,20 @@ Inductive alloc_pages_extframe:  (memory * mem_ctx) -> code_page -> memory * mem
           ctx_auxheap_bound := NEW_FRAME_MEMORY_STIPEND;
         |} ).
 
-(**
-Far call to a contract decommits the contract's code to a fresh code page.
-If the code was already decommitted in the current block, this operation is free.
-Otherwise, it costs the amount of ergs proportionate to the code size (in words).
- *)
-Inductive decommitment_cost (cm:decommitter) vhash (code_length_in_words: code_length): ergs -> Prop :=
-|dc_fresh: forall cost,
-    is_first_access _ cm vhash = true->
-    (cost, false) = umul_overflow _ Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT (resize _ _ code_length_in_words) ->
-    decommitment_cost cm vhash code_length_in_words cost
-|dc_not_fresh:
-  is_first_access _  cm vhash = false ->
-  decommitment_cost cm vhash code_length_in_words zero32.
 
 (** Fetch code and pay the associated cost. If [%masking_allowed] is true and there is no code
 associated with a given contract address, then the default AA code will be
 fetched. See [%code_fetch]. *)
 Inductive paid_code_fetch masking_allowed sid: depot -> decommitter -> contract_address
-                                           -> callstack -> callstack * code_page
+                                           -> callstack -> callstack * code_page * const_page
                                            ->Prop :=
 | cfp_apply:
-  forall depot (codes:decommitter) (dest_addr: contract_address) vhash dest_addr new_code_page code_length cost__decomm cs0 cs1,
+  forall depot (codes:decommitter) (dest_addr: contract_address) vhash dest_addr new_code_page new_const_page code_length cost__decomm cs0 cs1,
 
-    code_fetch _ depot codes.(cm_storage _) sid dest_addr masking_allowed (vhash, new_code_page, code_length) ->
-    decommitment_cost codes vhash code_length cost__decomm ->
+    code_fetch _ depot codes.(cm_storage _) sid dest_addr masking_allowed (vhash, (new_code_page, new_const_page), code_length) ->
+    decommitment_cost _ codes vhash code_length cost__decomm ->
     pay cost__decomm cs0 cs1 ->
-    paid_code_fetch masking_allowed sid depot codes dest_addr cs0 (cs1, new_code_page).
+    paid_code_fetch masking_allowed sid depot codes dest_addr cs0 (cs1, new_code_page, new_const_page).
 
 (** ## System calls
 
@@ -431,18 +418,18 @@ Section Def.
   .
 
   Inductive farcall : FarCall.params -> state -> state -> Prop :=
-  | farcall_fwd_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack gs reg_context_u128 new_pages new_code_page new_mem_ctx (in_ptr out_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query out_ptr,
+  | farcall_fwd_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack gs reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx (in_ptr out_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query out_ptr,
       let is_system := addr_is_kernel dest_addr && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if to_abi_shard then abi_shard else old_extframe.(ecf_shards).(shard_this) in
       abi_ptr_tag = true ->
 
-      paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr cs0 (cs1, new_code_page) ->
+      paid_code_fetch allow_masking callee_shard gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest_addr cs0 (cs1, new_code_page, new_const_page) ->
 
       validate in_ptr = no_exceptions ->
       (fp_lift free_ptr_shrink) in_ptr out_ptr ->
 
-      alloc_pages_extframe (old_pages,mem_ctx0) new_code_page (new_pages, new_mem_ctx) ->
+      alloc_pages_extframe (old_pages,mem_ctx0) new_code_page new_const_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,cs1) (ergs_actual, new_caller_stack) ->
 
       let new_stack := ExternalCall {|
@@ -453,13 +440,13 @@ Section Def.
                            ecf_code_address := dest_addr;
                            ecf_mem_ctx := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
-                           ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_shards := select_shards type to_abi_shard abi_shard old_extframe.(ecf_shards);
                            ecf_common := {|
                                           cf_exception_handler_location := handler_addr;
                                           cf_sp := INITIAL_SP_ON_FAR_CALL;
                                           cf_pc := zero16;
                                           cf_ergs_remaining := ergs_actual;
+                                          cf_saved_checkpoint := gs.(gs_revertable);
                                         |};
                          |} (Some new_caller_stack) in
 
@@ -494,18 +481,18 @@ Section Def.
 
           gs_global       := gs;
         |}
-  | farcall_fwd_memory: forall gs flags old_regs old_pages cs0 cs1 cs2 new_caller_stack reg_context_u128 new_pages new_code_page new_mem_ctx (in_span: span) abi_shard ergs_query ergs_actual is_syscall_query out_ptr page_type,
+  | farcall_fwd_memory: forall gs flags old_regs old_pages cs0 cs1 cs2 new_caller_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx (in_span: span) abi_shard ergs_query ergs_actual is_syscall_query out_ptr page_type,
       let is_system := addr_is_kernel dest_addr && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if to_abi_shard then abi_shard else old_extframe.(ecf_shards).(shard_this) in
 
       paid_code_fetch allow_masking callee_shard
         gs.(gs_revertable).(gs_depot) gs.(gs_contracts)
-                                  dest_addr cs0 (cs1, new_code_page) ->
+                                  dest_addr cs0 (cs1, new_code_page, new_const_page) ->
       paid_forward_heap_span page_type (in_span, cs1) (out_ptr, cs2) ->
 
       let mem_ctx1 := (active_extframe cs2).(ecf_mem_ctx) in
-      alloc_pages_extframe (old_pages, mem_ctx1) new_code_page (new_pages, new_mem_ctx) ->
+      alloc_pages_extframe (old_pages, mem_ctx1) new_code_page new_const_page (new_pages, new_mem_ctx) ->
       pass_allowed_ergs (ergs_query,cs2) (ergs_actual, new_caller_stack) ->
 
       let new_stack := ExternalCall {|
@@ -517,12 +504,12 @@ Section Def.
                            ecf_code_address := dest_addr;
                            ecf_mem_ctx := new_mem_ctx;
                            ecf_is_static :=  ecf_is_static old_extframe || call_as_static;
-                           ecf_saved_checkpoint := gs.(gs_revertable);
                            ecf_common := {|
                                           cf_exception_handler_location := handler_addr;
                                           cf_sp := INITIAL_SP_ON_FAR_CALL;
                                           cf_pc := zero16;
                                           cf_ergs_remaining := ergs_actual;
+                                          cf_saved_checkpoint := gs.(gs_revertable);
                                         |};
                          |} (Some new_caller_stack) in
 
