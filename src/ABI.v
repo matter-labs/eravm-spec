@@ -47,8 +47,6 @@ Module NearCall.
 
 End NearCall.
 
-(* Inductive forward_page_type := ForwardFatPointer | UseMemory (type: data_page_type). *)
-
 Inductive fwd_memory :=
   ForwardFatPointer (p:fat_ptr)
 | ForwardNewHeapPointer (heap_var: data_page_type) (s:span).

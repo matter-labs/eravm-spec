@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Addressing Common Flags CallStack Memory MemoryContext Instruction State MemoryOps ABI.
+Require Addressing Common Flags CallStack Memory MemoryContext Instruction State MemoryOps ABI KernelMode.
 
 Import
   Addressing
@@ -19,6 +19,7 @@ Import
     Instruction
     List
     ListNotations
+    KernelMode
     Memory
     MemoryContext
     MemoryBase
@@ -74,11 +75,6 @@ Section Payment.
       paid_forward_heap_span type (span, xstack0) (mk_fat_ptr heap_id (fresh_ptr span), xstack1).
 
 End Payment.
-
-Definition KERNEL_MODE_MAXADDR : contract_address := int_mod_of _ (2^16-1).
-
-Definition addr_is_kernel (addr:contract_address) : bool :=
-  lt_unsigned _ addr KERNEL_MODE_MAXADDR.
 
 Definition in_kernel_mode (ef:callstack) : bool :=
   let ef := active_extframe ef in

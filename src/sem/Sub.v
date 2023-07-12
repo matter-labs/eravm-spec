@@ -13,9 +13,7 @@ Section Def.
 
 ### Abstract Syntax
 
-```
- | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-```
+[%OpSub (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
 
 ### Syntax
 
@@ -49,7 +47,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
 
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
 - Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
+- Registers, if `out` resolves to a register.
 - flags, if `set_flags` modifier is set.
 
 ### Usage

@@ -10,9 +10,7 @@ Inductive step: instruction -> smallstep :=
 
 ## Abstract Syntax
 
-```
-OpEvent (key: in_reg) (value: in_reg) (is_first: bool)
-```
+[%OpEvent (key: in_reg) (value: in_reg) (is_first: bool)]
 
 ## Syntax
 
@@ -21,7 +19,7 @@ OpEvent (key: in_reg) (value: in_reg) (is_first: bool)
 
 ## Summary
 
-Emit an event with provided key and value. See [event] for more details on events system.
+Emit an event with provided key and value. See [%event] for more details on events system.
 
 ## Semantic
 
@@ -75,6 +73,6 @@ Emit an event with provided key and value. See [event] for more details on event
 
 ## Similar instructions
 
-- [OpSLoad], [OpSStore], [OpEvent], [OpToL1Message], [OpPrecompileCall] share the same opcode.
+- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
  *)

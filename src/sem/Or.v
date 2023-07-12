@@ -11,9 +11,7 @@ Section Def.
 
 ### Abstract Syntax
 
-```
- | OpOr (in1: in_any) (in2: in_reg) (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-```
+[% OpOr (in1: in_any) (in2: in_reg) (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
 
 
 ### Syntax
@@ -30,7 +28,7 @@ Bitwise OR of two 256-bit numbers.
 ### Semantic
 
 
-Follows the scheme described in [binop_effect_spec].
+Follows the scheme described in [%binop_effect_spec].
 
 Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 

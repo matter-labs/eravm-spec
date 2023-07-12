@@ -145,7 +145,7 @@ Section Def.
   end.
   (** ## Shifts *)
 
-  (** ### Logical shifts *)
+  (** ### Historyical shifts *)
   Definition shiftl_nat (x: int_mod) (bits: nat) : int_mod :=
     int_mod_of (Z.shiftl (int_val x) (Z.of_nat bits)).
 

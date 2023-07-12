@@ -15,10 +15,7 @@ Section Def.
 
 ## Abstract Syntax
 
-```
-| OpPtrSub (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
-
-```
+[%OpPtrSub (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
 
 ## Summary
 
@@ -100,15 +97,15 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 ## Similar instructions
 
 - Takes part in a group of pointer manipulating instructions:
-   - [OpPtrAdd]
-   - [OpPtrSub]
-   - [OpPtrShrink]
-   - [OpPtrPack]
+   - [%OpPtrAdd]
+   - [%OpPtrSub]
+   - [%OpPtrShrink]
+   - [%OpPtrPack]
 
-- Instruction [OpPtrAdd] effectively performs the same actions but the offset is negated.
+- Instruction [%OpPtrAdd] effectively performs the same actions but the offset is negated.
 
 ## Encoding
 
-Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
+Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
  *)
 End Def.

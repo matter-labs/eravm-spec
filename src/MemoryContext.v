@@ -11,9 +11,10 @@ Section MemoryContext.
 
   (** # Memory context
 
-Creation of a contract frame leads to allocation of pages for code, constant data, stack, and heap variants.
+Creation of an external frame leads to allocation of pages for code, constant data, stack, and heap variants.
 
 **Memory context** is a collection of these pages associated with a contract frame, plus the bounds for heap variants.
+It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
    *)
   Record mem_ctx :=
     mk_mem_ctx
@@ -28,7 +29,11 @@ Creation of a contract frame leads to allocation of pages for code, constant dat
       }.
 
 
-  (** The identifiers of pages in [%mem_ctx] are not guaranteed to be in any order. However, we need to be able to tell whether a given page was created before a given memory context; this is formalized by [%page_older].  *)
+  (** The exact values of identifiers of pages in [%mem_ctx] are not guaranteed,
+  therefore it is not guaranteed that they would be in any particular order.
+
+  However, we need to be able to tell whether a given page was created before a
+  given memory context; this is formalized by [%page_older]. *)
 
   Definition list_mem_ctx (ap:mem_ctx) : list page_id :=
     match ap with
@@ -44,8 +49,9 @@ Creation of a contract frame leads to allocation of pages for code, constant dat
     List.existsb (page_eq id) (list_mem_ctx c).
 
 
+  (* begin details: helpers *)
   #[export] Instance etaAP: Settable _ := settable! mk_mem_ctx< ctx_code_page_id; ctx_const_page_id; ctx_stack_page_id; ctx_heap_page_id; ctx_auxheap_page_id; ctx_heap_bound; ctx_auxheap_bound >.
-
+  (* end details *)
 
   (** If an instruction addresses a heap variant outside of its bounds, its
   bound is adjusted to include the used address. Then the bound has to be

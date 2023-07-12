@@ -11,7 +11,7 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory M
 
 ## Abstract Syntax
 
-[OpContextThis (out: out_reg)]
+[%OpContextThis (out: out_reg)]
 
 ## Syntax
 
@@ -28,7 +28,7 @@ Retrieves the address of the currently executed contract.
 
 - Fetch the address of the currently executed contract
 from the active external frame.
-- Widen the address to [word_bits], zero-extended, and write to register `out`.
+- Widen the address to [%word_bits], zero-extended, and write to register `out`.
 
 
 ## Affected parts of VM state
@@ -38,11 +38,11 @@ from the active external frame.
 ## Usage
 
 On delegatecall this address is preserved to be one of the caller.
-See [FarCall.select_this_address].
+See [%FarCall.select_this_address].
 
 ## Similar instructions
 
-See [OpContextCaller], [OpContextCodeAddress].
+See [%OpContextCaller], [%OpContextCodeAddress].
 
 ## Encoding
 
@@ -82,7 +82,7 @@ Inductive step: instruction -> smallstep :=
 
 ## Abstract Syntax
 
-[OpContextCaller (out: out_reg)]
+[%OpContextCaller (out: out_reg)]
 
 ## Syntax
 
@@ -98,7 +98,7 @@ Retrieves the address of the contract which has called the currently executed co
 ## Semantic
 
 - Fetch the address of the currently executed contract from the active external frame.
-- Widen address is widened to [word_bits], zero-extended, and written to register `out`.
+- Widen address is widened to [%word_bits], zero-extended, and written to register `out`.
 
 
 ## Affected parts of VM state
@@ -108,11 +108,11 @@ Retrieves the address of the contract which has called the currently executed co
 ## Usage
 
 On delegatecall this address is preserved to be the caller of the caller.
-See [FarCall.select_sender].
+See [%FarCall.select_sender].
 
 ## Similar instructions
 
-See [OpContextThis], [OpContextCodeAddress].
+See [%OpContextThis], [%OpContextCodeAddress].
 
 ## Encoding
 
@@ -153,7 +153,7 @@ See [OpContextThis], [OpContextCodeAddress].
 
 ## Abstract Syntax
 
-[OpContextCodeAddress (out: out_reg)]
+[%OpContextCodeAddress (out: out_reg)]
 
 ## Syntax
 
@@ -168,7 +168,7 @@ Retrieves the address of the contract code that is actually being executed.
 ## Semantic
 
 - Fetch the contract address of the currently executed code from the active external frame.
-- Widen the address to [word_bits], zero-extended, and write to register `out`.
+- Widen the address to [%word_bits], zero-extended, and write to register `out`.
 
 
 ## Affected parts of VM state
@@ -177,13 +177,13 @@ Retrieves the address of the contract code that is actually being executed.
 
 ## Usage
 
-- In the execution frame created by [OpDelegateCall] this will be the address of the contract that was called by [OpDelegateCall].
-- Necessary to implement Solidity’s `immutable` under [OpDelegateCall].
+- In the execution frame created by [%OpDelegateCall] this will be the address of the contract that was called by [%OpDelegateCall].
+- Necessary to implement Solidity’s `immutable` under [%OpDelegateCall].
 
 
 ## Similar instructions
 
-See [OpContextThis], [OpContextCaller].
+See [%OpContextThis], [%OpContextCaller].
 
 ## Encoding
 
@@ -222,7 +222,7 @@ See [OpContextThis], [OpContextCaller].
 
 ## Abstract Syntax
 
-[OpContextErgsLeft (out: out_reg)]
+[%OpContextErgsLeft (out: out_reg)]
 
 ## Syntax
 
@@ -239,7 +239,7 @@ Retrieves the balance in the current frame.
 
 - Fetch the current balance in ergs from the topmost frame, external or internal.
   The `ergs` belonging to the parent frames are not counted.
-- Widen the ergs number to [word_bits], zero-extended, and write to `out`.
+- Widen the ergs number to [%word_bits], zero-extended, and write to `out`.
 
 ## Affected parts of VM state
 
@@ -248,7 +248,7 @@ Retrieves the balance in the current frame.
 ## Usage
 
 - Check if the number of ergs is sufficient for an expensive task.
-- Should be used before [OpPrecompileCall].
+- Should be used before [%OpPrecompileCall].
 
 
 ## Similar instructions
@@ -291,7 +291,7 @@ The `context` instruction family.
 
 ## Abstract Syntax
 
-[OpContextSp (out: out_reg)]
+[%OpContextSp (out: out_reg)]
 
 ## Syntax
 
@@ -307,7 +307,7 @@ Retrieves current stack pointer.
 ## Semantic
 
 - Fetch the current SP from the topmost frame, external or internal.
-- Widen the SP value to [word_bits], zero-extended, and write to `out`.
+- Widen the SP value to [%word_bits], zero-extended, and write to `out`.
 
 ## Affected parts of VM state
 
@@ -316,7 +316,7 @@ Retrieves current stack pointer.
 ## Usage
 
 - Check if the number of ergs is sufficient for an expensive task.
-- Should be used before [OpPrecompileCall].
+- Should be used before [%OpPrecompileCall].
 
 
 ## Similar instructions
@@ -361,7 +361,7 @@ The `context` instruction family.
 
 ## Abstract Syntax
 
-[OpContextGetContextU128 (out: out_reg)]
+[%OpContextGetContextU128 (out: out_reg)]
 
 ## Syntax
 
@@ -378,7 +378,7 @@ Does not interact with the context register.
 ## Semantic
 
 - Fetch the current context value from the active external frame.
-- Widen the context value from 128 bits to [word_bits], zero-extended, and write to `out`.
+- Widen the context value from 128 bits to [%word_bits], zero-extended, and write to `out`.
 
 ## Affected parts of VM state
 
@@ -386,12 +386,12 @@ Does not interact with the context register.
 
 ## Usage
 
-- See [gs_context_u128], [ecf_context_u128_value].
+- See [%gs_context_u128], [%ecf_context_u128_value].
 
 ## Similar instructions
 
 - The `context` instruction family.
-- Farcalls capture context. See [OpFarCall], [OpMimicCall], [OpDelegateCall].
+- Farcalls capture context. See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall].
 
 ## Encoding
 
@@ -431,7 +431,7 @@ Does not interact with the context register.
 
 ## Abstract Syntax
 
-[OpContextSetContextU128 (in: in_reg)]
+[%OpContextSetContextU128 (in: in_reg)]
 
 ## Syntax
 
@@ -448,7 +448,7 @@ Does not interact with the captured context value in the active external frame.
 ## Semantic
 
 - Fetch the value from `out` and shrink it to 128 bits.
-- Store the shrunk value in the context register [gs_context_u128].
+- Store the shrunk value in the context register [%gs_context_u128].
 
 ## Affected parts of VM state
 
@@ -456,12 +456,12 @@ Does not interact with the captured context value in the active external frame.
 
 ## Usage
 
-- See [gs_context_u128], [ecf_context_u128_value].
+- See [%gs_context_u128], [%ecf_context_u128_value].
 
 ## Similar instructions
 
 - The `context` instruction family.
-- Farcalls capture context. See [OpFarCall], [OpMimicCall], [OpDelegateCall].
+- Farcalls capture context. See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall].
 
 ## Encoding
 
@@ -496,7 +496,7 @@ VM internal state introspection.
 
 ## Abstract Syntax
 
-[OpContextMeta (out: out_reg)]
+[%OpContextMeta (out: out_reg)]
 
 ## Syntax
 
@@ -510,7 +510,7 @@ Fetches
 
 ## Semantic
 
-- Stores the encoded value of [ABI.MetaParameters.params] in `out`. They follow the structure:
+- Stores the encoded value of [%ABI.MetaParameters.params] in `out`. They follow the structure:
 
 ```
 Record params := {
@@ -586,7 +586,7 @@ Record params := {
 
 ## Abstract Syntax
 
-[OpContextIncrementTxNumber]
+[%OpContextIncrementTxNumber]
 
 ## Syntax  TODO
 
@@ -596,7 +596,7 @@ context.??? out
 
 ## Summary
 
-Increments the tx number counter in [gs_tx_number_in_block].
+Increments the tx number counter in [%gs_tx_number_in_block].
 
 ## Semantic
 
@@ -643,7 +643,7 @@ Utility in system contracts.
 
 ## Abstract Syntax
 
-[OpContextSetErgsPerPubdataByte (value:in_reg)]
+[%OpContextSetErgsPerPubdataByte (value:in_reg)]
 
 ## Syntax  TODO
 
@@ -653,13 +653,13 @@ context.??? in
 
 ## Summary
 
-Sets a new value to [gs_current_ergs_per_pubdata_byte].
+Sets a new value to [%gs_current_ergs_per_pubdata_byte].
 ## Semantic
 
 
 ## Affected parts of VM state
 
-- only [gs_current_ergs_per_pubdata_byte].
+- only [%gs_current_ergs_per_pubdata_byte].
 
 ## Usage
 

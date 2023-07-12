@@ -14,14 +14,12 @@ Section Def.
 
 ## Abstract Syntax
 
-```
-| OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
-```
+[%OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
 
 ## Summary
 
 Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`.
-Advances the fat pointer's offset by that number, and writes the result to `out`.
+Advances the fat pointer's offset by that number, and writes (`in2` || incremented pointer) to `out`.
 
 ## Semantic
 
@@ -36,9 +34,11 @@ $$\mathit{diff} := \mathit{op}_2 \mod 2^{32}$$
 
 $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset + diff}$$
 
-6. Store the result, tagged as a pointer, to `out`:
+6. Store the result, tagged as a pointer and mixed with most significant 128 bits of `op1` to `out`:
 
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
+
+TODO I guess we should we rather express it in terms of pointer fields?
  *)
 Inductive step : instruction -> xsmallstep :=
 | step_PtrAdd:
@@ -96,16 +96,16 @@ Inductive step : instruction -> xsmallstep :=
 ## Similar instructions
 
 - Takes part in a group of pointer manipulating instructions:
-   - [OpPtrAdd]
-   - [OpPtrSub]
-   - [OpPtrShrink]
-   - [OpPtrPack]
+   - [%OpPtrAdd]
+   - [%OpPtrSub]
+   - [%OpPtrShrink]
+   - [%OpPtrPack]
 
-- Instruction [OpPtrSub] effectively performs the same actions but the offset is negated.
+- Instruction [%OpPtrSub] effectively performs the same actions but the offset is negated.
 
 ## Encoding
 
-Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
+Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
   *)
 End Def.

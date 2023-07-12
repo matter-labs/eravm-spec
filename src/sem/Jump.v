@@ -18,20 +18,20 @@ Unconditional jump.
 
 ### Abstract Syntax
 
-[ OpJump (dest: in_any)]
+[% OpJump (dest: in_any)]
 
 ### Syntax
 
 - `jump label`
 
-Note: Argument `label` uses the full addressing mode, therefore can be immediate
+Note: Argument `label` uses the full addressing mode [%in_any], therefore can be immediate
 16-bit value, register, a register value with an offset, and so on.
 
 ### Semantic
 
 - Fetch a new address from operand `label`.
 
-- Assign to current PC the fetched value truncated to [code_address_bits] bits.
+- Assign to current PC the fetched value truncated to [%code_address_bits] bits.
  *)
 | step_jump_apply:
   forall (dest:in_any) (dest_val: word) (any_tag: bool) (new_cs: callstack),
@@ -52,12 +52,17 @@ Note: Argument `label` uses the full addressing mode, therefore can be immediate
 
 - Unconditional jumps
 
-- In zkEVM, all instructions are predicated (see [Predication.cond]), therefore in conjunction with a required
-  condition type [jump] implements a conditional jump instruction.
+- In EraVM, all instructions are predicated (see [%Predication.cond]), therefore in conjunction with a required
+  condition type [%jump] implements a conditional jump instruction.
+
+- Currently, the compiler may emit jumps rather than [%OpNearCall]/[%OpNearRet]
+  and similar instructions when possible. It is cheaper, and most functions do
+  not require to install a non-default [%cf_exception_handler_location], nor
+  passing less than all available ergs.
 
 ### Similar instructions
 
-- Calls: see [OpNearCall], [OpFarCall], [OpDelegateCall], [OpMimicCall].
+- Calls: see [%OpNearCall], [%OpFarCall], [%OpDelegateCall], [%OpMimicCall].
 
 *)
 

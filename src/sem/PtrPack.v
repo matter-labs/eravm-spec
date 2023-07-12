@@ -11,10 +11,7 @@ Inductive step : instruction -> xsmallstep :=
 
 ## Abstract Syntax
 
-```
-| OpPtrPack (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)
-
-```
+[%OpPtrPack (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
 
 ## Summary
 
@@ -61,16 +58,16 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
 ## Similar instructions
 
 - Takes part in a group of pointer manipulating instructions:
-   - [OpPtrAdd]
-   - [OpPtrSub]
-   - [OpPtrShrink]
-   - [OpPtrPack]
+   - [%OpPtrAdd]
+   - [%OpPtrSub]
+   - [%OpPtrShrink]
+   - [%OpPtrPack]
 
-- Instruction [OpPtrSub] effectively performs the same actions but the offset is negated.
+- Instruction [%OpPtrSub] effectively performs the same actions but the offset is negated.
 
 ## Encoding
 
-Instructions [OpPtrAdd], [OpPtrSub], [OpPtrPack] and [OpPtrShrink] are sharing an opcode.
+Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
 *)
 End Def.

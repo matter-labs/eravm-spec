@@ -2,21 +2,20 @@ Require Addressing Common Memory Predication.
 
 Import Addressing Common Memory Predication Flags.
 
-(** - This file describes the syntax of assembly instructions.
- - The instruction semantics is described in a different place; see [%step].
- - This is a high-level instruction set, similar but not exactly matching machine instructions.
+(**
+- This file describes the syntax of assembly instructions.
+ - The instruction semantic is described in a different place; see all files in [%sem] module.
+ - This is a high-level instruction set, not an encoding-aware low-level machine
+   instruction set. The distinction between them is of convenience: while in encoded machine instructions some fields are only occasionally used, the instructions from this set only contain used fields.
 
    For example, `xor`, `or`, and `and` bitwise operations are represented by
-   three distinct instructions in this set; however, they are encoded to three
-   instructions with the same opcode and different modifiers.
-
-*)
+   three distinct instructions in this set; however, they are encoded using the
+   same opcode and different modifiers. *)
 Section Instructions.
-(** # Instruction modifiers
+(** # Common instruction modifiers
 
 Modifiers alter the meaning of instruction.
 
-## Common modifiers
 Two modifiers are commonly encountered:
 
   1. `swap`: if an instruction has two input operands, this modifier swaps
@@ -31,15 +30,16 @@ Two modifiers are commonly encountered:
     end.
 
   (**
-  For example, if `sub in1, in2, out` computes $\mathit{in_1 - in_2}$,
-  `sub.s in1,in2,out` (where `.s` stands for "with `swap` modifier") computes $\mathit{in_2 - in_1}$.
+  For example, if `sub in1, in2, out` computes $\mathit{in_1 - in_2}$.
+Adding `swap` modifier will change the syntax as follows:
+`sub.s in1,in2,out`; now, the meaning is to compute $\mathit{in_2 - in_1}$.
 
-  This is useful because `in1` usually has richer address modes: it can be e.g.
-  fetched from stack, whereas `in2` can only be fetched from a GPR.
+  This is useful because e.g. in binary operations `in1` usually supports more
+  sophisticated address modes: it can be e.g. fetched from stack, whereas `in2`
+  can only be fetched from a GPR.
 
-
-  2. `set_flags`: if set, instruction is allowed to change the flags. If
-    cleared, the instruction will not touch the flags.
+  2. `set_flags`: if set, an instruction is allowed to change [%gs_flags]. If
+    cleared, the instruction will not alter the flags.
    *)
   Inductive mod_set_flags := SetFlags | PreserveFlags.
 
@@ -118,7 +118,7 @@ Two modifiers are commonly encountered:
   | OpPrecompileCall (in1: in_reg)               (out: out_reg)
   .
 
-  (** ## Common definitions
+  (** ## Predicated instruction
 
 The type [%instruction_predicated] defines the predicated instruction.
 These are the instructions stored on [%code_page]s.

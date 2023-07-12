@@ -5,10 +5,10 @@ Import Bool Common Flags.
 Section Predication.
   (** # Predication
 
-Every instruction on code page is predicated, meaning it is augmented with a predicateition.
-The predicateition The predicateition describes, which values of 
+Every instruction on the [%code_page] is predicated, meaning it is augmented with a [%predicate].
+A predicate describes a condition on flags; if this condition is satisfied, then the instruction is executed; otherwise, it is skipped.
 
-   *)
+When an instruction is skipped, its base cost is still paid. *)
   Inductive predicate : Set :=
   | IfAlways | IfGT | IfEQ | IfLT | IfGE | IfLE | IfNotEQ | IfGTOrLT.
 
@@ -68,7 +68,7 @@ The predicateition The predicateition describes, which values of
       predicate_spec IfLT fs->
       predicate_spec IfGTOrLT fs
   .
-
+(* begin details: proofs *)
   Hint Constructors predicate_spec:flags.
 
   Theorem predicate_holds_spec :
@@ -85,4 +85,5 @@ The predicateition The predicateition describes, which values of
     destruct ec, flags as [[][][]]; solve [left;constructor| right;inversion 1 | auto with flags | right; inversion 1; subst; inversion H0].
   Defined.
 
+(* end details *)
 End Predication.

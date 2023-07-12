@@ -1,4 +1,4 @@
-From Coq.Logic    Require Decidable.
+From Coq.Logic   Require Decidable.
 
 Import Decidable.
 

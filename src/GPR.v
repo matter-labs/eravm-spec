@@ -3,7 +3,7 @@ Require Core List PrimitiveValue.
 
 Import Core PrimitiveValue .
 
-Section Regs.
+Section Registers.
 
   Context (pv := @primitive_value word).
 
@@ -141,7 +141,7 @@ The tag is set when the register contains a fat pointer.
         (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R15 pv
         (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 pv)
   .
-
+(* begin details: helpers *)
   #[export] Instance etaGPRs : Settable _ := settable! mk_regs < r1; r2; r3; r4; r5; r6; r7; r8; r9; r10; r11; r12; r13; r14; r15 >.
 
   Definition reg_map f (rs:regs_state) : regs_state :=
@@ -149,4 +149,5 @@ The tag is set when the register contains a fat pointer.
     | mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 =>
         ( mk_regs (f r1) (f r2) (f r3) (f r4) (f r5) (f r6) (f r7) (f r8) (f r9) (f r10) (f r11) (f r12) (f r13) (f r14) (f r15))
     end.
-End Regs.
+  (* end details *)
+End Registers.

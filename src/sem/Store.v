@@ -21,9 +21,7 @@ Section Defs.
 
 ## Abstract Syntax
 
-```
-OpStore (ptr: in_regimm) (val: in_reg) (mem:data_page_type)
-```
+[%OpStore (ptr: in_regimm) (val: in_reg) (mem:data_page_type)]
 
 ## Syntax
 
@@ -38,26 +36,17 @@ address `in1`.
 
 ## Semantic
 
-1. Decode a fat pointer `in_ptr` from `ptr`.
+1. Decode a [%heap_ptr] $\mathit{(addr,limit)}$ from `ptr`.
 
-   Fat pointers have following fields:
+2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
 
-```
-Record fat_ptr :=
-  mk_fat_ptr {
-      fp_page: page_id;
-      fp_start: mem_address;
-      fp_length: mem_address;
-      fp_offset: mem_address;
-    }.
-```
+3. Let $B$ be the selected heap variant bound. If $\mathit{addr + 32} > B$, grow
+   heap variant bound and pay for the growth. We are aiming at reading a 256-bit
+   word starting from address $\mathit{addr}$ so the heap variant bound should
+   contain all of it.
+4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to $\mathit{addr}$ in the heap variant.
+5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
 
-2. Ensure storing 32 consecutive bytes is possible; it is impossible if $\texttt{fp\_offset} > 2^{32}-32$.
-
-   Note: Valid (aux_)heap fat pointers always have `fp_start = 0`, therefore the read starts from an absolute address `fp_offset` in heap/auxheap. See [fat_ptr].
-
-3. If  `fp_offset + 32 > (aux_)heap bound`, grow (aux_)heap bound and pay for the growth. We are aiming at reading a 256-bit word starting from address `fp_offset`, so the (aux_)heap bound should contain all of it.
-4. Store 32 consecutive bytes of `val` as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
 *)
 
   | step_Store:

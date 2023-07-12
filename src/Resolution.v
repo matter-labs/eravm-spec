@@ -28,7 +28,6 @@ Section AddressingUtils.
   Definition sp_displ: regs_state -> reg_name -> u16 -> stack_address -> Prop := reg_rel_stack.
 End AddressingUtils.
 
-
   (** # Address resolution
 
 Instructions have multiple ways of addressing data, i.e. immediate 16-bit
@@ -42,7 +41,7 @@ section [%Addressing] by types such as [%in_any], [%out_reg], and so on.
 There are five main locations that instructions can address:
 
 1. Immediate data: the operand is provided directly as an unsigned 16-bit integer value.
-2. Register: data can be fetched or stored to general purpose registers [r1]--[r15].
+2. Register: data can be fetched or stored to general purpose registers [%r1]--[%r15].
 3. Stack address: data can be fetched or stored to stack.
 4. Code address: instructions can be fetched from a code page.
 5. Constant address: data can be fetched from a read-only page holding constant words.
@@ -67,7 +66,6 @@ Section Resolve.
   (** Resolution of [%RelSpPop] and [%RelSpPush] addressing modes modifies the
   stack pointer. This, and possible future effects, is described by
   [%resolve_effect] predicate.
-  effects
    *)
   Inductive resolve_effect := | NoEffect | NewSP (val: stack_address).
 

@@ -14,7 +14,7 @@ regs in current frame, set OF flag, return no data.
 
 ### Abstract Syntax
 
-- [%OpPanic]
+[%OpPanic]
 
 ### Syntax
 
@@ -41,7 +41,7 @@ regs in current frame, set OF flag, return no data.
 - most errors in executing of other instructions lead to executing `panic` instead.
 
 
-#### Case 1: `panic` from near call, no label
+#### Case 1: `panic` from near call
 
 1. Perform a [%roll_back].
 2. Drop current frame with its ergs.

@@ -10,9 +10,7 @@ Section Def.
 
 ## Abstract Syntax
 
-```
- | OpRor (in1: in_any) (in2: in_reg) (out: out_any) (swap:mod_swap) (flags:mod_set_flags)
-```
+[%OpRor (in1: in_any) (in2: in_reg) (out: out_any) (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -27,7 +25,7 @@ Bitwise circular left shift of `in1` by the number of binary digits specified by
 
 ## Semantic
 
-Follows the scheme described in [binop_state_bitwise_effect_spec].
+Follows the scheme described in [%binop_state_bitwise_effect_spec].
 
 - result is computed as `in1 >>> (in2 mod 256)`
 - flags are computed as follows:

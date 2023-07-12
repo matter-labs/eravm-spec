@@ -10,7 +10,7 @@ Instruction formats are described by [%instruction].
 **Operands** are entities operated upon by instructions. They serve as sources of data, or as destinations for the results of the instruction execution.
 
 **Addressing mode** refers to the way in which an instruction specifies the location of data that needs to be accessed or operated upon.
-This document describes the types of operands; each type corresponds to one or multiple possible addressing modes for an operand.
+This document describes the types of operands; each type corresponds to one or multiple possible addressing modes for an operand. See [%InstructionArguments].
 
 Abstract EraVM supports 8 addressing modes.
 Some of them only support reading (indicated by "in"), or writing (indicated by "out").
@@ -26,7 +26,7 @@ Some of them only support reading (indicated by "in"), or writing (indicated by 
 8. Stack page, relative to GPR and SP, with increasing SP (out)
 
 Note that the current implementation encodes some of these modes in the same way
-e.g. mode 7 and mode 8 only differ by in or out position.
+e.g. mode 7 and mode 8 only differ by *in* or *out* position.
 
 Predicate [%resolve] formalizes resolving operands to immediate values, registers
 and memory locations.
@@ -80,7 +80,7 @@ Code and const pages may coincide in the implementation.
 
   (** ## Stack page, relative to GPR and SP, with decreasing SP (in)
 
-Resolved to $\mathit{(SP - (reg + imm))$.
+Resolved to $\mathit{(SP - (reg + imm))}$.
 
 Additionally, after the resolution, SP is modified: SP -= (reg + imm).
 
@@ -106,131 +106,129 @@ read performed. See [%OpNoOp].
   | RelSpPush (reg:reg_name) (delta: stack_address)
   .
 
+  Section InstructionArguments.
+    (** # Operands
 
-  (** # Support of addressing modes from instructions
-
-In this section we describe argument types of instructions.
-Each type defines a set of acceptable operand types.
-
-There is an hierarchy of these arguments, ordered by inclusion (see [%Coercions]).
+In this section we describe operand types of [%instruction].
+There is an hierarchy of these types, ordered by inclusion (see [%Coercions]).
 For example, the first argument of [%OpAdd] can use any addressing mode, and its
 second argument can only use [%reg] address mode.
 Both arguments should accept GPR as a source.
-   *)
+     *)
 
-  Inductive stack_in : Set :=
-  | StackInOnly (arg: stack_in_only)
-  | StackInAny (arg: stack_io)
-  .
+    Inductive stack_in : Set :=
+    | StackInOnly (arg: stack_in_only)
+    | StackInAny (arg: stack_io)
+    .
 
-  Inductive stack_out: Set :=
-  | StackOutOnly (arg: stack_out_only)
-  | StackOutAny (arg: stack_io)
-  .
+    Inductive stack_out: Set :=
+    | StackOutOnly (arg: stack_out_only)
+    | StackOutAny (arg: stack_io)
+    .
 
-  Inductive stack_any : Set :=
-  | StackAnyIO (arg: stack_io)
-  | StackAnyIn (arg: stack_in_only)
-  | StackAnyOut (arg: stack_out_only)
-  .
+    Inductive stack_any : Set :=
+    | StackAnyIO (arg: stack_io)
+    | StackAnyIn (arg: stack_in_only)
+    | StackAnyOut (arg: stack_out_only)
+    .
 
-  (* begin details : Utility conversions, click to unfold *)
-  Definition stack_in_to_any (s:stack_in) : stack_any :=
-    match s with
-    | StackInOnly arg => StackAnyIn arg
-    | StackInAny arg => StackAnyIO arg
-    end.
+    (* begin details : Utility conversions, click to unfold *)
+    Definition stack_in_to_any (s:stack_in) : stack_any :=
+      match s with
+      | StackInOnly arg => StackAnyIn arg
+      | StackInAny arg => StackAnyIO arg
+      end.
 
-  Definition stack_out_to_any (s:stack_out) : stack_any :=
-    match s with
-    | StackOutOnly arg => StackAnyOut arg
-    | StackOutAny arg => StackAnyIO arg
-    end.
-  (* end details *)
+    Definition stack_out_to_any (s:stack_out) : stack_any :=
+      match s with
+      | StackOutOnly arg => StackAnyOut arg
+      | StackOutAny arg => StackAnyIO arg
+      end.
+    (* end details *)
 
 
 
-  (** This argument type allows for all addressing modes. *)
-  Inductive any : Set :=
-  | AnyReg  : reg_io   -> any
-  | AnyImm  : imm_in   -> any
-  | AnyStack: stack_any-> any
-  | AnyCode : code_in  -> any
-  | AnyConst: const_in -> any
-  .
+    (** This argument type allows for all addressing modes. *)
+    Inductive any : Set :=
+    | AnyReg  : reg_io   -> any
+    | AnyImm  : imm_in   -> any
+    | AnyStack: stack_any-> any
+    | AnyCode : code_in  -> any
+    | AnyConst: const_in -> any
+    .
 
-  (** We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output
-arguments as $\mathit{out_1}$, $\mathit{out_2}$.
+    (** We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output arguments as $\mathit{out_1}$, $\mathit{out_2}$.
 
 Many instructions have 2 input arguments and 1 output argument.
 
-## In arguments
+## *In* arguments
 
 Usually, $\mathit{in_1}$ supports any types of arguments, except for [%RelSpPush].
 
-   *)
-  Inductive in_any : Set :=
-  | InReg  : reg_io   -> in_any
-  | InImm  : imm_in   -> in_any
-  | InStack: stack_in -> in_any
-  | InCode : code_in  -> in_any
-  | InConst: const_in -> in_any
-  .
+     *)
+    Inductive in_any : Set :=
+    | InReg  : reg_io   -> in_any
+    | InImm  : imm_in   -> in_any
+    | InStack: stack_in -> in_any
+    | InCode : code_in  -> in_any
+    | InConst: const_in -> in_any
+    .
 
-  (* begin details: Inclusion function *)
-  Definition in_any_incl (ia: in_any) : any :=
-    match ia with
-    | InReg x => AnyReg x
-    | InImm x => AnyImm x
-    | InStack x => AnyStack (stack_in_to_any x)
-    | InCode x => AnyCode x
-    | InConst x => AnyConst x
-    end.
+    (* begin details: Inclusion function *)
+    Definition in_any_incl (ia: in_any) : any :=
+      match ia with
+      | InReg x => AnyReg x
+      | InImm x => AnyImm x
+      | InStack x => AnyStack (stack_in_to_any x)
+      | InCode x => AnyCode x
+      | InConst x => AnyConst x
+      end.
 
-  (* end details *)
+    (* end details *)
 
 
-  (** Usually, $\mathit{in_2}$ supports only arguments in GPRs. *)
-  Definition in_reg : Set := reg_io.
+    (** Usually, $\mathit{in_2}$ supports only arguments in GPRs. *)
+    Definition in_reg : Set := reg_io.
 
-  (** In exotic cases, an input argument may either be a register, or an immediate
+    (** In exotic cases, an input argument may either be a register, or an immediate
 value, but not anything else. Currently, only UMA instructions requires such an input
 argument; see [%OpHeapRead], [%OpHeapWrite], and similar. *)
 
-  Inductive in_regimm : Set :=
-  | RegImmR : reg_io -> in_regimm
-  | RegImmI : imm_in -> in_regimm
-  .
+    Inductive in_regimm : Set :=
+    | RegImmR : reg_io -> in_regimm
+    | RegImmI : imm_in -> in_regimm
+    .
 
-  (* begin details : Inclusion function *)
-  Definition in_regimm_incl (ri: in_regimm) : in_any :=
-    match ri with
-    | RegImmR r => InReg r
-    | RegImmI i => InImm i
-    end.
-  (* end details *)
+    (* begin details : Inclusion function *)
+    Definition in_regimm_incl (ri: in_regimm) : in_any :=
+      match ri with
+      | RegImmR r => InReg r
+      | RegImmI i => InImm i
+      end.
+    (* end details *)
 
-  (** ## Out arguments
+    (** ## *Out* arguments
 
-- Out arguments can not be immediate values.
+- Output arguments can not be immediate values.
 - A single immediate value is not sufficient to identify a memory cell, because we have multiple pages (see [%page]).
-- Out arguments can not be code or const addresses either, because these memories are not writable.
+- Out arguments can not be code or const addresses either, because [%code_page] and [%const_page] are not writable.
 - Usually, the $\mathit{out_1}$ argument can be of any type (except for immediate value).
-   *)
-  Inductive out_any : Set :=
-  | OutReg  : reg_io    -> out_any
-  | OutStack: stack_out -> out_any
-  .
+     *)
+    Inductive out_any : Set :=
+    | OutReg  : reg_io    -> out_any
+    | OutStack: stack_out -> out_any
+    .
 
-  (* begin details : Inclusion function *)
-  Definition out_any_incl (ia: out_any) : any :=
-    match ia with
-    | OutReg x => AnyReg x
-    | OutStack x => AnyStack (stack_out_to_any x)
-    end.
-  (* end details *)
+    (* begin details : Inclusion function *)
+    Definition out_any_incl (ia: out_any) : any :=
+      match ia with
+      | OutReg x => AnyReg x
+      | OutStack x => AnyStack (stack_out_to_any x)
+      end.
+    (* end details *)
 
-  Definition out_reg : Set := reg_io.
+    Definition out_reg : Set := reg_io.
+  End InstructionArguments.
 
 End Addressing.
 (** Therefore, we do not define [%out_regimm], because it is impossible to write
@@ -255,4 +253,3 @@ Module Coercions.
   Coercion in_regimm_incl: in_regimm >-> in_any.
   Coercion StackInAny : stack_io >-> stack_in.
 End Coercions.
-

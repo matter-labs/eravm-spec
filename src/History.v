@@ -1,18 +1,18 @@
 Require Decidability List.
 Import Decidability.
 
-Section Log.
+Section History.
 
-  (** # Log
-**Log** is a data structure supporting appending elements of type [%T] to it.
+  (** # History
+**History** is a data structure supporting appending elements of type [%T] to it.
    *)
   Context (T:Type) (elem_dec: Decidability.eq_dec T).
 
-  Definition log := list T.
+  Definition history := list T.
 
-  Context (l:log).
+  Context (l:history).
 
-  (** [%log] supports checking if an element is contained in it. *)
+  (** [%history] supports checking if an element is contained in it. *)
   Definition contains (elem:T): bool := if List.in_dec elem_dec elem l then true else false.
 
   Inductive contains_spec (elem: T) : bool -> Prop :=
@@ -31,4 +31,4 @@ Section Log.
         destruct (List.in_dec _ _ _); solve [reflexivity|contradiction].
   Qed.
 
-End Log.
+End History.

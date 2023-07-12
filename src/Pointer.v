@@ -32,10 +32,10 @@ It requires encoding the parameters according to [%ABI.FarRet.ABI] or
 See [%FarCall] and [%FarRet].
 
 
-In EraVM, heap variants have a bound; if memory is accessed beyond it, the bound
-is adjusted and the growth (difference between bounds) is paid in ergs.
-Definition [%span_induced_growth]
-   *)
+In EraVM, heap variants have a bound, stored in call stack frames (see [%ctx_heap_bound] of [%ecf_mem_ctx]).
+ If memory is accessed beyond this bound, the bound is adjusted and the growth
+(difference between bounds) is paid in ergs. Definition [%span_induced_growth]
+computes how many bytes should the user pay for. *)
   Inductive span_induced_growth: span -> mem_address -> mem_address -> Prop :=
   | gb_bytes: forall fp_start fp_length query_bound current_bound,
       fp_start + fp_length = (query_bound, false) ->
@@ -69,7 +69,9 @@ $[0,\mathit{limit})$, as described by [%hp_resolves_to]. *)
       mk_span zero32 hp.(hp_limit).
 
     (**
- **Shrinking a heap pointer** a pointer with [%hp_shrink] subtracts a number from its length; it is guaranteed not to overflow.
+
+
+ **Shrinking a heap pointer** with [%hp_shrink] subtracts a given number [%diff] from its length; it is guaranteed to not overflow.
 
 Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but such pointer will not resolve to a memory location.
     *)
@@ -100,7 +102,11 @@ The layout of a heap pointer in a 256-bit word is described by [%ABI.FatPointer.
 ## Relation to fat pointers
 
 Heap pointers are bearing a similarity to fat pointers.
-They can be thought about as fat pointers where the slice starts at 0, an offset is the address, length is the limit, and the page ID is ignored.
+They can be thought about as fat pointers where the span starts at 0, an offset
+is the address, length is the limit, and the page ID is ignored.
+
+Heap pointers are not necessarily tagged and do not receive any special
+treatment from the VM's side.
    *)
   End HeapPointer.
 
@@ -128,9 +134,11 @@ They can be thought about as fat pointers where the slice starts at 0, an offset
   Section FatPointer.
     (** # Fat pointer
 
-A **fat pointer** defines an address inside a [%span] of a specific data memory page [%fp_page].
-These four components are enough to unambiguously identify a **slice** of a data memory page. See [%Slice].
 
+
+A **fat pointer** defines an address inside a [%span] of a specific data memory page [%fp_page].
+We may denote is as a 4-tuple: $(\mathit{page, start, length, offset})$.
+These four components are enough to unambiguously identify a **[%slice]** of a data memory page.
      *)
     Record fat_ptr :=
       mk_fat_ptr {
@@ -190,6 +198,8 @@ Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDel
 
 - $\mathit{start}+\mathit{length} \geq 2^{256}$, or
 - $\mathit{offset} > \mathit{length}$.
+
+If $\mathit{offset} = \mathit{length}$, the span of the pointer is empty, but it is still valid.
      *)
     Definition validate (p:free_ptr) : validation_exception :=
       match p with
@@ -204,7 +214,7 @@ Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDel
 
     (** **Shrinking a fat pointer** moves its $\mathit{start}$ to where $\mathit{start} + \mathit{offset}$ was, and sets $\mathit{offset}$ to zero:
 
-$(\mathit{start}, \mathit{length}, \mathit{offset}) \mapsto (\mathit{start}+\mathit{offset}, \mathit{length}-\mathit{offset}, 0)$
+$(\mathit{page}, \mathit{start}, \mathit{length}, \mathit{offset}) \mapsto (\mathit{page}, \mathit{start}+\mathit{offset}, \mathit{length}-\mathit{offset}, 0)$
 
 ![](img/ptr-shrinking.svg)
 

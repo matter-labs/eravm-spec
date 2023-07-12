@@ -14,17 +14,13 @@ Section Stack.
 
   (** # Call stack
 
-There are two stacks in EraVM: call stack to support the execution of functions
-and contracts, and data stack to facilitate computations. This section
-describes the call stack.
+EraVM operates with two stacks: the call stack, which supports function and
+contract execution, and the data stack, aiding in computations. This section
+covers the call stack in detail.
 
-**Stack frame**, or **call frame** is a structure holding a fragment of current
-  execution environment.
-Stack frame is specific to a running instance of a contract, or to a running
-instance of a function belonging to currently running contract.
-By running instance of a function or a contract we mean a piece of VM runtime
-state associated with the current execution of a function or a contract, as
-described by [%callstack].
+
+A **stack frame**, or **call frame**, represents a fragment of current execution
+  environment associated with a running instance of a contract or a function.
 
 There are two types of stack frames:
 
@@ -87,7 +83,7 @@ hold:
 - [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
 - [%ecf_mem_ctx] : current [mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
 - [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
-- [%ecf_context_u128_value] : captured value of [%gs_context_u128].
+- [%ecf_context_u128_value] : captured value of [%gs_context_u128]. It represents a snapshot of the value of global register [%gs_context_u128] in the moment when the external call frame was created i.e. when a far call instruction was executed.
 - [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].
  *)
   Record callstack_external :=
@@ -96,7 +92,7 @@ hold:
         ecf_msg_sender: contract_address;
         ecf_code_address: contract_address;
         ecf_mem_ctx: mem_ctx;
-        ecf_is_static: bool; (* forbids any write-like "logs" and so state modifications, event emissions, etc *)
+        ecf_is_static: bool; (* forbids any write-like "log" and so state modifications, event emissions, etc *)
         ecf_context_u128_value: u128;
         ecf_shards:> active_shards;
         ecf_common :> callstack_common
@@ -120,7 +116,7 @@ hold:
 
   (** ## Operation
 
-When the server starts forming a new block, it starts a new instance of VM to execute the code called bootloader (see [Core]).
+When the server starts forming a new block, it starts a new instance of VM to execute the code called bootloader (see [%Core]).
 Bootloader is a contract with an address [%BOOTLOADER_SYSTEM_CONTRACT_ADDRESS].
 To support its execution, an [%ExternalCall] frame is pushed to the call stack.
 
@@ -138,11 +134,12 @@ Attempting to have more than [%CALLSTACK_LIMIT] elements in callstack will force
 Panics are equivalent to executing [%OpPanic], so they pop up the topmost stack frame and pass the control to the exception handler, specified in the popped frame.
 
 Executing any instruction $I$ changes the topmost frame:
-  - [%cf_pc] is incremented, unless $I$ is [%OpJump].
-  - [%cf_sp] may be modified if $I$ affects the data stack pointer.
-  - [%cf_ergs_remaining] is decreased by the **total cost** of $I$. Total cost
-    is a sum of [base_cost] and additional costs, described by the small step
-    predicates like [%sem.FarCall.step].
+
+1. [%cf_pc] is incremented, unless $I$ is [%OpJump].
+2. [%cf_sp] may be modified if $I$ affects the data stack pointer.
+3. [%cf_ergs_remaining] is decreased by the **total cost** of $I$. Total cost
+   is a sum of [%base_cost] and additional costs, described by the small step
+   predicates like [%step_jump].
 
    *)
   Definition stack_overflow (xstack:callstack) : bool :=

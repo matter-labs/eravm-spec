@@ -57,7 +57,7 @@ Additionally, the following actions lead to spending ergs:
 1. Decommitting contract code. Performing far call to a contract which was not called during the construction of the current block costs ergs per each word of contract code. See [%Decommitter], [%FarCall].
 2. TODO Accessing storage
 3. Memory growth. Data pages holding heap variants are bound, and only accesses to addresses within these bounds are free. Reading or writing to these pages leads to bound being increased; the difference between [%grow_and_pay] growth.
-- message
+4. Passing messages to L1 by [%OpToL1Message].
 
 
 ## Burning ergs
@@ -66,7 +66,11 @@ Burning ergs refers to setting erg balance to zero for the current frame, and ex
 
 The general rule is: if some invariant of execution breaks, VM panics, burning all ergs in the current frame.
 This is a fail-fast behavior in case of irrecoverable errors.
-An exemplary case would be trying to use an integer value where pointer values is expected.
+Some examples are:
+
+- using an integer value where pointer value is expected
+- executing kernel-only instruction in user mode
+- call stack overflow
 
 Some situations that provoke panic are:
 

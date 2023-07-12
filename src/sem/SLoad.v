@@ -17,9 +17,7 @@ Inductive step: instruction -> xsmallstep :=
 
 ## Abstract Syntax
 
-```
-OpSLoad (key: in_reg) (dest: out_reg)
-```
+[% OpSLoad (key: in_reg) (dest: out_reg)]
 
 ## Syntax
 
@@ -34,7 +32,7 @@ Access word in current storage by key.
 
 1. Load word from current shard, current contract's storage by key `key`.
 
-   Current contract is identified by the field [ecf_this_address] of the active external frame.
+   Current contract is identified by the field [%ecf_this_address] of the active external frame.
 2. Store the value to `dest`.
 
 *)
@@ -74,10 +72,10 @@ Access word in current storage by key.
 
 ## Usage
 
-- Only [SLoad] is capable of reading data from storage.
+- Only [%SLoad] is capable of reading data from storage.
 
 ## Similar instructions
 
-- [OpSLoad], [OpSStore], [OpEvent], [OpToL1Message], [OpPrecompileCall] share the same opcode.
+- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
  *)

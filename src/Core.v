@@ -31,6 +31,36 @@ End Parameters.
 - **Precompile processor** executes precompiles e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
 - **Decommittement processor**, stores and decommits the code of contracts. See [%Decommitter].
 
+## Functions and contracts
+
+In EraVM, contracts are the coarse-grained execution units.
+Contracts may have multiple **functions** in them; a contract may execute its
+functions by using **near call** instruction [%OpNearCall].
+A contract may also call other contracts by using **far call** instructions
+[%OpFarCall], [%OpMimicCall], or [%OpDelegateCall].
+
+By **running instance** of a function or a contract we mean a piece of VM runtime
+state associated with the current execution of a function or a contract, as
+described by [%callstack].
+
+EraVM allows recursive execution of functions and contracts.
+For example, a contract $A$ calls a function $f_1$ which calls a function $f_2$
+which calls a contract $B$, which calls a function $g_1$
+...
+During the execution of $g_1$, **running instances** of $A$, $f_1$, $f_2$ keep
+existing, waiting for the control to return to them.
+
+Recursive execution is also allowed, so a contract $C$ may call itself directly,
+or call either functions or other contracts, which may call $C$ again.
+
+Launching a contract allocates memory pages dedicated to it (see
+[%alloc_pages_extframe]).
+In a running instance of a contract, this contract's functions share these
+memory pages.
+
+Contracts have more contract-specific state associated to them than functions.
+However, running instances of both functions and contracts have their own
+balance in ergs, exception handlers, program counter and stack pointer values.
 
 ## Execution state
 
@@ -41,7 +71,7 @@ The main components of EraVM's execution state are:
 - 256-bit tagged general-purpose registers R1--R15 and a reserved register R0
   holding a constant 0. See [%regs_state].
 - Three flags: overflow/less-than, equals, greater-than. See
-  [%Predication.flags_state].
+  [%flags_state].
 - Data stack holding tagged words. It is located on a dedicated [%stack_page].
 - Callstack, holding callframes, which contain such information as the program
   counter, data stack pointer, current ergs balance, current contract's address,
@@ -55,15 +85,15 @@ The main components of EraVM's execution state are:
 
 Refer to the section [%Instructions] for the list of supported instructions.
 
-All instructions contain an encoded execution condition
-([%instruction_predicated]). It means that before executing any instruction
-flags are checked, and if they do not match the required condition, the
-instruction is skipped.
+All instructions are predicated; it means, that they contain an explicit
+condition about the current flags state. If the condition is satisfied, they are
+executed, otherwise they are skipped (but their basic cost is still paid). See
+[%instruction_predicated].
 
 Instruction can accept data and return results in various formats.
 
 - The formats of instruction operands are described in [%Addressing].
-- The address resolution to locations in memory is described in [%Resolution]
+- The address resolution to locations in memory is described in [%resolve]
 - Reading and writing to memory is described in [%MemoryOps].
 
 
@@ -87,7 +117,7 @@ VM has two modes which can be independently turned on and off.
 ## Ergs
 
 Instructions and some other actions should be paid for with a resource called
-**ergs**, analogous to Ethereum's gas. See the overview in [%Ergs].
+**ergs**, similar to Ethereum's gas. See the overview in [%Ergs].
 
 ## Operation
 

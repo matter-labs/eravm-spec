@@ -2,8 +2,13 @@ Require Addressing Core Common Memory List Pointer Resolution Slice.
 
 Import Addressing Core ZArith ZMod Common CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution Slice.
 
-Section Definitions.
+Section MemoryOps.
 
+  (** # Data loading and storing
+
+This file formalizes reading from memory or registers ([%fetch]) and writing to
+memory or registers ([%store]).
+   *)
   Import Addressing.Coercions.
 
   Context {instruction: Type} (instruction_invalid:instruction)
@@ -73,18 +78,23 @@ Section Definitions.
         store_loc value (LocStackAddress addr) (regs, new_mem)
     .
 
+    (** Loading a primitive value from registers or memory, applying effects of
+    [%RelSpPop] if necessary. *)
     Inductive load: in_any -> callstack * primitive_value -> Prop :=
     | ld_apply : forall (arg:in_any) loc res new_cs,
         resolve_apply regs cs arg (new_cs, loc) ->
         fetch loc (FetchPV res) ->
         load arg (new_cs, res).
 
+    (** A version of [%load] that does not care about the pointer tags. *)
     Inductive load_any: in_any -> callstack * word -> Prop :=
     | lda_apply : forall (arg:in_any) loc res new_cs __,
         resolve_apply regs cs arg (new_cs, loc) ->
         fetch loc (FetchPV (mk_pv __ res)) ->
         load_any arg (new_cs, res).
 
+    (** A special version of [%load] for registers because it has less
+    potential effects on the state, which makes it easier and more precise. *)
     Inductive load_reg: in_reg -> primitive_value -> Prop :=
     | ldr_apply : forall  loc res,
         fetch_gpr regs loc = res ->
@@ -98,12 +108,16 @@ Section Definitions.
     Definition load_int a cs w := load a (cs, IntValue w).
     Definition load_reg_int a w := load_reg a (IntValue w).
 
+    (** Storing a primitive value to registers or memory, applying effects of
+    [%RelSpPush] if necessary. *)
     Inductive store: out_any -> primitive_value -> regs_state * memory * callstack -> Prop :=
     | st_apply: forall (arg:out_any) loc new_regs new_mem new_cs pv,
         resolve_apply regs cs arg (new_cs, loc) ->
         store_loc pv loc (new_regs, new_mem)->
         store arg pv (new_regs, new_mem, new_cs).
 
+    (** A special version of [%store] for registers because it has less
+    potential effects on the state, which makes it easier and more precise. *)
     Inductive store_reg: out_reg -> primitive_value -> regs_state -> Prop :=
     | sr_apply: forall (arg:out_reg) loc new_regs  pv,
         store_gpr regs loc pv new_regs ->
@@ -148,10 +162,18 @@ Section Definitions.
       store_regs regs1 tail regs2 ->
       store_regs regs ((arg,pv)::tail) regs2.
 
-End Definitions.
+End MemoryOps.
 
 
 Section Multibyte.
+  (** Multibyte loads and stores
+
+UMA instructions such as [%OpStore] and [%OpLoadPointer] operate with a byte
+addressable [%data_page]s, but load or store 256-bit [%word]s.
+Therefore, their effects are formalized separately.
+
+
+   *)
   Inductive endianness := LittleEndian | BigEndian.
 
   Context (e:endianness) (mem:data_page).
@@ -187,6 +209,12 @@ Section Multibyte.
       mb_store_word addr val = Some page' ->
       mb_store_word_result addr val page'.
 
+  (** ## Reading from memory slices
+
+Reading from [%slice] is particular in the
+following way: if the accessed word passes over bounds, the bytes below the
+bound are formally assigned zeros. See [%Slices].
+   *)
   Definition mb_load_slice_word (slc:data_slice) (addr:mem_address) :option word :=
     match load_multicell data_page_slice_params addr bytes_in_word slc with
     | None => None

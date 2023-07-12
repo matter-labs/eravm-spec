@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require ABI Core Decommitter GPR Ergs Event Memory Log Instruction CallStack .
+Require ABI Core Decommitter GPR Ergs Event Memory History Instruction CallStack .
 
-Import Core Flags ZArith ABI Common GPR Ergs Event CallStack Log MemoryBase Memory Instruction ZMod List Decommitter.
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory Instruction ZMod List Decommitter.
 Import ListNotations RecordSetNotations.
 
 Section Definitions.
@@ -24,21 +24,22 @@ Definition event := @event contract_address.
 
 (** # EraVM state
 
-The EraVM [%state] contains the following parts:
+EraVM employs a [%state] that comprises the following components:
 
-1. A revertable part [%state_checkpoint]. It contains all contracts' storages on
-   all shards, queues for events and L1 messages.
-   Every time a contract code is launched, we save a snapshot of this part of
-   the state.
-   If a contract reverts or panics, the state is reverted to this snapshot.
+1. A revertable [%state_checkpoint]. It houses the depot state, embodying all
+   contracts storages across all shards, as well as two queues for events and L1
+   messages.
+   Launching a contract (far call) or a function (near call) defines a
+   checkpoint; if a contract or a function reverts or panics, the state rolls back
+   to the snapshot (see [%roll_back]).
 
-   Note, that the rolling back mechanism may be implemented in a different way
+   Note, that a rollback mechanism may be implemented in a different way
    for efficiency.
  *)
 Record state_checkpoint := {
     gs_depot: depot;
-    gs_events: @log query;
-    gs_l1_msgs: @log event;
+    gs_events: @history query;
+    gs_l1_msgs: @history event;
   }.
 
 Definition callstack := @callstack state_checkpoint.
@@ -62,9 +63,9 @@ Inductive roll_back checkpoint: global_state -> global_state -> Prop :=
   roll_back checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
 
 (**
-3. Transient execution state [%exec_state]:
-  - flags [%gs_flags] are boolean values representing some characteristics of the computation results. See [%Flags].
-  - general purpose registers [%gs_regs] are 15 mutable tagged words (primitive values) `r1`--`r15`, and a reserved read-only zero valued `r0`.
+3. Transient execution state [%exec_state] contains:
+  - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
+  - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0].
   - all memory pages allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
   - call stack, where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and current balance are parts of the current stack frame. See [%CallStack].
  *)
@@ -86,22 +87,21 @@ Record state :=
       gs_global :> global_state;
     }.
 
-(**
-## Context register
+(** ## Context register
 
-There are two places where context value appears:
+Typical usage of the context value unfolds as follows:
 
-- register [%gs_context_u128] is a part of the VM state [%state];
-- value [%ecf_context_u128_value] is a part of an external call stack frame [%callstack_external].
+- In the [%gs_context_u128] register, forming a part of the EraVM state [%state].
+- In the [%ecf_context_u128_value], forming part of an external call stack frame [%callstack_external].
 
 Here is how context value is typically used:
 
-1. Set the value of [%gs_context_u128] to $C$ by using [%OpContextSetContextU128].
-2. Launch a contract by one of far call instructions. This pushes a new [%callstack_external] frame to the call stack; the value of its field [%ecf_context_u128_value] will be equal to $C$. Additionally, far calls assign [%gs_context_u128] = 0.
-3. Retrieve the context value by the instruction [%OpContextGetContextU128].
-4. Upon completion of the contract code, the [%gs_context_u128] is reset to zero by [%OpFarRet], [%OpFarRevert] or [%OpPanic].
+1. Set the value of [%gs_context_u128] to $C$ by executing the instruction [%OpContextSetContextU128].
+2. Launch a contract using one of the far call instructions. This action pushes a new [%callstack_external] frame $F$ onto the [%gs_callstack]. The value of the $F$'s field [%ecf_context_u128_value] is equal to $C$. Ina ddition, far calls reset [%gs_context_u128] to 0.
+3. Retrieve the context value by executing the instruction [%OpContextGetContextU128].
+4. On contract code completion, the [%gs_context_u128] is reset to zero by either [%OpFarRet], [%OpFarRevert], or [%OpPanic].
 
-Note that setting context register is forbidden in [%StaticMode]. See [%forbidden_static].
+Note that setting the context register [%gs_context_u128] is forbidden in [%StaticMode]. See [%forbidden_static].
  *)
 
 (* begin hide *)

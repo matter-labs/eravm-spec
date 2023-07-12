@@ -19,9 +19,7 @@ Section Defs.
 
 ## Abstract Syntax
 
-```
-OpLoadPointer (ptr: in_reg)  (res: out_reg)
-```
+[%OpLoadPointer (ptr: in_reg)  (res: out_reg)]
 
 ## Syntax
 
@@ -34,21 +32,9 @@ Read 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page
 
 ## Semantic
 
-1. Decode a fat pointer `in_ptr` from `ptr`.
+1. Decode a [%fat_ptr] `in_ptr` from `ptr`.
 
-   Fat pointers have following fields:
-
-```
-Record fat_ptr :=
-  mk_fat_ptr {
-      fp_page: page_id;
-      fp_start: mem_address;
-      fp_length: mem_address;
-      fp_offset: mem_address;
-    }.
-```
-
-2. Validate that offset is in bounds: `fp_offset < fp_length`.
+2. Validate that offset is in bounds: `offset < length`.
 
 3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
 
@@ -56,9 +42,10 @@ Record fat_ptr :=
 
 ```
 {|
-fp_start  := 0;
-fp_length := 5;
-fp_offset := 2
+page   := _;
+start  := 0;
+length := 5;
+offset := 2
 |}
 ```
 
@@ -97,11 +84,11 @@ fp_offset := 2
 ## Usage
 
 - Read data from a read-only slice returned from a far call, or passed to a far call.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc].
+- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
 
 ## Similar instructions
 
-- [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc] are variants of the same instruction.
+- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
  *)
 End Defs.

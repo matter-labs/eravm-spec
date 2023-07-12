@@ -14,9 +14,7 @@ Inductive step: instruction -> smallstep :=
 
 ## Abstract Syntax
 
-```
-OpSStore (key: in_reg) (value: in_reg)
-```
+[%OpSStore (key: in_reg) (value: in_reg)]
 
 ## Syntax
 
@@ -31,7 +29,7 @@ Store word in current storage by key.
 
 - Store word in current shard, and current contract's storage by key `key`.
 
-  Current contract is identified by the field [ecf_this_address] of the active external frame.
+  Current contract is identified by the field [%ecf_this_address] of the active external frame.
 
 - Pay for storage write.
 
@@ -88,11 +86,11 @@ Store word in current storage by key.
 
 ## Usage
 
-- Only [SStore] is capable to write data to storage.
-- [SStore] is rolled back if the current frame ended by [OpPanic] or [OpRevert].
+- Only [%SStore] is capable to write data to storage.
+- [%SStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
 
 ## Similar instructions
 
-- [OpSLoad], [OpSStore], [OpEvent], [OpToL1Message], [OpPrecompileCall] share the same opcode.
+- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
  *)

@@ -12,9 +12,7 @@ Section Def.
 
 ### Abstract Syntax
 
-```
-| OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
-```
+[%OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)]
 
 ### Syntax
 
@@ -44,7 +42,7 @@ caller calls the callee.
 
 Step-by-step explanation:
 
-1. Read the value of `abi_reg` and decode the following structure [ABI.NearCall.params] from it.
+1. Read the value of `abi_reg` and decode the following structure [%ABI.NearCall.params] from it.
    The `ergs_passed` field indicates the amount of ergs we intend to pass, but
    the actual amount of ergs passed gets decided at runtime (see step 2).
 
@@ -54,7 +52,7 @@ Record params := {
 }.
 ```
 
-2. The actual amount of ergs passed is determined by [split_ergs_callee_caller] based on:
+2. The actual amount of ergs passed is determined by [%split_ergs_callee_caller] based on:
 
    - The current balance of the caller frame.
    - The value of `ergs_passed`.
@@ -70,7 +68,7 @@ Record params := {
   Section Defs.
 
     (**
-Explanation for [split_ergs_caller_callee]:
+Explanation for [%split_ergs_caller_callee]:
 
 - if `ergs_passed` = 0, pass all available ergs to the callee and set
   the caller's balance to zero. Upon the callee's normal return, its unspent
@@ -83,7 +81,7 @@ Explanation for [split_ergs_caller_callee]:
 - otherwise, if the call is not affordable (`ergs_passed` $\gt$
   `balance`), pass all available ergs to the callee.
 
-Function [split_ergs_callee_caller] returns a pair of erg values, where:
+Function [%split_ergs_callee_caller] returns a pair of erg values, where:
 
 - the first component is the amount of ergs actually passed to the callee;
 - the second component is the amount of ergs left to the caller.
@@ -131,11 +129,11 @@ the caller.
 - Execution stack: a new frame is pushed on top of the execution stack, and the caller frame is changed.
   + Caller frame:
     * PC of the caller frame is advanced by one, as in any instruction.
-    * Ergs are split between caller and callee frames. See [split_ergs_callee_caller].
+    * Ergs are split between caller and callee frames. See [%split_ergs_callee_caller].
   + New (callee) frame:
     * PC is set to `callee_address`
     * SP is copied to the new frame as is.
-    * ergs are set to the actual amount passed. See [split_ergs_callee_caller].
+    * ergs are set to the actual amount passed. See [%split_ergs_callee_caller].
     * exception handler
 - Flags are always cleared.
 
@@ -153,12 +151,12 @@ the caller.
 
 - Can be used for internal system code, like bootloader. For example, wrap a
   pair of AA call + fee payment in any order in such `near_call`, and then
-  rollback the entire frame atomically.
+  rollback the entir:e frame atomically.
 
 ### Similar instructions
 
 
-- See [OpFarCall], [OpMimicCall], [OpDelegateCall]. They are used to call code of other contracts.
+- See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
    *)
   End Defs.
 

@@ -9,12 +9,19 @@ Open Scope ZMod_scope.
 
 Accesses through fat pointers should be in bounds of its span.
 
-Accesses through [%OpLoadPtr] and [%OpLoadPtrInc] return 32-byte words starting at an address [%fp_start + fp_offset], specified by  fat pointer.
-However, the word spans across addresses from [%fp_start + fp_offset] to [%fp_start + fp_offset + 32] and might surpass the upper bound when [%fp_length - fp_offset <= 32].
-In this case, reads from out-of-bound bytes will return zero bytes.
+Suppose $P:=(\mathit{page, start, length, offset})$ is a fat pointer.
+Accesses through [%OpLoadPtr] and [%OpLoadPtrInc] return 32-byte words starting
+at an address $\mathit{start + offset}$.
 
+However, the 256-bit [%word] spans across addresses in range
+$[\mathit{start + offset, start + offset + 32})$
+and therefore might surpass the upper bound when $\mathit{length-offset} \leq 32$.
 
-Data slice is a virtual memory page holding a read-only fragment of some memory page.
+In this case, reads from out-of-bound bytes in range $[\mathit{start+length,
+start+offset+32})$ will return zero bytes.
+
+Data slice is a virtual memory page holding a read-only fragment of some memory
+page.
  *)
 
 Definition data_page_slice_params := data_page_params <| writable := false |>.

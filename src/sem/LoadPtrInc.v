@@ -35,19 +35,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 ## Semantic
 
-1. Decode a fat pointer `in_ptr` from `ptr`.
-
-   Fat pointers have following fields:
-
-```
-Record fat_ptr :=
-  mk_fat_ptr {
-      fp_page: page_id;
-      fp_start: mem_address;
-      fp_length: mem_address;
-      fp_offset: mem_address;
-    }.
-```
+1. Decode a [%fat_ptr] `in_ptr` from `ptr`.
 
 2. Validate that offset is in bounds: `fp_offset < fp_length`.
 
@@ -56,9 +44,10 @@ Record fat_ptr :=
    Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
 ```
 {|
-fp_start  := 0;
-fp_length := 5;
-fp_offset := 2
+page   := _;
+start  := 0;
+length := 5;
+offset := 2
 |}
 ```
 

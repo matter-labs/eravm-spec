@@ -1,6 +1,6 @@
-Require Common ABI lib.Decidability Log MemoryOps VersionedHash.
+Require Common ABI lib.Decidability History MemoryOps VersionedHash.
 
-Import Coder Log VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ZMod ABI.
+Import Coder History VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ZMod ABI.
 
 
 Section Decommitter.
@@ -44,7 +44,7 @@ Note: storage with the same contract address may differ between shards.
   Record decommitter :=
     mk_code_mgr {
         cm_storage: code_storage;
-        cm_accessed: @log versioned_hash;
+        cm_accessed: @history versioned_hash;
       }.
 
   (** The versioned hash is called **cold** if it was not accessed during

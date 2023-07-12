@@ -65,7 +65,7 @@ In EraVM there are three flags:
   (**
 
 ## Usage
-Flags are used to control the execution flow. See [Predication].
+Flags are used to control the execution flow. See [%Predication].
 
    *)
   (* begin details: Helpers *)

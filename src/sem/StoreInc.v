@@ -20,9 +20,7 @@ Section Defs.
 
 ## Abstract Syntax
 
-```
-OpStoreInc (ptr: in_regimm) (val: in_reg) (mem:data_page_type) (inc_ptr: out_reg)
-```
+[% OpStoreInc (ptr: in_regimm) (val: in_reg) (mem:data_page_type) (inc_ptr: out_reg)]
 
 ## Syntax
 
@@ -37,34 +35,16 @@ address `ptr`. Additionally, store a pointer to the next word to `art_ptr` regis
 
 ## Semantic
 
-1. Decode a fat pointer `in_ptr` from `ptr`.
+1. Decode a [%heap_ptr] $\mathit{(addr,limit)}$ from `ptr`.
 
-   Fat pointers have following fields:
+2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
 
-```
-Record fat_ptr :=
-  mk_fat_ptr {
-      fp_page: page_id;
-      fp_start: mem_address;
-      fp_length: mem_address;
-      fp_offset: mem_address;
-    }.
-```
-
-2. Ensure storing 32 consecutive bytes is possible; it is impossible if $\texttt{fp\_offset} > 2^{32}-32$.
-
-   Note: Valid (aux_)heap fat pointers always have `fp_start = 0`, therefore the read starts from an absolute address `fp_offset` in heap/auxheap. See [fat_ptr].
-
-3. If  `fp_offset + 32 > (aux_)heap bound`, grow (aux_)heap bound and pay for the growth. We are aiming at reading a 256-bit word starting from address `fp_offset`, so the (aux_)heap bound should contain all of it.
-4. Store 32 consecutive bytes of `val` as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
-5. Store an encoded fat pointer to the next 32-byte word in (aux_)heap in `inc_ptr`. Its fields are assigned as follows:
-
-```
-fp_page := (aux_)heap page id;
-fp_start := zero32;
-fp_length := in_ptr.(fp_length);
-fp_offset := in_ptr.(fp_offset) + 32;
-```
+3. Let $B$ be the selected heap variant bound. If $\mathit{addr + 32} > B$, grow
+   heap variant bound and pay for the growth. We are aiming at reading a 256-bit
+   word starting from address $\mathit{addr}$ so the heap variant bound should
+   contain all of it.
+4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to $\mathit{addr}$ in the heap variant.
+5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
 *)
   | step_StoreInc:
  
@@ -123,12 +103,12 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
 ## Usage
 
-- Only [OpStore] and [OpStoreInc] are capable of writing to (aux_)heap.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc].
+- Only [%OpStore] and [%OpStoreInc] are capable of writing to (aux_)heap.
+- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
 
 ## Similar instructions
 
-- [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc] are variants of the same instruction.
+- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
  *)
 End Defs.

@@ -32,18 +32,19 @@ Unsigned division of two numbers. The quotient is returned in `out1`, the remain
 
 ## Semantic
 
-- resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
+1. resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
 
-- compute results of unsigned division of `in1` by `in2`.
+2. compute results of unsigned division of `in1` by `in2`.
 
-1. If `in2` $\neq 0$:
-   $$\begin{cases}out_1 := \frac{ op_1}{op_2} \\
+   - If `in2` $\neq 0$:
+     $$\begin{cases}out_1 := \frac{ op_1}{op_2} \\
 out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
 
-   Flags are computed as follows:
-   - `LT_OF` is cleared;
-   - `EQ` is cleared.
-   - `GT` is cleared.
+      Flags are computed as follows:
+
+      - `LT_OF` is cleared;
+      - `EQ` is cleared.
+      - `GT` is cleared.
 
    Reminder: flags are only set if `set_flags` modifier is set.
    *)
@@ -77,14 +78,14 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
             (mk_exec_state flags new_regs new_mem new_cs)
         )
   (**
-2. If `in2` $= 0$:
-   $$\begin{cases}out_1 := 0 \\
+   - If `in2` $= 0$:
+      $$\begin{cases}out_1 := 0 \\
 out_{2} := 0 \end{cases}$$
 
-   Flags are computed as follows:
-   - `LT_OF` is set.
-   - `EQ` is set if $result_{low} = 0$.
-   - `GT` is set if `LT_OF` and `EQ` are cleared.
+     Flags are computed as follows:
+      - `LT_OF` is set.
+      - `EQ` is set if $result_{low} = 0$.
+      - `GT` is set if `LT_OF` and `EQ` are cleared.
 
 Reminder: flags are only set if `set_flags` modifier is set.
    *)
@@ -113,7 +114,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
   .
 
 (**
-- Finally, store results in the locations corresponding to `out1` and `out2`.
+3. Finally, store results in the locations corresponding to `out1` and `out2`.
 
 ## Affected parts of VM state
 
@@ -128,7 +129,7 @@ Arithmetic operations.
 
 ## Similar instructions
 
-- See [OpMul].
+- See [%OpMul].
 
  *)
 End Def.

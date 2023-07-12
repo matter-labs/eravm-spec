@@ -21,6 +21,7 @@ Import
     GPR
     Ergs
     CallStack
+    KernelMode
     Memory
     MemoryBase
     MemoryOps
@@ -219,7 +220,6 @@ A system call is a far call that satisfies the following conditions:
 
 ## Semantic
 
-The semantics of all three
 First two steps are formalized by predicates [%Semantics.step] and [%fetch_operands].
 
 1. Fetch the instruction, adjust PC and perform the usual checks (such as kernel
@@ -334,7 +334,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
       <| r15 := IntValue word0 |>
   else
     regs_state_zero <| r1 := PtrValue enc_ptr |>.
-(*
+(**
 10. Form a new execution stack frame:
 
    - the call is static if the current call is static, or if `.is_static` modifier is applied to instruction;
@@ -607,8 +607,10 @@ instruction is masked as [%OpPanic].
 
 ## Usage
 
-- Calling precompiles
 - Calling other contracts
+- Calling precompiles
+  Usually we call a system contract with assigned precompile. It prepares data
+  for a precompile, performs precompile call, and returns the result.
 
 ## Encoding
 

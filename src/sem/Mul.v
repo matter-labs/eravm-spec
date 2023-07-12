@@ -27,25 +27,25 @@ OpMul (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
 
 ## Summary
 
-Unsigned overflowing multiplication of two numbers modulo $2^{512}$; the high and low 256 bits of the result is returned in two separate operands.
+Unsigned overflowing multiplication of two numbers modulo $2^{512}$; the high and low 256 bits of the result are returned in two separate operands.
 
 ## Semantic
 
-- resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
+1. Resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
 
-- compute result by unsigned multiplication of `in1` by `in2`.
+2. Compute result by unsigned multiplication of `in1` by `in2`.
 
    $$\begin{cases}result_{high} := \frac{ op_1 \times op_2}{2^{256}}\\
 result_{low} := op_1 \times op_2 \mod 2^{256} \end{cases}$$
 
-- flags are computed as follows:
+3. Flags are computed as follows:
    - `LT_OF` is set if overflow occurs, i.e. $op_1 \times op_2 \geq 2^{256}$
    - `EQ` is set if $result_{low} = 0$.
    - `GT` is set if `LT_OF` and `EQ` are cleared.
 
-Reminder: flags are only set if `set_flags` modifier is set.
+   Reminder: flags are only set if `set_flags` modifier is set.
 
-- store results in the locations corresponding to `out1` and `out2`.
+4. Wtore results in the locations corresponding to `out1` and `out2`.
 
 ## Affected parts of VM state
 
@@ -60,7 +60,7 @@ Arithmetic operations.
 
 ## Similar instructions
 
-- See [OpDiv].
+- See [%OpDiv].
 
  *)
   | step_Mul:

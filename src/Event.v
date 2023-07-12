@@ -11,8 +11,8 @@ VM interfaces with two queues:
 1. L2 [%events] events (see [%gs_events]),  emitted by [%OpEvent].
 2. L1 [%l1_msg] events (see [%gs_l1_msgs]), emitted by [%OpToL1Message].
 
-These queues are subject to rollbacks: if a contract code reverts or panics, the
-events emitted in its current run are rolled back.
+These queues are subject to rollbacks: in case of revert or panic, the
+events emitted during the function or contract execution are rolled back.
  *)
 Record event := {
     ev_shard_id: shard_id;
@@ -38,5 +38,5 @@ Inductive query :=
   | PrecompileQuery : precompile_query -> query.
 
 
-(* For later: probably these structures can be redesigned *)
+(* todo: probably these structures can be redesigned *)
 End Events.

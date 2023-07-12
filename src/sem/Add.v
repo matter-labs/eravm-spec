@@ -12,9 +12,7 @@ Section Def.
 
 ## Abstract Syntax
 
-```
-| OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)
-```
+[%% OpAdd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -29,7 +27,7 @@ Unsigned overflowing addition of two numbers modulo $2^{256}$.
 
 ## Semantic
 
-Follows the scheme described in [binop_effect_spec].
+Follows the scheme described in [%binop_effect_spec].
 
 - result is computed by unsigned addition of two numbers with overflow modulo $2^{256}$.
 
@@ -51,7 +49,8 @@ Reminder: flags are only set if `set_flags` modifier is set.
 
 ## Usage
 
-Arithmetic operations.
+- Arithmetic operations.
+- There is no dedicated `mov` instruction, so `add` is used to copy values around. Copying A to B is implemented as `add A, r0, B`.
 
 ## Similar instructions
 
