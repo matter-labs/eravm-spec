@@ -285,5 +285,7 @@ Current costs are:
 | <otherwise> => 6
 ```
  *)
+  Compute base_cost.
+  
 End Costs.
 

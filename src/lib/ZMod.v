@@ -5,34 +5,34 @@ Import BinInt ZArith ZArith_ext BinIntDef.Z.
 
 
 (** * Machine integers modulo 2^N.
-      Integers are encoded in binary form (see [BinNums.positive]), therefore we are able to
+      Integers are encoded in binary form (see [%BinNums.positive]), therefore we are able to
       efficiently reason about wide numbers e.g. 256-bit. *)
 Section Def.
 
-  (** [bits] is an implicit parameter passed to all definitions in this section
+  (** [%bits] is an implicit parameter passed to all definitions in this section
   that use it. After the Section end, all definitions will be rewritten so that
-  [bits] is passed to them explicitly. *)
+  [%bits] is passed to them explicitly. *)
   Variable bits: nat.
 
-  (** [bits_nz] is an implicit proof passed to all definitions in this section
+  (** [%bits_nz] is an implicit proof passed to all definitions in this section
   that use it. It forbids constructing integers modulo 1. After the Section end,
-   all definitions will be rewritten so that [bits] is passed to them explicitly. *)
+   all definitions will be rewritten so that [%bits] is passed to them explicitly. *)
   Hypothesis bits_nz: (bits <> 0)%nat.
 
 
-  (* [Let] is a keyword for section-local definitions, to be inlined. *)
+  (* [%Let] is a keyword for section-local definitions, to be inlined. *)
   Let zbits: Z :=  Z.of_nat bits.
   Let characteristic: Z := 2 ^ zbits.
 
 
-  (** An integer modulo 2^N. It carries a proof [int_range] of representability
-  with no more than [bits] binary digits. *)
+  (** An integer modulo 2^N. It carries a proof [%int_range] of representability
+  with no more than [%bits] binary digits. *)
   Record int_mod: Type := mk_int_mod {
                               int_val: Z;
                               int_range: in_range 0 int_val characteristic = true
                             }.
 
-  (** Equality *)
+  (** ## Equality *)
 
   Lemma eq_values: forall (x y: int_mod),
       x = y <-> int_val x = int_val y.
@@ -61,10 +61,10 @@ Section Def.
 
   (** ** Conversions *)
 
-  (** Interpreting [int_mod] as an unsigned integer modulo 2^N. *)
+  (** Interpreting [%int_mod] as an unsigned integer modulo 2^N. *)
   Definition as_unsigned (n: int_mod) : Z := int_val n.
 
-  (** Interpreting [int_mod] as a signed [Z], where the leftmost bit encodes the
+  (** Interpreting [%int_mod] as a signed [%Z], where the leftmost bit encodes the
   sign. *)
   Definition as_signed (n: int_mod) : Z :=
     (let x := as_unsigned n in
@@ -98,10 +98,9 @@ Section Def.
     apply (int_mod_range z).
   Defined.
 
-  (** ** Operations *)
-  (** Addition, subtraction, multiplication, division, shifts, modulo operations. *)
-
-  (** *** Comparison *)
+  (** ## Operations
+  Addition, subtraction, multiplication, division, shifts, modulo operations.
+### Comparison *)
   Definition beq (x y: int_mod) : bool := if eq_dec x y then true else false.
   Definition lt_signed (x y: int_mod) : bool := if lt_dec (as_signed x) (as_signed y) then true else false.
   Definition lt_unsigned (x y: int_mod) : bool := if lt_dec (as_unsigned x) (as_unsigned y) then true else false.
@@ -143,9 +142,8 @@ Section Def.
     match usub_overflow x  y with
     | (z, _) => z
   end.
-  (** ## Shifts *)
-
-  (** ### Historyical shifts *)
+  (** ## Shifts
+### Logical shifts *)
   Definition shiftl_nat (x: int_mod) (bits: nat) : int_mod :=
     int_mod_of (Z.shiftl (int_val x) (Z.of_nat bits)).
 

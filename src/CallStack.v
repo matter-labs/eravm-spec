@@ -81,7 +81,7 @@ hold:
 - [%ecf_msg_sender] : the stack frame was created when this contract invoked one
   of far call instructions.
 - [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
-- [%ecf_mem_ctx] : current [mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
+- [%ecf_mem_ctx] : current [%mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
 - [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
 - [%ecf_context_u128_value] : captured value of [%gs_context_u128]. It represents a snapshot of the value of global register [%gs_context_u128] in the moment when the external call frame was created i.e. when a far call instruction was executed.
 - [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].

@@ -30,8 +30,8 @@ Section Defs.
 
 ## Summary
 
-Store 32 consecutive bytes to the active `heap` or `aux_heap` page starting from
-address `ptr`. Additionally, store a pointer to the next word to `art_ptr` register.
+Decode the heap address from `in1`, load 32 consecutive bytes from the specified active heap variant.
+Additionally, store a pointer to the next word to `inc_ptr` register.
 
 ## Semantic
 
@@ -96,14 +96,14 @@ address `ptr`. Additionally, store a pointer to the next word to `art_ptr` regis
 - execution stack:
 
   + PC, as by any instruction;
-  + ergs balance if the (aux_)heap has to be grown;
-  + (aux_)heap bounds, if (aux_)heap has to be grown.
+  + ergs balance if the heap variant has to be grown;
+  + heap variant bounds, if heap variant has to be grown.
 
 - GPRs, because `res` and `inc_ptr` only resolve to registers.
 
 ## Usage
 
-- Only [%OpStore] and [%OpStoreInc] are capable of writing to (aux_)heap.
+- Only [%OpStore] and [%OpStoreInc] are capable of writing to heap variant.
 - One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
 
 ## Similar instructions

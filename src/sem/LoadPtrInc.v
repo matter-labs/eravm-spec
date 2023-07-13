@@ -13,7 +13,7 @@ Section Defs.
   Open Scope ZMod_scope.
 
   (**
-# LoadPointer
+# LoadPointerInc
 
 
 ## Abstract Syntax
@@ -39,7 +39,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 2. Validate that offset is in bounds: `fp_offset < fp_length`.
 
-3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
+3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in heap variant.
 
    Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
 ```
@@ -54,7 +54,7 @@ offset := 2
    Reading will produce a word with 3 most significant bytes read from memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
 
 4. Store the word to `res`.
-6. Store an encoded fat pointer to the next 32-byte word in (aux_)heap in `inc_ptr`. Its fields are assigned as follows:
+6. Store an encoded fat pointer to the next 32-byte word in heap variant in `inc_ptr`. Its fields are assigned as follows:
 
 ```
 fp_page := in_ptr.(fp_page);

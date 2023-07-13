@@ -31,8 +31,7 @@ Section Defs.
 
 ## Summary
 
-Store 32 consecutive bytes to the active `heap` or `aux_heap` page starting from
-address `in1`.
+Decode the heap address from `in1`, store 32 consecutive bytes to the specified active heap variant.
 
 ## Semantic
 
@@ -98,20 +97,20 @@ address `in1`.
 - execution stack:
 
   + PC, as by any instruction;
-  + ergs balance if the (aux_)heap has to be grown;
-  + (aux_)heap bounds, if (aux_)heap has to be grown.
+  + ergs balance if the heap variant has to be grown;
+  + heap bounds, if heap variant has to be grown.
 
 - GPRs, because `out` only resolves to a register.
 - Memory page
 
 ## Usage
 
-- Only [OpLoad] and [OpLoadInc] are capable of reading data from heap/aux_heap.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc].
+- Only [%OpLoad] and [%OpLoadInc] are capable of reading data from heap variant.
+- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
 
 ## Similar instructions
 
-- [OpLoad], [OpLoadInc], [OpStore], [OpStoreInc], [OpLoadPointer], [OpLoadPointerInc] are variants of the same instruction.
+- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
  *)
 End Defs.

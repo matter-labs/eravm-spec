@@ -30,7 +30,7 @@ Section Defs.
 
 ## Summary
 
-Load 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page.
+Decode the heap address from `in1`, load 32 consecutive bytes from the specified active heap variant.
 
 ## Semantic
 
@@ -87,8 +87,8 @@ Load 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page
 - execution stack:
 
   + PC, as by any instruction;
-  + ergs balance if the (aux_)heap has to be grown;
-  + (aux_)heap bounds, if (aux_)heap has to be grown.
+  + ergs balance if the heap variant has to be grown;
+  + heap variant bounds, if heap variant has to be grown.
 
 - GPRs, because `res` only resolves to a register.
 

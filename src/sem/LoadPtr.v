@@ -36,7 +36,7 @@ Read 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page
 
 2. Validate that offset is in bounds: `offset < length`.
 
-3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in (aux_)heap.
+3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in heap variant.
 
    Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
 
