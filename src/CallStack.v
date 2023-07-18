@@ -7,26 +7,29 @@ Import ZArith Common Ergs Instruction MemoryBase MemoryContext Memory ZMod List 
 Section Stack.
 
   Context (CALLSTACK_LIMIT : nat).
-  Context {state_checkpoint: Type} {ins: Type} (ins_invalid: ins)
-    (pages := @era_pages _ ins_invalid).
+  Context {state_checkpoint: Type} {ins: Type} (ins_invalid: ins).
 
   Definition exception_handler := code_address.
 
   (** # Call stack
 
 EraVM operates with two stacks: the call stack, which supports function and
-contract execution, and the data stack, aiding in computations. This section
-covers the call stack in detail.
+contract execution, and the data stack, aiding in computations.
+Data stack has a role similar to the stack in JVM and other language virtual
+machines; call stack may be implemented in any way, but it is separate from data
+stack.
+This section covers the call stack in detail.
 
 
-A **stack frame**, or **call frame**, represents a fragment of current execution
-  environment associated with a running instance of a contract or a function.
+A **stack frame**, or **call frame**, is a data structure representing a
+  fragment of current execution environment associated with a running instance
+  of a contract or a function.
 
 There are two types of stack frames:
 
-- External frames [%InternalCall]: created on far calls (by instructions [%OpFarCall],
+- External frames [%ExternalCall]: created on far calls (by instructions [%OpFarCall],
   [%OpMimicCall], [%OpDelegateCall]).
-- Internal frames [%ExternalCall]: created by near calls (by instruction [%OpNearCall]).
+- Internal frames [%InternalCall]: created by near calls (by instruction [%OpNearCall]).
 
 Each external frame is **associated** with a contract address. It means that it
 was created when the associated contract address was far called.
@@ -206,44 +209,44 @@ Executing any instruction $I$ changes the topmost frame:
     Definition sp_get (cf: callstack) : stack_address :=
       (cfc cf).(cf_sp).
 
-    Definition sp_mod_extcall (f:stack_address->stack_address) ef :=
+    Definition sp_map_extcall (f:stack_address->stack_address) ef :=
       (ef <| ecf_common ::= fun cf => cf <| cf_sp ::=  f |> |>).
 
-    Inductive sp_mod_extcall_spec f: callstack_external -> callstack_external -> Prop :=
+    Inductive sp_map_extcall_spec f: callstack_external -> callstack_external -> Prop :=
     | sme_apply: forall a b c d e g h eh sp pc ss ergs,
-        sp_mod_extcall_spec f (mk_extcf a b c d e g h (mk_cf eh sp pc ergs ss))
+        sp_map_extcall_spec f (mk_extcf a b c d e g h (mk_cf eh sp pc ergs ss))
           (mk_extcf a b c d e g h (mk_cf eh (f sp) pc ergs ss)).
 
-    Theorem sp_mod_extcall_correct:
-      forall f ef, sp_mod_extcall_spec f ef (sp_mod_extcall f ef).
+    Theorem sp_map_extcall_correct:
+      forall f ef, sp_map_extcall_spec f ef (sp_map_extcall f ef).
     Proof.
       intros f [].
       destruct ecf_common0.
       constructor.
     Qed.
 
-    Definition sp_mod (f:stack_address->stack_address) ef : callstack :=
+    Definition sp_map (f:stack_address->stack_address) ef : callstack :=
       match ef with
       | InternalCall x tail => InternalCall (x <| cf_sp ::=  f |>) tail
-      | ExternalCall x tail => ExternalCall (sp_mod_extcall f x) tail
+      | ExternalCall x tail => ExternalCall (sp_map_extcall f x) tail
       end.
 
-    Definition sp_update new_sp := sp_mod (fun _ => new_sp).
+    Definition sp_update new_sp := sp_map (fun _ => new_sp).
 
-    Inductive sp_mod_spec f : callstack -> callstack -> Prop :=
+    Inductive sp_map_spec f : callstack -> callstack -> Prop :=
     | usp_ext:
       forall ecf ecf' tail,
-        sp_mod_extcall_spec f ecf ecf' ->
-        sp_mod_spec f (ExternalCall ecf tail) (ExternalCall ecf' tail)
+        sp_map_extcall_spec f ecf ecf' ->
+        sp_map_spec f (ExternalCall ecf tail) (ExternalCall ecf' tail)
     | usp_int:
       forall  eh sp pc ergs tail ss,
-        sp_mod_spec f (InternalCall (mk_cf eh sp pc ergs ss ) tail) (InternalCall (mk_cf eh (f sp) pc ergs ss) tail).
+        sp_map_spec f (InternalCall (mk_cf eh sp pc ergs ss ) tail) (InternalCall (mk_cf eh (f sp) pc ergs ss) tail).
 
-    Theorem sp_mod_spec_correct f:
-      forall ef, sp_mod_spec f ef (sp_mod f ef).
+    Theorem sp_map_spec_correct f:
+      forall ef, sp_map_spec f ef (sp_map f ef).
     Proof.
       destruct ef; destruct c; constructor.
-      apply sp_mod_extcall_correct.
+      apply sp_map_extcall_correct.
     Qed.
 
   End SP.
@@ -256,45 +259,46 @@ Executing any instruction $I$ changes the topmost frame:
       | ExternalCall ef tail => ef.(ecf_common).(cf_pc)
       end.
 
-    Definition pc_mod f ef :=
+    Definition pc_map f ef :=
       match ef with
       | InternalCall x tail => InternalCall (x <| cf_pc ::=  f |>) tail
       | ExternalCall x tail => ExternalCall (x <| ecf_common ::= fun cf => cf <| cf_pc ::=  f |> |>) tail
       end.
 
 
-    Definition pc_set new := pc_mod (fun _ => new).
+    Definition pc_set new := pc_map (fun _ => new).
 
-    Inductive update_pc_cfc : code_address -> callstack_common -> callstack_common
+    Inductive pc_map_cfc_spec f : callstack_common -> callstack_common
                               -> Prop :=
-    | uupdate_pc:
+    | upc_map:
       forall ehl sp ergs pc pc' ss,
-        update_pc_cfc pc' (mk_cf ehl sp pc ergs ss) (mk_cf ehl sp pc' ergs ss).
+        f pc = pc' ->
+        pc_map_cfc_spec f (mk_cf ehl sp pc ergs ss) (mk_cf ehl sp pc' ergs ss).
 
-    Inductive update_pc_extcall: code_address -> callstack_external -> callstack_external
+    Inductive pc_map_extcall_spec f: callstack_external -> callstack_external
                                  -> Prop :=
     | upe_update:
-      forall pc' cf cf' this_address msg_sender code_address memory is_static context_u128_value cc,
-        update_pc_cfc pc' cf cf' ->
-        update_pc_extcall pc'
+      forall cf cf' this_address msg_sender code_address memory is_static context_u128_value cc,
+        pc_map_cfc_spec f cf cf' ->
+        pc_map_extcall_spec f
           (mk_extcf this_address msg_sender code_address memory is_static
              context_u128_value cc cf)
           (mk_extcf this_address msg_sender code_address memory is_static
              context_u128_value cc cf')
     .
 
-    Inductive update_pc : code_address -> callstack -> callstack -> Prop :=
+    Inductive pc_map_spec f : callstack -> callstack -> Prop :=
     | upc_ext:
-      forall ecf ecf' tail pc',
-        update_pc_extcall pc' ecf ecf' ->
-        update_pc pc' (ExternalCall ecf tail) (ExternalCall ecf' tail)
+      forall ecf ecf' tail ,
+        pc_map_extcall_spec f ecf ecf' ->
+        pc_map_spec f (ExternalCall ecf tail) (ExternalCall ecf' tail)
     | upc_int:
-      forall pc' cf cf' tail,
-        update_pc_cfc pc' cf cf' ->
-        update_pc pc' (InternalCall cf tail) (InternalCall cf' tail).
+      forall cf cf' tail,
+        pc_map_cfc_spec f cf cf' ->
+        pc_map_spec f (InternalCall cf tail) (InternalCall cf' tail).
 
-    Theorem update_pc_correct:
-      forall ef pc, update_pc pc ef (pc_set pc ef).
+    Theorem pc_map_correct:
+      forall ef f, pc_map_spec f ef (pc_map f ef).
     Proof.
       intros [ []|[] ] pc; simpl; [|destruct ecf_common0]; repeat constructor.
     Qed.
@@ -390,7 +394,8 @@ Executing any instruction $I$ changes the topmost frame:
 
 
     Section ActivePages.
-      Context (page_has_id: page_id -> @page pages -> Prop).
+
+      Context (page_has_id: page_id -> @page (@era_pages _ ins_invalid) -> Prop).
 
       Definition active_exception_handler (ef: callstack) : exception_handler :=
         (cfc ef).(cf_exception_handler_location).

@@ -25,11 +25,11 @@ End Parameters.
 ![](img/arch-overview.png)
 
 
-- **Memory**, provides access to transient memory, consisting of pages. See [%Memory].
-- **Storage**, provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage.   See [%Memory].
-- **EventSink**, collects events and L2→L1 messages. See [%Events].
+- **Memory** provides access to transient memory, consisting of pages. See [%Memory].
+- **Storage** provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage.   See [%Memory].
+- **EventSink** collects events and L2→L1 messages. See [%Events].
 - **Precompile processor** executes precompiles e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
-- **Decommittement processor**, stores and decommits the code of contracts. See [%Decommitter].
+- **Decommitment processor** stores and decommits the code of contracts. See [%Decommitter].
 
 ## Functions and contracts
 
@@ -121,19 +121,59 @@ Instructions and some other actions should be paid for with a resource called
 
 ## Operation
 
-Context of EraVM
+The VM is started by a server that controls it and feeds the transactions to the [%Bootloader].
 
-When the server needs to build a new block, it starts an instance of EraVM.
+### Context of EraVM
+
+When the server needs to build a new batch, it starts an instance of EraVM.
 
 EraVM accepts three parameters:
 
-1. Bootloader's [%versioned_hash].
-2. Default code hash [%DEFAULT_AA_VHASH].
+1. Bootloader's [%versioned_hash]. It is used to fetch the bootloader code from [%Decommitter].
+2. Default code hash [%DEFAULT_AA_VHASH]. It is used to fetch the default code
+   from [%Decommitter] in case of a far call to a contract without any associated
+   code.
 3. A boolean flag `is_porter_available`, to determine the number of shards (two
    if zkPorter is available, one otherwise).
 
 Bootloader is a contract written in YUL in charge of block construction. See
 [%Bootloader].
+
+EraVM retrives the code of bootloader from [%Decommitter] and proceeds with
+sequential execution of instructions on the bootloader's code page.
+
+### Failures and rollbacks
+
+There are three types of behaviors triggered by execution failures.
+
+1. Skipping a malformed transaction. It is a mechanism implemented by the
+   server, external to EraVM.
+   Server makes a snapshot of EraVM state after completing every transaction.
+   When the bootloader encounters a malformed transaction, it fails, and the
+   server restarts EraVM from the most recent snapshot, skipping this
+   transaction.
+
+   This behavior is specific to bootloader; the contract code has no ways of
+   invoking it.
+
+2. Revert is triggered by the contract code explicitly by executing [%OpRevert].
+   EraVM saves its persistent state to [%state_checkpoint] on every near or far
+   call.
+   If the contract code identifies a recoverable error, it may execute
+   [%OpRevert]. Then EraVM rolls the storage and event queues back to the last
+   [%state_checkpoint] and executes the exception handler.
+   See [%roll_back].
+
+3. Panic is triggered either explicitly by executing
+   [%OpPanic]/[%OpNearPanicTo], or internally when some execution invariants are
+   violated. For example, attempting to execute in user mode an instruction,
+   which is exclusive to kernel mode, results in panic.
+
+   On panic, the persistent state of EraVM is rolled back in the same way as on
+   revert.
+   See [%roll_back].
+
+
 *)
 
 

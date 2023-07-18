@@ -26,15 +26,15 @@ Definition event := @event contract_address.
 
 EraVM employs a [%state] that comprises the following components:
 
-1. A revertable [%state_checkpoint]. It houses the depot state, embodying all
-   contracts storages across all shards, as well as two queues for events and L1
-   messages.
+1. A revertable part [%state_checkpoint]. It houses the depot state, embodying
+   all contracts storages across all shards, as well as two queues for events
+   and L1 messages.
    Launching a contract (far call) or a function (near call) defines a
    checkpoint; if a contract or a function reverts or panics, the state rolls back
    to the snapshot (see [%roll_back]).
 
-   Note, that a rollback mechanism may be implemented in a different way
-   for efficiency.
+   Note, that the rollback mechanism may be implemented in any efficient way
+   matching this behavior.
  *)
 Record state_checkpoint := {
     gs_depot: depot;
@@ -44,8 +44,7 @@ Record state_checkpoint := {
 
 Definition callstack := @callstack state_checkpoint.
 
-(**
- 2. Global parameters:
+(** 2. Global parameters:
 - current price of accessing data in storage [%gs_current_ergs_per_pubdata_byte].
 - transaction number in the current block [%gs_tx_number_in_block]
 - decommitter [%gs_contracts]
@@ -62,8 +61,7 @@ Inductive roll_back checkpoint: global_state -> global_state -> Prop :=
 | rb_apply: forall e tx ccs ___,
   roll_back checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
 
-(**
-3. Transient execution state [%exec_state] contains:
+(** 3. Transient execution state [%exec_state] contains:
   - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
   - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0].
   - all memory pages allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
@@ -89,10 +87,12 @@ Record state :=
 
 (** ## Context register
 
-Typical usage of the context value unfolds as follows:
+The 128-bit context value occurs in two places in EraVM:
 
 - In the [%gs_context_u128] register, forming a part of the EraVM state [%state].
 - In the [%ecf_context_u128_value], forming part of an external call stack frame [%callstack_external].
+
+These values are distinct: the second one is a snapshot of the first one in a moment of a far call.
 
 Here is how context value is typically used:
 

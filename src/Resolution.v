@@ -204,7 +204,7 @@ In the current state of EraVM, only SP modifications are allowed, therefore the 
   | ae_none: forall s,
       apply_effects NoEffect s
   | ae_sp: forall  cs' new_sp,
-      cs' = sp_mod (fun _ => new_sp) cs ->
+      sp_map_spec (fun _ => new_sp) cs cs' ->
       apply_effects (NewSP new_sp) cs'.
 
   Inductive resolve_apply
@@ -214,7 +214,7 @@ In the current state of EraVM, only SP modifications are allowed, therefore the 
       resolve_apply arg (cs, loc)
   | ra_effect : forall cs' arg loc new_sp,
       resolve arg [[ loc ; SP <- new_sp ]] ->
-      cs' = sp_mod (fun _ => new_sp) cs ->
+      sp_map_spec (fun _ => new_sp) cs cs' ->
       resolve_apply arg (cs', loc).
 
 End Resolve.

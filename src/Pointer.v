@@ -58,7 +58,7 @@ and a limit [%hp_limit]. They are used in UMA instructions: [%OpLoad]/[%OpLoadIn
     Definition heap_ptr_empty := mk_hptr zero32 zero32.
 
     (** Heap pointer $(\mathit{addr}, \mathit{limit})$ resolves to
-$[0,\mathit{limit})$, as described by [%hp_resolves_to]. *)
+$\mathit{addr}$, as described by [%hp_resolves_to]. *)
 
     Inductive hp_resolves_to : heap_ptr -> mem_address -> Prop :=
     | tpr_apply: forall addr limit,

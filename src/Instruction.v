@@ -30,13 +30,21 @@ Two modifiers are commonly encountered:
     end.
 
   (**
-  For example, if `sub in1, in2, out` computes $\mathit{in_1 - in_2}$.
-Adding `swap` modifier will change the syntax as follows:
-`sub.s in1,in2,out`; now, the meaning is to compute $\mathit{in_2 - in_1}$.
+  For example, take an instruction
 
-  This is useful because e.g. in binary operations `in1` usually supports more
-  sophisticated address modes: it can be e.g. fetched from stack, whereas `in2`
-  can only be fetched from a GPR.
+  [%OpSub $a$ $b$ $c$ NoSwap PreserveFlags]
+
+  It computes $a - b$ and stores the result to $c$.
+
+  Adding `swap` modifier will change the syntax as follows:
+
+  [%OpSub $a$ $b$ $c$ Swap PreserveFlags]
+
+  The new meaning with `swap` modifier is to compute $b-a$.
+
+  In binary operations the first input operand usually supports more
+  sophisticated address modes: it can be e.g. fetched from stack, whereas the
+  second one can only be fetched from a GPR.
 
   2. `set_flags`: if set, an instruction is allowed to change [%gs_flags]. If
     cleared, the instruction will not alter the flags.
