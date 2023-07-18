@@ -6,8 +6,6 @@ Import Addressing ABI Bool Common Predication Ergs CallStack Event Memory Memory
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
 Import ZArith List ListNotations.
 
-Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
-  mk_fqa_storage (current_shard xstack) (current_contract xstack).
 Generalizable Variable __.
 
 Inductive step: instruction -> xsmallstep :=

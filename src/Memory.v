@@ -100,7 +100,11 @@ processor [%decommitter].
 
 Storage is a part of a [%shard], which is a part of [%depot].
 
-See [%Storage] for additional details on storage operation.
+One storage is selected as an active storage, it is the storage corresponding to
+the [%current_shard] and [%current_contract].
+
+Use the instruction [%OpSStore] to write to the active storage, [%OpSLoad] to
+read from the active storage.
 
 ## Instructions
 

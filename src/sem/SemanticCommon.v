@@ -94,7 +94,6 @@ Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
   mk_fqa_storage (current_shard xstack) (current_contract xstack).
 
 
-
 Section UMA.
   Open Scope ZMod_scope.
 

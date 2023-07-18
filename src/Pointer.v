@@ -26,8 +26,9 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
   (** ## Usage
 
   Spans enable creating **fat pointers** by encoding spans in
-[%ForwardNewHeapPointer] and passing the encoded value in register.
-It requires encoding the parameters according to [%ABI.FarRet.ABI] or
+[%ForwardNewHeapPointer] and passing the encoded value in register to far calls
+or far returns instructions.
+The required encoding is described by [%ABI.FarRet.ABI] or
 [%ABI.FarCall.ABI].
 See [%FarCall] and [%FarRet].
 

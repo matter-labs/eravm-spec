@@ -57,6 +57,13 @@ Two modifiers are commonly encountered:
     | PreserveFlags => f
     end.
 
+  (** # EraVM high-level instruction set
+
+The definition [%instruction] enumerates all available instructions, omitting
+the predicate (see [%instruction_predicated] and [%Predication]). This is a
+higher-level instruction set. Then the [%instruction_predicated] is encoded into
+a fixed instruction format, then it is serialized to 256-bit words.
+   *)
   Inductive instruction: Set :=
   | OpInvalid
   | OpNoOp
@@ -80,11 +87,11 @@ Two modifiers are commonly encountered:
   | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
   | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
 
-  (*               quasi fat pointer + forwarding mode *)
+
   | OpNearRet
   | OpNearRetTo      (label: code_address)
   | OpFarRet         (args: in_reg)
-  (*               quasi fat pointer + forwarding mode *)
+
   | OpNearRevert
   | OpNearRevertTo(label: code_address)
   | OpFarRevert   (args: in_reg)

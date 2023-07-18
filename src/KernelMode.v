@@ -22,9 +22,9 @@ current mode is kernel, otherwise current mode is user mode. *)
     addr < KERNEL_MODE_MAXADDR_LIMIT.
 
 (** Current contract's address can be obtained from the active external frame in [%callstack].
-Topmost external frame (active frame) is obtained through [%active_extframe], it contains the current contract's address in its field [%ecf_this_address]. *)
+Topmost external frame (active frame) is obtained through [%active_extframe], it contains the current contract's address in its field [%ecf_this_address].
 
-  (** The list of instructions requiring kernel mode is encoded by the
+The list of instructions requiring kernel mode is encoded by the
 definition [%requires_kernel]. If [%requires_kernel ins == true], the instruction
 [%ins] is only allowed in kernel mode. *)
   Definition requires_kernel (ins: instruction) : bool :=
@@ -43,7 +43,7 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
   (** Function [%check_requires_kernel] returns [%false] if:
 
 - an instruction [%ins] requires kernel mode, and
-- not in kernel mode, as indicated by [%in_kernel].
+- VM is not in kernel mode, as indicated by [%in_kernel].
    *)
   Definition check_requires_kernel
     (ins: instruction)
