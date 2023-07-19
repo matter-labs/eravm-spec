@@ -33,7 +33,7 @@ and memory locations.
 
 [%MemoryOps] formalizes reading and writing to locations.
 
-## Register addressing
+1. Register addressing
 
 Register addressing takes value from one of General Purpose Registers (GPR).
    *)
@@ -42,13 +42,13 @@ Register addressing takes value from one of General Purpose Registers (GPR).
 
   (** See [%global_state], [%gs_regs].
 
-## Immediate 16-bit value *)
+2. Immediate 16-bit value *)
 
   Inductive imm_in : Set := Imm (imm: u16).
 
   (** Only for input operands. See [%imm_in], [%in_regimm].
 
-## Address on a code page, relative to a GPR *)
+3. Address on a code page, relative to a GPR *)
 
   Inductive code_in : Set := CodeAddr (reg:reg_name) (imm:code_address).
 
@@ -56,12 +56,12 @@ Register addressing takes value from one of General Purpose Registers (GPR).
 
 Code and const pages may coincide in the implementation.
 
-## Address on a const page, relative to a GPR *)
+4. Address on a const page, relative to a GPR *)
   Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
   (** Resolved to $\mathit{(reg + imm)}$. Code and const pages may coincide.
 
-## Address on a stack page, relative to a GPR
+5. Address on a stack page, relative to a GPR
 
  Resolved to $\mathit{(reg + imm)}$.
 
@@ -69,23 +69,23 @@ Code and const pages may coincide in the implementation.
   Inductive stack_io : Set :=
   | Absolute (reg:reg_name) (imm: stack_address)
 
-  (** ## Address on a stack page, relative to SP and GPR.
+  (** 6. Address on a stack page, relative to SP and GPR.
 
- Resolved to $\mathit{(SP - reg + imm)}$.
+ Resolved to $\mathit{(SP - (reg + imm))}$.
 
  Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
    *)
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
 
-  (** ## Stack page, relative to GPR and SP, with decreasing SP (in)
+  (** 7. Stack page, relative to GPR and SP, with decreasing SP (in)
 
 Resolved to $\mathit{(SP - (reg + imm))}$.
 
 Additionally, after the resolution, SP is modified: SP -= (reg + imm).
 
-If used in [%OpNoOp], the value of SP is modified even if there was no actual
-read performed. See [%OpNoOp].
+If used in [%OpModSP], the value of SP is modified even if there was no actual
+read performed. See [%OpModSP].
 
    *)
 
@@ -93,14 +93,14 @@ read performed. See [%OpNoOp].
   | RelSpPop (reg:reg_name) (delta: stack_address)
   .
 
-  (** ## Stack page, relative to GPR and SP, with increasing SP (out).
+  (** 8. Stack page, relative to GPR and SP, with increasing SP (out).
 
 Resolved to $\mathit{(SP + (reg + imm))}$.
 
 Additionally, after the resolution, SP is modified: SP += (reg + imm).
 
-If used in [%OpNoOp], the value of SP is modified even if there was no actual
-read performed. See [%OpNoOp].
+If used in [%OpModSP], the value of SP is modified even if there was no actual
+read performed. See [%OpModSP].
    *)
   Inductive stack_out_only : Set :=
   | RelSpPush (reg:reg_name) (delta: stack_address)
