@@ -5,23 +5,27 @@ Require Pointer.
 Section Slices.
 Import Bool Core ZMod Common MemoryBase Memory RecordSetNotations Pointer PMap_ext ZMod.
 Open Scope ZMod_scope.
-(** ### Slices
+(** # Slice
 
-Accesses through fat pointers should be in bounds of its span.
+Data slice is a virtual memory page holding a read-only fragment of some memory
+page.
+
+Accesses through a fat pointer should be in bounds of its span.
 
 Suppose $P:=(\mathit{page, start, length, offset})$ is a fat pointer.
 Accesses through [%OpLoadPtr] and [%OpLoadPtrInc] return 32-byte words starting
 at an address $\mathit{start + offset}$.
 
-However, the 256-bit [%word] spans across addresses in range
+However, a 32-byte [%word] spans across addresses in range
 $[\mathit{start + offset, start + offset + 32})$
-and therefore might surpass the upper bound when $\mathit{length-offset} \leq 32$.
+and therefore can surpass the upper bound $\mathit{start + length})$
+if $\mathit{length-offset} \leq 32$.
 
-In this case, reads from out-of-bound bytes in range $[\mathit{start+length,
-start+offset+32})$ will return zero bytes.
+Reading past [%\mathit{start+offset}] yields zero bytes.
+In other words, attempting to read a word that spans across the pointer bound
+$\mathit{start + offset}$ will return zero bytes for the addresses
+$[\mathit{start+length, start+offset+32})$.
 
-Data slice is a virtual memory page holding a read-only fragment of some memory
-page.
  *)
 
 Definition data_page_slice_params := data_page_params <| writable := false |>.

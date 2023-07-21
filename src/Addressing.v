@@ -33,59 +33,71 @@ and memory locations.
 
 [%MemoryOps] formalizes reading and writing to locations.
 
-1. Register addressing
+1. **Register addressing.**
 
-Register addressing takes value from one of General Purpose Registers (GPR).
+   Register addressing takes value from one of General Purpose Registers (GPR).
+   See [%global_state], [%gs_regs].
    *)
 
   Inductive reg_io : Set := Reg (reg:reg_name).
 
-  (** See [%global_state], [%gs_regs].
+  (**
+2. **Immediate 16-bit value.**
 
-2. Immediate 16-bit value *)
+   Only for input operands. See [%imm_in], [%in_regimm].
+   *)
 
   Inductive imm_in : Set := Imm (imm: u16).
 
-  (** Only for input operands. See [%imm_in], [%in_regimm].
+  (**
+3. **Address on a code page, relative to a GPR**.
 
-3. Address on a code page, relative to a GPR *)
+   Resolved to $\mathit{(reg + imm) \mod 2^{16}}$.
+   Code and const pages may coincide in the implementation.
+
+   *)
 
   Inductive code_in : Set := CodeAddr (reg:reg_name) (imm:code_address).
 
-  (** Resolved to $\mathit{(reg + imm)}$.
+  (**
 
-Code and const pages may coincide in the implementation.
+4. **Address on a const page, relative to a GPR.**.
 
-4. Address on a const page, relative to a GPR *)
+   Resolved to $\mathit{(reg + imm) \mod 2^{16}}$. Code and const pages may coincide.
+
+
+   *)
   Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
-  (** Resolved to $\mathit{(reg + imm)}$. Code and const pages may coincide.
+  (**
+5. **Address on a stack page, relative to a GPR.**
 
-5. Address on a stack page, relative to a GPR
-
- Resolved to $\mathit{(reg + imm)}$.
+   Resolved to $\mathit{(reg + imm)\mod 2^{16}}$.
 
    *)
   Inductive stack_io : Set :=
   | Absolute (reg:reg_name) (imm: stack_address)
 
-  (** 6. Address on a stack page, relative to SP and GPR.
+  (**
+6. **Address on a stack page, relative to SP and GPR.**
 
- Resolved to $\mathit{(SP - (reg + imm))}$.
+   Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$.
 
- Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
+   Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
    *)
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
 
-  (** 7. Stack page, relative to GPR and SP, with decreasing SP (in)
+  (**
+7. **Stack page, relative to GPR and SP, accompanied by decreasing SP (in).**
 
-Resolved to $\mathit{(SP - (reg + imm))}$.
+   Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$.
 
-Additionally, after the resolution, SP is modified: SP -= (reg + imm).
+   Additionally, after the resolution, SP is modified: SP -= (reg + imm).
 
-If used in [%OpModSP], the value of SP is modified even if there was no actual
-read performed. See [%OpModSP].
+   It is a generalization of `pop` operation.
+
+   If used in [%OpModSP], the value of SP is modified even if there was no actual read performed. See [%OpModSP].
 
    *)
 
@@ -93,14 +105,16 @@ read performed. See [%OpModSP].
   | RelSpPop (reg:reg_name) (delta: stack_address)
   .
 
-  (** 8. Stack page, relative to GPR and SP, with increasing SP (out).
+  (**
+8. **Stack page, relative to GPR and SP, accompanied by increasing SP (out).**
 
-Resolved to $\mathit{(SP + (reg + imm))}$.
+   Resolved to $\mathit{(SP + (reg + imm))\mod 2^{16}}$.
 
-Additionally, after the resolution, SP is modified: SP += (reg + imm).
+   Additionally, after the resolution, SP is modified: SP += (reg + imm).
 
-If used in [%OpModSP], the value of SP is modified even if there was no actual
-read performed. See [%OpModSP].
+   It is a generalization of `push` operation.
+
+   If used in [%OpModSP], the value of SP is modified even if there was no actual read performed. See [%OpModSP].
    *)
   Inductive stack_out_only : Set :=
   | RelSpPush (reg:reg_name) (delta: stack_address)
@@ -110,10 +124,31 @@ read performed. See [%OpModSP].
     (** # Operands
 
 In this section we describe operand types of [%instruction].
-There is an hierarchy of these types, ordered by inclusion (see [%Coercions]).
-For example, the first argument of [%OpAdd] can use any addressing mode, and its
-second argument can only use [%reg] address mode.
-Both arguments should accept GPR as a source.
+
+Instruction may have *input* and *output* operands.
+
+- There are three types of input operands:
+
+   + [%in_reg] : read from a GPR.
+   + [%in_any] : read from reg, immediate value, or any memory. May be a generalized pop [%RelSpPop].
+   + [%in_regimm] read from either reg or immmediate value (used exclusively in UMA instructions such as [%OpLoad]).
+
+- There are two types of input operands:
+
+   + [%out_reg] : store to a GPR.
+   + [%out_any] : store to a GPR or any writable memory location. May be a generalized push [%RelSpPush].
+
+To describe these types, we create a hierarchy of subtypes ordered by inclusion (see [%Coercions]).
+
+
+We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output arguments as $\mathit{out_1}$, $\mathit{out_2}$.
+Many instructions have 2 input arguments and 1 output argument.
+The encoding limits the number of arguments of type [%in_any] and [%out_any]:
+
+- For each instruction, there can be no more one argument of type [%in_any].
+- For each instruction, there can be no more one argument of type [%out_any].
+
+It is allowed to have both [%in_any] and [%out_any] in the same instruction.
      *)
 
     Inductive stack_in : Set :=
@@ -148,7 +183,8 @@ Both arguments should accept GPR as a source.
 
 
 
-    (** This argument type allows for all addressing modes. *)
+    (** The [%any] auxiliary argument type allows for all addressing modes; it
+    never occurs in instructions but is used to resolve argument locations. *)
     Inductive any : Set :=
     | AnyReg  : reg_io   -> any
     | AnyImm  : imm_in   -> any
@@ -157,11 +193,11 @@ Both arguments should accept GPR as a source.
     | AnyConst: const_in -> any
     .
 
-    (** We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output arguments as $\mathit{out_1}$, $\mathit{out_2}$.
+    (**
 
-Many instructions have 2 input arguments and 1 output argument.
+## Input arguments
 
-## *In* arguments
+Instructions may have no more than two input arguments.
 
 Usually, $\mathit{in_1}$ supports any types of arguments, except for [%RelSpPush].
 
@@ -207,12 +243,17 @@ argument; see [%OpHeapRead], [%OpHeapWrite], and similar. *)
       end.
     (* end details *)
 
-    (** ## *Out* arguments
+    (** ## Output arguments
 
-- Output arguments can not be immediate values.
-- A single immediate value is not sufficient to identify a memory cell, because we have multiple pages (see [%page]).
-- Out arguments can not be code or const addresses either, because [%code_page] and [%const_page] are not writable.
-- Usually, the $\mathit{out_1}$ argument can be of any type (except for immediate value).
+Instructions may have no more than two output arguments.
+
+Output arguments can not be immediate values.
+
+A single immediate value is not sufficient to identify a memory cell, because we
+have multiple pages (see [%page]).
+
+Out arguments can not resolve to the addresses of constants or instructions,
+because [%code_page] and [%const_page] are not writable.
      *)
     Inductive out_any : Set :=
     | OutReg  : reg_io    -> out_any
@@ -232,7 +273,7 @@ argument; see [%OpHeapRead], [%OpHeapWrite], and similar. *)
 
 End Addressing.
 (** Therefore, we do not define [%out_regimm], because it is impossible to write
-in immediate values. *)
+to immediate values. *)
 
 Module Coercions.
   Coercion in_any_incl: in_any >-> any.

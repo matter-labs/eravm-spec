@@ -57,11 +57,11 @@ Pages persist for as long as they are referenced from the live code.
 
 Pages hold one of:
 
-- data: $2^{32}$ byte-addressable data for heap or auxheap; bound, so reading or
+- data: $2^{32}$ byte-addressable data for heap or auxheap; bounded, so reading or
   writing outside bounds leads to a paid growth of available portion.
 - code: instruction-addressable, read-only;
 - constants: $2^{16}$ word-addressable, read-only;
-- stack: word-addressable, tagged words;
+- stack: $2^{16}$ words, word-addressable, tagged words. When the execution of a contract starts, the initial value of stack pointer is [%INITIAL_SP_ON_FAR_CALL].
 
 
 The following describes all types of memory formally and with greater detail.
@@ -121,7 +121,7 @@ the last value written.
 # Shards and contracts
 
 A **contract** is uniquely identified by its 160-bit address [%contract_address].
-In future, the address could be seemlessly extended to up to 256 bits.
+In future, the address could be seamlessly extended to up to 256 bits.
 
 A **shard** is a mapping of contract addresses to storages.
 
@@ -337,7 +337,7 @@ between contracts.
 ### Stack pages
 
 A **stack page** contains $2^{16}$ primitive values (see [%primitive_value]).
-Therefore, elements of stack pages are tagged words.
+Reminder: primitive values are tagged words.
 
 *)
   Definition stack_page_params := {|
@@ -358,20 +358,18 @@ There are two stacks in EraVM: call stack to support the execution of functions
 and contracts, and data stack to facilitate computations. This section details
 the data stack.
 
-Data stack is located on stack pages. At each moment of execution, one stack
-page is active; it is associated with the topmost of external frames, which
-belongs to the contract currently being executed. See [%active_extframe], its
-field [%ecf_mem_ctx] and subfield [%ctx_stack_page_id].
+At each moment of execution, one stack page is active; it is associated with the
+topmost of external frames, which belongs to the contract currently being
+executed. See [%active_extframe], its field [%ecf_mem_ctx] and subfield
+[%ctx_stack_page_id].
 
-If the first contract being executed calls other contracts, stack spreads over
-multiple pages. Stack pointer on new stack pages start with a value
-[%INITIAL_SP_ON_FAR_CALL]. Therefore, stack addresses in range from 0 inclusive
-to [%INITIAL_SP_ON_FAR_CALL] exclusive can be used as a scratch space.
+Each contract instance has an independent stack on a separate page.
+Instead of zero, stack pointer on new stack pages start with a value
+[%INITIAL_SP_ON_FAR_CALL]. Stack addresses in range [0; [%INITIAL_SP_ON_FAR_CALL]) can be used as a scratch space.
 
-Topmost frame in callstack, no matter internal or external, contains the stack
-pointer (SP) value [%cf_sp]; this value is used to determine where the top of
-the data stack is located. SP points to the address after the topmost element of
-the stack. It means that the topmost element of the stack is located in the word
+Topmost frame of the callstack, whether internal or external, contains the stack
+pointer (SP) value [%cf_sp]; which points to the address after the topmost element of
+the stack. That means that the topmost element of the stack is located in word
 number $(\mathit{SP}-1)$ on the associated stack page.
 
 Data stack grows towards greater addresses.
@@ -380,7 +378,7 @@ elements decreases stack pointer.
 
 ### Const pages
 
-A **const page** contains $2^{16}$ primitive values (see [%primitive_value]).
+A **const page** contains $2^{16}$ non tagged [%word]s.
 They are not writable.
 
 Implementation may put constants and code on the same pages.

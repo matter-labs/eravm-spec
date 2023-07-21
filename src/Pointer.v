@@ -32,6 +32,7 @@ The required encoding is described by [%ABI.FarRet.ABI] or
 [%ABI.FarCall.ABI].
 See [%FarCall] and [%FarRet].
 
+See also: [%Slices].
 
 In EraVM, heap variants have a bound, stored in call stack frames (see [%ctx_heap_bound] of [%ecf_mem_ctx]).
  If memory is accessed beyond this bound, the bound is adjusted and the growth

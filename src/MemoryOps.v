@@ -166,7 +166,7 @@ End MemoryOps.
 
 
 Section Multibyte.
-  (** Multibyte loads and stores
+  (** # Multibyte loads and stores
 
 UMA instructions such as [%OpStore] and [%OpLoadPointer] operate with a byte
 addressable [%data_page]s, but load or store 256-bit [%word]s.

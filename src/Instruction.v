@@ -32,13 +32,13 @@ Two modifiers are commonly encountered:
   (**
   For example, take an instruction
 
-  [%OpSub $a$ $b$ $c$ NoSwap PreserveFlags]
+  [%OpSub a b c NoSwap PreserveFlags]
 
   It computes $a - b$ and stores the result to $c$.
 
   Adding `swap` modifier will change the syntax as follows:
 
-  [%OpSub $a$ $b$ $c$ Swap PreserveFlags]
+  [%OpSub a b c Swap PreserveFlags]
 
   The new meaning with `swap` modifier is to compute $b-a$.
 

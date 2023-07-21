@@ -42,7 +42,7 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
     end.
 
   Definition page_older (id: page_id) (mps: mem_ctx) : bool :=
-    List.forallb (page_older id) (list_mem_ctx mps).
+    List.forallb (Memory.page_older id) (list_mem_ctx mps).
 
   (** Function [%is_active_page] returns [%true] if memory page [%id] belongs to the context [%c]. *)
   Definition is_active_page (c:mem_ctx) (id: page_id) : bool :=
@@ -54,9 +54,9 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
   (* end details *)
 
   (** If an instruction addresses a heap variant outside of its bounds, its
-  bound is adjusted to include the used address. Then the bound has to be
-  adjusted; predicates [%grow_heap_page], [%grow_auxheap_page],
-  [%grow_heap_variant] are relating memory contexts where an appropriate heap
+  bound is adjusted to include the used address. Predicates [%grow_heap_page],
+  [%grow_auxheap_page], [%grow_heap_variant] are relating memory contexts where
+  an appropriate heap
   variant was grown. *)
 
   Inductive grow_heap_page: mem_address -> mem_ctx -> mem_ctx -> Prop :=

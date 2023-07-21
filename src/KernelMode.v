@@ -48,8 +48,6 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
   Definition check_requires_kernel
     (ins: instruction)
     (in_kernel: bool) : bool :=
-    if negb in_kernel
-    then negb (requires_kernel ins)
-    else true.
+    (negb in_kernel) || in_kernel.
 
 End KernelMode.
