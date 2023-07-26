@@ -1,12 +1,114 @@
 From RecordUpdate Require Import RecordSet.
-Require sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.PtrAdd sem.PtrSub sem.PtrPack sem.PtrShrink sem.Context sem.Div sem.Mul sem.NearCall.
+Require sem.Farcall sem.BinOps sem.ModSP sem.Jump sem.PtrAdd sem.PtrSub sem.PtrPack sem.PtrShrink sem.Context sem.Div sem.Mul sem.NearCall StaticMode.
 
 Import Bool ZArith Common Decommitter Predication Ergs CallStack MemoryBase Memory MemoryOps Instruction State ZMod
-  ZBits SemanticCommon RecordSetNotations.
+  ZBits SemanticCommon RecordSetNotations KernelMode StaticMode Addressing PrimitiveValue Flags.
 
+Inductive binop_effect_spec:
+                        mod_swap -> mod_set_flags ->
+                        in_any * primitive_value ->
+                        in_reg * primitive_value ->
+                        out_any* primitive_value ->
+                        flags_state ->
+                        exec_state -> exec_state -> Prop :=
+| bes_apply:
+  forall xstack new_xstack regs new_regs memory new_memory (in1: in_any) (in2:in_reg) (out: out_any)
+    op1 op2 swap set_flags result flags_candidate flags new_flags ,
+
+    fetch_apply21_swap swap
+      (regs,memory,xstack)
+      (in1, op1) (InReg in2, op2) (out, result)
+      (new_regs,new_memory,new_xstack) ->
+    new_flags = apply_set_flags set_flags flags flags_candidate ->
+    binop_effect_spec
+      swap set_flags
+      (in1, op1) (in2, op2) (out, result)
+      flags_candidate
+      (mk_exec_state flags regs memory xstack)
+      (mk_exec_state new_flags new_regs new_memory new_xstack).
+
+Inductive update_flags (fs_candidate:flags_state): mod_set_flags -> exec_state -> exec_state -> Prop :=
+  | uf_apply:
+    forall md (s s':exec_state),
+      let new_fs := apply_set_flags md (gs_flags s) fs_candidate in
+      s' = (s <| gs_flags := new_fs |>) ->
+      update_flags fs_candidate md s s'.
+
+Generalizable Variables ins s.
+Local Open Scope ZMod_scope.
+Inductive step_add: @instruction instruction_bound -> xsmallstep :=
+  | step_Add:
+    forall mod_swap mod_sf xs xs' tag1 tag2 op1 op2 result flags_candidate new_OF,
+
+      (result, new_OF) = op1 + op2 ->
+      let new_EQ := result == zero256 in
+      let new_GT := negb new_EQ && negb new_OF in
+
+      flags_candidate = bflags new_OF new_EQ new_GT ->
+      update_flags flags_candidate mod_sf xs xs' ->
+
+      step_add (OpAdd (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_swap mod_sf) xs xs'
+  .
+Inductive step_ins: @instruction instruction_-> smallstep :=
+| step_ins_modsp:
+  `(
+      step_callstack (sem.ModSP.cs_step ins) s s' ->
+      step_ins ins s s'
+    )
+| step_ins_noop: `(step_ins OpNoOp s s)
+| step_ins_add: `(forall swap sf, step_add step_ins (OpAdd i1 i2 o1 swap sf) s s)
+
+
+                 .
+
+
+    
+    
+                
+                        
+ .
+ 
+Inductive step: smallstep :=
+   | step_correct:
+    forall gs flags  pages xstack0 xstack1 new_xstack ins context_u128 regs cond new_gs ins ins',
+      let gs0 := {|
+          gs_xstate := {|
+                        gs_callstack    := xstack0;
+
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                      |};
+          gs_context_u128 := context_u128;
+          gs_global       := gs;
+          |} in
+      let gs1 := {|
+          gs_xstate := {|
+                        gs_callstack    := new_xstack;
+
+                        gs_flags        := flags;
+                        gs_regs         := regs;
+                        gs_pages        := pages;
+                        |};
+
+          gs_context_u128 := context_u128;
+          gs_global       := gs;
+          |} in
+      predicate_holds flags = true ->
+      stack_overflow xstack0 = false ->
+      check_requires_kernel ins (in_kernel_mode xstack0) = true ->
+      check_forbidden_static ins (active_extframe xstack0).(ecf_is_static) = true ->
+      fetch_instr regs xstack0 pages (Ins ins cond) ->
+
+      update_pc_regular xstack0 xstack1 ->
+      pay (ergs_of (base_cost ins)) xstack1 new_xstack ->
+      fetch ins ins' ->
+      step_ins ins gs1 new_gs ->
+      step gs0 new_gs.
 (*
 Inductive step_ins: instruction -> smallstep :=
 | step_ins_noop: forall gs, step_ins OpNoOp gs gs
+
 | step_ins_op: forall ins gs gs',
     match ins with
 | OpInvalid =>

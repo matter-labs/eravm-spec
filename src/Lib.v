@@ -56,3 +56,9 @@ Definition plus_of {n} (x y: int_mod n) : res (int_mod n) :=
 
 
 End Arithmetics.
+
+Section Relations.
+
+Definition rcomp {A B C} (f: A -> B -> Prop) (g: B -> C -> Prop) := fun a c => exists b, f a b /\ g b c.
+
+End Relations.

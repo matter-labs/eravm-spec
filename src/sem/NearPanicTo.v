@@ -4,7 +4,7 @@ Import Common Flags CallStack GPR Memory Instruction State SemanticCommon.
 
 Section NearPanic.
 Generalizable Variables regs flags pages gs s __.
-Inductive step_panic: instruction -> smallstep :=
+Inductive step_panic: forall descr, @instruction descr -> smallstep :=
 (**
 
 # NearPanic (abnormal return, not return/panic)
@@ -32,13 +32,13 @@ Inductive step_panic: instruction -> smallstep :=
 4. Proceed with executing [%label], i.e. replace program counter with the label's value.
  *)
 | step_NearPanic:
-    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx label,
+    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx label descr,
       `(
           let cs := InternalCall (mk_cf _eh _sp _pc _ergs saved) caller_stack in
           let handler := active_exception_handler cs in
 
           roll_back saved gs gs' ->
-          step_panic (OpNearPanicTo label)
+          step_panic descr (OpNearPanicTo label)
                       {|
                         gs_xstate := {|
                                        gs_flags        := flags;

@@ -8,6 +8,7 @@ Section KernelMode.
   Open Scope ZMod_scope.
   Local Coercion int_mod_of : Z >-> int_mod.
 
+  Context {descr: instruction_descr}.
   (** # Kernel Mode
 
 At each moment of execution VM is either in **kernel** or in **user mode**. Some
@@ -27,7 +28,7 @@ Topmost external frame (active frame) is obtained through [%active_extframe], it
 The list of instructions requiring kernel mode is encoded by the
 definition [%requires_kernel]. If [%requires_kernel ins == true], the instruction
 [%ins] is only allowed in kernel mode. *)
-  Definition requires_kernel (ins: instruction) : bool :=
+  Definition requires_kernel (ins: @instruction descr) : bool :=
     match ins with
     | OpMimicCall _ _ _ _ _
     | OpContextSetContextU128 _
@@ -45,8 +46,8 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
 - an instruction [%ins] requires kernel mode, and
 - VM is not in kernel mode, as indicated by [%in_kernel].
    *)
-  Definition check_requires_kernel
-    (ins: instruction)
+  Definition check_requires_kernel 
+    (ins: @instruction descr)
     (in_kernel: bool) : bool :=
     (negb in_kernel) || in_kernel.
 

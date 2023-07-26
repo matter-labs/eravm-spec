@@ -44,8 +44,8 @@ Static calls are guaranteed to preserve the state of storage, will not emit even
 
 
 (** Function [%forbidden_static] returns [%true] if instruction [%ins] is forbidden in static mode. *)
-  Context (forbidden := true) (allowed := false).
-  Definition forbidden_static (ins:instruction) : bool :=
+  Context (forbidden := true) (allowed := false) {descr:instruction_descr}.
+  Definition forbidden_static (ins:@instruction descr) : bool :=
     match ins with
     | OpContextSetContextU128 _
     | OpContextSetErgsPerPubdataByte _

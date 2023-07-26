@@ -155,8 +155,7 @@ executing; see [%Semantics.step].
 
 Instructions may also impose additional costs e.g. far returns and far calls may grow heap; farcalls also may induce code decommittment costs.
  *)
-
-  Definition base_cost (ins:instruction) :=
+  Definition base_cost {descr} (ins:@instruction descr) :=
     (match ins with
      | OpInvalid => INVALID_OPCODE_ERGS
      | OpNoOp | OpModSP _ _ => RICH_ADDRESSING_OPCODE_ERGS
@@ -286,6 +285,5 @@ Current costs are:
 ```
  *)
   Compute base_cost.
-  
-End Costs.
 
+End Costs.

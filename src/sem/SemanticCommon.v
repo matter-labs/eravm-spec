@@ -10,6 +10,7 @@ Import
     ABI.FarRet
     Bool
     Common
+    Coder
     Flags
     CallStack
     Decommitter
@@ -233,3 +234,95 @@ Inductive fetch_apply22_swap swap:
     )
 .
 Generalizable No Variables.
+
+#[global]
+Definition instruction_fetched: instruction_descr :=
+  let pv := @primitive_value Core.word in
+  {|
+    in_any_pv := pv;
+    in_reg_pv := pv;
+    in_reg_farcall_abi := ABI.FarCall.params;
+    in_reg_nearcall_abi := ABI.NearCall.params;
+    in_reg_ret_abi := ABI.fwd_memory;
+    in_regimm_heapptr := Pointer.heap_ptr;
+    in_reg_fatptr := fat_ptr;
+
+    out_reg_pv := out_reg;
+    out_any_pv := out_reg;
+    out_reg_fatptr := out_reg;
+    out_reg_heapptr := out_reg;
+  |}.
+#[global]
+Definition instruction_bound: instruction_descr :=
+  let pv := @primitive_value Core.word in
+  {|
+    in_any_pv := pv;
+    out_any_pv := pv;
+    in_reg_pv := pv;
+    out_reg_pv := pv;
+    in_reg_farcall_abi := ABI.FarCall.params;
+    in_reg_nearcall_abi := ABI.NearCall.params;
+    in_reg_ret_abi := ABI.fwd_memory;
+    in_regimm_heapptr := Pointer.heap_ptr;
+    out_reg_fatptr := fat_ptr;
+    out_reg_heapptr := heap_ptr;
+    in_reg_fatptr := fat_ptr;
+  |}.
+
+Definition rel_load_operands {ins} {instruction_invalid:ins} regs cs mem (new_cs: callstack) : @instruction_mapper instruction_stored instruction_fetched:=
+  let load op v := load instruction_invalid regs cs mem  op (new_cs,v) in
+  let load_any op v := load_any _ regs cs mem op (new_cs,v) in
+    let f_in_any_pv := load in
+    let f_in_reg_pv := load in
+
+    let f_in_reg_farcall_abi op params := forall v, load op (IntValue v) -> FarCall.ABI.(decode) v = Some params in
+    let f_in_reg_nearcall_abi op params := forall v, load op (IntValue v) -> NearCall.ABI.(decode) v = Some params in
+    let f_in_reg_fatptr op params := forall v, load op (IntValue v) -> decode_fat_ptr v = Some params in
+    let f_in_reg_ret_abi op params := forall v, load_any op v -> FarRet.ABI.(decode) v = Some params in
+    let f_in_regimm_heapptr op params := forall v, load_any op (v) -> decode_heap_ptr v = Some params in
+
+
+    let f_out_any_pv := eq in
+    let f_out_reg_pv := eq in
+    let f_out_reg_fatptr := eq in
+    let f_out_reg_heapptr := eq in
+
+    Build_instruction_mapper instruction_stored instruction_fetched
+      f_in_any_pv
+      f_in_reg_pv
+      f_in_reg_farcall_abi
+      f_in_reg_nearcall_abi
+      f_in_reg_ret_abi
+      f_in_regimm_heapptr
+      f_in_reg_fatptr
+      f_out_reg_pv
+      f_out_any_pv
+      f_out_reg_fatptr
+      f_out_reg_heapptr.
+
+
+#[global]
+Canonical instruction_bound.
+#[global]
+Canonical instruction_fetched.
+
+Definition rel_store_operands regs cs mem (new_regs:regs_state) (new_cs: callstack) (new_mem:memory)  : @instruction_mapper instruction_fetched instruction_bound :=
+  let load op v := load _ regs cs mem  op (new_cs,v) in
+  let load_any op v := load_any _ regs cs mem op (new_cs,v) in
+  let store (op:out_any) (v:primitive_value) := store _ regs cs mem op v (new_regs, new_mem, new_cs) in
+  @Build_instruction_mapper instruction_fetched instruction_bound eq eq eq eq eq eq eq
+    store store
+   (fun (op:out_reg) (fp:fat_ptr) => store op (PtrValue (encode_fat_ptr fp)))
+   (fun (op:out_reg) (hp:heap_ptr) => store op (IntValue (encode_heap_ptr hp)))
+  .
+
+  Definition rel_operands regs cs mem (new_regs: regs_state) (new_cs: callstack) (new_mem: memory): instruction -> instruction -> Prop :=
+fun i1 i2 => exists cs',
+    let m := rmap_comp (rel_load_operands regs cs mem cs') (rel_store_operands regs cs' mem new_regs new_cs new_mem) in
+    instruction_rmap m i1 i2 .
+
+Definition load_operands {ins} {instruction_invalid:ins} regs mem cs new_cs :=
+  instruction_rmap (@rel_load_operands _ instruction_invalid regs mem cs new_cs).
+
+Definition bind_io_operands {ins} {instruction_invalid:ins} regs cs mem new_regs new_cs new_mem :=
+  rel_operands regs cs mem new_regs new_cs new_mem.

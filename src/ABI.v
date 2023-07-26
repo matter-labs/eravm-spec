@@ -32,6 +32,9 @@ Module FatPointer.
 
   Definition encode_fat_ptr (fp: fat_ptr) : word := ABI.(encode) fp.
 
+  Definition encode_heap_ptr (hp:heap_ptr) : word :=
+    encode_fat_ptr (mk_fat_ptr None (heap_ptr_to_free hp)).
+
 End FatPointer.
 
 

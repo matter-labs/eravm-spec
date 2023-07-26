@@ -3,8 +3,8 @@ Require SemanticCommon.
 Import Common Flags CallStack GPR Memory Instruction State SemanticCommon.
 
 Section NearRet.
-Generalizable Variables regs flags pages s.
-Inductive step_ret: instruction -> xsmallstep :=
+Generalizable Variables regs flags pages s descr.
+Inductive step_ret: forall descr, @instruction descr -> xsmallstep :=
 (**
 
 # NearRet (normal return, not panic/revert)
@@ -35,7 +35,7 @@ Inductive step_ret: instruction -> xsmallstep :=
       `(
       ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
 
-       step_ret OpNearRet {|
+       step_ret descr OpNearRet {|
           gs_flags        := flags;
           gs_callstack    := InternalCall cf caller_stack;
 
