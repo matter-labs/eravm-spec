@@ -1,11 +1,11 @@
 Require SemanticCommon.
 
-Import Common Flags CallStack GPR Memory Instruction State SemanticCommon.
+Import Common Flags CallStack isa.CoreSet State SemanticCommon.
 
 Section NearRet.
-Generalizable Variables regs flags pages s descr.
-Inductive step_ret: forall descr, @instruction descr -> xsmallstep :=
-(**
+  Generalizable Variables __ regs pages ctx.
+  Inductive step_nearret: @instruction bound -> tsmallstep :=
+  (**
 
 # NearRet (normal return, not panic/revert)
 
@@ -29,31 +29,33 @@ Inductive step_ret: forall descr, @instruction descr -> xsmallstep :=
 2. Drop current frame.
 3. Clear flags
 
- *)
-| step_NearRet:
-    forall cf caller_stack caller_reimbursed,
+   *)
+  | step_NearRet:
+    forall cf caller_stack caller_reimbursed pages,
       `(
-      ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
+          ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
 
-       step_ret descr OpNearRet {|
-          gs_flags        := flags;
-          gs_callstack    := InternalCall cf caller_stack;
-
-
-          gs_regs         := regs;
-          gs_pages        := pages;
-        |}
-        {|
-          gs_flags        := flags_clear;
-          gs_callstack    := caller_reimbursed;
+          step_nearret OpNearRet {|
+                         gs_flags        := __;
+                         gs_callstack    := InternalCall cf caller_stack;
 
 
-          gs_regs         := regs;
-          gs_pages        := pages;
-        |}
+                         gs_regs         := regs;
+                         gs_pages        := pages;
+                         gs_context_u128 := ctx;
+                       |}
+                       {|
+                         gs_flags        := flags_clear;
+                         gs_callstack    := caller_reimbursed;
+
+
+                         gs_regs         := regs;
+                         gs_pages        := pages;
+                         gs_context_u128 := ctx;
+                       |}
         )
-.
-(**
+  .
+  (**
 
 ## Affected parts of VM state
 
@@ -66,5 +68,7 @@ Inductive step_ret: forall descr, @instruction descr -> xsmallstep :=
 ## Usage
 
 Normal return from functions.
-*)
+   *)
+
+  Generalizable No Variables.
 End NearRet.

@@ -1,14 +1,40 @@
 From RecordUpdate Require Import RecordSet.
 
-Require SemanticCommon.
+Require
+ABI
+Bool
+CallStack
+Coder
+Common
+Flags
+GPR
+MemoryContext
+Pointer
+PrimitiveValue
+SemanticCommon
+State.
 
-Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps Instruction State ZMod
-  ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations MemoryContext.
+Import
+ABI
+ABI.FatPointer
+Bool
+CallStack
+Coder
+Common
+Flags
+GPR
+isa.CoreSet
+MemoryContext
+Pointer
+PrimitiveValue
+RecordSetNotations
+SemanticCommon
+State
+.
 
 Section FarRet.
 
-  Generalizable Variables regs flags pages s.
-  Inductive xstep: instruction -> xsmallstep :=
+  Inductive step_farret: instruction -> tsmallstep :=
 (**
 
 # Far return (normal return, not panic/revert)
@@ -43,11 +69,11 @@ Inductive fwd_memory :=
    - For [%ForwardFatPointer p]:
       + ensure that the register containing `abi_reg`  is tagged as pointer.
       + ensure that the memory page of `p` does NOT refer to a page owned by an older frame.
-      + [%fp_shrink] [%p] so it starts at its current offset, and the offset is reset to zero. See [%free_ptr_shrink].
+      + [%fp_narrow] [%p] so it starts at its current offset, and the offset is reset to zero. See [%free_ptr_narrow].
 
         TODO Explanation why the circularity check is necessary.
 
-     There is no payment because the existing fat pointer has already been paid for 
+     There is no payment because the existing fat pointer has already been paid for.
 
    - For [%ForwardNewHeapPointer heap_var (start, limit)]:
       + let $B$ be the bound of the heap variant [%heap_var] taken from
@@ -74,100 +100,74 @@ Inductive fwd_memory :=
  6. Context register is zeroed.
 *)
 | step_RetExt_heapvar:
-  forall gs pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) heap_span_enc out_ptr ____ heap_type hspan,
+  forall pages cf caller_stack cs1 caller_reimbursed enc  ___ ____ _____ out_ptr heap_type hspan params s1 s2,
     let cs0 := ExternalCall cf (Some caller_stack) in
-
-    load_reg_any regs arg heap_span_enc ->
-
-    decode FarRet.ABI heap_span_enc = Some (ForwardNewHeapPointer heap_type hspan) ->
 
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
-
-    xstep (OpFarRet arg)
-          {|
-            gs_xstate := {|
+    params = FarRet.mk_params (ForwardNewHeapPointer heap_type hspan) ->
+    step_transient_only {|
                           gs_flags        := ___ ;
                           gs_callstack    := cs0;
-                          gs_regs         := regs;
+                          gs_regs         := ____;
+                          gs_context_u128 := _____;
 
 
                           gs_pages        := pages;
-                        |};
-            gs_context_u128 := ____;
-
-            gs_global       := gs;
-          |}
-          {|
-            gs_xstate := {|
+                        |}
+                        {|
                           gs_flags        := flags_clear;
                           gs_callstack    := caller_reimbursed;
                           gs_regs         := regs_state_zero
-                             <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |>
+                             <| r1 := PtrValue (encode_fat_ptr out_ptr) |>
                              <| r2 := reserved |>
                              <| r3 := reserved |>
                              <| r4 := reserved |> ;
+                          gs_context_u128 := zero128;
 
 
                           gs_pages        := pages;
-                          |};
-          gs_context_u128 := zero128;
+                           |} s1 s2 ->
+    step_farret (OpFarRet (Some params, enc)) s1 s2 
 
-          gs_global       := gs;
-          |}
- 
-| step_RetExt_ForwardFatPointer:
-  forall __ gs pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr out_ptr page,
+  | step_RetExt_ForwardFatPointer:
+  forall pages cf caller_stack cs1 caller_reimbursed __ ___ ____ in_ptr out_ptr page params enc s1 s2,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
-    (* Panic if not a pointer *)
-    load_reg regs arg (PtrValue in_ptr_encoded) ->
-
-    FarRet.ABI.(decode) in_ptr_encoded = Some (ForwardFatPointer in_ptr) ->
     in_ptr.(fp_page) = Some page ->
 
-    negb ( page_older page (get_mem_ctx cs0)) = true ->
+    page_older page (get_mem_ctx cs0) = false->
 
     validate in_ptr = no_exceptions ->
 
-    fp_shrink in_ptr out_ptr ->
+    fat_ptr_narrow in_ptr out_ptr ->
 
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
-
-    xstep (OpFarRet arg)
-          {|
-            gs_xstate := {|
+    params = FarRet.mk_params (ForwardFatPointer in_ptr) ->
+    step_transient_only {|
                           gs_flags        := __ ;
                           gs_callstack    := cs0;
-                          gs_regs         := regs;
+                          gs_regs         := ___;
+                          gs_context_u128 := ____;
 
 
                           gs_pages        := pages;
-                        |};
-            gs_context_u128 := ___;
-
-            gs_global       := gs;
-          |}
-          {|
-            gs_xstate := {|
+                        |}
+                        {|
                           gs_flags        := flags_clear;
                           gs_callstack    := caller_reimbursed;
                           gs_regs         := regs_state_zero
-                             <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
+                             <| r1 := PtrValue (encode_fat_ptr out_ptr) |>
                              <| r2 := reserved |>
                              <| r3 := reserved |>
                              <| r4 := reserved |> ;
 
 
+                          gs_context_u128 := zero128;
                           gs_pages        := pages;
-                          |};
-
-
-          gs_context_u128 := zero128;
-
-          gs_global       := gs;
-          |}
-.
+                          |} s1 s2 ->
+    step_farret (OpFarRet (Some params, enc)) s1 s2
+  .
 
 (**
 

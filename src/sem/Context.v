@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory MemoryOps Instruction State ZMod
+Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory MemoryOps isa.CoreSet State ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParameters.
 
 (**
@@ -49,33 +49,16 @@ See [%OpContextCaller], [%OpContextCodeAddress].
 - Shares opcode with other `contextX` instructions.
 
  *)
-Inductive step: instruction -> smallstep :=
+Inductive step_context: instruction -> smallstep :=
 
 | step_ContextThis:
-  forall flags mem cs regs (out_arg:out_reg) this_addr new_regs s1 s2,
+  forall this_addr this_addr_truncated (s1 s2: state),
 
-    store_reg regs out_arg (IntValue this_addr) new_regs ->
+    this_addr = ecf_this_address (active_extframe (gs_callstack s1)) ->
+    this_addr_truncated = resize contract_address_bits word_bits this_addr ->
 
-    this_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_this_address) ->
 
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextThis out_arg) s1 s2
+    step_context (OpContextThis (IntValue this_addr_truncated)) s1 s2
 (**
 
 # ContextCaller
@@ -120,33 +103,11 @@ See [%OpContextThis], [%OpContextCodeAddress].
 
  *)
 | step_ContextCaller:
-  forall flags cs regs (out_arg:out_reg) sender_addr new_regs mem s1 s2,
-    store_reg regs
-      out_arg (IntValue sender_addr)
-      new_regs ->
+  forall sender_addr sender_addr_truncated (s1 s2:state),
+    sender_addr = (active_extframe (gs_callstack s1)).(ecf_msg_sender) ->
+    sender_addr_truncated = resize contract_address_bits word_bits sender_addr ->
 
-    sender_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_msg_sender) ->
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextCaller out_arg) s1 s2
+    step_context (OpContextCaller (IntValue sender_addr_truncated)) s1 s2
 (**
 
 # ContextCodeAddress
@@ -191,30 +152,11 @@ See [%OpContextThis], [%OpContextCaller].
 
  *)
 | step_ContextCodeAddress:
-  forall flags  cs regs (out:out_reg) code_addr new_regs mem s1 s2,
-    store_reg regs out (IntValue code_addr) new_regs ->
+  forall code_addr code_addr_truncated (s1 s2:state),
 
-    code_addr = resize contract_address_bits word_bits (active_extframe cs).(ecf_code_address) ->
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-        gs_pages        := mem;
-
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextCodeAddress out) s1 s2
+    code_addr = ecf_code_address (active_extframe (gs_callstack s1)) ->
+    code_addr_truncated = resize contract_address_bits word_bits code_addr ->
+    step_context (OpContextCodeAddress (IntValue code_addr_truncated)) s1 s2
 
 (**
 
@@ -261,29 +203,9 @@ The `context` instruction family.
 
  *)
 | step_ContextErgsLeft:
-  forall flags mem cs regs (out_arg:out_reg) balance new_regs s1 s2,
-    store_reg regs out_arg (IntValue balance) new_regs ->
-
-    balance = resize _ word_bits (ergs_remaining cs) ->
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-
-    step (OpContextErgsLeft out_arg) s1 s2
+  forall ergs_left_truncated (s1 s2:state),
+    ergs_left_truncated = resize _ word_bits (ergs_remaining (gs_callstack s1)) ->
+    step_context (OpContextErgsLeft (IntValue ergs_left_truncated)) s1 s2
 
 (**
 
@@ -329,31 +251,10 @@ The `context` instruction family.
 
  *)
 | step_ContextSP:
-  forall flags  cs regs (out_arg:out_reg) sp new_regs mem s1 s2,
-    store_reg regs out_arg (IntValue sp) new_regs ->
+  forall sp_zero_padded (s1 s2 :state),
+    sp_zero_padded = resize _ word_bits (sp_get (gs_callstack s1)) ->
 
-    sp = resize _ word_bits (sp_get cs) ->
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-        gs_pages        := mem;
-
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-
-        gs_pages        := mem;
-
-
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextSp out_arg) s1 s2
+    step_context (OpContextSp (IntValue sp_zero_padded)) s1 s2
 (**
 
 # ContextGetContextU128
@@ -399,29 +300,9 @@ Does not interact with the context register.
 
  *)
 | step_ContextGetContextU128:
-  forall flags cs regs (out_arg:out_reg) new_regs mem wcontext s1 s2,
-    store_reg regs out_arg (IntValue wcontext) new_regs ->
-
+  forall wcontext (s1 s2: state),
     wcontext = resize _ word_bits (gs_context_u128 s1) ->
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-        gs_pages        := mem;
-
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-        gs_pages        := mem;
-
-
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextGetContextU128 out_arg) s1 s2
+    step_context (OpContextGetContextU128 (IntValue wcontext)) s1 s2
 (**
 
 # ContextSetContextU128
@@ -469,25 +350,12 @@ Does not interact with the captured context value in the active external frame.
 
  *)
 | step_ContextSetContextU128:
-  forall gs old_context_u128 regs (in_arg:in_reg) any_tag val new_context_u128 xstate,
-    load_reg regs in_arg (mk_pv any_tag val) ->
+  forall new_context256 any_tag new_context_u128 xs1 xs2 s1 s2,
+    new_context_u128 = resize word_bits 128 new_context256->
+    xs2 = xs1 <| gs_context_u128 := new_context_u128 |> ->
+    step_transient_only xs1 xs2 s1 s2 ->
 
-    new_context_u128 = resize word_bits 128 val ->
-    step (OpContextSetContextU128 in_arg)
-         {|
-           gs_context_u128 := old_context_u128;
-
-
-           gs_xstate := xstate;
-           gs_global       := gs;
-         |}
-         {|
-           gs_context_u128 := new_context_u128;
-
-
-           gs_xstate := xstate;
-           gs_global       := gs;
-         |}
+    step_context (OpContextSetContextU128 (mk_pv any_tag new_context256)) s1 s2
 (**
 
 # ContextMeta
@@ -540,43 +408,19 @@ Record params := {
 
  *)
 | step_ContextMeta:
-  forall flags  mem cs regs (out_arg:out_reg) new_regs meta_encoded
+  forall params encoded
     (s1 s2: state),
-    store_reg regs
-      out_arg (IntValue meta_encoded)
-      new_regs ->
-
+    let cs := gs_callstack s1 in
     let shards := (active_extframe cs).(ecf_shards) in
-    meta_encoded =
-      MetaParameters.ABI.(encode)
-                           {|
-                             ergs_per_pubdata_byte := gs_current_ergs_per_pubdata_byte s1;
-                             heap_size := heap_bound cs;
-                             aux_heap_size := auxheap_bound cs;
-                             this_shard_id := shard_this shards;
-                             caller_shard_id := shard_caller shards;
-                             code_shard_id := shard_code shards;
-                           |} ->
-
-    step_xstate_only
-      {|
-        gs_regs         := regs;
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-
-      |}
-      {|
-        gs_regs         := new_regs;
-
-
-        gs_pages        := mem;
-        gs_callstack    := cs;
-        gs_flags        := flags;
-      |} s1 s2 ->
-    step (OpContextMeta out_arg) s1 s2
+    params = {|
+               ergs_per_pubdata_byte := gs_current_ergs_per_pubdata_byte s1;
+               heap_size := heap_bound cs;
+               aux_heap_size := auxheap_bound cs;
+               this_shard_id := shard_this shards;
+               caller_shard_id := shard_caller shards;
+               code_shard_id := shard_code shards;
+             |} ->
+    step_context (OpContextMeta (params,encoded)) s1 s2
 (**
 
 # ContextIncrementTxNumber
@@ -620,18 +464,15 @@ Utility in system contracts.
  *)
 
 | step_ContextIncTx:
-  forall context_u128 gs new_gs xstate,
+  forall transient gs new_gs,
     global_state_increment_tx tx_inc gs new_gs ->
-    step OpContextIncrementTxNumber
+    step_context OpContextIncrementTxNumber
          {|
-           gs_xstate       := xstate;
-
-           gs_context_u128 := context_u128;
+           gs_transient    := transient;
            gs_global       := gs;
          |}
          {|
-           gs_xstate       := xstate;
-           gs_context_u128 := context_u128;
+           gs_transient    := transient;
            gs_global       := new_gs;
          |}
 (**
@@ -676,23 +517,18 @@ Utility in system contracts.
  *)
 
 | step_ContextSetErgsPerPubdata:
-  forall gs new_gs context_u128 regs (in_arg:in_reg) any_tag new_val (new_val_arg:in_reg) xstate ,
-
-    load_reg regs in_arg (mk_pv any_tag new_val) ->
+  forall gs new_gs any_tag new_val transient ,
 
     let new_ergs := resize _ ergs_bits new_val in
     new_gs = gs <| gs_global ::= (fun s => s <| gs_current_ergs_per_pubdata_byte := new_ergs |> ) |> ->
 
-    step (OpContextSetErgsPerPubdataByte new_val_arg)
+    step_context (OpContextSetErgsPerPubdataByte (mk_pv any_tag new_val))
         {|
-          gs_xstate       := xstate;
-
-          gs_context_u128 := context_u128;
+          gs_transient    := transient;
           gs_global       := gs;
         |}
         {|
-          gs_xstate       := xstate;
-          gs_context_u128 := context_u128;
+          gs_transient    := transient;
           gs_global       := new_gs;
         |}
 

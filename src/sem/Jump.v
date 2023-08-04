@@ -2,14 +2,13 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon RecordSetNotations.
+Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State ZMod
+  PrimitiveValue SemanticCommon RecordSetNotations.
 
 Section Def.
 
-Context (regs: regs_state) (mem:memory) (cs: callstack).
 
-Inductive step_jump: instruction -> callstack -> Prop :=
+Inductive step_jump_aux: @instruction bound -> callstack -> callstack -> Prop :=
 (**
 
 ## `jump`
@@ -34,13 +33,12 @@ Note: Argument `label` uses the full addressing mode [%in_any], therefore can be
 - Assign to current PC the fetched value truncated to [%code_address_bits] bits.
  *)
 | step_jump_apply:
-  forall (dest:in_any) (dest_val: word) (any_tag: bool) (new_cs: callstack),
+  forall (dest_val: word) (cs new_cs: callstack) __,
 
-    load_int _ regs cs mem dest new_cs dest_val ->
     let dest_addr := resize _ code_address_bits dest_val in
     new_cs = pc_set dest_addr cs ->
 
-    step_jump (OpJump dest) new_cs.
+    step_jump_aux (OpJump (mk_pv __ dest_val)) cs new_cs.
 
 (**
 
@@ -68,9 +66,7 @@ Note: Argument `label` uses the full addressing mode [%in_any], therefore can be
 
 End Def.
 
-Inductive step: instruction -> smallstep :=
+Inductive step_jump: @instruction bound -> smallstep :=
 | step_Jump: forall ins (s1 s2:state),
-    let regs := gs_regs s1 in
-    let mem := gs_pages s1 in
-    step_callstack (fun cs => step_jump regs mem cs ins) s1 s2 ->
-    step ins s1 s2.
+    step_callstack (step_jump_aux ins) s1 s2 ->
+    step_jump ins s1 s2.

@@ -217,4 +217,3 @@ Fixpoint extract_digits (w:Z) (bits_per_digit: nat) (units:nat) : list Z :=
       h:: tail
 
   end.
-

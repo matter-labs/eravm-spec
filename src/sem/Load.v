@@ -1,19 +1,13 @@
-From RecordUpdate Require Import RecordSet.
+Require SemanticCommon.
 
-Require SemanticCommon Addressing.
-
-Import ABI Addressing Bool Coder Common Predication CallStack GPR Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions Pointer SemanticCommon Memory PrimitiveValue State RecordSetNotations ZMod.
-
-Import FatPointer.
-Import List ListNotations.
+Import MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
 
 Section Defs.
 
   Open Scope ZMod_scope.
 
-  Generalizable Variables cs flags regs mem .
-  Inductive xstep: instruction -> xsmallstep :=
+  Generalizable Variables cs flags regs mem.
+  Inductive step_load: instruction -> tsmallstep :=
   (**
 # Load
 
@@ -45,39 +39,34 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 4. Read 32 consecutive bytes as a Big Endian 256-bit word from $\mathit{addr}$ in the heap variant, store result to `res`.
 *)
   | step_Load:
-    forall new_cs heap_variant enc_ptr (arg_dest:out_reg) (arg_enc_ptr:in_regimm) result new_regs (mem: memory) selected_page query addr limit,
-
+    forall new_cs heap_variant ctx result __ mem selected_page query addr limit,
       `(
-      load_any _  regs cs0 mem arg_enc_ptr (cs1, enc_ptr) ->
-      let hptr := mk_hptr addr limit in
-      decode_heap_ptr enc_ptr = Some hptr ->
-
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound hptr query ->
+      word_upper_bound (mk_hptr addr limit) query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      store_reg regs arg_dest (IntValue result) new_regs ->
-
-      xstep (OpLoad arg_enc_ptr arg_dest heap_variant)
+      step_load (OpLoad (Some (mk_hptr addr limit), __) (IntValue result) heap_variant)
          {|
            gs_callstack    := cs0;
+
+
            gs_regs         := regs;
-
-
            gs_pages        := mem;
            gs_flags        := flags;
+           gs_context_u128 := ctx;
          |}
          {|
            gs_callstack    := new_cs;
-           gs_regs         := new_regs;
 
 
+           gs_regs         := regs;
            gs_pages        := mem;
            gs_flags        := flags;
+           gs_context_u128 := ctx;
          |}
         )
   .

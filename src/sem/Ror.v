@@ -1,10 +1,10 @@
-Require sem.Bitwise.
-Import Addressing Core ZArith Common Instruction Memory ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon sem.Bitwise.
+Require sem.SemanticCommon.
+Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
 
-Section Def.
+Section Ror.
   Open Scope ZMod_scope.
-  Inductive step: instruction -> xsmallstep :=
+  Generalizable Variables tag.
+  Inductive step_ror: instruction -> flags_tsmallstep :=
   (**
 # Ror
 
@@ -34,12 +34,10 @@ Follows the scheme described in [%binop_state_bitwise_effect_spec].
 
 Reminder: flags are only set if `set_flags` modifier is set. *)
   | step_Ror:
-    forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out _tag1 _tag2 x y result gs gs' shift,
-      binop_bitwise_effect_spec in1 in2 out mod_swap mod_sf
-        (mk_pv _tag1 x) (mk_pv _tag2 y) (IntValue result)  gs gs' ->
-      shift = resize _ word_bits (resize _ 8 y) ->
-      result = ror _ x shift ->
-      step (OpRor in1 in2 out mod_sf) gs gs'
+    forall mod_sf result op shift w_shift old_flags new_flags,
+      `(w_shift = resize _ word_bits (resize _ 8 shift) ->
+      result = ror _ op w_shift ->
+      step_ror (OpRor (mk_pv tag1 op) (mk_pv tag2 shift) (IntValue result) mod_sf) old_flags new_flags)
   .
 (**
 ## Affected parts of VM state
@@ -58,4 +56,4 @@ Reminder: flags are only set if `set_flags` modifier is set. *)
 
 - `shl`, `shr`, `rol` and `ror` are encoded as variants of the same instruction.
  *)
-End Def.
+End Ror.

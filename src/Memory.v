@@ -234,38 +234,33 @@ When the execution of a contract starts, new pages are allocated for:
 Therefore, the types of pages are: data pages, stack pages, constant data pages,
 and code pages. **)
 
-    Record pages_config := {
-        pc_code: Type;
-        pc_const: Type;
-        pc_data: Type;
-        pc_stack: Type;
-      }.
+    Context {code_page const_page data_page stack_page: Type}.
 
-    Context {config: pages_config}
-        (code_page  := pc_code config)
-        (const_page := pc_const config)
-        (data_page  := pc_data config)
-        (stack_page := pc_stack config).
+    Inductive page_type :=
+    | DataPage : data_page -> page_type
+    | StackPage : stack_page -> page_type
+    | ConstPage : const_page -> page_type
+    | CodePage : code_page -> page_type
+    .
 
-    Inductive page :=
-    | DataPage : data_page -> page
-    | StackPage : stack_page -> page
-    | ConstPage : const_page -> page
-    | CodePage : code_page -> page.
-
-
+    Record page := mk_page {
+        type:> page_type
+        }.
     (** **Memory** is a collection of pages [%memory], each page is attributed a
     unique identifier [%page_id]. Pages persist for as long as they can be read
     by some code; in presence of [%FatPointer] the page lifetime may exceed the
     lifetime of the frame that created it. *)
 
     Definition page_id := nat.
-    Definition memory := list (page_id * page).
+    Definition pages := list (page_id * page).
+    Record memory := mk_pages {
+        mem_pages:> pages;
+      }.
 
     Inductive page_has_id : memory -> page_id -> page -> Prop :=
     | mpid_select : forall mm id page,
         List.In (id, page) mm ->
-        page_has_id mm id page.
+        page_has_id (mk_pages mm) id page.
 
     (** The set of identifiers has a complete linear order, ordering the pages
     by the time of creation. The ability to distinguish older pages from newer
@@ -284,18 +279,26 @@ and code pages. **)
     [%m1] and [%m2], where [%m2] is a copy of [%m1] but a page with it [%id] is
     replaced
     by another page [%p].*)
-    Inductive page_replace (id:page_id) (p:page): memory -> memory -> Prop :=
+    Inductive page_replace_list (id:page_id) (p:page): pages -> pages -> Prop :=
     | mm_replace_base: forall oldpage newpage tail,
-        page_replace id p ((id, oldpage)::tail) ((id,newpage)::tail)
+        page_replace_list id p ((id, oldpage)::tail) ((id,newpage)::tail)
     | mm_replace_ind: forall oldpage not_id tail tail',
-        page_replace id p tail tail' ->
+        page_replace_list id p tail tail' ->
         id <> not_id ->
-        page_replace id p ((not_id,oldpage)::tail) ((not_id,oldpage)::tail').
+        page_replace_list id p ((not_id,oldpage)::tail) ((not_id,oldpage)::tail').
+
+    Inductive page_replace (id:page_id) (p:page): memory -> memory -> Prop :=
+      | prl_apply: forall ls ls',
+        page_replace_list id p ls ls' ->
+        page_replace id p (mk_pages ls) (mk_pages ls').
 
     (** Function [%page_alloc] creates a new page in memory. *)
-    Definition page_alloc (p:page) (m: memory ) : memory :=
-      let new_id := length m in
-      cons (new_id, p) m.
+    Definition page_alloc (p:page) (m: memory) : memory :=
+      let new_id := length (mem_pages m) in
+      match m with
+      | mk_pages mem_pages => mk_pages (cons (new_id, p) mem_pages)
+      end.
+
   End Pages.
 
 
@@ -312,6 +315,7 @@ $2^{32}$ bytes. *)
                                 |}.
   Definition mem_address := address data_page_params.
   Definition mem_address_zero: mem_address := zero32.
+  Definition mem_address_bits := data_page_params.(address_bits).
 
   Definition data_page := mem_parameterized data_page_params.
 
@@ -348,6 +352,7 @@ Reminder: primitive values are tagged words.
                                  |}.
 
   Definition stack_address := address stack_page_params.
+  Definition stack_address_bits := stack_page_params.(address_bits).
   Definition stack_address_zero: stack_address := zero16.
 
   Definition stack_page := mem_parameterized stack_page_params.
@@ -421,13 +426,17 @@ Const pages can coincide with code pages. *)
                                   default_value := invalid_ins;
                                   writable := false
                                 |}.
-  Definition code_page := mem_parameterized code_page_params.
+  Record code_page := mk_code_page {
+      cp_insns:> mem_parameterized code_page_params;
+      }.
   Definition code_length := code_address.
-
 
 End Memory.
 
-(** The definition [%era_pages] collects the specific types of pages used by
+(** The definition [%vm_page] collects the specific types of pages used by
 EraVM semantic. *)
-Definition era_pages {instr} {inv:instr} := Build_pages_config (code_page inv) const_page data_page stack_page.
+#[global]
+  Canonical vm_page {instr} (inv:instr) type : page := @mk_page (code_page inv) const_page data_page stack_page type.
+#[global]
+  Canonical vm_mem {instr} (inv:instr) type : memory := @mk_pages (code_page inv) const_page data_page stack_page type.
 

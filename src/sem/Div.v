@@ -1,13 +1,14 @@
-Require  sem.SemanticCommon.
+Require sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Flags GPR Instruction CallStack Memory MemoryOps State ZMod
+Import Addressing Bool ZArith Common Flags GPR isa.CoreSet CallStack Modifiers State ZMod
   ZBits Addressing.Coercions PrimitiveValue SemanticCommon List ListNotations.
 
 Section Def.
   Open Scope Z_scope.
 
-  Generalizable Variables arg_op arg_out any_tag .
-  Inductive step_div: instruction -> xsmallstep :=
+  Generalizable Variables tag.
+
+  Inductive step_div: instruction -> flags_tsmallstep :=
 
   (**
 # Div
@@ -42,42 +43,50 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
 
       Flags are computed as follows:
 
+1. If division by a non-zero integer:
+
       - `LT_OF` is cleared;
-      - `EQ` is cleared.
+      - `EQ` is set if the quotient is not zero;
+      - `GT` is set if the reminder is not zero.
+
+2. If division by zero:
+
+      - `LT_OF` is set;
+      - `EQ` is cleared;
       - `GT` is cleared.
 
    Reminder: flags are only set if `set_flags` modifier is set.
    *)
   | step_Div_no_overflow:
-
-    forall (mod_swap: mod_swap) (mod_flags: mod_set_flags)
-      (x y:Z) wx wy
-      flags regs mem cs new_regs new_mem new_flags new_cs
-      (quot rem: Z) wquot wrem,
-      `(
-          fetch_apply22_swap mod_swap (regs,mem,cs)
-
-            (      arg_op1, mk_pv any_tag1 wx)
-            (InReg arg_op2, mk_pv any_tag2 wy)
-
-            (       arg_out1, IntValue wquot)
-            (OutReg arg_out2, IntValue wrem)
-
-            (new_regs, new_mem, new_cs) ->
-
+    `(forall mod_sf old_flags new_flags w_quot w_rem quot rem (x y x y:Z) op1 op2,
+          let x := int_val _ op1 in
+          let y := int_val _ op2 in
           y <> 0 ->
           quot = Z.div x y ->
           rem = Z.rem x y ->
+          w_quot = u256_of quot ->
+          w_rem = u256_of rem ->
 
-          let new_EQ := Z.eqb quot 0 in
-          let new_GT := Z.eqb rem 0 in
-          new_flags = apply_set_flags mod_flags flags (bflags false new_EQ new_GT) ->
+          let new_EQ := quot =? 0 in
+          let new_GT := rem =? 0 in
+          new_flags = apply_set_flags mod_sf
+                        old_flags
+                        (bflags false new_EQ new_GT) ->
 
-          step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
-            (mk_exec_state flags regs mem cs)
-            (mk_exec_state flags new_regs new_mem new_cs)
+          step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue w_quot) (IntValue w_rem) mod_sf) old_flags new_flags)
+  | step_Div_overflow:
+    forall mod_sf old_flags new_flags (x y x y:Z) op1 op2,
+      `(
+          let x := int_val _ op1 in
+          let y := int_val _ op2 in
+          new_flags = apply_set_flags mod_sf old_flags (bflags true false false) ->
+
+          step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue zero256) (IntValue zero256) mod_sf) old_flags new_flags
         )
-  (**
+
+
+
+.  (**
    - If `in2` $= 0$:
       $$\begin{cases}out_1 := 0 \\
 out_{2} := 0 \end{cases}$$
@@ -88,32 +97,6 @@ out_{2} := 0 \end{cases}$$
       - `GT` is set if `LT_OF` and `EQ` are cleared.
 
 Reminder: flags are only set if `set_flags` modifier is set.
-   *)
-  | step_Div_overflow:
-
-    forall (mod_swap: mod_swap) (mod_flags: mod_set_flags)
-      wx
-      flags regs mem cs new_regs new_mem new_flags new_cs,
-
-      `(
-          fetch_apply22_swap mod_swap (regs,mem,cs)
-
-            (      arg_op1, mk_pv any_tag1 wx)
-            (InReg arg_op2, mk_pv any_tag2 zero256)
-
-            (       arg_out1, IntValue zero256)
-            (OutReg arg_out2, IntValue zero256)
-
-            (new_regs, new_mem, new_cs) ->
-
-          new_flags = apply_set_flags mod_flags flags (bflags true false false) ->
-          step_div (OpDiv arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
-            (mk_exec_state flags regs mem cs)
-            (mk_exec_state flags new_regs new_mem new_cs)
-        )
-  .
-
-(**
 3. Finally, store results in the locations corresponding to `out1` and `out2`.
 
 ## Affected parts of VM state

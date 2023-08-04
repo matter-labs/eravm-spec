@@ -1,20 +1,12 @@
-From RecordUpdate Require Import RecordSet.
+Require SemanticCommon.
 
-Require SemanticCommon Addressing.
-
-Import ABI Addressing Bool Common Coder Predication CallStack GPR Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions Pointer PrimitiveValue SemanticCommon MemoryContext State RecordSetNotations ZMod.
-
-Import FatPointer.
-Import List ListNotations.
-
+Import MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
 
 Section Defs.
 
   Open Scope ZMod_scope.
-  Import Pointer.Coercions.
-  Generalizable Variables cs flags.
-  Inductive step_load : instruction -> xsmallstep :=
+  Generalizable Variables cs flags regs mem.
+  Inductive step_load_inc : instruction -> tsmallstep :=
     (**
 # LoadInc
 
@@ -47,31 +39,23 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
 *)
   | step_LoadInc:
-    forall heap_variant enc_ptr (arg_dest arg_modptr:out_reg) (arg_enc_ptr:in_regimm) result mem new_regs selected_page ptr_inc query new_cs regs addr limit src_tag,
+    forall heap_variant result new_regs selected_page ptr_inc query new_cs addr limit src_tag __ ___ ctx,
       `(
-      load _  regs cs0 mem arg_enc_ptr (cs1, mk_pv src_tag enc_ptr) ->
       let hptr := mk_hptr addr limit in
-      decode_heap_ptr enc_ptr = Some hptr ->
 
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
-      heap_variant_page heap_variant cs1 mem selected_page ->
+      heap_variant_page heap_variant cs0 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
       word_upper_bound hptr query ->
-      grow_and_pay heap_variant query cs1 new_cs ->
+      grow_and_pay heap_variant query cs0 new_cs ->
 
       hp_inc hptr ptr_inc ->
-      let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None ptr_inc) in
-
-      store_regs regs [
-          (arg_dest, IntValue result);
-          (arg_modptr, mk_pv src_tag ptr_inc_enc)
-        ] new_regs ->
-
-      step_load (OpLoadInc arg_enc_ptr arg_dest heap_variant arg_modptr)
-        (mk_exec_state flags regs mem cs0)
-        (mk_exec_state flags new_regs mem new_cs)
+      
+      step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant (ptr_inc, mk_pv src_tag ___))
+        (mk_transient_state flags regs mem cs0 ctx)
+        (mk_transient_state flags new_regs mem new_cs ctx)
         )
   .
 (**

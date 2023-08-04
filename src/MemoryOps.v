@@ -13,27 +13,16 @@ memory or registers ([%store]).
 
   Context {instruction: Type} (instruction_invalid:instruction)
     {state_checkpoint: Type}
-    (code_page := code_page instruction_invalid)
     (primitive_value := @primitive_value word)
-    (era_pages := @era_pages _ instruction_invalid)
-    (StackPage := @StackPage era_pages)
-    (CodePage := @CodePage era_pages)
-    (ConstPage := @ConstPage era_pages)
     (callstack:= @callstack state_checkpoint)
-    (pconf := Build_pages_config code_page const_page data_page stack_page)
-    (memory := @memory pconf)
   .
 
   Section FetchStore.
-    Context
-        (regs: regs_state)
-        (cs: callstack)
-        (mem: memory)
-        (page_has_id := page_has_id mem)
-    .
+    Let memory :=  @memory (@code_page instruction instruction_invalid) const_page data_page stack_page.
+    Context (regs: regs_state) (cs: callstack) (mem: memory) .
 
     Inductive fetch_result : Type :=
-    | FetchIns (ins: instruction )
+    | FetchIns (ins: instruction)
     | FetchPV (pv: primitive_value) .
 
     Inductive fetch: loc -> fetch_result -> Prop :=
@@ -45,17 +34,17 @@ memory or registers ([%store]).
         fetch (LocImm imm) (FetchPV (IntValue imm'))
     | fetch_stackaddr:
       forall stackpage (value: primitive_value) addr,
-        @active_stackpage _ _ instruction_invalid page_has_id cs stackpage ->
+        active_stackpage (page_has_id mem) cs stackpage ->
         MemoryBase.load_result _ addr stackpage value ->
         fetch (LocStackAddress addr) (FetchPV value)
     | fetch_codeaddr:
       forall codepage addr ins,
-        active_codepage _ page_has_id cs codepage ->
+        active_codepage (page_has_id mem) cs codepage ->
         load_result _ addr codepage ins ->
         fetch (LocCodeAddr addr) (FetchIns ins)
     | fetch_constaddr:
       forall constpage addr value,
-        active_constpage _ page_has_id cs constpage ->
+        active_constpage (page_has_id mem) cs constpage ->
         load_result _ addr constpage value ->
         fetch (LocConstAddr addr) (FetchPV (IntValue value))
     .
@@ -72,7 +61,7 @@ memory or registers ([%store]).
         store_loc value (LocReg reg_name) (new_regs, mem)
     | store_lstackaddr:
       forall new_mem stackpage addr value pid new_stackpage,
-        active_stackpage _ page_has_id cs stackpage ->
+        active_stackpage (page_has_id mem) cs stackpage ->
         store_result _ addr stackpage value new_stackpage ->
         page_replace pid (StackPage new_stackpage) mem new_mem ->
         store_loc value (LocStackAddress addr) (regs, new_mem)

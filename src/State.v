@@ -1,23 +1,22 @@
 From RecordUpdate Require Import RecordSet.
-Require ABI Core Decommitter GPR Ergs Event Memory History Instruction CallStack .
+Require ABI Core Decommitter GPR Ergs Event Memory History CallStack .
 
-Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory Instruction ZMod List Decommitter.
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory ZMod List Decommitter Predication.
 Import ListNotations RecordSetNotations.
 
 Section Definitions.
 
 Definition CALLSTACK_LIMIT := 1024%nat.
-
 Definition exception_handler := code_address.
 
 (* begin details: helpers *)
-Definition era_pages := @era_pages instruction_predicated instruction_invalid.
-Definition page := @page era_pages.
+Definition instruction_invalid : predicated Assembly.instruction := invalid Assembly.OpInvalid.
 Definition decommitter := decommitter instruction_invalid.
-Definition memory := @memory era_pages.
-
-Definition query := @query contract_address PrecompileParameters.inner_params.
+Definition code_page := code_page instruction_invalid.
+Definition memory := @memory code_page const_page data_page stack_page.
+Definition query := @query contract_address PrecompileParameters.params.
 Definition event := @event contract_address.
+Definition page_has_id := @page_has_id code_page const_page data_page stack_page.
 
 
 (* end details *)
@@ -54,34 +53,34 @@ Record global_state :=
     gs_current_ergs_per_pubdata_byte: ergs;
     gs_tx_number_in_block: tx_num;
     gs_contracts: decommitter;
-    gs_revertable: state_checkpoint;
+    gs_revertable:> state_checkpoint;
     }.
 
 Inductive roll_back checkpoint: global_state -> global_state -> Prop :=
 | rb_apply: forall e tx ccs ___,
   roll_back checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
 
-(** 3. Transient execution state [%exec_state] contains:
+(** 3. Transient execution state [%transient_state] contains:
   - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
   - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0].
   - all memory pages allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
   - call stack, where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and current balance are parts of the current stack frame. See [%CallStack].
+  - 128-bit register [%gs_context_u128]. Its usage is detailed below.
  *)
-Record exec_state :=
-  mk_exec_state {
+Record transient_state :=
+  mk_transient_state {
       gs_flags : flags_state;
       gs_regs: regs_state;
       gs_pages: memory;
       gs_callstack: callstack;
+      gs_context_u128: u128;
     }.
 
 (**
-4. In addition to that, a  128-bit register [%gs_context_u128] is used. Its usage is detailed below.
  *)
 Record state :=
   mk_state {
-      gs_xstate :> exec_state;
-      gs_context_u128: u128;
+      gs_transient :> transient_state;
       gs_global :> global_state;
     }.
 
@@ -89,12 +88,13 @@ Record state :=
 
 The 128-bit context value occurs in two places in EraVM:
 
-- In the [%gs_context_u128] register, forming a part of the EraVM state [%state].
-- In the [%ecf_context_u128_value], forming part of an external call stack frame [%callstack_external].
+- In the mutable [%gs_context_u128] register, forming a part of the EraVM state [%state].
+- In the read-only [%ecf_context_u128_value] of each external call stack frame [%callstack_external].
 
-These values are distinct: the second one is a snapshot of the first one in a moment of a far call.
+These values are distinct: the value in callstack is a snapshot of the register
+[%gs_context_u128] in a moment of a far call.
 
-Here is how context value is typically used:
+The typical usage of the context value is as follows:
 
 1. Set the value of [%gs_context_u128] to $C$ by executing the instruction [%OpContextSetContextU128].
 2. Launch a contract using one of the far call instructions. This action pushes a new [%callstack_external] frame $F$ onto the [%gs_callstack]. The value of the $F$'s field [%ecf_context_u128_value] is equal to $C$. Ina ddition, far calls reset [%gs_context_u128] to 0.
@@ -107,8 +107,8 @@ Note that setting the context register [%gs_context_u128] is forbidden in [%Stat
 (* begin hide *)
 
 #[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_revertable>.
-#[export] Instance etaXS : Settable _ := settable! mk_exec_state <gs_flags ; gs_regs; gs_pages; gs_callstack>.
-#[export] Instance etaXGGS : Settable _ := settable! mk_state <gs_xstate; gs_context_u128; gs_global> .
+#[export] Instance etaXS : Settable _ := settable! mk_transient_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128>.
+#[export] Instance etaXGGS : Settable _ := settable! mk_state <gs_transient; gs_global> .
 
 (* end hide *)
 
@@ -190,13 +190,12 @@ Definition heap_variant_page_id (page_type: data_page_type)
   | AuxHeap => @active_auxheap_id state_checkpoint
   end.
 
-Definition page_has_id mem := page_has_id mem (config := era_pages).
 
 Definition heap_variant_page (page_type: data_page_type) (cs:callstack) (mem:memory) :=
     match page_type with
     | Heap => active_heappage
     | AuxHeap =>  active_auxheappage
-    end _ (page_has_id mem) cs .
+    end (page_has_id mem) cs .
 
 Definition heap_variant_id (page_type: data_page_type)
   :  callstack -> page_id :=

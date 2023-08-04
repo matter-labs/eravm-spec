@@ -1,5 +1,5 @@
-Require lib.ZMod Common Instruction Memory.
-Import Common Instruction Memory ZMod ZArith.
+Require lib.ZMod Common isa.Assembly Memory.
+Import Common Assembly Memory ZMod ZArith.
 
 Section Ergs.
 Open Scope Z_scope.
@@ -155,10 +155,10 @@ executing; see [%Semantics.step].
 
 Instructions may also impose additional costs e.g. far returns and far calls may grow heap; farcalls also may induce code decommittment costs.
  *)
-  Definition base_cost {descr} (ins:@instruction descr) :=
+  Definition base_cost (ins:instruction) :=
     (match ins with
      | OpInvalid => INVALID_OPCODE_ERGS
-     | OpNoOp | OpModSP _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpNoOp | OpSpAdd _ _ | OpSpSub _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpAnd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpOr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
@@ -166,17 +166,17 @@ Instructions may also impose additional costs e.g. far returns and far calls may
      | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
 
-     | OpShl _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpShr _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpRol _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpRor _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpShl _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpShr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpRol _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpRor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
 
      | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
-     | OpFarCall _ _ _ _ _
-     | OpDelegateCall _ _ _ _ _
-     | OpMimicCall _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
+     | OpFarCall _ _ _ _ _ _
+     | OpDelegateCall _ _ _ _ _ _
+     | OpMimicCall _ _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
                              + RAM_PERMUTATION_COST_IN_ERGS
                              + STORAGE_READ_IO_PRICE
                              + CALL_LIKE_ERGS_COST
@@ -192,8 +192,8 @@ Instructions may also impose additional costs e.g. far returns and far calls may
      | OpPtrShrink _ _ _ _
      | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      |
-       OpStore _ _ _
-     | OpStoreInc _ _ _ _
+       OpStore _ _ _ _
+     | OpStoreInc _ _ _ _ _
        => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
 
      | OpLoad _ _ _
@@ -217,7 +217,7 @@ Instructions may also impose additional costs e.g. far returns and far calls may
                  + RAM_PERMUTATION_COST_IN_ERGS
                  + LOG_DEMUXER_COST_IN_ERGS
                  + STORAGE_SORTER_COST_IN_ERGS
-     | OpSStore _ _ =>
+     | OpSStore _ _ _ =>
                 Z.max MIN_STORAGE_WRITE_COST (
                     STORAGE_WRITE_IO_PRICE
                     + 2 * VM_CYCLE_COST_IN_ERGS
@@ -231,12 +231,12 @@ Instructions may also impose additional costs e.g. far returns and far calls may
                     + 2 * LOG_DEMUXER_COST_IN_ERGS
                     + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS in
                 Z.max intrinsic_cost L1_MESSAGE_MIN_COST_IN_ERGS
-     | OpEvent _ _ _ => EVENT_IO_PRICE
+     | OpEvent _ _ _ _ => EVENT_IO_PRICE
                      + 2 * VM_CYCLE_COST_IN_ERGS
                      + RAM_PERMUTATION_COST_IN_ERGS
                      + 2 * LOG_DEMUXER_COST_IN_ERGS
                      + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
-     | OpPrecompileCall _ _ =>
+     | OpPrecompileCall _ _ _ _ =>
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
      end)%Z.
 

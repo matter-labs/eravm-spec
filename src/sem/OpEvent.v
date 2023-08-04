@@ -1,10 +1,8 @@
 Require SemanticCommon.
 
-Import Addressing Common CallStack Event MemoryOps Instruction State
-  Addressing.Coercions PrimitiveValue SemanticCommon.
-Import List ListNotations.
+Import CallStack Event isa.CoreSet State PrimitiveValue SemanticCommon.
 
-Inductive step: instruction -> smallstep :=
+Inductive step_event: instruction -> smallstep :=
 (**
 # Event
 
@@ -29,15 +27,11 @@ Emit an event with provided key and value. See [%event] for more details on even
 
  *)
 | step_Event:
-  forall context_u128 xs (arg_key: in_reg) (arg_value: in_reg) is_first __ ___
+  forall xs is_first __ ___
     key value gs new_gs,
     let regs := gs_regs xs in
     let pages := gs_pages xs in
     let xstack := gs_callstack xs in
-    load_regs regs [
-        (arg_key, mk_pv __ key);
-        (arg_value, mk_pv ___ value)
-      ] ->
 
     emit_event (EventQuery {|
                     ev_shard_id := current_shard xstack;
@@ -48,20 +42,14 @@ Emit an event with provided key and value. See [%event] for more details on even
                     ev_value := value;
                   |}) gs new_gs ->
 
-
-    step (OpEvent arg_key arg_value is_first)
+    step_event (OpEvent (mk_pv __ key) (mk_pv ___ value) is_first)
          {|
            gs_global       := gs;
-
-           gs_xstate       := xs;
-           gs_context_u128 := context_u128;
+           gs_transient    := xs;
          |}
          {|
            gs_global       := new_gs;
-
-
-           gs_xstate       := xs;
-           gs_context_u128 := context_u128;
+           gs_transient    := xs;
          |}.
 (**
 ## Affected parts of VM state

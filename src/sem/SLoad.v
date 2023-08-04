@@ -1,15 +1,11 @@
-From RecordUpdate Require Import RecordSet.
-
 Require SemanticCommon.
+Import  isa.CoreSet Memory PrimitiveValue SemanticCommon State.
 
-Import Addressing ABI Bool Common Predication Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
-Import ZArith List ListNotations.
+Section SLoad.
+  Generalizable Variable __.
 
-Generalizable Variable __.
-
-Inductive step: instruction -> xsmallstep :=
-(**
+  Inductive step_sload: instruction -> smallstep :=
+  (**
 # SLoad
 
 
@@ -33,35 +29,14 @@ Access word in current storage by key.
    Current contract is identified by the field [%ecf_this_address] of the active external frame.
 2. Store the value to `dest`.
 
-*)
-| step_SLoad:
-  forall flags xstack regs (arg_key: in_reg) (arg_dest_value: out_reg)
-    new_regs pages read_value key (s1 s2:state) __,
-    load_reg regs arg_key (mk_pv __ key) ->
+   *)
+  | step_SLoad:
+    forall read_value key (s:state) __,
+      let fqa_storage := mk_fqa_key (current_storage_fqa (gs_callstack s)) key in
 
-    let fqa_storage := mk_fqa_key (current_storage_fqa xstack) key in
-
-    storage_read (gs_revertable s1).(gs_depot) fqa_storage read_value ->
-    store_reg regs arg_dest_value (IntValue read_value) new_regs ->
-    step_xstate_only
-      {|
-           gs_regs         := regs;
-
-
-           gs_pages        := pages;
-           gs_callstack    := xstack;
-           gs_flags        := flags;
-         |}
-         {|
-           gs_regs         := new_regs;
-
-
-           gs_pages        := pages;
-           gs_callstack    := xstack;
-           gs_flags        := flags;
-         |} s1 s2 ->
-    step (OpSLoad arg_key arg_dest_value) s1 s2
-.
+      storage_read (gs_revertable s).(gs_depot) fqa_storage read_value ->
+      step_sload (OpSLoad (mk_pv __ key)(IntValue read_value)) s s
+  .
 (**
 ## Affected parts of VM state
 
@@ -77,3 +52,4 @@ Access word in current storage by key.
 - [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
  *)
+End SLoad.

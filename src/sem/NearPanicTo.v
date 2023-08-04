@@ -1,10 +1,10 @@
+From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Common Flags CallStack GPR Memory Instruction State SemanticCommon.
+Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon VMPanic RecordSetNotations isa.CoreSet.
 
-Section NearPanic.
-Generalizable Variables regs flags pages gs s __.
-Inductive step_panic: forall descr, @instruction descr -> smallstep :=
+Section NearPanicTo.
+Inductive step_panicto: instruction -> smallstep :=
 (**
 
 # NearPanic (abnormal return, not return/panic)
@@ -32,36 +32,10 @@ Inductive step_panic: forall descr, @instruction descr -> smallstep :=
 4. Proceed with executing [%label], i.e. replace program counter with the label's value.
  *)
 | step_NearPanic:
-    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx label descr,
-      `(
-          let cs := InternalCall (mk_cf _eh _sp _pc _ergs saved) caller_stack in
-          let handler := active_exception_handler cs in
-
-          roll_back saved gs gs' ->
-          step_panic descr (OpNearPanicTo label)
-                      {|
-                        gs_xstate := {|
-                                       gs_flags        := flags;
-                                       gs_callstack    := InternalCall cf caller_stack;
-
-                                       gs_regs         := regs;
-                                       gs_pages        := pages;
-                                     |};
-                        gs_context_u128 := ctx;
-                        gs_global := gs;
-                      |}
-                      {|
-                        gs_xstate := {|
-                                      gs_flags        := set_overflow flags_clear;
-                                      gs_callstack    := pc_set label caller_reimbursed;
-
-                                      gs_regs         := regs;
-                                      gs_pages        := pages;
-                                    |};
-                        gs_context_u128 := ctx;
-                        gs_global := gs';
-                      |}
-        )
+    forall label s1 s2 s3,
+      step_panic TriggeredExplicitly s1 s2 ->
+      s3 = s2 <| gs_transient ::= fun ts => ts <| gs_callstack ::= pc_set label  |> |> ->
+      step_panicto (@OpNearPanicTo bound label) s1 s3
 .
 (** ## Affected parts of VM state
 
@@ -76,4 +50,4 @@ Inductive step_panic: forall descr, @instruction descr -> smallstep :=
 
 Return from a recoverable error, fail-safe.
  *)
-End NearPanic.
+End NearPanicTo.

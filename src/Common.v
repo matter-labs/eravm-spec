@@ -1,4 +1,4 @@
-Require ZArith lib.ZMod.
+Require lib.ZMod.
 Require Lib.
 Export Lib.
 

@@ -1,14 +1,19 @@
-From RecordUpdate Require Import RecordSet.
-
 Require SemanticCommon.
 
-Import Addressing Common Coder CallStack Memory Instruction State ZMod
-  ABI ABI.FatPointer SemanticCommon PrimitiveValue Pointer RecordSetNotations ZArith.
+Import
+Core
+Memory
+MemoryBase
+Pointer
+PrimitiveValue
+SemanticCommon
+State
+ZMod
+isa.CoreSet
+.
 
 Section Def.
   Open Scope ZMod_scope.
-  Import Pointer.Coercions.
-
 
   (**
 # PtrSub
@@ -40,44 +45,19 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset - diff}$$
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
 
    *)
-  Inductive step : instruction -> xsmallstep :=
+  Inductive step_ptrsub : instruction -> smallstep :=
   | step_PtrSub:
-    forall (in1:in_any) (in2:in_reg) (out:out_any) op1 new_ofs op2 swap result regs mem cs new_regs new_mem new_cs flags limit ofs,
-      fetch_apply21_swap swap (regs, mem, cs)
+    forall src_enc result s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
-        (      in1, PtrValue op1)
-        (InReg in2, IntValue op2)
-        (      out, PtrValue result)
+      mem_delta = resize word_bits mem_address_bits arg_delta ->
+      (new_ofs, false) = ofs + mem_delta ->
 
-        (new_regs, new_mem, new_cs) ->
-
-      decode_heap_ptr op1 = Some (mk_hptr ofs limit) ->
-      let diff := resize _ 32 op2 in
-      (new_ofs, false) = ofs - diff ->
-
-      let ptr := encode_fat_ptr (mk_fat_ptr None (mk_hptr new_ofs limit)) in
-      let low := resize _ 128 ptr in
-
-      result = mix_lower 128 op1 low ->
-
-
-      step (OpPtrSub in1 in2 out swap)
-           {|
-             gs_callstack    := cs;
-             gs_regs         := regs;
-             gs_pages        := mem;
-
-
-             gs_flags        := flags;
-           |}
-           {|
-             gs_callstack    := new_cs;
-             gs_regs         := new_regs;
-             gs_pages        := new_mem;
-
-
-             gs_flags        := flags;
-           |}
+      topmost_128_bits_match src_enc result ->
+      step_ptrsub (OpPtrSub
+              (Some (mk_fat_ptr pid (mk_ptr span ofs)), PtrValue src_enc)
+              (IntValue arg_delta)
+              (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
+        s s
   .
 (**
 

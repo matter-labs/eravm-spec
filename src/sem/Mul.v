@@ -1,13 +1,14 @@
-From RecordUpdate Require Import RecordSet.
-Require  sem.SemanticCommon.
+Require sem.SemanticCommon.
 
-Import Addressing Bool Core ZArith Common Flags Instruction CallStack Memory MemoryOps State ZMod
-  ZBits  PrimitiveValue RecordSetNotations SemanticCommon List ListNotations.
+Import Bool Core Modifiers Common Flags isa.CoreSet CallStack Memory MemoryOps State ZMod
+  ZArith PrimitiveValue SemanticCommon List ListNotations.
 
 Section Def.
   Open Scope ZMod_scope.
 
-Inductive xstep: instruction -> xsmallstep :=
+  Generalizable Variables tag.
+
+  Inductive step_mul: instruction -> flags_tsmallstep :=
 (**
 # Mul
 
@@ -64,39 +65,22 @@ Arithmetic operations.
 
  *)
   | step_Mul:
-    forall flags pages cs regs (arg_op1:in_any) (arg_op2:in_reg) (arg_out1:out_any) (arg_out2:out_reg) any_tag1 any_tag2 mod_swap mod_flags wx wy wprod_high wprod_low (x y prod_high prod_low:Z) new_regs new_cs new_pages new_flags,
-      fetch_apply22_swap mod_swap (regs,pages,cs)
+    forall mod_sf old_flags new_flags w_high w_low high low (x y:Z) op1 op2,
+      `(
+          let x := int_val _ op1 in
+          let y := int_val _ op2 in
+          extract_digits (x * y) word_bits 2 = [ w_high;  w_low ] ->
+          let high256 := u256_of w_high in
+          let low256  := u256_of w_low in
 
-        (      arg_op1, mk_pv any_tag1 wx)
-        (InReg arg_op2, mk_pv any_tag2 wy)
+          let new_EQ := low256  == zero256 in
+          let new_OF := high256 != zero256 in
+          let new_GT := negb new_EQ && negb new_OF in
 
-        (       arg_out1, IntValue wprod_low)
-        (OutReg arg_out2, IntValue wprod_high)
+          new_flags = apply_set_flags mod_sf old_flags
+                        (bflags new_OF new_EQ new_GT) ->
 
-        (new_regs, new_pages, new_cs) ->
-      wx = u256_of x -> wy = u256_of y ->
-      wprod_low = u256_of prod_low ->
-      wprod_high = u256_of prod_high ->
-      extract_digits (x * y) word_bits 2 = [ prod_high;  prod_low ] ->
-
-      let new_EQ := wprod_low  == zero256 in
-      let new_OF := wprod_high != zero256 in
-      let new_GT := (negb new_OF) && (negb new_EQ) in
-      new_flags = apply_set_flags mod_flags flags (bflags new_OF new_EQ new_GT) ->
-
-      xstep (OpMul arg_op1 arg_op2 arg_out1 arg_out2 mod_swap mod_flags)
-        {|
-          gs_flags        := flags;
-          gs_regs         := regs;
-          gs_callstack    := cs;
-          gs_pages        := pages;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_regs         := new_regs;
-          gs_callstack    := new_cs;
-          gs_pages        := new_pages;
-        |}
-.
-
+          step_mul (OpMul (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue high) (IntValue low) mod_sf) old_flags new_flags
+        ).
+  Generalizable No Variables.
 End Def.

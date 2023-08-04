@@ -1,6 +1,6 @@
-Require Instruction.
+Require isa.CoreSet.
 
-Import Instruction Addressing GPR Common.
+Import isa.CoreSet Addressing GPR Common.
 Section StaticMode.
 
 (** # Static mode
@@ -44,7 +44,7 @@ Static calls are guaranteed to preserve the state of storage, will not emit even
 
 
 (** Function [%forbidden_static] returns [%true] if instruction [%ins] is forbidden in static mode. *)
-  Context (forbidden := true) (allowed := false) {descr:instruction_descr}.
+  Context (forbidden := true) (allowed := false) {descr:descr}.
   Definition forbidden_static (ins:@instruction descr) : bool :=
     match ins with
     | OpContextSetContextU128 _

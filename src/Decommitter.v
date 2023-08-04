@@ -30,12 +30,14 @@ Note: storage with the same contract address may differ between shards.
   Definition code_hash_location (for_contract: contract_address) (sid:shard_id): fqa_key :=
     mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (resize _ 256 for_contract).
 
-  Context {ins_type: Type} (invalid_ins: ins_type) (code_page := code_page invalid_ins).
+  Context {ins_type: Type} (invalid_ins: ins_type) (code_page := code_page invalid_ins)
+    (empty_code : code_page := @mk_code_page _ invalid_ins (empty _))
+    (empty_const: const_page := (empty _ )).
 
   Definition code_storage_params := {|
                                      addressable_block := code_page * const_page;
                                      address_bits := 256;
-                                     default_value := (empty _, empty _);
+                                     default_value := (empty_code, empty_const);
                                      writable := false;
                                    |}.
 

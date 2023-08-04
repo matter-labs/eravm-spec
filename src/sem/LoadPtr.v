@@ -1,17 +1,11 @@
-Require SemanticCommon Addressing Slice.
+Require SemanticCommon Slice.
 
-Import ABI Addressing Common Coder CallStack GPR Pointer  Memory MemoryOps Instruction ZMod
-  Addressing.Coercions SemanticCommon MemoryContext Pointer PrimitiveValue State Slice.
-
-Import FatPointer.
-Import List ListNotations.
-Import Addressing.Coercions.
-
+Import Memory MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue Slice State ZMod.
 
 Section Defs.
 
   Open Scope ZMod_scope.
-  Inductive step_load_ptr : instruction -> xsmallstep :=
+  Inductive step_load_ptr : instruction -> tsmallstep :=
 
  (**
 # LoadPointer
@@ -54,25 +48,18 @@ offset := 2
 4. Store the word to `res`.
 *)
   | step_LoadPointer:
-    forall enc_ptr (arg_dest: out_reg) (arg_enc_ptr: in_reg) result regs new_regs mem addr selected_page in_ptr slice cs flags page_id,
-
-      load_reg regs arg_enc_ptr (PtrValue enc_ptr) ->
-
-      decode_fat_ptr enc_ptr = Some in_ptr ->
-
+    forall result _flags _regs mem _cs _ctx addr selected_page (in_ptr:fat_ptr) slice page_id __,
       validate_in_bounds in_ptr = true ->
-      Some page_id  =in_ptr.(fp_page) ->
-      page_has_id mem page_id (@DataPage era_pages selected_page) ->
+      Some page_id = in_ptr.(fp_page) ->
+      page_has_id mem page_id (mk_page (DataPage selected_page)) ->
       slice_page selected_page in_ptr slice ->
 
       ptr_resolves_to in_ptr addr  ->
       mb_load_slice_result BigEndian slice addr result ->
 
-      store_reg regs arg_dest (IntValue result) new_regs ->
-
-      step_load_ptr (OpLoadPointer arg_enc_ptr arg_dest)
-        (mk_exec_state flags regs mem cs)
-        (mk_exec_state flags new_regs mem cs)
+      step_load_ptr (OpLoadPointer (Some in_ptr, PtrValue __) (IntValue result))
+                    (mk_transient_state _flags _regs mem _cs _ctx)
+                    (mk_transient_state _flags _regs mem _cs _ctx)
   .
 
 (**

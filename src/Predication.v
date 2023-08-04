@@ -86,4 +86,22 @@ When an instruction is skipped, its base cost is still paid. *)
   Defined.
 
 (* end details *)
+
+
+  Record predicated (instruction:Type): Type :=
+    Ins {
+        ins_spec: instruction;
+        ins_cond: predicate;
+      }.
+
+  (** Invalid instruction. It is a default value on code memory pages. See
+  [%code_page]. It is parameterized by an instruction type for convenience of
+  defining it. *)
+
+  Definition invalid {I} (ins:I) : predicated I :=
+    {|
+      ins_spec := ins;
+      ins_cond:= IfAlways
+    |}.
+
 End Predication.

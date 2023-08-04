@@ -1,11 +1,11 @@
 Require SemanticCommon.
 
-Import Common Flags CallStack GPR Memory Instruction State SemanticCommon.
+Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon.
 
 Section NearRevert.
-Generalizable Variables regs flags pages gs s __.
-Inductive step_revert: instruction -> smallstep :=
-(**
+  Generalizable Variables regs pages __.
+  Inductive step_nearrevertto: @instruction bound -> smallstep :=
+  (**
 
 # NearRevert (return with recoverable error)
 
@@ -31,40 +31,40 @@ Inductive step_revert: instruction -> smallstep :=
 3. Drop topmost frame.
 4. Clear flags
 5. Proceed with executing [%label], i.e. replace program counter with the label's value.
- *)
-| step_NearRevert:
-    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx label,
+   *)
+  | step_NearRevert:
+    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx label gs new_gs pages,
       `(
           let cs := InternalCall (mk_cf _eh _sp _pc _ergs saved) caller_stack in
           let handler := active_exception_handler cs in
 
           ergs_reimburse_caller_and_drop cs caller_reimbursed ->
-          roll_back saved gs gs' ->
-          step_revert (OpNearRevertTo label)
-                      {|
-                        gs_xstate := {|
-                                       gs_flags        := flags;
-                                       gs_callstack    := InternalCall cf caller_stack;
+          roll_back saved gs new_gs ->
+          step_nearrevertto (OpNearRevertTo label)
+                            {|
+                              gs_transient := {|
+                                               gs_flags        := __ ;
+                                               gs_callstack    := InternalCall cf caller_stack;
 
-                                       gs_regs         := regs;
-                                       gs_pages        := pages;
-                                     |};
-                        gs_context_u128 := ctx;
-                        gs_global := gs;
-                      |}
-                      {|
-                        gs_xstate := {|
-                                      gs_flags        := flags_clear;
-                                      gs_callstack    := pc_set label caller_reimbursed;
+                                               gs_regs         := regs;
+                                               gs_pages        := pages;
+                                               gs_context_u128 := ctx;
+                                             |};
+                              gs_global := gs;
+                            |}
+                            {|
+                              gs_transient := {|
+                                               gs_flags        := flags_clear;
+                                               gs_callstack    := pc_set label caller_reimbursed;
 
-                                      gs_regs         := regs;
-                                      gs_pages        := pages;
-                                    |};
-                        gs_context_u128 := ctx;
-                        gs_global := gs';
-                      |}
+                                               gs_regs         := regs;
+                                               gs_pages        := pages;
+                                               gs_context_u128 := ctx;
+                                             |};
+                              gs_global := new_gs;
+                            |}
         )
-.
+  .
 (** ## Affected parts of VM state
 
 - Flags are cleared.

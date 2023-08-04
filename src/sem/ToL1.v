@@ -2,14 +2,13 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing ABI Bool Common Predication Ergs CallStack Event Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
-Import ZArith List ListNotations.
+Import Common Ergs CallStack Event Memory isa.CoreSet State ZMod
+  PrimitiveValue SemanticCommon RecordSetNotations.
 
 Section ToL1.
 
   Open Scope ZMod_scope.
-(**
+  (**
 # ToL1Message
 
 ## Abstract Syntax
@@ -31,55 +30,34 @@ Emit a message to L1 with provided key and value. See [%event] for more details 
 - If `is_first` is `true`, mark the event as the first in a chain of events.
 - Emit L1 message event.
 
- *)
-Inductive step: instruction -> smallstep :=
+   *)
+  Inductive step_tol1: instruction -> smallstep :=
 
-| step_ToL1:
-  forall flags cs new_cs context_u128 regs (arg_key: in_reg) (arg_value: in_reg) is_first
-    pages key value gs new_gs cost __ ___,
-    load_regs regs [
-        (arg_key, mk_pv __ key);
-        (arg_value, mk_pv ___ value)
-      ] ->
+  | step_ToL1:
+    forall cs new_cs is_first key value gs new_gs cost ts1 ts2 __ ___,
 
-    (cost, false) = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
-    pay cost cs new_cs ->
+      (cost, false) = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
+      pay cost cs new_cs ->
 
-    emit_l1_msg {|
-        ev_shard_id := current_shard cs;
-        ev_is_first := is_first;
-        ev_tx_number_in_block := gs_tx_number_in_block gs;
-        ev_address := current_contract cs;
-        ev_key := key;
-        ev_value := value;
-      |} gs new_gs ->
-
-    step (OpToL1Message arg_key arg_value is_first)
-         {|
-           gs_xstate := {|
-                         gs_callstack    := cs;
-
-                         gs_regs         := regs;
-                         gs_pages        := pages;
-                         gs_flags        := flags;
-                         |};
-
-           gs_global       := gs;
-           gs_context_u128 := context_u128;
-         |}
-         {|
-           gs_xstate := {|
-                         gs_callstack    := new_cs;
-
-                         gs_regs         := regs;
-                         gs_pages        := pages;
-                         gs_flags        := flags;
-                       |};
-
-           gs_global       := new_gs;
-           gs_context_u128 := context_u128;
-         |}
-         .
+      emit_l1_msg {|
+          ev_shard_id := current_shard cs;
+          ev_is_first := is_first;
+          ev_tx_number_in_block := gs_tx_number_in_block gs;
+          ev_address := current_contract cs;
+          ev_key := key;
+          ev_value := value;
+        |} gs new_gs ->
+      ts2 = ts1 <| gs_callstack := new_cs |> ->
+      step_tol1 (OpToL1Message (mk_pv __ key) (mk_pv ___ value) is_first)
+           {|
+             gs_transient := ts1;
+             gs_global    := gs;
+           |}
+           {|
+             gs_transient := ts2;
+             gs_global    := new_gs;
+           |}
+  .
 (**
 ## Affected parts of VM state
 

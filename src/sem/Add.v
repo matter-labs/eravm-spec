@@ -1,18 +1,20 @@
-Require sem.BinOps.
+Require SemanticCommon.
 
-Import Addressing Bool Common Flags Instruction Memory State ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon BinOps.
+Import Bool Common Flags CoreSet Memory Modifiers State ZMod
+  PrimitiveValue SemanticCommon.
 
 Section Def.
   Open Scope ZMod_scope.
 
-  Inductive step: instruction -> xsmallstep :=
+  Generalizable Variables op tag.
+
+  Inductive step_add: instruction -> flags_tsmallstep :=
   (**
 # Add
 
 ## Abstract Syntax
 
-[%% OpAdd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
+[%OpAdd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -26,8 +28,6 @@ Section Def.
 Unsigned overflowing addition of two numbers modulo $2^{256}$.
 
 ## Semantic
-
-Follows the scheme described in [%binop_effect_spec].
 
 - result is computed by unsigned addition of two numbers with overflow modulo $2^{256}$.
 
@@ -58,19 +58,18 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
    *)
   | step_Add:
-    forall mod_swap mod_sf (in1:in_any) (in2:in_reg) out xs xs' _tag1 _tag2 op1 op2 result flags_candidate new_OF,
+    forall mod_sf old_flags new_flags,
+      `(
+          let (result, new_OF) := op1 + op2 in
+          let new_EQ := result == zero256 in
+          let new_GT := negb new_EQ && negb new_OF in
 
-      binop_effect_spec mod_swap mod_sf
-        (in1, mk_pv _tag1 op1)
-        (in2, mk_pv _tag2 op2)
-        (out, IntValue result) flags_candidate
-        xs xs' ->
+          new_flags = apply_set_flags mod_sf
+                        old_flags
+                        (bflags new_OF new_EQ new_GT) ->
 
-      (result, new_OF) = op1 + op2 ->
-      let new_EQ := result == zero256 in
-      let new_GT := negb new_EQ && negb new_OF in
-      flags_candidate = bflags new_OF new_EQ new_GT ->
-
-      step (OpAdd in1 in2 out mod_swap mod_sf) xs xs'
+          step_add (OpAdd (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_sf) old_flags new_flags)
   .
+  Generalizable No Variables.
+
 End Def.

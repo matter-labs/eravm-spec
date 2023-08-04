@@ -20,5 +20,5 @@ Precompiles are not revertable; their functioning is not affected by rollbacks.
 
 Currently we formalize precompiles as a black box.
    *)
-  Parameter precompile_processor : contract_address -> PrecompileParameters.inner_params -> exec_state -> exec_state -> Prop.
+  Parameter precompile_processor : contract_address -> PrecompileParameters.params -> transient_state -> transient_state -> Prop.
 End Precompiles.

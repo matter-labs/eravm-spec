@@ -1,10 +1,8 @@
-From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Addressing Common Coder Core Flags CallStack GPR Ergs MemoryOps Memory Instruction State ZMod
-  ABI ABI.NearCall Addressing.Coercions PrimitiveValue SemanticCommon.
+Import ABI.NearCall Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet Memory State ZMod SemanticCommon.
 
-Section Def.
+Section NearCall.
   Open Scope ZMod_scope.
   (**
 
@@ -65,9 +63,7 @@ Record params := {
       | (remaining, true) => (balance, zero32)
       end.
 
-  Section Defs.
-
-    (**
+  (**
 Explanation for [%split_ergs_caller_callee]:
 
 - if `ergs_passed` = 0, pass all available ergs to the callee and set
@@ -98,30 +94,43 @@ the caller.
    - new SP is copied from the old frame as is.
 5. Clear flags.
 
-     *)
+   *)
 
-    Context (regs: regs_state) (mem: memory) (cs: callstack) (ss:state_checkpoint).
+  Inductive step_nearcall: @instruction bound -> smallstep :=
+  | step_NearCall_pass_some_ergs:
+    forall (expt_handler call_addr: code_address)
+      (passed_ergs callee_ergs caller_ergs: ergs)
+      (new_caller:callstack) (new_frame:callstack_common) __ ___ (cs:callstack) regs ctx pages gs,
 
-    Inductive step_nearcall: instruction -> flags_state * callstack -> Prop:=
-    | step_NearCall_pass_some_ergs:
-      forall (abi_params_arg:in_reg) (abi_params_value:word)  (expt_handler call_addr: code_address)
-        (passed_ergs callee_ergs caller_ergs:ergs)
-        (abi_tag: bool)
-        (new_caller:callstack) (new_frame:callstack_common),
+      (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
 
-        load_reg regs abi_params_arg (mk_pv abi_tag abi_params_value) ->
+      new_caller = ergs_set caller_ergs cs ->
+      new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs (gs_revertable gs) ->
 
-        Some passed_ergs = option_map ergs_passed (ABI.(decode) abi_params_value) ->
+      step_nearcall
+        (OpNearCall (Some (mk_params passed_ergs), __) (Imm call_addr) (Imm expt_handler))
+        {|
+          gs_transient := {|
+                           gs_flags        := ___;
+                           gs_callstack    := cs;
+                           gs_regs         := regs;
+                           gs_context_u128 := ctx;
+                           gs_pages        := pages;
+                         |};
+          gs_global       := gs;
+        |}
+        {|
+          gs_transient := {|
+                           gs_flags        := flags_clear;
+                           gs_callstack    := InternalCall new_frame new_caller;
+                           gs_regs         := regs;
+                           gs_context_u128 := ctx;
+                           gs_pages        := pages;
+                         |};
+          gs_global       := gs;
+        |}.
 
-        (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
-
-        new_caller = ergs_set caller_ergs cs ->
-        new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs ss ->
-
-        step_nearcall (OpNearCall abi_params_arg (Imm call_addr) (Imm expt_handler))
-          (flags_clear, InternalCall new_frame new_caller).
-
-  (**
+(**
 
 
 ### Affected parts of VM state
@@ -157,30 +166,6 @@ the caller.
 
 
 - See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
-   *)
-  End Defs.
+ *)
+End NearCall.
 
-  Inductive xstep ss: instruction -> xsmallstep :=
-  | step_NearCall:
-    forall flags memory cs regs (abi_params_op:in_reg) new_flags new_cs ins,
-
-      step_nearcall regs cs ss ins (new_flags, new_cs) ->
-      xstep ss ins
-        {|
-          gs_flags        := flags;
-          gs_callstack    := cs;
-
-
-          gs_regs         := regs;
-          gs_pages        := memory;
-        |}
-        {|
-          gs_flags        := new_flags;
-          gs_callstack    := new_cs;
-
-
-          gs_regs         := regs;
-          gs_pages        := memory;
-        |}.
-
-End Def.

@@ -1,14 +1,20 @@
-From RecordUpdate Require Import RecordSet.
-
 Require SemanticCommon.
 
-Import Addressing Common CallStack Memory Instruction State ZMod
-  ABI ABI.FatPointer Addressing.Coercions Coder PrimitiveValue Pointer SemanticCommon RecordSetNotations ZArith.
+Import
+Core
+Memory
+MemoryBase
+Pointer
+PrimitiveValue
+SemanticCommon
+State
+ZMod
+isa.CoreSet
+.
 
 Section Def.
   Open Scope ZMod_scope.
-  Import Pointer.Coercions.
-(**
+  (**
 
 # PtrAdd
 
@@ -38,48 +44,21 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset + diff}$$
 
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
 
-TODO I guess we should we rather express it in terms of pointer fields?
- *)
-Inductive step : instruction -> xsmallstep :=
-| step_PtrAdd:
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap result regs mem cs new_regs new_mem new_cs flags ofs new_ofs limit,
+   *)
+  Inductive step_ptradd : instruction -> smallstep :=
+  | step_PtrAdd:
+    forall src_enc result s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
-      fetch_apply21_swap swap (regs, mem, cs)
+      mem_delta = resize word_bits mem_address_bits arg_delta ->
+      (new_ofs, false) = ofs + mem_delta ->
 
-        (      in1, PtrValue op1)
-        (InReg in2, IntValue op2)
-        (      out, PtrValue result)
-
-        (new_regs, new_mem, new_cs) ->
-
-      decode_heap_ptr op1 = Some (mk_hptr ofs limit) ->
-      let diff := resize _ 32 op2 in
-      (new_ofs, false) = ofs + diff ->
-
-      let ptr := encode_fat_ptr (mk_fat_ptr None (mk_hptr new_ofs limit)) in
-      let low := resize _ 128 ptr in
-
-      result = mix_lower 128 op1 low ->
-
-
-      step (OpPtrAdd in1 in2 out swap)
-           {|
-             gs_callstack    := cs;
-             gs_regs         := regs;
-             gs_pages        := mem;
-
-
-             gs_flags        := flags;
-           |}
-           {|
-             gs_callstack    := new_cs;
-             gs_regs         := new_regs;
-             gs_pages        := new_mem;
-
-
-             gs_flags        := flags;
-           |}
-.
+      topmost_128_bits_match src_enc result ->
+      step_ptradd (OpPtrAdd
+              (Some (mk_fat_ptr pid (mk_ptr span ofs)), PtrValue src_enc)
+              (IntValue arg_delta)
+              (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
+        s s
+  .
 (** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
@@ -107,5 +86,5 @@ Inductive step : instruction -> xsmallstep :=
 
 Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
-  *)
+ *)
 End Def.

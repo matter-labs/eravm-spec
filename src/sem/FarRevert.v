@@ -2,11 +2,10 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps Instruction State ZMod
+Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps isa.CoreSet State ZMod
   ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
-Generalizable Variables regs flags pages s gs.
 
-Inductive step: instruction -> smallstep :=
+Inductive step_farrevert: instruction -> smallstep :=
 
 (** ## Far revert (return with recoverable error)
 
@@ -48,7 +47,7 @@ Inductive fwd_memory :=
    - For [%ForwardFatPointer p]:
       + ensure that the register containing `abi_reg`  is tagged as pointer.
       + ensure that the memory page of `p` does NOT refer to a page owned by an older frame.
-      + [%fp_shrink] [%p] so it starts at its current offset, and the offset is reset to zero. See [%free_ptr_shrink].
+      + [%fp_narrow] [%p] so it starts at its current offset, and the offset is reset to zero. See [%free_ptr_narrow].
 
         TODO Explanation why the circularity check is necessary.
 
@@ -79,33 +78,29 @@ Inductive fwd_memory :=
  7. Context register is zeroed.
 *)
 | step_RevertExt_heapvar:
-  forall pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) heap_span_enc out_ptr ____ heap_type hspan,
-    `(let cs0 := ExternalCall cf (Some caller_stack) in
+  forall gs gs' pages cf caller_stack cs1 caller_reimbursed params out_ptr heap_type hspan __ ___ ____ _____,
+    let cs0 := ExternalCall cf (Some caller_stack) in
 
-    load_reg_any regs arg heap_span_enc ->
-
-    decode FarRet.ABI heap_span_enc = Some (ForwardNewHeapPointer heap_type hspan) ->
+    params = ForwardNewHeapPointer heap_type hspan ->
 
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
     roll_back cf.(cf_saved_checkpoint) gs gs' ->
-    step (OpFarRevert arg)
+    step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
           {|
-            gs_xstate := {|
-                          gs_flags        := ___ ;
+            gs_transient := {|
+                          gs_flags        := __ ;
                           gs_callstack    := cs0;
-                          gs_regs         := regs;
-
+                          gs_regs         := ___;
+                          gs_context_u128 := ____;
 
                           gs_pages        := pages;
                         |};
-            gs_context_u128 := ____;
-
             gs_global       := gs;
           |}
           {|
-            gs_xstate := {|
+            gs_transient := {|
                           gs_flags        := flags_clear;
                           gs_callstack    := caller_reimbursed;
                           gs_regs         := regs_state_zero
@@ -113,50 +108,45 @@ Inductive fwd_memory :=
                              <| r2 := reserved |>
                              <| r3 := reserved |>
                              <| r4 := reserved |> ;
-
+                          gs_context_u128 := zero128;
 
                           gs_pages        := pages;
                           |};
-          gs_context_u128 := zero128;
-
           gs_global       := gs';
-          |})
-
+          |}
 | step_RevertExt_ForwardFatPointer:
-  forall __ pages cf caller_stack cs1 caller_reimbursed ___ regs (arg:in_reg) in_ptr_encoded in_ptr out_ptr page,
-    `(let cs0 := ExternalCall cf (Some caller_stack) in
+  forall pages cf caller_stack cs1 caller_reimbursed __ ___ ____ _____ in_ptr out_ptr page params gs gs',
+    let cs0 := ExternalCall cf (Some caller_stack) in
 
     (* Panic if not a pointer *)
-    load_reg regs arg (PtrValue in_ptr_encoded) ->
 
-    FarRet.ABI.(decode) in_ptr_encoded = Some (ForwardFatPointer in_ptr) ->
+    params = ForwardFatPointer in_ptr ->
     in_ptr.(fp_page) = Some page ->
 
     MemoryContext.page_older page (get_mem_ctx cs0) = false ->
 
     validate in_ptr = no_exceptions ->
 
-    fp_shrink in_ptr out_ptr ->
+    fat_ptr_narrow in_ptr out_ptr ->
 
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
     roll_back cf.(cf_saved_checkpoint) gs gs' ->
-    step (OpFarRevert arg)
+    step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
           {|
-            gs_xstate := {|
+            gs_transient := {|
                           gs_flags        := __ ;
                           gs_callstack    := cs0;
-                          gs_regs         := regs;
-
+                          gs_regs         := ___ ;
+                          gs_context_u128 := ____;
 
                           gs_pages        := pages;
                         |};
-            gs_context_u128 := ___;
 
             gs_global       := gs;
           |}
           {|
-            gs_xstate := {|
+            gs_transient := {|
                           gs_flags        := flags_clear;
                           gs_callstack    := caller_reimbursed;
                           gs_regs         := regs_state_zero
@@ -164,16 +154,13 @@ Inductive fwd_memory :=
                              <| r2 := reserved |>
                              <| r3 := reserved |>
                              <| r4 := reserved |> ;
-
+                          gs_context_u128 := zero128;
 
                           gs_pages        := pages;
                           |};
 
-
-          gs_context_u128 := zero128;
-
           gs_global       := gs';
-          |})
+          |}
 .
 (** ### Affected parts of VM state
 

@@ -1,20 +1,12 @@
-From RecordUpdate Require Import RecordSet.
-
-Require SemanticCommon Addressing.
-
-
-Import ABI Addressing Bool Core Coder Common Predication CallStack GPR Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon MemoryContext Pointer PrimitiveValue State RecordSetNotations ZArith ZMod.
-
-Import FatPointer.
-Import List ListNotations.
-Import Addressing.Coercions.
+Require SemanticCommon.
+Import Core Common Memory MemoryOps isa.CoreSet State ZMod
+  SemanticCommon Pointer PrimitiveValue.
 
 
 Section Defs.
  Open Scope ZMod_scope.
- Import Pointer.Coercions.
- Inductive step: instruction -> xsmallstep :=
+
+ Inductive step_storeinc: instruction -> tsmallstep :=
 (**
 # StoreInc
 
@@ -48,17 +40,11 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 *)
   | step_StoreInc:
  
-    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page query modified_page cs regs mem __ ___ addr limit arg_modptr hptr_mod,
+    forall hptr flags new_cs heap_variant enc_ptr value new_mem selected_page query modified_page cs regs mem __ ___ addr limit hptr_mod ctx ____,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
-      loads _ regs cs mem [
-         (in_regimm_incl arg_enc_ptr, mk_pv __ enc_ptr) ;
-         (InReg          arg_val, mk_pv ___ value)
-          ] cs ->
-
-      let hptr := mk_hptr addr limit in
-      decode_heap_ptr enc_ptr = Some hptr ->
+      hptr = mk_hptr addr limit ->
 
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
@@ -68,28 +54,31 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
       grow_and_pay heap_variant query cs new_cs ->
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->
-      page_replace selected_page_id (@DataPage era_pages modified_page) mem new_mem ->
+      page_replace selected_page_id (mk_page (DataPage modified_page)) mem new_mem ->
 
       hp_inc hptr hptr_mod ->
-      let ptr_inc_enc := encode_fat_ptr (mk_fat_ptr None hptr_mod) in
 
-      step (OpStoreInc arg_enc_ptr arg_val heap_variant arg_modptr)
-                 {|
-                   gs_callstack    := cs;
-                   gs_regs         := regs;
-                   gs_pages        := mem;
+      step_storeinc (OpStoreInc (Some hptr, mk_pv __ enc_ptr) (mk_pv ___ value) heap_variant (hptr_mod, ____))
+           {|
+             gs_callstack    := cs;
+             gs_pages        := mem;
 
 
-                   gs_flags        := flags;
-                 |}
-                 {|
-                   gs_callstack    := new_cs;
-                   gs_regs         := new_regs;
-                   gs_pages        := new_mem;
+             gs_regs         := regs;
+             gs_flags        := flags;
+             gs_context_u128 := ctx;
+           |}
+           {|
+             gs_callstack    := new_cs;
+             gs_pages        := new_mem;
 
 
-                   gs_flags        := flags;
-                 |}.
+             gs_regs         := regs;
+             gs_flags        := flags;
+             gs_context_u128 := ctx;
+           |}
+
+ .
 (**
 ## Affected parts of VM state
 

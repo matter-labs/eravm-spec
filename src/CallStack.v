@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Memory Ergs MemoryContext.
+Require Common Ergs Memory MemoryContext.
 
-Import ZArith Common Ergs Instruction MemoryBase MemoryContext Memory ZMod List ListNotations.
+Import Common Ergs MemoryContext Memory List ListNotations.
 
 Section Stack.
 
@@ -79,21 +79,28 @@ Internal call frames hold the following information:
 (** External call frames hold the same information as internal. Additionally, they
 hold:
 
-- [%ecf_this_address] : the stack frame was created when this contract was
-  called.
-- [%ecf_msg_sender] : the stack frame was created when this contract invoked one
+- Three associated contract addresses:
+
+   1. [%ecf_this_address] : the stack frame was created when this contract was called.
+   2. [%ecf_msg_sender] : the stack frame was created when this contract invoked one
   of far call instructions.
-- [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
+   3. [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
+
 - [%ecf_mem_ctx] : current [%mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
 - [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
 - [%ecf_context_u128_value] : captured value of [%gs_context_u128]. It represents a snapshot of the value of global register [%gs_context_u128] in the moment when the external call frame was created i.e. when a far call instruction was executed.
 - [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].
  *)
-  Record callstack_external :=
-    mk_extcf {
+  Record associated_contracts :=
+    mk_assoc_contracts {
         ecf_this_address: contract_address;
         ecf_msg_sender: contract_address;
         ecf_code_address: contract_address;
+      }.
+
+  Record callstack_external :=
+    mk_extcf {
+        ecf_associated:> associated_contracts;
         ecf_mem_ctx: mem_ctx;
         ecf_is_static: bool; (* forbids any write-like "log" and so state modifications, event emissions, etc *)
         ecf_context_u128_value: u128;
@@ -102,8 +109,9 @@ hold:
       }.
 
   (* begin hide *)
+  #[export] Instance etaACE : Settable _ := settable! mk_assoc_contracts < ecf_this_address; ecf_msg_sender; ecf_code_address >.
   #[export] Instance etaCFE : Settable _ :=
-    settable! mk_extcf < ecf_this_address; ecf_msg_sender; ecf_code_address; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_common>.
+    settable! mk_extcf < ecf_associated; ecf_mem_ctx; ecf_is_static; ecf_context_u128_value; ecf_shards; ecf_common>.
   (* end hide *)
 
   Inductive callstack :=
@@ -213,9 +221,9 @@ Executing any instruction $I$ changes the topmost frame:
       (ef <| ecf_common ::= fun cf => cf <| cf_sp ::=  f |> |>).
 
     Inductive sp_map_extcall_spec f: callstack_external -> callstack_external -> Prop :=
-    | sme_apply: forall a b c d e g h eh sp pc ss ergs,
-        sp_map_extcall_spec f (mk_extcf a b c d e g h (mk_cf eh sp pc ergs ss))
-          (mk_extcf a b c d e g h (mk_cf eh (f sp) pc ergs ss)).
+    | sme_apply: forall a d e g h eh sp pc ss ergs,
+        sp_map_extcall_spec f (mk_extcf a d e g h (mk_cf eh sp pc ergs ss))
+          (mk_extcf a d e g h (mk_cf eh (f sp) pc ergs ss)).
 
     Theorem sp_map_extcall_correct:
       forall f ef, sp_map_extcall_spec f ef (sp_map_extcall f ef).
@@ -278,12 +286,12 @@ Executing any instruction $I$ changes the topmost frame:
     Inductive pc_map_extcall_spec f: callstack_external -> callstack_external
                                  -> Prop :=
     | upe_update:
-      forall cf cf' this_address msg_sender code_address memory is_static context_u128_value cc,
+      forall cf cf' ac memory is_static context_u128_value cc,
         pc_map_cfc_spec f cf cf' ->
         pc_map_extcall_spec f
-          (mk_extcf this_address msg_sender code_address memory is_static
+          (mk_extcf ac memory is_static
              context_u128_value cc cf)
-          (mk_extcf this_address msg_sender code_address memory is_static
+          (mk_extcf ac memory is_static
              context_u128_value cc cf')
     .
 
@@ -361,7 +369,7 @@ Executing any instruction $I$ changes the topmost frame:
 
     Definition current_shard xstack : shard_id := (active_extframe xstack).(ecf_shards).(shard_this).
 
-    Definition current_contract xstack : contract_address := (active_extframe xstack).(ecf_this_address).
+    Definition current_contract xstack : contract_address := ecf_this_address (active_extframe xstack).
 
   End TopmostExternalFrame.
 
@@ -395,7 +403,7 @@ Executing any instruction $I$ changes the topmost frame:
 
     Section ActivePages.
 
-      Context (page_has_id: page_id -> @page (@era_pages _ ins_invalid) -> Prop).
+      Context {code_page const_page data_page stack_page} (page_has_id: page_id -> @page code_page const_page data_page stack_page -> Prop).
 
       Definition active_exception_handler (ef: callstack) : exception_handler :=
         (cfc ef).(cf_exception_handler_location).
@@ -403,29 +411,29 @@ Executing any instruction $I$ changes the topmost frame:
 
       Context (ef: callstack) (page_id := fun i => page_has_id (i ef)).
 
-      Inductive active_codepage : code_page _ -> Prop :=
+      Inductive active_codepage : code_page -> Prop :=
       | ap_active_code: forall codepage,
-          page_id active_code_id (CodePage codepage) ->
+          page_id active_code_id (mk_page (CodePage codepage)) ->
           active_codepage codepage.
 
       Inductive active_constpage : const_page -> Prop :=
       | ap_active_const: forall constpage,
-          page_id  active_const_id (ConstPage constpage) ->
+          page_id  active_const_id (mk_page (ConstPage constpage)) ->
           active_constpage  constpage.
 
       Inductive active_stackpage : stack_page -> Prop :=
       | ap_active_stack: forall  stackpage,
-          page_id active_stack_id (StackPage stackpage) ->
+          page_id active_stack_id (mk_page (StackPage stackpage)) ->
           active_stackpage stackpage.
 
       Inductive active_heappage : data_page -> Prop :=
       | ap_active_heap: forall p,
-          page_id active_heap_id (DataPage p) ->
+          page_id active_heap_id (mk_page (DataPage p)) ->
           active_heappage p.
 
       Inductive active_auxheappage : data_page -> Prop :=
       | ap_active_auxheap: forall p,
-          page_id active_auxheap_id (DataPage p) ->
+          page_id active_auxheap_id (mk_page (DataPage p)) ->
           active_auxheappage p.
     End ActivePages.
 

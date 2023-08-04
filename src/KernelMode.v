@@ -1,14 +1,13 @@
-Require Instruction.
+Require isa.CoreSet.
 
-Import Instruction Memory.
+Import CoreSet Memory.
 
 Section KernelMode.
   Import ZArith ZMod.
   Open Scope Z_scope.
   Open Scope ZMod_scope.
-  Local Coercion int_mod_of : Z >-> int_mod.
 
-  Context {descr: instruction_descr}.
+  Context {descr: CoreSet.descr}.
   (** # Kernel Mode
 
 At each moment of execution VM is either in **kernel** or in **user mode**. Some
@@ -17,7 +16,7 @@ instructions are only allowed in kernel mode; executing them in user mode result
 Current mode is determined by the address of the currently executed contract: if
 the address is in range from 0 to [%KERNEL_MODE_MAXADDR_LIMIT] (exclusive),
 current mode is kernel, otherwise current mode is user mode. *)
-  Definition KERNEL_MODE_MAXADDR_LIMIT : contract_address := 2^16.
+  Definition KERNEL_MODE_MAXADDR_LIMIT : contract_address := int_mod_of _ (2^16).
 
   Definition addr_is_kernel (addr:contract_address) : bool :=
     addr < KERNEL_MODE_MAXADDR_LIMIT.
@@ -36,7 +35,7 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
     | OpContextIncrementTxNumber
     | OpEvent _ _ _
     | OpToL1Message _ _ _
-    | OpPrecompileCall _ _
+    | OpPrecompileCall _ _ _
       => true
     | _ => false
     end.
@@ -46,7 +45,7 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
 - an instruction [%ins] requires kernel mode, and
 - VM is not in kernel mode, as indicated by [%in_kernel].
    *)
-  Definition check_requires_kernel 
+  Definition check_requires_kernel
     (ins: @instruction descr)
     (in_kernel: bool) : bool :=
     (negb in_kernel) || in_kernel.

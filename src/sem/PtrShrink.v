@@ -1,12 +1,12 @@
 Require SemanticCommon.
 
-Import Addressing Common Coder CallStack Memory Instruction State ZMod
-  ABI ABI.FatPointer Addressing.Coercions PrimitiveValue Pointer SemanticCommon ZArith.
+Import Common Core Memory isa.CoreSet State ZMod
+  Pointer PrimitiveValue SemanticCommon ZArith.
 
 Section PtrShrink.
-  Import Pointer.Coercions.
+  Open Scope ZMod_scope.
 
-Inductive step: instruction -> xsmallstep :=
+Inductive step_ptrshrink: instruction -> smallstep :=
 (**
 # PtrShrink
 
@@ -35,39 +35,18 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
  *)
 
 | step_PtrShrink :
-  forall (in1:in_any) (in2:in_reg) (out:out_any) op1 op2 swap result ptr_in regs mem cs new_regs new_mem new_cs flags hptr ptr_out,
+  forall  s result ptr_in ptr_out src_enc delta ,
 
-    fetch_apply21_swap swap
-      (regs, mem, cs)
-      (in1, PtrValue op1) (InReg in2, IntValue op2) (out,PtrValue result)
-      (new_regs, new_mem, new_cs) ->
-
-    decode_heap_ptr op1 = Some hptr ->
-
-    let diff := resize _ 32 op2 in
-    hp_shrink diff ptr_in ptr_out ->
-
-    let ptr_out_enc := encode_fat_ptr (mk_fat_ptr None ptr_out) in
-    let res_low := resize _ 128 ptr_out_enc in
-    result = mix_lower 128 op1 res_low ->
-
-    step (OpPtrPack in1 in2 out swap)
-         {|
-           gs_callstack    := cs;
-           gs_regs         := regs;
-           gs_pages        := mem;
+    let diff := resize _ mem_address_bits delta in
+    fat_ptr_shrink diff ptr_in ptr_out ->
 
 
-           gs_flags        := flags;
-         |}
-         {|
-           gs_callstack    := new_cs;
-           gs_regs         := new_regs;
-           gs_pages        := new_mem;
-
-
-           gs_flags        := flags;
-         |}
+    topmost_128_bits_match src_enc result ->
+    step_ptrshrink (OpPtrShrink
+                      (Some ptr_in, PtrValue src_enc)
+                      (IntValue delta)
+                      (ptr_out, PtrValue result))
+      s s
 .
 (**
 

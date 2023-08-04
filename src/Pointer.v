@@ -70,21 +70,9 @@ $\mathit{addr}$, as described by [%hp_resolves_to]. *)
     Definition hp_span (hp:heap_ptr) : span :=
       mk_span zero32 hp.(hp_limit).
 
-    (**
-
-
- **Shrinking a heap pointer** with [%hp_shrink] subtracts a given number [%diff] from its length; it is guaranteed to not overflow.
-
-Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but such pointer will not resolve to a memory location.
-    *)
-    Inductive hp_shrink (diff: mem_address) : heap_ptr -> heap_ptr -> Prop :=
-    | tptl_apply: forall length length' ofs,
-        length - diff = (length', false) ->
-        hp_shrink diff (mk_hptr ofs length) (mk_hptr ofs length').
-
-    (** Incrementing a heap pointer with [%hp_inc] increases its offset by 32, the size of a word in bytes.
-This is used by instructions [%OpLoadInc] and [%OpStoreInc].
-     *)
+    (** Incrementing a heap pointer with [%hp_inc] increases its offset by 32,
+the size of a word in bytes. This is used by instructions [%OpLoadInc] and
+[%OpStoreInc]. *)
     Inductive hp_inc : heap_ptr -> heap_ptr -> Prop :=
     |fpi_apply :
       forall ofs ofs' lim,
@@ -93,19 +81,22 @@ This is used by instructions [%OpLoadInc] and [%OpStoreInc].
 
   (** ## Usage
 
-Heap pointers are used by some UMA instructions and pointer manipulation instructions:
+Heap pointers are used by the following instructions:
 
 - [%OpLoad]/[%OpLoadInc]
 - [%OpStore]/[%OpStoreInc]
-- [%OpPtrAdd], [%OpPtrSub], [%OpPtrShrink]
 
 The layout of a heap pointer in a 256-bit word is described by [%ABI.FatPointer.decode_heap_ptr].
 
 ## Relation to fat pointers
 
 Heap pointers are bearing a similarity to fat pointers.
-They can be thought about as fat pointers where the span starts at 0, an offset
-is the address, length is the limit, and the page ID is ignored.
+They can be thought about as fat pointers where:
+
+- the span starts at 0;
+- an offset is the address;
+- length is the limit, and
+- page ID is ignored.
 
 Heap pointers are not necessarily tagged and do not receive any special
 treatment from the VM's side.
@@ -133,6 +124,12 @@ treatment from the VM's side.
   Definition heap_ptr_to_free (hp:heap_ptr) : free_ptr :=
     mk_ptr (hp_span hp) hp.(hp_addr).
 
+  Inductive word_upper_bound : heap_ptr -> mem_address -> Prop :=
+  | qbu_apply : forall start limit upper_bound,
+      let bytes_in_word := int_mod_of _ Core.z_bytes_in_word in
+      limit + bytes_in_word  = (upper_bound, false) ->
+      word_upper_bound (mk_hptr start limit) upper_bound.
+
   Section FatPointer.
     (** # Fat pointer
 
@@ -149,9 +146,9 @@ These four components are enough to unambiguously identify a **[%slice]** of a d
         }.
 
     (* begin hide *)
-    Inductive fp_lift (P: free_ptr -> free_ptr -> Prop) : fat_ptr -> fat_ptr -> Prop :=
+    Inductive fat_ptr_lift (P: free_ptr -> free_ptr -> Prop) : fat_ptr -> fat_ptr -> Prop :=
     |fpl_apply: forall i p1 p2, P p1 p2 ->
-                           fp_lift P (mk_fat_ptr i p1) (mk_fat_ptr i p2).
+                           fat_ptr_lift P (mk_fat_ptr i p1) (mk_fat_ptr i p2).
 
     #[export] Instance etaSpan : Settable _ := settable! mk_span < s_start; s_length >.
     #[export] Instance etaFreePointer: Settable _ := settable! mk_ptr < p_span; p_offset >.
@@ -214,29 +211,40 @@ If $\mathit{offset} = \mathit{length}$, the span of the pointer is empty, but it
 
     Definition is_trivial (p:free_ptr) := (p.(s_length) == zero32) && (p.(p_offset) == zero32).
 
-    (** **Shrinking a fat pointer** moves its $\mathit{start}$ to where $\mathit{start} + \mathit{offset}$ was, and sets $\mathit{offset}$ to zero:
+    (** **Narrowing a fat pointer** moves its $\mathit{start}$ to where $\mathit{start} + \mathit{offset}$ was, and sets $\mathit{offset}$ to zero:
 
 $(\mathit{page}, \mathit{start}, \mathit{length}, \mathit{offset}) \mapsto (\mathit{page}, \mathit{start}+\mathit{offset}, \mathit{length}-\mathit{offset}, 0)$
 
-![](img/ptr-shrinking.svg)
+![](img/ptr-narrowing.svg)
 
 
-A fat pointer is automatically shrunk in two situations:
+A fat pointer is automatically narrowed in two situations:
 
 - by far calls with forwarding mode [%ForwardFatPointer];
 - by returns from far calls with forwarding mode [%ForwardFatPointer].
 
      *)
-    Inductive free_ptr_shrink : free_ptr -> free_ptr -> Prop :=
-    | tps_shrink : forall start start' length length' ofs,
+    Inductive free_ptr_narrow: free_ptr -> free_ptr -> Prop :=
+    | tps_narrow: forall start start' length length' ofs,
         validate (mk_ptr (mk_span start length) ofs) = no_exceptions ->
         start + ofs = (start', false) ->
         length - ofs = (length', false) ->
-        free_ptr_shrink (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start' length') zero32).
+        free_ptr_narrow (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start' length') zero32).
 
-    Definition fp_shrink := fp_lift free_ptr_shrink.
+    Definition fat_ptr_narrow := fat_ptr_lift free_ptr_narrow.
 
 
+(** **Shrinking a fat pointer** with [%fat_ptr_shrink] subtracts a given number [%diff] from its length; it is guaranteed to not overflow.
+
+Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but such pointer will not resolve to a memory location.
+
+    *)
+    Inductive free_ptr_shrink (diff: mem_address) : free_ptr -> free_ptr -> Prop :=
+    | tptl_apply: forall start ofs length length',
+        length - diff = (length', false) ->
+        free_ptr_shrink diff (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start length') zero32).
+
+    Definition fat_ptr_shrink diff := fat_ptr_lift (free_ptr_shrink diff).
     (** Incrementing a fat pointer with [%fp_inc] increases its offset by 32, the size of a word in bytes. This is used by the instruction [%OpLoadPointerInc]. *)
 
     Inductive ptr_inc : free_ptr -> free_ptr -> Prop :=
@@ -246,7 +254,7 @@ A fat pointer is automatically shrunk in two situations:
         ptr_inc (mk_ptr s ofs) (mk_ptr s ofs').
 
 
-    Definition fp_inc := fp_lift ptr_inc.
+    Definition fat_ptr_inc := fat_ptr_lift ptr_inc.
   End FatPointer.
 
 End Definitions.

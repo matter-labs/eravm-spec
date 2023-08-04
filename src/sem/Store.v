@@ -1,22 +1,13 @@
-From RecordUpdate Require Import RecordSet.
-
-Require SemanticCommon Addressing.
-
-
-Import ABI Addressing Bool Core Coder Common Predication CallStack GPR Memory MemoryOps Instruction State ZMod
-  Addressing.Coercions SemanticCommon MemoryContext Pointer PrimitiveValue State RecordSetNotations ZArith ZMod.
-
-Import FatPointer.
-Import List ListNotations.
-Import Addressing.Coercions.
-
+Require SemanticCommon.
+Import Core Common Memory MemoryOps isa.CoreSet State ZMod
+  SemanticCommon Pointer PrimitiveValue.
 
 Section Defs.
- Open Scope ZMod_scope.
+  Open Scope ZMod_scope.
 
- Inductive step: instruction -> xsmallstep :=
+  Inductive step_store: instruction -> tsmallstep :=
 
-(**
+  (**
 # Store
 
 ## Abstract Syntax
@@ -46,20 +37,14 @@ Decode the heap address from `in1`, store 32 consecutive bytes to the specified 
 4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to $\mathit{addr}$ in the heap variant.
 5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
 
-*)
+   *)
 
   | step_Store:
-    forall flags new_cs heap_variant enc_ptr (arg_enc_ptr:in_regimm) (arg_val:in_reg) value new_regs new_mem selected_page query modified_page cs regs mem __ ___ addr limit,
+    forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page query modified_page cs regs mem __ ___ addr limit ctx,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
-      loads _ regs cs mem [
-         (in_regimm_incl arg_enc_ptr, mk_pv __ enc_ptr) ;
-         (InReg          arg_val, mk_pv ___ value)
-          ] cs ->
-
-      let hptr := mk_hptr addr limit in
-      decode_heap_ptr enc_ptr = Some hptr ->
+      hptr = mk_hptr addr limit ->
 
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
@@ -70,25 +55,27 @@ Decode the heap address from `in1`, store 32 consecutive bytes to the specified 
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->
 
-      page_replace selected_page_id (@DataPage era_pages modified_page) mem new_mem ->
+      page_replace selected_page_id (mk_page (DataPage modified_page)) mem new_mem ->
 
-      step (OpStore arg_enc_ptr arg_val heap_variant)
-                 {|
-                   gs_callstack    := cs;
-                   gs_regs         := regs;
-                   gs_pages        := mem;
-
-
-                   gs_flags        := flags;
-                 |}
-                 {|
-                   gs_callstack    := new_cs;
-                   gs_regs         := new_regs;
-                   gs_pages        := new_mem;
+      step_store (OpStore (Some hptr, mk_pv __ enc_ptr) (mk_pv ___ value) heap_variant)
+           {|
+             gs_callstack    := cs;
+             gs_pages        := mem;
 
 
-                   gs_flags        := flags;
-                 |}
+             gs_regs         := regs;
+             gs_flags        := flags;
+             gs_context_u128 := ctx;
+           |}
+           {|
+             gs_callstack    := new_cs;
+             gs_pages        := new_mem;
+
+
+             gs_regs         := regs;
+             gs_flags        := flags;
+             gs_context_u128 := ctx;
+           |}
 
   .
 (**
