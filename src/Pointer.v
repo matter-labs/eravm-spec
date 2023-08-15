@@ -5,9 +5,9 @@ Import Bool Core ZMod Common MemoryBase Memory RecordSetNotations PMap_ext BinIn
 
 Section Definitions.
   Context (bytes_in_word := u32_of z_bytes_in_word).
-  
+
   Open Scope ZMod_scope.
-  (** This file describes concepts related to [%data_page]s: spans, heap
+  (** This library describes concepts related to [%data_page]s: spans, heap
   pointers, and fat pointers.
 
 # Span
@@ -17,7 +17,7 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
 
   Record span :=
     mk_span {
-        s_start: mem_address;
+        s_start : mem_address;
         s_length: mem_address;
       }.
 
@@ -25,59 +25,56 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
 
   (** ## Usage
 
-  Spans enable creating **fat pointers** by encoding spans in
-[%ForwardNewHeapPointer] and passing the encoded value in register to far calls
-or far returns instructions.
-The required encoding is described by [%ABI.FarRet.ABI] or
-[%ABI.FarCall.ABI].
+Passing a span in [%ForwardNewHeapPointer] as an argument to far calls or far
+returns creates a **fat pointer**.
+The required encoding is described by [%ABI.FarRet.ABI] or [%ABI.FarCall.ABI].
 See [%FarCall] and [%FarRet].
 
 See also: [%Slices].
 
-In EraVM, heap variants have a bound, stored in call stack frames (see [%ctx_heap_bound] of [%ecf_mem_ctx]).
- If memory is accessed beyond this bound, the bound is adjusted and the growth
+In EraVM, heap variants have a bound, stored in call stack frames (see
+[%ctx_heap_bound] of [%ecf_mem_ctx]).
+If memory is accessed beyond this bound, the bound is adjusted and the growth
 (difference between bounds) is paid in ergs. Definition [%span_induced_growth]
 computes how many bytes should the user pay for. *)
   Inductive span_induced_growth: span -> mem_address -> mem_address -> Prop :=
-  | gb_bytes: forall fp_start fp_length query_bound current_bound,
-      fp_start + fp_length = (query_bound, false) ->
-      let diff := growth current_bound query_bound in
-      span_induced_growth (mk_span fp_start fp_length) current_bound diff.
+  | gb_bytes: forall start length query_bound current_bound diff,
+      start + length = (query_bound, false) ->
+      diff = growth current_bound query_bound ->
+      span_induced_growth (mk_span start length) current_bound diff.
 
   Section HeapPointer.
     (** # Heap pointer
 
-A **heap pointer** is a pair of an absolute address [%hp_addr] on some data page
-and a limit [%hp_limit]. They are used in UMA instructions: [%OpLoad]/[%OpLoadInc], [%OpStore]/[%OpStoreInc].
-*)
+A **heap pointer** is an absolute address [%hp_addr] on some data page.
+Heap pointers are used in instructions:
 
+ - [%OpLoad]/[%OpLoadInc]
+ - [%OpStore]/[%OpStoreInc]
+*)
     Record heap_ptr :=
       mk_hptr
         {
           hp_addr: mem_address;
-          hp_limit: mem_address;
+          (*hp_limit: mem_address;*)
         }.
-    Definition heap_ptr_empty := mk_hptr zero32 zero32.
-
-    (** Heap pointer $(\mathit{addr}, \mathit{limit})$ resolves to
-$\mathit{addr}$, as described by [%hp_resolves_to]. *)
+    Definition heap_ptr_empty : heap_ptr := mk_hptr zero32.
 
     Inductive hp_resolves_to : heap_ptr -> mem_address -> Prop :=
-    | tpr_apply: forall addr limit,
-        ( addr < limit ) = true ->
-        hp_resolves_to (mk_hptr addr limit) addr.
+    | tpr_apply: forall addr,
+        hp_resolves_to (mk_hptr addr) addr.
 
-    Definition hp_span (hp:heap_ptr) : span :=
-      mk_span zero32 hp.(hp_limit).
+    (* Definition hp_span (hp:heap_ptr) : span := *)
+    (*   mk_span zero32 hp.(hp_limit). *)
 
     (** Incrementing a heap pointer with [%hp_inc] increases its offset by 32,
 the size of a word in bytes. This is used by instructions [%OpLoadInc] and
 [%OpStoreInc]. *)
     Inductive hp_inc : heap_ptr -> heap_ptr -> Prop :=
     |fpi_apply :
-      forall ofs ofs' lim,
+      forall ofs ofs',
         ofs + bytes_in_word  = (ofs', false) ->
-        hp_inc (mk_hptr ofs lim) (mk_hptr ofs' lim).
+        hp_inc (mk_hptr ofs) (mk_hptr ofs' ).
 
   (** ## Usage
 
@@ -121,14 +118,14 @@ treatment from the VM's side.
       (addr, false) = start + ofs ->
       ptr_resolves_to (mk_ptr (mk_span start length) ofs) addr.
 
-  Definition heap_ptr_to_free (hp:heap_ptr) : free_ptr :=
-    mk_ptr (hp_span hp) hp.(hp_addr).
+  (* Definition heap_ptr_to_free (hp:heap_ptr) : free_ptr := *)
+  (*   mk_ptr (hp_span hp) hp.(hp_addr). *)
 
   Inductive word_upper_bound : heap_ptr -> mem_address -> Prop :=
-  | qbu_apply : forall start limit upper_bound,
+  | qbu_apply : forall start upper_bound,
       let bytes_in_word := int_mod_of _ Core.z_bytes_in_word in
-      limit + bytes_in_word  = (upper_bound, false) ->
-      word_upper_bound (mk_hptr start limit) upper_bound.
+      start + bytes_in_word  = (upper_bound, false) ->
+      word_upper_bound (mk_hptr start) upper_bound.
 
   Section FatPointer.
     (** # Fat pointer
@@ -258,9 +255,3 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
   End FatPointer.
 
 End Definitions.
-
-Module Coercions.
-
-  Coercion heap_ptr_to_free : heap_ptr >-> free_ptr.
-
-End Coercions .

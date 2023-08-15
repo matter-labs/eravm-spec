@@ -8,7 +8,6 @@ Section Decommitter.
   Open Scope ZMod_scope.
   (** # Decommitter
 
-
 Decommitter is a module external to EraVM, a key-value storage where:
 
 - key is [%versioned_hash]

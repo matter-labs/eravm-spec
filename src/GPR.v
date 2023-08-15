@@ -7,11 +7,14 @@ Section Registers.
 
   Context (pv := @primitive_value word).
 
-  (** # General purpose registers
+  (** # GPR (General Purpose Registers)
 
 EraVM has 15 mutable general purpose registers R1, R2, ..., R15.
 They hold [%primitive_value word], so they are tagged 256-bit words.
-The tag is set when the register contains a fat pointer.
+The tag is set when the register contains a fat pointer in its 128 least significant bits (it may contain other useful data in topmost 128-bits; this is used e.g. for encoding parameters of [%FarCall]).
+
+Additionally, EraVM has one read-only, **constant register** R0 which
+evaluates to [%IntValue 0], that is, an untagged integer 0.
    *)
   Inductive reg_name : Set :=
     R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13
@@ -42,7 +45,7 @@ The tag is set when the register contains a fat pointer.
                                 mk_regs z z z z z z z z z z z z z z z.
   (* end hide *)
 
-  (** Additionally, it has one reserved read-only register R0 which evaluates to [%IntValue 0], that is, an untagged integer 0. Function [%fetch_gpr] loads a value from register. *)
+  (** Function [%fetch_gpr] loads a value from register. *)
   Definition fetch_gpr (rs:regs_state) (r:reg_name) : pv :=
     match r with
     | R0 => IntValue word0
@@ -63,6 +66,7 @@ The tag is set when the register contains a fat pointer.
     | R15 => r15 rs
     end.
 
+(* begin details: helpers *)
   (** Predicate [%store_gpr] stores value to a general purpose register. It is not defined for [%R0] *)
   Inductive store_gpr : regs_state -> reg_name -> pv -> regs_state -> Prop :=
   | fr_store1 :
@@ -141,7 +145,6 @@ The tag is set when the register contains a fat pointer.
         (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R15 pv
         (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 pv)
   .
-(* begin details: helpers *)
   #[export] Instance etaGPRs : Settable _ := settable! mk_regs < r1; r2; r3; r4; r5; r6; r7; r8; r9; r10; r11; r12; r13; r14; r15 >.
 
   Definition reg_map f (rs:regs_state) : regs_state :=

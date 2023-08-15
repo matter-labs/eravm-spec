@@ -44,12 +44,12 @@ Adjusting SP e.g. deallocating space on stack.
    *)
   Inductive step_sp_sub : instruction -> callstack_smallstep :=
   | step_op_sp_sub:
-    forall cs0 new_cs (old_sp intermediate_sp new_sp: stack_address) ofs op __,
+    forall (cs0 new_cs: callstack) (old_sp intermediate_sp new_sp ofs: stack_address) op __,
       sp_get cs0 = old_sp ->
       (intermediate_sp, false) = old_sp + (resize _ stack_address_bits op) ->
       (new_sp, false) = intermediate_sp - ofs->
       new_cs = sp_update new_sp cs0 ->
-      step_sp_sub (OpSpSub (mk_pv __ op) (Imm ofs)) cs0 new_cs
+      step_sp_sub (OpSpSub (mk_pv __ op) ofs) cs0 new_cs
   .
 
 End SpSub.

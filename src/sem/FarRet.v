@@ -128,7 +128,7 @@ Inductive fwd_memory :=
 
                           gs_pages        := pages;
                            |} s1 s2 ->
-    step_farret (OpFarRet (Some params, enc)) s1 s2 
+    step_farret (OpFarRet (Some params, enc)) s1 s2
 
   | step_RetExt_ForwardFatPointer:
   forall pages cf caller_stack cs1 caller_reimbursed __ ___ ____ in_ptr out_ptr page params enc s1 s2,

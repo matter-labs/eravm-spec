@@ -39,17 +39,17 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 4. Read 32 consecutive bytes as a Big Endian 256-bit word from $\mathit{addr}$ in the heap variant, store result to `res`.
 *)
   | step_Load:
-    forall new_cs heap_variant ctx result __ mem selected_page query addr limit,
+    forall new_cs heap_variant ctx result __ mem selected_page query addr,
       `(
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound (mk_hptr addr limit) query ->
+      word_upper_bound (mk_hptr addr) query ->
       grow_and_pay heap_variant query cs1 new_cs ->
 
-      step_load (OpLoad (Some (mk_hptr addr limit), __) (IntValue result) heap_variant)
+      step_load (OpLoad (Some (mk_hptr addr), __) (IntValue result) heap_variant)
          {|
            gs_callstack    := cs0;
 

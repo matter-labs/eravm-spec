@@ -41,7 +41,7 @@ Local Coercion int_mod_of : Z >-> int_mod.
 (** # Far calls
 
 Far calls are calls to the code outside the current contract space.
-This file describes three instructions to perform far calls:
+This section describes three instructions to perform far calls:
 
 - [%OpFarCall]
 - [%OpDelegateCall]
@@ -349,7 +349,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
    - start SP at [%INITIAL_SP_ON_FAR_CALL];
  *)
 
-Definition CALL_IMPLICIT_PARAMETER_REG := R3.
+Definition CALL_IMPLICIT_PARAMETER_REG := R15.
 Inductive farcall_type : Set := Normal | Mimic | Delegate.
 
 (**
@@ -383,8 +383,8 @@ Definition select_sender type (callers_caller caller : contract_address) regs :=
   | Normal => caller
   | Delegate => callers_caller
   | Mimic =>
-      let r3_value := (fetch_gpr regs CALL_IMPLICIT_PARAMETER_REG).(value) in
-      resize _ _ r3_value
+      let r15_value := (fetch_gpr regs CALL_IMPLICIT_PARAMETER_REG).(value) in
+      resize _ _ r15_value
   end.
 
 Definition select_associated_contracts type regs (ac:associated_contracts) (call_dest: contract_address): associated_contracts :=
@@ -551,21 +551,21 @@ Inductive step_farcall : instruction -> smallstep :=
     let handler_code_addr := resize _ code_address_bits handler in
     farcall Normal call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpFarCall (Some abi, abi_enc) (mk_pv __ dest) (Imm handler) call_shard call_as_static) s1 s2
+    step_farcall (OpFarCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 | step_farcall_mimic: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
     let dest_addr := resize _ contract_address_bits dest in
     let handler_code_addr := resize _ code_address_bits handler in
     farcall Mimic call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpMimicCall (Some abi, abi_enc) (mk_pv __ dest) (Imm handler) call_shard call_as_static) s1 s2
+    step_farcall (OpMimicCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 | step_farcall_delegate: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
     let dest_addr := resize _ contract_address_bits dest in
     let handler_code_addr := resize _ code_address_bits handler in
     farcall Delegate call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpDelegateCall (Some abi, abi_enc) (mk_pv __ dest) (Imm handler) call_shard call_as_static) s1 s2
+    step_farcall (OpDelegateCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 .
 
 (**

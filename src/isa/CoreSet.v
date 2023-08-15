@@ -1,22 +1,51 @@
 Require Addressing isa.Modifiers Predication.
 Import Addressing Modifiers Memory Predication.
 
-Structure descr: Type := {
-    src_pv: Type;
-    src_fat_ptr: Type;
-    src_heap_ptr: Type;
-    src_farcall_params: Type;
-    src_nearcall_params: Type;
-    src_ret_params: Type;
-    src_precompile_params: Type;
-    dest_pv: Type;
-    dest_heap_ptr: Type;
-    dest_fat_ptr: Type;
-    dest_meta_params: Type;
-  }.
+Section CoreInstructionSet.
+  (** # Core instruction set
 
-Section Functor.
+This section describes a schema [%instruction] of a simplified instruction set appearing in semantic definitions for [%asm_instruction].
+The meaning of "schema" here is that [%instruction] needs to be specialized with
+a proper instance of [%descr] record to describe an instruction at different
+stages of its execution.
 
+The schema [instruction] is parameterized with types of various instruction operands.
+Conventionally, their names reflect the following information:
+
+- the prefix is `src_` for source operands and `dest_` for output operands.
+- the suffix shows the type of data fetched or stored from register/memory.
+
+For example:
+
+- [%src_pv] means "a source operand with a meaning of a [%primitive_value]";
+- [%src_fat_ptr] means "a source operand which will be decoded to a [%fat_ptr]";
+- [%dest_heap_ptr] means "a destination operand with a meaning of [%heap_ptr]; such pointer will be encoded and written to memory".
+
+Therefore, the exact definitions of instructions should be specialized with an
+instance of [%descr] to give precise meaning to instruction operands.
+Currently, two such instances are used:
+
+- [%instruction decoded] is decoded from [%asm_instruction].
+- [%instruction bound] is an instruction where operands have been bound to their
+  source/destination locations in memory; at this stage, reads, writes, encoding
+  and decodings (parts of ABI) are accounted for.
+
+Having [%instruction bound] allows attributing semantic in a more concise way. See [%OperandBinding].
+For additional versatility, the definitions may bind both the decoded values and their representations as primitive values; see [%bound].
+   *)
+  Structure descr: Type := {
+      src_pv: Type;
+      src_fat_ptr: Type;
+      src_heap_ptr: Type ;
+      src_farcall_params: Type;
+      src_nearcall_params: Type;
+      src_ret_params: Type;
+      src_precompile_params: Type;
+      dest_pv: Type;
+      dest_heap_ptr: Type;
+      dest_fat_ptr: Type;
+      dest_meta_params: Type;
+    }.
   Context {d: descr}
     (src_pv:= src_pv d)
     (src_fat_ptr:= src_fat_ptr d)
@@ -34,8 +63,8 @@ Section Functor.
   Inductive instruction: Type :=
   | OpInvalid
   | OpNoOp
-  | OpSpAdd       (in1: src_pv) (ofs: imm_in)  (* encoded as NoOp with $out_1$ *)
-  | OpSpSub       (in1: src_pv) (ofs: imm_in) (* encoded as NoOp with $in_1$ *)
+  | OpSpAdd       (in1: src_pv) (ofs: stack_address)  (* encoded as NoOp with $out_1$ *)
+  | OpSpSub       (in1: src_pv) (ofs: stack_address) (* encoded as NoOp with $in_1$ *)
 
   | OpJump        (dest: src_pv)
   | OpAnd         (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (flags:mod_set_flags)
@@ -51,10 +80,10 @@ Section Functor.
 
   | OpMul         (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (out2: dest_pv) (flags:mod_set_flags)
   | OpDiv         (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (out2: dest_pv) (flags:mod_set_flags)
-  | OpNearCall    (in1: src_nearcall_params) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: src_farcall_params) (dest: src_pv) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
-  | OpMimicCall   (enc: src_farcall_params) (dest: src_pv) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
-  | OpDelegateCall(enc: src_farcall_params) (dest: src_pv) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
+  | OpNearCall    (in1: src_nearcall_params) (dest: code_address) (handler: code_address)
+  | OpFarCall     (enc: src_farcall_params) (dest: src_pv) (handler: code_address) (is_static:bool) (is_shard_provided: bool)
+  | OpMimicCall   (enc: src_farcall_params) (dest: src_pv) (handler: code_address) (is_static:bool) (is_shard_provided: bool)
+  | OpDelegateCall(enc: src_farcall_params) (dest: src_pv) (handler: code_address) (is_static:bool) (is_shard_provided: bool)
 
   | OpNearRet
   | OpNearRetTo     (label: code_address)
@@ -101,9 +130,8 @@ Section Functor.
   | OpPrecompileCall (in1: src_precompile_params) (ergs:src_pv)    (out: dest_pv)
   .
 
-End Functor.
 
-
+End CoreInstructionSet.
 
 
 
@@ -147,17 +175,17 @@ Section InstructionMapper.
   Generalizable Variables s i o imm fs.
 
   Context {S A B} (m:@relate_st S A B)
-      (mf_src_pv := mf_src_pv m)
-      (mf_src_fat_ptr := mf_src_fat_ptr m)
-      (mf_src_heap_ptr := mf_src_heap_ptr m)
-      (mf_src_farcall_params := mf_src_farcall_params m)
-      (mf_src_nearcall_params := mf_src_nearcall_params m)
-      (mf_src_ret_params := mf_src_ret_params m)
-      (mf_src_precompile_params := mf_src_precompile_params m)
-      (mf_dest_pv := mf_dest_pv m)
-      (mf_dest_heap_ptr := mf_dest_heap_ptr m)
-      (mf_dest_fat_ptr := mf_dest_fat_ptr m)
-      (mf_dest_meta_params := mf_dest_meta_params m)
+    (mf_src_pv := mf_src_pv m)
+    (mf_src_fat_ptr := mf_src_fat_ptr m)
+    (mf_src_heap_ptr := mf_src_heap_ptr m)
+    (mf_src_farcall_params := mf_src_farcall_params m)
+    (mf_src_nearcall_params := mf_src_nearcall_params m)
+    (mf_src_ret_params := mf_src_ret_params m)
+    (mf_src_precompile_params := mf_src_precompile_params m)
+    (mf_dest_pv := mf_dest_pv m)
+    (mf_dest_heap_ptr := mf_dest_heap_ptr m)
+    (mf_dest_fat_ptr := mf_dest_fat_ptr m)
+    (mf_dest_meta_params := mf_dest_meta_params m)
   .
 
 
@@ -306,90 +334,90 @@ Section InstructionMapper.
                       ins_srelate s0 s1 (OpFarRevert i1) (OpFarRevert i1')
                     )
   |sim_load:`( forall type,
-          mf_src_heap_ptr s0 s1 i1 i1' ->
-          mf_dest_pv s1 s2 o1 o1' ->
-          ins_srelate s0 s2 (OpLoad i1 o1 type) (OpLoad  i1' o1' type)
-      )
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_dest_pv s1 s2 o1 o1' ->
+         ins_srelate s0 s2 (OpLoad i1 o1 type) (OpLoad  i1' o1' type)
+     )
   |sim_loadptr:`(
-        mf_src_fat_ptr s0 s1 i1 i1' ->
-        mf_dest_pv s1 s2 o1 o1' ->
-        ins_srelate s0 s2 (OpLoadPointer i1 o1) (OpLoadPointer i1' o1' )
-      )
+       mf_src_fat_ptr s0 s1 i1 i1' ->
+       mf_dest_pv s1 s2 o1 o1' ->
+       ins_srelate s0 s2 (OpLoadPointer i1 o1) (OpLoadPointer i1' o1' )
+     )
   |sim_loadinc:`( forall type,
-          mf_src_heap_ptr s0 s1 i1 i1' ->
-          mf_dest_pv s1 s2 o1 o1' ->
-          mf_dest_heap_ptr s2 s3 o2 o2' ->
-          ins_srelate s0 s3 (OpLoadInc i1 o1 type o2) (OpLoadInc i1' o1' type o2')
-      )
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_dest_pv s1 s2 o1 o1' ->
+         mf_dest_heap_ptr s2 s3 o2 o2' ->
+         ins_srelate s0 s3 (OpLoadInc i1 o1 type o2) (OpLoadInc i1' o1' type o2')
+     )
   |sim_loadptrinc:`(
-        mf_src_fat_ptr s0 s1 i1 i1' ->
-        mf_dest_pv s1 s2 o1 o1' ->
-        mf_dest_fat_ptr s2 s3 o2 o2' ->
-        ins_srelate s0 s3 (OpLoadPointerInc i1 o1 o2) (OpLoadPointerInc i1' o1' o2')
-      )
+       mf_src_fat_ptr s0 s1 i1 i1' ->
+       mf_dest_pv s1 s2 o1 o1' ->
+       mf_dest_fat_ptr s2 s3 o2 o2' ->
+       ins_srelate s0 s3 (OpLoadPointerInc i1 o1 o2) (OpLoadPointerInc i1' o1' o2')
+     )
   |sim_store:`( forall type,
-          mf_src_heap_ptr s0 s1 i1 i1' ->
-          mf_src_pv s1 s2 i2 i2' ->
-          mf_dest_pv s2 s3 o1 o1' ->
-          ins_srelate s0 s3 (OpStore i1 i2 type) (OpStore i1' i2' type)
-      )
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_src_pv s1 s2 i2 i2' ->
+         mf_dest_pv s2 s3 o1 o1' ->
+         ins_srelate s0 s3 (OpStore i1 i2 type) (OpStore i1' i2' type)
+     )
   |sim_storeinc:`( forall type,
-          mf_src_heap_ptr s0 s1 i1 i1' ->
-          mf_src_pv s1 s2 i2 i2' ->
-          mf_dest_heap_ptr s2 s3 o1 o1' ->
-          ins_srelate s0 s3 (OpStoreInc i1 i2 type o1) (OpStoreInc i1' i2' type o1')
-      )
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_src_pv s1 s2 i2 i2' ->
+         mf_dest_heap_ptr s2 s3 o1 o1' ->
+         ins_srelate s0 s3 (OpStoreInc i1 i2 type o1) (OpStoreInc i1' i2' type o1')
+     )
   |sim_OpContextThis: `(
-                         mf_dest_pv s0 s1 o1 o1' ->
-                         ins_srelate s0 s1 (OpContextThis o1) (OpContextThis o1'))
+                          mf_dest_pv s0 s1 o1 o1' ->
+                          ins_srelate s0 s1 (OpContextThis o1) (OpContextThis o1'))
   |sim_OpContextCaller: `(
-                           mf_dest_pv s0 s1 o1 o1' ->
-                           ins_srelate s0 s1 (OpContextCaller o1) (OpContextCaller o1'))
+                            mf_dest_pv s0 s1 o1 o1' ->
+                            ins_srelate s0 s1 (OpContextCaller o1) (OpContextCaller o1'))
   |sim_OpContextCodeAddress: `(
-                                mf_dest_pv s0 s1 o1 o1' ->
-                                ins_srelate s0 s1 (OpContextCodeAddress o1) (OpContextCodeAddress o1'))
+                                 mf_dest_pv s0 s1 o1 o1' ->
+                                 ins_srelate s0 s1 (OpContextCodeAddress o1) (OpContextCodeAddress o1'))
   |sim_OpContextMeta: `(
-                         mf_dest_meta_params s0 s1 o1 o1' ->
-                         ins_srelate s0 s1 (OpContextMeta o1) (OpContextMeta o1'))
+                          mf_dest_meta_params s0 s1 o1 o1' ->
+                          ins_srelate s0 s1 (OpContextMeta o1) (OpContextMeta o1'))
   |sim_OpContextErgsLeft: `(
-                             mf_dest_pv s0 s1 o1 o1' ->
-                             ins_srelate s0 s1 (OpContextErgsLeft o1) (OpContextErgsLeft o1'))
+                              mf_dest_pv s0 s1 o1 o1' ->
+                              ins_srelate s0 s1 (OpContextErgsLeft o1) (OpContextErgsLeft o1'))
   |sim_OpContextSp: `(
-                       mf_dest_pv s0 s1 o1 o1' ->
-                       ins_srelate s0 s1 (OpContextSp o1) (OpContextSp o1'))
+                        mf_dest_pv s0 s1 o1 o1' ->
+                        ins_srelate s0 s1 (OpContextSp o1) (OpContextSp o1'))
   |sim_OpContextGetContextU128: `(
-                                   mf_dest_pv s0 s1 o1 o1' ->
-                                   ins_srelate s0 s1 (OpContextGetContextU128 o1) (OpContextGetContextU128 o1'))
+                                    mf_dest_pv s0 s1 o1 o1' ->
+                                    ins_srelate s0 s1 (OpContextGetContextU128 o1) (OpContextGetContextU128 o1'))
   |sim_OpContextSetContextU128: `(
-                                   mf_src_pv s0 s1 i1 i1' ->
-                                   ins_srelate s0 s1 (OpContextSetContextU128 i1) (OpContextSetContextU128 i1'))
+                                    mf_src_pv s0 s1 i1 i1' ->
+                                    ins_srelate s0 s1 (OpContextSetContextU128 i1) (OpContextSetContextU128 i1'))
   |sim_OpContextSetErgsPerPubdataByte: `(
-                                          mf_src_pv s0 s1 i1 i1' ->
-                                          ins_srelate s0 s1 (OpContextSetErgsPerPubdataByte i1) (OpContextSetErgsPerPubdataByte i1'))
+                                           mf_src_pv s0 s1 i1 i1' ->
+                                           ins_srelate s0 s1 (OpContextSetErgsPerPubdataByte i1) (OpContextSetErgsPerPubdataByte i1'))
   |sim_OpContextIncrementTxNumber: `(
-                                      mf_dest_pv s0 s1 o1 o1' ->
-                                      ins_srelate s0 s1 (OpContextIncrementTxNumber ) (OpContextIncrementTxNumber ))
+                                       mf_dest_pv s0 s1 o1 o1' ->
+                                       ins_srelate s0 s1 (OpContextIncrementTxNumber ) (OpContextIncrementTxNumber ))
   |sim_OpSLoad: `(
-                   mf_src_pv s0 s1 i1 i1' ->
-                   mf_dest_pv s1 s2 o1 o1' ->
-                   ins_srelate s0 s2 (OpSLoad i1 o1) (OpSLoad i1' o1'))
-  |sim_OpSStore: `(
                     mf_src_pv s0 s1 i1 i1' ->
-                    mf_src_pv s1 s2 i2 i2' ->
-                    ins_srelate s0 s2 (OpSStore i1 i2) (OpSStore i1' i2'))
-  |sim_OpToL1Message: `(forall first,
-                           mf_src_pv s0 s1 i1 i1' ->
-                           mf_src_pv s1 s2 i2 i2' ->
-                           ins_srelate s0 s2 (OpToL1Message i1 i2 first) (OpToL1Message i1' i2' first))
-  |sim_OpEvent: `(forall first,
+                    mf_dest_pv s1 s2 o1 o1' ->
+                    ins_srelate s0 s2 (OpSLoad i1 o1) (OpSLoad i1' o1'))
+  |sim_OpSStore: `(
                      mf_src_pv s0 s1 i1 i1' ->
                      mf_src_pv s1 s2 i2 i2' ->
-                     ins_srelate s0 s2 (OpEvent i1 i2 first) (OpEvent i1' i2' first))
-  |sim_OpPrecompileCall: `(
-                            mf_src_precompile_params s0 s1 i1 i1' ->
+                     ins_srelate s0 s2 (OpSStore i1 i2) (OpSStore i1' i2'))
+  |sim_OpToL1Message: `(forall first,
+                            mf_src_pv s0 s1 i1 i1' ->
                             mf_src_pv s1 s2 i2 i2' ->
-                            mf_dest_pv s2 s3 o1 o1' ->
-                            ins_srelate s0 s3 (OpPrecompileCall i1 i2 o1) (OpPrecompileCall i1' i2' o1'))
+                            ins_srelate s0 s2 (OpToL1Message i1 i2 first) (OpToL1Message i1' i2' first))
+  |sim_OpEvent: `(forall first,
+                      mf_src_pv s0 s1 i1 i1' ->
+                      mf_src_pv s1 s2 i2 i2' ->
+                      ins_srelate s0 s2 (OpEvent i1 i2 first) (OpEvent i1' i2' first))
+  |sim_OpPrecompileCall: `(
+                             mf_src_precompile_params s0 s1 i1 i1' ->
+                             mf_src_pv s1 s2 i2 i2' ->
+                             mf_dest_pv s2 s3 o1 o1' ->
+                             ins_srelate s0 s3 (OpPrecompileCall i1 i2 o1) (OpPrecompileCall i1' i2' o1'))
   .
 
   Generalizable No Variables.

@@ -114,12 +114,12 @@ Section Resolve.
 
 (**
 - [%RelSpPop] : **Reading** relative to SP with a general purpose register and
-  an immediate displacement, **and SP adjustment**, is resolved to
+  an immediate displacement, **and SP decrement**, is resolved to
   $\mathit{sp}-(\mathit{reg}+\mathit{imm})$; additionally, SP is assigned the
   same value $\mathit{sp}-(\mathit{reg}+\mathit{imm})$. The new SP value will
   then be used for the resolution of other operands.
 
-   In other words, it is equivalent to:
+   In other words, it is equivalent to a sequence of two actions:
 
    1. SP = SP - (reg + imm)
    2. [SP] -> result
@@ -136,12 +136,12 @@ Section Resolve.
 
 (**
 - [%RelSpPush] : **Writing** relative to SP with a general purpose register and
-  an immediate displacement, **and SP adjustment**, is resolved to **the current
+  an immediate displacement, **and SP increment**, is resolved to **the current
   value of SP**. Additionally, SP is assigned a new value
   $\mathit{sp}-(\mathit{reg}+\mathit{imm})$. The new SP value will then be used
   for the resolution of other operands.
 
-  In other words, it is equivalent to:
+  In other words, it is equivalent to a sequence of two actions:
 
   1. [SP] <- input value
   2. SP = SP + (reg + imm)

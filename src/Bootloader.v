@@ -7,7 +7,7 @@ Section Bootloader.
   Open Scope Z.
 (** # Bootloader
 
- Bootloader is a system contract written in YUL in charge of block construction
+ Bootloader is a system contract in charge of block construction
 ([sources](https://github.com/matter-labs/system-contracts/blob/main/bootloader/bootloader.yul)).
 
 

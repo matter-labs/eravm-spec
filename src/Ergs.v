@@ -9,32 +9,45 @@ Open Scope Z_scope.
 **Ergs** is the resource spent on executing actions in EraVM.
 
 The most common action consuming ergs is executing an instruction.
-Executing an instruction has a fixed [%base_cost]; if the current balance is lower than the cost, VM panics.
-If an instruction is not executed because of mismatch between their execution condition [%cond] with the current [%flags_state] in [%state], its base cost is still paid.
-Therefore it is cheaper to jump over expensive instructions like [%OpFarCall] than to predicate them.
+Instructions have a fixed [%base_cost], failure to pay this cost results in panic.
 
-Additionally, actions like decommitting code for execution, accessing contract storage, or growing memory bounds, also cost ergs.
+In EraVM, the instructions are [%predicated]. If an instruction is not executed
+because of mismatch between their predicate [%ins_cond] with the current
+[%gs_flags], its base cost is still paid.
+Therefore, it is cheaper to jump over expensive instructions like [%OpFarCall]
+than to predicate them so that they are not executed.
+
+Additionally, actions like decommitting code for execution, accessing contract
+storage, or growing memory bounds, also cost ergs.
 
 Internally, ergs are 32-bit unsigned numbers.
- *)
+*)
 
 Definition ergs_bits := 32%nat.
 Definition ergs := int_mod ergs_bits.
 Definition ergs_of := int_mod_of ergs_bits.
 
-(** ## Ergs balance in callstack
+(** ## Ergs and callstack
 
-Every frame in [%callstack], whether external or internal, keeps its proper independent ergs balance in the field [%cf_ergs_remaining].
+Every frame in [%callstack], whether external or internal, keeps its associated ergs in the field [%cf_ergs_remaining].
+Spending ergs decreases this value [%cf_ergs_remaining].
 
-Calling functions/contracts requires passing ergs to the new calling frame, so that the callee's code would be able to function by spending ergs (see e.g. [%step_nearcall]).
 
-For far calls, it is not possible to pass more than [%FarCall.max_passable] ergs (currently 63/64 of the balance in current frame).
+### Calls
+
+Calling functions/contracts requires passing ergs to the new calling frame, so
+that the callee's code would be able to operate and spend ergs (see e.g.
+[%step_nearcall]).
+
+For far calls, it is not possible to pass more than [%max_passable] ergs (currently 63/64 of ergs available in current frame).
 For near calls, passing 0 ergs leads to passing all ergs in the current frame.
+
+### Returns
+
+If a function returns without panic, the remaining ergs are returned to its parent frame i.e. added to the parent frame's [%cf_ergs_remaining].
 
 If a function panics, all its ergs are burned (see [%sem.Panic.step_panic]).
 Panic does not burn ergs of parent frames.
-
-If the function returns without panic, the remaining ergs are returned to its parent frame i.e. added to the parent frame's [%cf_ergs_remaining].
 
 The following return instructions lead to returning remaining ergs to the caller:
 
@@ -56,14 +69,12 @@ Additionally, the following actions lead to spending ergs:
 
 1. Decommitting contract code. Performing far call to a contract which was not called during the construction of the current block costs ergs per each word of contract code. See [%Decommitter], [%FarCall].
 2. TODO Accessing storage
-3. Memory growth. Data pages holding heap variants are bound, and only accesses to addresses within these bounds are free. Reading or writing to these pages leads to bound being increased; the difference between [%grow_and_pay] growth.
+3. Memory growth. Data pages holding heap variants are bounded, and only accesses to addresses within these bounds are free. Reading or writing to these pages outside bounds forces the **memory growth** with bound adjustment. The number of bytes by which the bounded area has grown has to be paid; see [%grow_and_pay].
 4. Passing messages to L1 by [%OpToL1Message].
-
 
 ## Burning ergs
 
-Burning ergs refers to setting erg balance to zero for the current frame, and executing [%OpPanic].
-
+Burning ergs refers to setting erg balance to zero for the current frame and panicking.
 The general rule is: if some invariant of execution breaks, VM panics, burning all ergs in the current frame.
 This is a fail-fast behavior in case of irrecoverable errors.
 Some examples are:
@@ -78,14 +89,17 @@ Some situations that provoke panic are:
 - attempting to execute an instruction with an invalid encoding;
 - attempting to execute kernel-only instruction in user mode.
 
+See section [%Panics] for the full description.
 
 ## Parameters
 
 The following definitions are used to derive the costs of instructions and other actions.
  *)
 
+(* begin hide *)
 #[reversible]
 Local Coercion ergs_of : Z >-> int_mod.
+(* end hide *)
 
 Definition VM_CYCLE_COST_IN_ERGS: Z := 4.
 Definition RAM_PERMUTATION_COST_IN_ERGS: Z := 1.
@@ -146,16 +160,15 @@ End Ergs.
 
 Section Costs.
   Import ZMod ZArith.
-
   Open Scope Z_scope.
 (** # Costs
 
-Basic costs of all instructions. They get deducted when the instruction starts
+Basic costs of all instructions. They are paid when the instruction starts
 executing; see [%Semantics.step].
 
 Instructions may also impose additional costs e.g. far returns and far calls may grow heap; farcalls also may induce code decommittment costs.
  *)
-  Definition base_cost (ins:instruction) :=
+  Definition base_cost (ins:asm_instruction) :=
     (match ins with
      | OpInvalid => INVALID_OPCODE_ERGS
      | OpNoOp | OpSpAdd _ _ | OpSpSub _ _ => RICH_ADDRESSING_OPCODE_ERGS

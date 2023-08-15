@@ -7,7 +7,7 @@ Inductive step_oppanic: @instruction bound -> smallstep :=
 ## Panic (irrecoverable error, not normal return/not return from recoverable error)
 
 Return from a function signaling an error; execute exception handler, burn all
-regs in current frame, set OF flag, return no data.
+ergs in current frame, set OF flag, return no data.
 
 ### Abstract Syntax
 
@@ -40,7 +40,7 @@ regs in current frame, set OF flag, return no data.
 
 #### Case 1: `panic` from near call
 
-1. Perform a [%roll_back].
+1. Perform a [%rollback].
 2. Drop current frame with its ergs.
 3. Set PC to the exception handler of a dropped frame.
 4. Clear flags, and set OF.

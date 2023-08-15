@@ -5,85 +5,242 @@ Import Common Memory GPR.
 Section Addressing.
   (** # Addressing modes
 
-Instruction formats are described by [%instruction].
+This section describes the addressing modes in [%asm_instruction].
+Section [%InstructionArguments] describes the types of the instruction arguments;
+each type corresponds to one or multiple possible addressing modes.
+Assembly instruction formats with the types of their arguments are described by [%asm_instruction].
 
-**Operands** are entities operated upon by instructions. They serve as sources of data, or as destinations for the results of the instruction execution.
+Core instructions [%instruction decoded] have different types of operands
+detailed by [%instruction] and [%decoded].
 
-**Addressing mode** refers to the way in which an instruction specifies the location of data that needs to be accessed or operated upon.
-This document describes the types of operands; each type corresponds to one or multiple possible addressing modes for an operand. See [%InstructionArguments].
+**Operands** are entities operated upon by instructions. They serve as sources
+  of data, or as destinations for the results of the instruction execution.
+
+**Addressing mode** refers to the way in which an instruction specifies the
+  location of data that needs to be accessed or operated upon.
 
 Abstract EraVM supports 8 addressing modes.
 Some of them only support reading (indicated by "in"), or writing (indicated by "out").
 
 
 1. Register (in/out).
+
+   *Concrete syntax example*. Use `r1` as a source:
+   ```
+   add r1, r0, r3
+   ```
+
 2. Imm (in)
+
+   *Concrete syntax example*. Use immediate `42` as a source:
+   ```
+   add 42, r0, r3
+   ```
+
 3. Code page, relative to GPR (in)
+
+   *Concrete syntax example*. Use 42-th [%word] on the code page as a source:
+
+   ```
+   add code[42], r0, r3
+   ```
+
+   Note: words are enumerated starting at 0, each word contains 4 instructions,
+   adjacent words are disjoint.
+
 4. Const page, relative to GPR (in)
+
+   Currently, the concrete syntax is absent because code and constant pages
+   coincide in current EraVM implementation. Use the following instead:
+
+   ```
+   add code[42], r0, r3
+   ```
+
 5. Stack page, relative to GPR (in/out)
+
+   *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a source has two equivalent forms:
+   ```
+   add stack[r1+42], r0, r3
+   add stack=[r1+42], r0, r3
+   ```
+
 6. Stack page, relative to GPR and SP (in/out)
+
+   *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a
+    source:
+
+   ```
+   add stack-[r1+42], r0, r3
+   ```
+
+   Note, that the following form is forbidden:
+
+   ```
+   add stack-[r1+42], r0, r3
+   ```
+
+   See the note about addressing relative to SP for an explanation of the
+   additional `-1` appearing here.
+
 7. Stack page, relative to GPR and SP, with decreasing SP (in)
+
+   *Concrete syntax example*. Use `SP-1-(r1+42)`-th [%word] on the stack page as a
+    source:
+
+   ```
+   add stack-=[r1+42], r0, r3
+   ```
+
+   See the note about addressing relative to SP for an explanation of the
+   additional `-1` appearing here.
+
+   Note, that the following form is forbidden:
+
+   ```
+   add stack+=[r1+42], r0, r3
+   ```
+
 8. Stack page, relative to GPR and SP, with increasing SP (out)
+
+   *Concrete syntax example*. Use `SP-1+(r1+42)`-th [%word] on the stack page as a
+    destination:
+
+   ```
+   add r3, r0, stack+=[r1+42]
+   ```
+
+   See the note about addressing relative to SP for an explanation of the
+   additional `-1` appearing here.
+
+-----
+
+## Note about addressing relative to SP
+
+**The instructions accepted by EraVM, in their abstract syntax, do not perform
+any +-1 adjustment on the operands**. If the operand is addressed via
+[%Addressing.RelSpPop reg offset], it is resolved to the location
+$\mathit{(SP - (reg + imm))\mod 2^{16}}$ and $\mathit{SP}$ is assigned
+$\mathit{(SP - (reg + imm))\mod 2^{16}}$ as well.
+
+However, the assembler, as a program that translates the mnemonics between text assembly instructions fed to
+the assembler, and the encoded instructions accepted by EraVM.
+
+The address of the topmost element in stack is $SP-1$, and SP points to the
+address of the next element after it.
+In the text assembly code, the construction `stack[0]` refers to the topmost element in the stack, that is, the $SP-1$-th word on the stack page.
+
+Therefore, the concrete *syntax* to perform an operation that accesses the element at an address
+$\mathit{SP - (reg + imm)}$ is:
+
+```
+add stack-[reg+imm_adjusted]
+```
+
+where `imm_adjusted := imm + 1`.
+
+-----
 
 Note that the current implementation encodes some of these modes in the same way
 e.g. mode 7 and mode 8 only differ by *in* or *out* position.
+
 
 Predicate [%resolve] formalizes resolving operands to immediate values, registers
 and memory locations.
 
 [%MemoryOps] formalizes reading and writing to locations.
 
-1. **Register addressing.**
+1. **Register addressing** (in/out)
 
-   Register addressing takes value from one of General Purpose Registers (GPR).
-   See [%global_state], [%gs_regs].
+   - Refers to one of General Purpose Registers (GPR).
+   - *Concrete syntax example*. Use `r1` as a source:
+
+      ```
+      add r1, r0, r3
+      ```
    *)
 
   Inductive reg_io : Set := Reg (reg:reg_name).
 
   (**
-2. **Immediate 16-bit value.**
+2. **Immediate 16-bit value** (in)
 
-   Only for input operands. See [%imm_in], [%in_regimm].
+   - *Concrete syntax example*. Use immediate `42` as a source:
+
+     ```
+     add 42, r0, r3
+     ```
    *)
 
   Inductive imm_in : Set := Imm (imm: u16).
 
   (**
-3. **Address on a code page, relative to a GPR**.
+3. **Address on a code page, relative to a GPR** (in)
 
-   Resolved to $\mathit{(reg + imm) \mod 2^{16}}$.
-   Code and const pages may coincide in the implementation.
+   - Resolved to $\mathit{(reg + imm) \mod 2^{16}}$. See [%rslv_code].
+   - Code and const pages may coincide in the implementation.
 
+   - *Concrete syntax example*. Use 42-th [%word] on the code page as a source:
+
+     ```
+     add code[42], r0, r3
+     ```
+
+     Note: words are enumerated starting at 0, each word contains 4 instructions,
+     adjacent words are disjoint.
    *)
 
   Inductive code_in : Set := CodeAddr (reg:reg_name) (imm:code_address).
 
   (**
+4. **Address on a const page, relative to a GPR** (in)
 
-4. **Address on a const page, relative to a GPR.**.
+   - Resolved to $\mathit{(reg + imm) \mod 2^{16}}$. See [%rslv_const].
+   - Code and const pages may coincide.
 
-   Resolved to $\mathit{(reg + imm) \mod 2^{16}}$. Code and const pages may coincide.
+   - Currently, the concrete syntax is absent because code and constant pages
+     coincide in current EraVM implementation. Use the following instead:
 
-
+     ```
+     add code[42], r0, r3
+     ```
    *)
   Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
 
   (**
-5. **Address on a stack page, relative to a GPR.**
+5. **Address on a stack page, relative to a GPR** (in/out)
 
-   Resolved to $\mathit{(reg + imm)\mod 2^{16}}$.
+   - Resolved to $\mathit{(reg + imm)\mod 2^{16}}$. See [%rslv_stack_abs].
+   - *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a source has two equivalent forms:
 
+     ```
+     add stack[r1+42], r0, r3
+     add stack=[r1+42], r0, r3
+     ```
    *)
   Inductive stack_io : Set :=
   | Absolute (reg:reg_name) (imm: stack_address)
 
   (**
-6. **Address on a stack page, relative to SP and GPR.**
+6. **Address on a stack page, relative to SP and GPR**
 
-   Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$.
+   - Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$. See [%rslv_stack_rel].
+   - Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
+   - *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a
+      source:
 
-   Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
+     ```
+     add stack-[r1+42], r0, r3
+     ```
+
+     Note, that the following form is forbidden:
+
+     ```
+     add stack[r1+42], r0, r3
+     ```
+
+     See the note about addressing relative to SP for an explanation of the
+     additional `-1` appearing here.
    *)
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
@@ -91,39 +248,56 @@ and memory locations.
   (**
 7. **Stack page, relative to GPR and SP, accompanied by decreasing SP (in).**
 
-   Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$.
+   - A generalized version of `pop` operation.
+   - Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$. See [%rslv_stack_rel].
+   - Additionally, after the resolution, SP is modified: `SP -= (reg + imm)`.
+   - *Concrete syntax example*. Use `SP-1-(r1+42)`-th [%word] on the stack page as a
+      source:
 
-   Additionally, after the resolution, SP is modified: SP -= (reg + imm).
+     ```
+     add stack-=[r1+42], r0, r3
+     ```
 
-   It is a generalization of `pop` operation.
+     See the note about addressing relative to SP for an explanation of the
+     additional `-1` appearing here.
 
-   If used in [%OpModSP], the value of SP is modified even if there was no actual read performed. See [%OpModSP].
+     Note, that the following form is forbidden:
 
+     ```
+     add stack+=[r1+42], r0, r3
+     ```
    *)
 
   Inductive stack_in_only : Set :=
-  | RelSpPop (reg:reg_name) (delta: stack_address)
+  | RelSpPop (reg:reg_name) (offset: stack_address)
   .
 
   (**
 8. **Stack page, relative to GPR and SP, accompanied by increasing SP (out).**
 
-   Resolved to $\mathit{(SP + (reg + imm))\mod 2^{16}}$.
+   - A generalized version of `push` operation.
+   - Resolved to $\mathit{(SP + (reg + imm))\mod 2^{16}}$.
+   - Additionally, after the resolution, SP is modified: `SP += (reg + imm)`.
+   - *Concrete syntax example*. Use `SP-1+(r1+42)`-th [%word] on the stack page as a
+      destination:
 
-   Additionally, after the resolution, SP is modified: SP += (reg + imm).
+     ```
+     add r3, r0, stack+=[r1+42]
+     ```
 
-   It is a generalization of `push` operation.
-
-   If used in [%OpModSP], the value of SP is modified even if there was no actual read performed. See [%OpModSP].
+     See the note about addressing relative to SP for an explanation of the
+     additional `-1` appearing here.
    *)
   Inductive stack_out_only : Set :=
-  | RelSpPush (reg:reg_name) (delta: stack_address)
+  | RelSpPush (reg:reg_name) (offset: stack_address)
   .
 
   Section InstructionArguments.
-    (** # Operands
+    (** # Operand types
 
-In this section we describe operand types of [%instruction].
+This section details the types of operand for [%asm_instruction].
+The types of operands for [%instruction] are different and detailed by
+[%instruction], [%descr], [%decoded] and [%bound].
 
 Instruction may have *input* and *output* operands.
 
@@ -131,17 +305,18 @@ Instruction may have *input* and *output* operands.
 
    + [%in_reg] : read from a GPR.
    + [%in_any] : read from reg, immediate value, or any memory. May be a generalized pop [%RelSpPop].
-   + [%in_regimm] read from either reg or immmediate value (used exclusively in UMA instructions such as [%OpLoad]).
+   + [%in_regimm] read from either reg or immmediate value.
 
 - There are two types of input operands:
 
    + [%out_reg] : store to a GPR.
    + [%out_any] : store to a GPR or any writable memory location. May be a generalized push [%RelSpPush].
 
-To describe these types, we create a hierarchy of subtypes ordered by inclusion (see [%Coercions]).
+To describe these types, we create a hierarchy of subtypes ordered by inclusion
+(see [%Coercions]).
 
-
-We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output arguments as $\mathit{out_1}$, $\mathit{out_2}$.
+We denote input arguments as $\mathit{in_1}$, $\mathit{in_2}$, and output
+arguments as $\mathit{out_1}$, $\mathit{out_2}$.
 Many instructions have 2 input arguments and 1 output argument.
 The encoding limits the number of arguments of type [%in_any] and [%out_any]:
 
@@ -184,7 +359,7 @@ It is allowed to have both [%in_any] and [%out_any] in the same instruction.
 
 
     (** The [%any] auxiliary argument type allows for all addressing modes; it
-    never occurs in instructions but is used to resolve argument locations. *)
+    never occurs in instructions but is used to [%resolve] argument locations. *)
     Inductive any : Set :=
     | AnyReg  : reg_io   -> any
     | AnyImm  : imm_in   -> any
@@ -227,8 +402,7 @@ Usually, $\mathit{in_1}$ supports any types of arguments, except for [%RelSpPush
     Definition in_reg : Set := reg_io.
 
     (** In exotic cases, an input argument may either be a register, or an immediate
-value, but not anything else. Currently, only UMA instructions requires such an input
-argument; see [%OpHeapRead], [%OpHeapWrite], and similar. *)
+value, but not anything else. *)
 
     Inductive in_regimm : Set :=
     | RegImmR : reg_io -> in_regimm

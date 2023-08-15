@@ -108,7 +108,7 @@ the caller.
       new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs (gs_revertable gs) ->
 
       step_nearcall
-        (OpNearCall (Some (mk_params passed_ergs), __) (Imm call_addr) (Imm expt_handler))
+        (OpNearCall (Some (mk_params passed_ergs), __) call_addr expt_handler)
         {|
           gs_transient := {|
                            gs_flags        := ___;
@@ -152,7 +152,7 @@ the caller.
 - Set `ergs_passed=0` to pass all available ergs to callee.
 - If the first argument is omitted, all available ergs will be passed to callee.
 
-  Explanation: if the first argument is omitted, the compiler implicitly puts
+  Explanation: if the first argument is omitted, the assembler implicitly puts
   `r0` in its place. The reserved register `r0` always holds zero, therefore
   `ergs_passed` will be decoded into zero as well.
 
@@ -160,10 +160,9 @@ the caller.
 
 - Can be used for internal system code, like bootloader. For example, wrap a
   pair of AA call + fee payment in any order in such `near_call`, and then
-  rollback the entir:e frame atomically.
+  rollback the entire frame atomically.
 
 ### Similar instructions
-
 
 - See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
  *)

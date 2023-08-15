@@ -7,6 +7,16 @@
 
   In other words, start is included, and limit is excluded.
 
+- Accessing subranges of a binary representation of a number is denoted with $\{\}$.
+  For example, this denotes a binary number obtained by taking bits from 128-th
+  to 255-th, both inclusive, of the value $\mathit{op}$:
+
+  $$\mathit{op}\{255\dots128\}$$
+
+- Concatenation of sequences of binary numbers is denoted with $||$
+
+  For example, this denotes concatenating bit representations of the numbers $a$ and $b$:
+  $$a || b$$
 *)
 
 (**
@@ -43,17 +53,18 @@
 - **External/internal frame, function/contract frame** --
 - **Far call** -- execution of one of the following instructions: [%OpFarCall], [%OpMimicCall], [%OpDelegateCall].
 - **Fat pointer** --  a full 128-bit [%data_page] pointer encoding page id, a span of addresses from some starting address and with a specified length, and an offset inside this span. See [%fat_ptr].
-- **GPR, general purpose register** --  one of 16 registers [%r0]--[%r15] containing primitive values. Register [%r0] holds 0 and is read-only.
+- **GPR, general purpose register** --  one of 16 registers [%r0]--[%r15] containing primitive values. Register [%r0] is a constant register, can not be written to and is read-only.
 - **Heap** --  one of two heap variants (heap and auxheap), mostly used by system contracts. Executing one of far call instructions creates a new external frame and allocates pages for code, constants, data stack, heap and aux heap.
 - **Heap pointer** --  a pair of address in heap and a limit; it is associated with a span $[0; limit)$. See [%heap_ptr].
 - **Heap variant** -- either Heap or Auxheap, depending on the context.
 - **Integer value** -- a [%primitive_value] with a reset pointer tag. See [%IntValue].
 - **L1** -- level-1, refers to the main Ethereum blockchain, also known as the Ethereum Mainnet. Used to distinguish from scaling solutions or Layer 2 solutions that aim to improve the scalability and throughput of the Ethereum blockchain.
 - **Log instructions** -- variations of `log` machine instruction: [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall].
-- **Memory forwarding** -- a mechanism of sharing a read-only fragment ofmemory between contracts. The memory fragment is created from [%span] and described by [%fat_ptr]. This fragment can shrink as a result of far call or executing [%OpPtrShrink].
+- **Memory forwarding** -- a mechanism of sharing a read-only fragment ofmemory between contracts. The memory fragment is created from [%span] and described by [%fat_ptr]. This fragment can be narrowed or shrunk as a result of far call or executing [%OpPtrShrink].
 - **Machine instruction** -- a low-level machine instruction with a fixed format. The high-level [%instruction_predicated] is encoded to machine instructions.
 - **Memory growth** -- a process, where an access to a heap variant beyond its bound leads to increasing the bound and payment.
 - **Message** --  TODO
+- **Narrowing a fat pointer** -- subtract a given number from its length and add it to its start; it is guaranteed to not overflow. See [%fat_ptr_narrow]. Used when passing a fat pointer to a far call, or returning it from a contract.
 - **Near call** -- calling a function that belongs to the same contract.
 - **Operand** --  data or the address that is operated upon by the instruction. It represents the input or output values used by the instruction to perform a specific operation or computation. See [%InstructionArguments].
 - **Page** -- see [%page].
@@ -65,12 +76,12 @@ algorithm specific to this contract. See [%Precompiles].
 - **Precompile processor** -- a module responsible for encoding the algorithms of precompile calls and executing them.
 - **Primitive value** -- a tagged word. See [%primitive_value].
 - **Shrinking a heap pointer** -- see [%hp_shrink].
+- **Shrinking a fat pointer** -- subtract a given number from its length; it is guaranteed to not overflow. See [%fat_ptr_shrink]. Triggered by [%OpPtrShrink] instruction.
 - **Slice** -- see [%slice].
 - **Span** -- see [%span].
 - **Stack page** -- a type of pages. See [%stack_page].
 - **System contracts** -- contracts with addresses from 0 to [%KERNEL_MODE_MAXADDR_LIMIT]. They are executed in [%KernelMode].
 - **Topmost callstack frame** -- the last frame pushed to call stack.
-- **UMA instructions** -- instructions [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
 - **Word** -- 256-bit unsigned untagged integer value.
 - **address resolution** -- a matching between instruction operands and locations using the supported address modes. See [%resolve].
 - **balance** -- the number of currently available ergs in the topmost frame in [%callstack].

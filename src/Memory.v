@@ -9,9 +9,9 @@ Import ListNotations.
 All memory available to the contract code can be divided into transient and
 persistent memory.
 
-- Transient memory exists to enable computations and does not persist between
+- **Transient memory** exists to enable computations and does not persist between
   VM, like the main memory of personal computers.
-- Persistent memory exists as a storage of untagged 256-bit [%word]s shared
+- **Persistent memory** exists as a storage of untagged 256-bit [%word]s shared
   between the network participants.
 
 Contract code uses transient memory to perform computations and uses the storage
@@ -61,7 +61,9 @@ Pages hold one of:
   writing outside bounds leads to a paid growth of available portion.
 - code: instruction-addressable, read-only;
 - constants: $2^{16}$ word-addressable, read-only;
-- stack: $2^{16}$ words, word-addressable, tagged words. When the execution of a contract starts, the initial value of stack pointer is [%INITIAL_SP_ON_FAR_CALL].
+- stack: $2^{16}$ words, word-addressable, tagged words. When the execution of a
+  contract starts, the initial value of stack pointer is
+  [%INITIAL_SP_ON_FAR_CALL].
 
 
 The following describes all types of memory formally and with greater detail.
@@ -319,9 +321,13 @@ $2^{32}$ bytes. *)
 
   Definition data_page := mem_parameterized data_page_params.
 
-  (** There are currently two types of data pages: [%Heap] and [%AuxHeap] pages.
-  We call both of them **heap variants** for brevity, as working with them is
-  quite similar. *)
+  (** There are currently two types of data pages:
+
+- [%Heap]
+- [%AuxHeap].
+
+  We call both of them **heap variants** for brevity, as in almost all cases
+  they are handled in a similar way. *)
   Inductive data_page_type := Heap | AuxHeap.
 
   Import ZMod.
@@ -330,10 +336,17 @@ $2^{32}$ bytes. *)
     : mem_address :=
     if query_bound < current_bound then zero32 else
       fst (query_bound - current_bound).
-(** Note: only instructions from UMA (unaligned memory access) instruction
-family can access data pages ([%OpLoad]/[%OpLoadInc], [%OpStore]/[%OpStoreInc],
-[%OpLoadPointer]/[%OpLoadPointerInc]). Every byte on data pages has an address,
-but the instructions from UMA family read or store 32-byte words.
+(**
+
+Note: only selected few instructions can access data pages:
+
+- [%OpLoad]/[%OpLoadInc]
+- [%OpStore]/[%OpStoreInc]
+- [%OpLoadPointer]/[%OpLoadPointerInc]
+
+Every byte on data pages has an address, but these instructions read or store 32-byte words.
+
+-----
 
 Fat pointers [%fat_ptr] define slices of data pages and allow passing them
 between contracts.

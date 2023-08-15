@@ -24,10 +24,13 @@ doc/EraVM.Slice.html
 doc/EraVM.Pointer.html
 doc/EraVM.StaticMode.html
 doc/EraVM.VersionedHash.html
+
+doc/EraVM.isa.Instructions.html
 doc/EraVM.isa.Assembly.html
 doc/EraVM.isa.CoreSet.html
 doc/EraVM.isa.AssemblyToCore.html
 doc/EraVM.isa.Modifiers.html
+
 doc/EraVM.sem.SemanticCommon.html
 doc/EraVM.sem.SpAdd.html
 doc/EraVM.sem.SpSub.html
@@ -75,6 +78,9 @@ doc/EraVM.sem.OpEvent.html
 doc/EraVM.sem.ToL1.html
 doc/EraVM.sem.Context.html
 doc/EraVM.sem.PrecompileCall.html
+
+
+doc/EraVM.Steps.html
 doc/EraVM.ABI.html
 doc/EraVM.Precompiles.html
 doc/EraVM.lib.ZMod.html

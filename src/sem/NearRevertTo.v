@@ -7,7 +7,7 @@ Section NearRevert.
   Inductive step_nearrevertto: @instruction bound -> smallstep :=
   (**
 
-# NearRevert (return with recoverable error)
+# NearRevertTo (return with recoverable error)
 
 ## Abstract Syntax
 
@@ -26,7 +26,7 @@ Section NearRevert.
 
 ## Semantic
 
-1. Perform a [%roll_back].
+1. Perform a [%rollback].
 2. Pass all ergs from the topmost frame to the parent frame.
 3. Drop topmost frame.
 4. Clear flags
@@ -39,7 +39,7 @@ Section NearRevert.
           let handler := active_exception_handler cs in
 
           ergs_reimburse_caller_and_drop cs caller_reimbursed ->
-          roll_back saved gs new_gs ->
+          rollback saved gs new_gs ->
           step_nearrevertto (OpNearRevertTo label)
                             {|
                               gs_transient := {|

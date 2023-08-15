@@ -162,7 +162,7 @@ There are three types of behaviors triggered by execution failures.
    If the contract code identifies a recoverable error, it may execute
    [%OpRevert]. Then EraVM rolls the storage and event queues back to the last
    [%state_checkpoint] and executes the exception handler.
-   See [%roll_back].
+   See [%rollback].
 
 3. Panic is triggered either explicitly by executing
    [%OpPanic]/[%OpNearPanicTo], or internally when some execution invariants are
@@ -171,7 +171,7 @@ There are three types of behaviors triggered by execution failures.
 
    On panic, the persistent state of EraVM is rolled back in the same way as on
    revert.
-   See [%roll_back].
+   See [%rollback].
 
 
 *)

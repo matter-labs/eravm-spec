@@ -21,14 +21,14 @@ Unconditional jump.
 
 ### Syntax
 
-- `jump label`
+- `jump destination`
 
-Note: Argument `label` uses the full addressing mode [%in_any], therefore can be immediate
+Note: Argument `destination` uses the full addressing mode [%in_any], therefore can be immediate
 16-bit value, register, a register value with an offset, and so on.
 
 ### Semantic
 
-- Fetch a new address from operand `label`.
+- Fetch a new address from operand `destination`.
 
 - Assign to current PC the fetched value truncated to [%code_address_bits] bits.
  *)

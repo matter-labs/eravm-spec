@@ -6,7 +6,7 @@ Section MemoryOps.
 
   (** # Data loading and storing
 
-This file formalizes reading from memory or registers ([%fetch]) and writing to
+This section formalizes reading from memory or registers ([%fetch]) and writing to
 memory or registers ([%store]).
    *)
   Import Addressing.Coercions.
@@ -157,7 +157,7 @@ End MemoryOps.
 Section Multibyte.
   (** # Multibyte loads and stores
 
-UMA instructions such as [%OpStore] and [%OpLoadPointer] operate with a byte
+Instructions such as [%OpStore] and [%OpLoadPointer] operate with a byte
 addressable [%data_page]s, but load or store 256-bit [%word]s.
 Therefore, their effects are formalized separately.
 

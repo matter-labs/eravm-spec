@@ -32,7 +32,7 @@ The assembler expands `revert` to `revert r1`, but `r1` is ignored by reverts fr
 
 Effectively the same as `ret abi_reg`, but restores storage and executes the exception handler.
 
-1. Perform a [%roll_back].
+1. Perform a [%rollback].
 2. Fetch the value from register `abi_reg` and decode the value of type [%fwd_memory]:
 
 ```
@@ -86,7 +86,7 @@ Inductive fwd_memory :=
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
-    roll_back cf.(cf_saved_checkpoint) gs gs' ->
+    rollback cf.(cf_saved_checkpoint) gs gs' ->
     step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
           {|
             gs_transient := {|
@@ -131,7 +131,7 @@ Inductive fwd_memory :=
 
     ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
 
-    roll_back cf.(cf_saved_checkpoint) gs gs' ->
+    rollback cf.(cf_saved_checkpoint) gs gs' ->
     step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
           {|
             gs_transient := {|

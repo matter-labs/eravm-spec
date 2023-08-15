@@ -28,7 +28,8 @@ OpMul (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
 
 ## Summary
 
-Unsigned overflowing multiplication of two numbers modulo $2^{512}$; the high and low 256 bits of the result are returned in two separate operands.
+Unsigned multiplication of two numbers modulo $2^{512}$; the high and low 256
+bits of the result are returned in two separate operands.
 
 ## Semantic
 
@@ -65,13 +66,13 @@ Arithmetic operations.
 
  *)
   | step_Mul:
-    forall mod_sf old_flags new_flags w_high w_low high low (x y:Z) op1 op2,
+    forall mod_sf old_flags new_flags high low high256 low256 (x y:Z) op1 op2,
       `(
           let x := int_val _ op1 in
           let y := int_val _ op2 in
-          extract_digits (x * y) word_bits 2 = [ w_high;  w_low ] ->
-          let high256 := u256_of w_high in
-          let low256  := u256_of w_low in
+          extract_digits (x * y) word_bits 2 = [ high;  low ] ->
+          high256 = u256_of high ->
+          low256  = u256_of low ->
 
           let new_EQ := low256  == zero256 in
           let new_OF := high256 != zero256 in
@@ -80,7 +81,7 @@ Arithmetic operations.
           new_flags = apply_set_flags mod_sf old_flags
                         (bflags new_OF new_EQ new_GT) ->
 
-          step_mul (OpMul (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue high) (IntValue low) mod_sf) old_flags new_flags
+          step_mul (OpMul (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue low256) (IntValue high256) mod_sf) old_flags new_flags
         ).
   Generalizable No Variables.
 End Def.

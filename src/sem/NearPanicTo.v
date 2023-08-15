@@ -26,7 +26,7 @@ Inductive step_panicto: instruction -> smallstep :=
 
 ## Semantic
 
-1. Perform a [%roll_back].
+1. Perform a [%rollback].
 2. Drop topmost frame. Its ergs are burned (lost).
 3. Set flag [%OF_LT], clear all other flags.
 4. Proceed with executing [%label], i.e. replace program counter with the label's value.

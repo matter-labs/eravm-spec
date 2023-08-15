@@ -146,8 +146,8 @@ Panics are equivalent to executing [%OpPanic], so they pop up the topmost stack 
 
 Executing any instruction $I$ changes the topmost frame:
 
-1. [%cf_pc] is incremented, unless $I$ is [%OpJump].
-2. [%cf_sp] may be modified if $I$ affects the data stack pointer.
+1. [%cf_pc] is incremented, unless $I$ is [%OpJump] .
+2. [%cf_sp] may be modified if $I$ affects the data stack pointer through addressing modes [%RelSpPop] or [%RelSpPop].
 3. [%cf_ergs_remaining] is decreased by the **total cost** of $I$. Total cost
    is a sum of [%base_cost] and additional costs, described by the small step
    predicates like [%step_jump].

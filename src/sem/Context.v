@@ -328,7 +328,7 @@ Does not interact with the captured context value in the active external frame.
 
 ## Semantic
 
-- Fetch the value from `out` and shrink it to 128 bits.
+- Fetch the value from `out` and narrow it to 128 bits.
 - Store the shrunk value in the context register [%gs_context_u128].
 
 ## Affected parts of VM state

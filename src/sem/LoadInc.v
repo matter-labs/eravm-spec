@@ -39,9 +39,9 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
 *)
   | step_LoadInc:
-    forall heap_variant result new_regs selected_page ptr_inc query new_cs addr limit src_tag __ ___ ctx,
+    forall heap_variant result new_regs selected_page ptr_inc query new_cs addr src_tag __ ___ ctx,
       `(
-      let hptr := mk_hptr addr limit in
+      let hptr := mk_hptr addr in
 
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
@@ -52,7 +52,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
       grow_and_pay heap_variant query cs0 new_cs ->
 
       hp_inc hptr ptr_inc ->
-      
+
       step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant (ptr_inc, mk_pv src_tag ___))
         (mk_transient_state flags regs mem cs0 ctx)
         (mk_transient_state flags new_regs mem new_cs ctx)

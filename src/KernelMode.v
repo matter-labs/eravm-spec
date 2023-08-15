@@ -10,12 +10,15 @@ Section KernelMode.
   Context {descr: CoreSet.descr}.
   (** # Kernel Mode
 
-At each moment of execution VM is either in **kernel** or in **user mode**. Some
-instructions are only allowed in kernel mode; executing them in user mode results in executing [%OpPanic] instead.
+EraVM operates either in **kernel** or in **user mode**. Some instructions (see
+[%requires_kernel] are only allowed in kernel mode; executing them in user mode
+results in panic.
 
-Current mode is determined by the address of the currently executed contract: if
-the address is in range from 0 to [%KERNEL_MODE_MAXADDR_LIMIT] (exclusive),
-current mode is kernel, otherwise current mode is user mode. *)
+Current mode is determined by the address of the currently executed contract $C$:
+
+- if $C <$ [%KERNEL_MODE_MAXADDR_LIMIT], EraVM is in kernel mode;
+- otherwise, EraVM is in user mode.
+   *)
   Definition KERNEL_MODE_MAXADDR_LIMIT : contract_address := int_mod_of _ (2^16).
 
   Definition addr_is_kernel (addr:contract_address) : bool :=

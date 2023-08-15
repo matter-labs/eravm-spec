@@ -26,7 +26,7 @@ Section NearRevert.
 
 ## Semantic
 
-1. Perform a [%roll_back].
+1. Perform a [%rollback].
 2. Retrieve an exception handler $E$ from the current frame.
 3. Pass all ergs from the topmost frame to the parent frame.
 4. Drop topmost frame.
@@ -40,7 +40,7 @@ Section NearRevert.
           let handler := active_exception_handler cs in
 
           ergs_reimburse_caller_and_drop cs caller_reimbursed ->
-          roll_back saved gs new_gs ->
+          rollback saved gs new_gs ->
           step_nearrevert OpNearRevert
                           {|
                             gs_transient := {|

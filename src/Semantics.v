@@ -62,7 +62,7 @@ Section SmallStep.
 
   Inductive action: Type := Execute | Skip | Panic : reason -> action.
 
-  Definition chose_action (s:transient_state) (i:@predicated Assembly.instruction) : action :=
+  Definition chose_action (s:transient_state) (i:@predicated asm_instruction) : action :=
     if stack_overflow CALLSTACK_LIMIT (gs_callstack s) then
       Panic CallStackOverflow
     else if negb (check_requires_kernel i.(ins_spec _) (in_kernel_mode (gs_callstack s))) then
@@ -160,12 +160,12 @@ Section SmallStep.
 
   Definition fetch_predicated_instruction (s: transient_state) ins :=
     @fetch_instr _ instruction_invalid _ (gs_regs s) (gs_callstack s) (gs_pages s)
-      (@FetchIns (predicated Assembly.instruction) ins).
+      (@FetchIns (predicated asm_instruction) ins).
 
   Inductive step: smallstep :=
   | step_correct:
     forall (s new_s : state) cond
-      (instr:Assembly.instruction)
+      (instr:asm_instruction)
       (ins_bound:@instruction bound),
 
       fetch_predicated_instruction  s (Ins _ instr cond) ->

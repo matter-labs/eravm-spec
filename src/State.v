@@ -10,7 +10,7 @@ Definition CALLSTACK_LIMIT := 1024%nat.
 Definition exception_handler := code_address.
 
 (* begin details: helpers *)
-Definition instruction_invalid : predicated Assembly.instruction := invalid Assembly.OpInvalid.
+Definition instruction_invalid : predicated Assembly.asm_instruction := invalid Assembly.OpInvalid.
 Definition decommitter := decommitter instruction_invalid.
 Definition code_page := code_page instruction_invalid.
 Definition memory := @memory code_page const_page data_page stack_page.
@@ -25,29 +25,27 @@ Definition page_has_id := @page_has_id code_page const_page data_page stack_page
 
 EraVM employs a [%state] that comprises the following components:
 
-1. A revertable part [%state_checkpoint]. It houses the depot state, embodying
+1. The [%global_state] contains:
+- current price of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
+- transaction number in the current block [%gs_tx_number_in_block]
+- decommitter [%gs_contracts]
+- a revertable part [%state_checkpoint]. It houses the **depot** state, embodying
    all contracts storages across all shards, as well as two queues for events
    and L1 messages.
-   Launching a contract (far call) or a function (near call) defines a
-   checkpoint; if a contract or a function reverts or panics, the state rolls back
-   to the snapshot (see [%roll_back]).
 
-   Note, that the rollback mechanism may be implemented in any efficient way
-   matching this behavior.
- *)
+   Launching a contract (far call) or a function (near call) defines a
+   checkpoint.
+   If a contract or a function reverts or panics, the state rolls back
+   to the latest snapshot (see [%rollback]).
+
+   The rollback may be implemented in any efficient way conforming to this behavior.
+*)
 Record state_checkpoint := {
     gs_depot: depot;
     gs_events: @history query;
     gs_l1_msgs: @history event;
   }.
 
-Definition callstack := @callstack state_checkpoint.
-
-(** 2. Global parameters:
-- current price of accessing data in storage [%gs_current_ergs_per_pubdata_byte].
-- transaction number in the current block [%gs_tx_number_in_block]
-- decommitter [%gs_contracts]
- *)
 Record global_state :=
   mk_gstate {
     gs_current_ergs_per_pubdata_byte: ergs;
@@ -56,17 +54,21 @@ Record global_state :=
     gs_revertable:> state_checkpoint;
     }.
 
-Inductive roll_back checkpoint: global_state -> global_state -> Prop :=
+Inductive rollback checkpoint: global_state -> global_state -> Prop :=
 | rb_apply: forall e tx ccs ___,
-  roll_back checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
+  rollback checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
 
-(** 3. Transient execution state [%transient_state] contains:
+(** 2. The [%transient_state] contains:
   - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
-  - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0].
-  - all memory pages allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
-  - call stack, where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and current balance are parts of the current stack frame. See [%CallStack].
+  - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0]. See [%Registers].
+  - all memory [%gs_pages] allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
+  - [%gs_callstack], where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and the remaining ergs allocated for the current function's run are parts of a stack frame. See [%CallStack].
   - 128-bit register [%gs_context_u128]. Its usage is detailed below.
  *)
+(* begin details: helpers *)
+Definition callstack := @callstack state_checkpoint.
+(* end details *)
+
 Record transient_state :=
   mk_transient_state {
       gs_flags : flags_state;
@@ -76,8 +78,6 @@ Record transient_state :=
       gs_context_u128: u128;
     }.
 
-(**
- *)
 Record state :=
   mk_state {
       gs_transient :> transient_state;
@@ -97,11 +97,14 @@ These values are distinct: the value in callstack is a snapshot of the register
 The typical usage of the context value is as follows:
 
 1. Set the value of [%gs_context_u128] to $C$ by executing the instruction [%OpContextSetContextU128].
-2. Launch a contract using one of the far call instructions. This action pushes a new [%callstack_external] frame $F$ onto the [%gs_callstack]. The value of the $F$'s field [%ecf_context_u128_value] is equal to $C$. Ina ddition, far calls reset [%gs_context_u128] to 0.
-3. Retrieve the context value by executing the instruction [%OpContextGetContextU128].
+2. Launch a contract using one of the far call instructions. This action pushes a new [%callstack_external] frame $F$ onto the [%gs_callstack]. The value of the $F$'s field [%ecf_context_u128_value] is equal to $C$. In addition, far calls reset [%gs_context_u128] to 0.
+3. Retrieve the context value by executing the instruction [%OpContextGetContextU128] to use it.
 4. On contract code completion, the [%gs_context_u128] is reset to zero by either [%OpFarRet], [%OpFarRevert], or [%OpPanic].
 
 Note that setting the context register [%gs_context_u128] is forbidden in [%StaticMode]. See [%forbidden_static].
+
+Context is used to simulate `msg.value`, a Solidity construction standing for the amount of wei sent in a transaction.
+A system contract `MsgValueSimulator` is respondible for ensuring that whenever this context value is set to $C$, there is indeed $C$ wei transfered to the callee.
  *)
 
 (* begin hide *)

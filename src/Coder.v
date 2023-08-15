@@ -8,11 +8,11 @@ deserialization.
 - Serialization encodes an instance of type [%T] into a word of type [%word].
 - Deserialization tries to decode an instance of type [%T] from a word of type
   [%word].
-*)
+ *)
 
 Context {word T:Type}.
 
-(** Definition [%decoder] defines an embedding of a subset of words of type
+(** The type [%decoder] defines an embedding of a subset of words of type
 [%word] to a type [%T]. Decoding may fail if the input word is malformed. *)
 Definition decoder := word -> option T.
 

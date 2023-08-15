@@ -11,15 +11,15 @@ Section Def.
   (** # Versioned hash
 
 [%versioned_hash] is a hash augmented with additional information. It is used as
-a key to identify code for decommitter.
+a key to identify the contract code for decommitter.
 
 Additional information includes:
 
 - [%VERSION_BYTE] (currently 1)
 - [%marker] (is the contract being constructed or already constructed?)
 
-The hash itself is [%partial_hash]; it is computed as SHA256 hash modulo $2^{28
-\times 8}$.
+The hash itself is described by [%partial_hash]; it is computed as SHA256 hash
+modulo $2^{28 \times 8}$.
 
    *)
   Definition VERSION_BYTE: u8 := int_mod_of _ 1%Z.
@@ -38,10 +38,11 @@ The hash itself is [%partial_hash]; it is computed as SHA256 hash modulo $2^{28
 
   Axiom hash_coder: @coder word versioned_hash.
 
-  (** EraVM accepts [%DEFAULT_AA_VHASH] as a parameter. See also [%Core]. *)
+  (** EraVM accepts [%DEFAULT_AA_VHASH] as a parameter. See also [%Parameters]. *)
   Parameter DEFAULT_AA_VHASH: versioned_hash.
 
 
+  (* begin hide *)
   Theorem eq_dec: Decidability.eq_dec versioned_hash.
   Proof.
     unfold Decidability.eq_dec.
@@ -49,4 +50,6 @@ The hash itself is [%partial_hash]; it is computed as SHA256 hash modulo $2^{28
     apply ZMod.eq_dec.
     apply ZMod.eq_dec.
   Qed.
+
+  (* end hide *)
 End Def.

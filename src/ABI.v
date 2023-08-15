@@ -1,17 +1,23 @@
 Require Coder Ergs Pointer GPR.
 Import Core Common Coder Bool ZMod GPR Ergs Memory Pointer.
 
-(** # ABI
 
-ABIs are described here:
-https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.3.2/src/definitions/abi/far_call.as
- *)
+#[local]
+Definition coder := @coder word.
 
 
-Local Definition coder := @coder word.
+(** # Application binary interface (ABI)
+
+This section details the serialization and deserialization formats for compound
+instruction arguments.
 
 
-(** ## Fat pointers *)
+Currently, they are not described in details, but introduced axiomatically.
+
+The description from Rust VM implementation is described here:
+https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.4.1/src/definitions/abi
+
+## Fat pointers *)
 Module FatPointer.
   Axiom ABI  : @coder fat_ptr.
 
@@ -19,8 +25,8 @@ Module FatPointer.
 
   Definition decode_heap_ptr (w:word) : option heap_ptr :=
     match decode_fat_ptr w with
-    | Some (mk_fat_ptr _ (mk_ptr (mk_span _ length) offset)) =>
-        Some (mk_hptr offset length)
+    | Some (mk_fat_ptr _ (mk_ptr _ offset)) =>
+        Some (mk_hptr offset)
     | None => None
    end.
 
@@ -31,9 +37,6 @@ Module FatPointer.
    end.
 
   Definition encode_fat_ptr (fp: fat_ptr) : word := ABI.(encode) fp.
-
-  Definition encode_heap_ptr (hp:heap_ptr) : word :=
-    encode_fat_ptr (mk_fat_ptr None (heap_ptr_to_free hp)).
 
 End FatPointer.
 
@@ -50,13 +53,13 @@ Module NearCall.
 
 End NearCall.
 
-(* TODO find better place*)
+(* TODO find better place to describe memory forwarding *)
 Inductive fwd_memory :=
   ForwardFatPointer (p:fat_ptr)
 | ForwardNewHeapPointer (heap_var: data_page_type) (s:span).
 
 
-(** ## Ret *)
+(** ## Far returns *)
 Module FarRet.
   Record params := mk_params {
                            forwarded_memory :> fwd_memory
@@ -113,37 +116,6 @@ Module PrecompileParameters.
         memory_page_to_write: page_id;
         precompile_interpreted_data: u64;
       }.
-
-  (* Record inner_params := *)
-  (*   mk_priv_params *)
-  (*     { *)
-  (*       priv_input_memory_offset: mem_address; *)
-  (*       priv_input_memory_length: mem_address; *)
-  (*       priv_output_memory_offset: mem_address; *)
-  (*       priv_output_memory_length: mem_address; *)
-  (*       priv_memory_page_to_read: page_id; *)
-  (*       priv_memory_page_to_write: page_id; *)
-  (*       priv_precompile_interpreted_data: u64; *)
-  (*     }. *)
-
-  (* Definition to_inner read_page write_page (pub: params) : inner_params := *)
-  (*   match pub with *)
-  (*   | mk_params *)
-  (*       input_memory_offset *)
-  (*       input_memory_length *)
-  (*       output_memory_offset *)
-  (*       output_memory_length *)
-  (*       per_precompile_interpreted => *)
-  (*       {| *)
-  (*         priv_input_memory_offset := input_memory_offset; *)
-  (*         priv_input_memory_length := input_memory_length; *)
-  (*         priv_output_memory_offset := output_memory_offset; *)
-  (*         priv_output_memory_length := output_memory_length; *)
-  (*         priv_memory_page_to_read := read_page; *)
-  (*         priv_memory_page_to_write := write_page; *)
-  (*         priv_precompile_interpreted_data := per_precompile_interpreted; *)
-  (*       |} *)
-  (*   end. *)
 
   Axiom ABI: @coder params.
 

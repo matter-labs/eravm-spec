@@ -40,11 +40,11 @@ Decode the heap address from `in1`, store 32 consecutive bytes to the specified 
    *)
 
   | step_Store:
-    forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page query modified_page cs regs mem __ ___ addr limit ctx,
+    forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page query modified_page cs regs mem __ ___ addr ctx,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
-      hptr = mk_hptr addr limit ->
+      hptr = mk_hptr addr ->
 
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
