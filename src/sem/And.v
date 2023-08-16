@@ -2,35 +2,31 @@ Require SemanticCommon.
 
 Import Common ZMod CoreSet Modifiers SemanticCommon PrimitiveValue.
 
-Section Def.
+Section AndDefinition.
   Open Scope ZMod_scope.
 
   Generalizable Variables op tag.
 
   Inductive step_and: instruction -> flags_tsmallstep :=
   (**
-## And
+# Bitwise AND
 
-### Abstract Syntax
+## Abstract Syntax
 
-[%OpAnd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
+[%OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
 
-### Syntax
+## Syntax
 
 - `and in1, in2, out`
 - `and.s in1, in2, out`, to set `swap` modifier.
 - `and! in1, in2, out`, to set `set flags` modifier.
 - `and.s! in1, in2, out`, to set both `swap` and `set flags` modifiers.
 
-### Summary
+## Summary
 
 Bitwise AND of two 256-bit numbers.
 
-### Semantic
-
-Follows the scheme described in [%binop_effect_spec].
-
-Its parameter $F(op_1, op_2)$ is a function that acts as follows:
+## Semantic
 
 - result is computed as a bitwise AND of two operands.
 - flags are computed as follows:
@@ -39,28 +35,26 @@ Its parameter $F(op_1, op_2)$ is a function that acts as follows:
 
 Reminder: flags are only set if `set_flags` modifier is set.
 
-### Affected parts of VM state
+## Affected parts of VM state
 
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
 - Current stack memory page, if `out` resolves to it.
 - GPRs, if `out` resolves to a register.
 - flags, if `set_flags` modifier is set.
 
-### Usage
+## Usage
 
 - operations with bit masks
 
-### Similar instructions
+## Similar instructions
 
-- `and`, `or` and `xor` are encoded as variants of the same instruction.
-
+- `and`, `or` and `xor` are encoded as variants of the same [%mach_instruction].
    *)
 
   | step_And:
-    forall mod_sf old_flags new_flags,
+    forall mod_sf old_flags new_flags result,
       `(
-          let result := bitwise_and _ op1 op2 in
-
+          result = bitwise_and _ op1 op2 ->
           new_flags = apply_set_flags mod_sf
                         old_flags
                         (bitwise_flags result) ->
@@ -68,4 +62,4 @@ Reminder: flags are only set if `set_flags` modifier is set.
           step_and (OpAnd (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_sf) old_flags new_flags)
   .
   Generalizable No Variables.
-End Def.
+End AndDefinition.

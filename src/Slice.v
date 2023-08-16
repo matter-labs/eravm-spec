@@ -7,12 +7,17 @@ Import Bool Core ZMod Common MemoryBase Memory RecordSetNotations Pointer PMap_e
 Open Scope ZMod_scope.
 (** # Slice
 
-Data slice is a virtual memory page holding a read-only fragment of some memory
-page.
+Data slice is a virtual memory page holding a read-only fragment of a [%data_page].
 
 Accesses through a fat pointer should be in bounds of its span.
+However, loads by fat pointer return words, not individual bytes, so it is important to cut off parts of the memory page outside the pointer's span.
 
-Suppose $P:=(\mathit{page, start, length, offset})$ is a fat pointer.
+For example, suppose $P$ is a fat pointer $(page, 0, 33, 10)$.
+Reading 32-byte [%word] yields bytes from the offset 10-th to 42-th (excluded).
+However, the span of $P$ is $[0,33)$ so the bytes from 33-th to 42-th are outside of this span.
+EraVM treats the bytes outside $P$'s span as if they were zeros.
+
+More generally, suppose $P:=(\mathit{page, start, length, offset})$ is a fat pointer.
 Accesses through [%OpLoadPtr] and [%OpLoadPtrInc] return 32-byte words starting
 at an address $\mathit{start + offset}$.
 
@@ -21,7 +26,7 @@ $[\mathit{start + offset, start + offset + 32})$
 and therefore can surpass the upper bound $\mathit{start + length})$
 if $\mathit{length-offset} \leq 32$.
 
-Reading past [%\mathit{start+offset}] yields zero bytes.
+Reading past $\mathit{start+offset}$ yields zero bytes.
 In other words, attempting to read a word that spans across the pointer bound
 $\mathit{start + offset}$ will return zero bytes for the addresses
 $[\mathit{start+length, start+offset+32})$.

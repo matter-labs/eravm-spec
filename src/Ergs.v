@@ -74,7 +74,8 @@ Additionally, the following actions lead to spending ergs:
 
 ## Burning ergs
 
-Burning ergs refers to setting erg balance to zero for the current frame and panicking.
+Burning ergs refers to a situation of panic, when the topmost [%callstack] frame
+is destroyed with its allocated ergs.
 The general rule is: if some invariant of execution breaks, VM panics, burning all ergs in the current frame.
 This is a fail-fast behavior in case of irrecoverable errors.
 Some examples are:
@@ -166,7 +167,9 @@ Section Costs.
 Basic costs of all instructions. They are paid when the instruction starts
 executing; see [%Semantics.step].
 
-Instructions may also impose additional costs e.g. far returns and far calls may grow heap; farcalls also may induce code decommittment costs.
+Instructions may also impose additional costs e.g. far returns and far calls may
+grow heap; far calls also may induce code
+[%decommitment_cost].
  *)
   Definition base_cost (ins:asm_instruction) :=
     (match ins with
@@ -253,7 +256,7 @@ Instructions may also impose additional costs e.g. far returns and far calls may
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
      end)%Z.
 
-(** Coq allows partially evaluating [%base_cost] to get the absolute erg costs for each instruction:
+(** Implementation note: Coq allows partially evaluating [%base_cost] to get the absolute erg costs for each instruction:
 
 ```
 Compute base_costs.

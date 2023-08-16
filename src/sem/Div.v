@@ -3,7 +3,7 @@ Require sem.SemanticCommon.
 Import Addressing Bool ZArith Common Flags GPR isa.CoreSet CallStack Modifiers State ZMod
   ZBits Addressing.Coercions PrimitiveValue SemanticCommon List ListNotations.
 
-Section Def.
+Section DivDefinition.
   Open Scope Z_scope.
 
   Generalizable Variables tag.
@@ -15,10 +15,7 @@ Section Def.
 
 ## Abstract Syntax
 
-```
-OpDiv (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
-      (swap:mod_swap) (flags:mod_set_flags)
-```
+[%OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -29,38 +26,34 @@ OpDiv (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
 
 ## Summary
 
-Unsigned division of two numbers. The quotient is returned in `out1`, the remainder is returned in `out2`.
+Unsigned division of `in1` by `in2`. The quotient is returned in `out1`, the
+remainder is returned in `out2`.
 
 ## Semantic
 
-1. resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
-
-2. compute results of unsigned division of `in1` by `in2`.
-
-   - If `in2` $\neq 0$:
+- If `in2` $\neq 0$:
      $$\begin{cases}out_1 := \frac{ op_1}{op_2} \\
 out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
 
-      Flags are computed as follows:
+  Flags are computed as follows:
+  - `LT_OF` is cleared;
+  - `EQ` is set if the quotient is not zero;
+  - `GT` is set if the reminder is not zero.
 
-1. If division by a non-zero integer:
+- If `in2` $= 0$:
+   $$\begin{cases}out_1 := 0 \\ out_{2} := 0 \end{cases}$$
 
-      - `LT_OF` is cleared;
-      - `EQ` is set if the quotient is not zero;
-      - `GT` is set if the reminder is not zero.
+   Flags are computed as follows:
+   - `LT_OF` is set.
+   - `EQ` is set if $result_{low} = 0$.
+   - `GT` is set if `LT_OF` and `EQ` are cleared.
 
-2. If division by zero:
-
-      - `LT_OF` is set;
-      - `EQ` is cleared;
-      - `GT` is cleared.
-
-   Reminder: flags are only set if `set_flags` modifier is set.
+Reminder: flags are only set if `set_flags` modifier is set.
    *)
   | step_Div_no_overflow:
-    `(forall mod_sf old_flags new_flags w_quot w_rem quot rem (x y x y:Z) op1 op2,
-          let x := int_val _ op1 in
-          let y := int_val _ op2 in
+    `(forall mod_sf old_flags new_flags w_quot w_rem quot rem (x y:Z) op1 op2,
+          x = int_val _ op1 ->
+          y = int_val _ op2 ->
           y <> 0 ->
           quot = Z.div x y ->
           rem = Z.rem x y ->
@@ -75,29 +68,15 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
 
           step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue w_quot) (IntValue w_rem) mod_sf) old_flags new_flags)
   | step_Div_overflow:
-    forall mod_sf old_flags new_flags (x y x y:Z) op1 op2,
+    forall mod_sf old_flags new_flags (x y:Z) op1 op2,
       `(
-          let x := int_val _ op1 in
-          let y := int_val _ op2 in
+          x = int_val _ op1 ->
+          y = int_val _ op2 ->
           new_flags = apply_set_flags mod_sf old_flags (bflags true false false) ->
 
           step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue zero256) (IntValue zero256) mod_sf) old_flags new_flags
         )
-
-
-
 .  (**
-   - If `in2` $= 0$:
-      $$\begin{cases}out_1 := 0 \\
-out_{2} := 0 \end{cases}$$
-
-     Flags are computed as follows:
-      - `LT_OF` is set.
-      - `EQ` is set if $result_{low} = 0$.
-      - `GT` is set if `LT_OF` and `EQ` are cleared.
-
-Reminder: flags are only set if `set_flags` modifier is set.
-3. Finally, store results in the locations corresponding to `out1` and `out2`.
 
 ## Affected parts of VM state
 
@@ -115,4 +94,4 @@ Arithmetic operations.
 - See [%OpMul].
 
  *)
-End Def.
+End DivDefinition.

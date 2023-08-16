@@ -6,7 +6,6 @@ Import ListNotations RecordSetNotations.
 
 Section Definitions.
 
-Definition CALLSTACK_LIMIT := 1024%nat.
 Definition exception_handler := code_address.
 
 (* begin details: helpers *)

@@ -2,11 +2,14 @@ From RecordUpdate Require Import RecordSet.
 Require BinNums FMapPositive ZArith.
 Require Common.
 
-Section Mem.
-  Import lib.ZMod.
+Section MemoryBase.
   Import BinNums ZArith FMapPositive.
+  Import lib.ZMod.
   Import List ListNotations.
 
+  (** Memory is modeled as a mapping from addresses (integers of [%address_bits]
+  bits) to values of type [%addressable_block]. Unmapped addresses are mapped to
+  the [%default_value]. *)
   Record mem_descr := mk_mem_descr {
       addressable_block: Type;
       default_value: addressable_block;
@@ -14,34 +17,46 @@ Section Mem.
       writable: bool;
     }.
 
+  (* begin hide *)
   #[export] Instance etaMD: Settable _ := settable! mk_mem_descr< addressable_block; default_value; address_bits; writable>.
+  (* end hide *)
 
-  Variable mem_params: mem_descr.
+  Context (mem_params: mem_descr)
+    (default_value := mem_params.(default_value))
+    (address_bits := mem_params.(address_bits))
+    (addressable_block := mem_params.(addressable_block)).
 
-  Let default_value := mem_params.(default_value).
-  Let address_bits := mem_params.(address_bits).
-  Let addressable_block := mem_params.(addressable_block).
-
-  Definition address : Set := int_mod address_bits.
+  Definition address := int_mod address_bits.
 
   Record mem_parameterized : Type := mk_mem {
                                   contents :> PositiveMap.t addressable_block
                                 }.
 
+  (** We use a map from positive numbers implemented as a tree to store values in memory. However, address space starts at zero. Therefore, having an address $A$ we map it to the key $K(A)$ as follows:
+
+$$K(A):= A + 1$$
+
+   *)
   Definition addr_to_key (addr: address): positive :=
     Z.to_pos ((int_val address_bits addr) + 1).
 
-  (** [%load] assumes mem is initialized with a known default_value value. *)
+  (** Function [%extract_address] narrows down the integer to the appropriate
+  number of bits for the given address type. *)
+  Definition extract_address {word_bits} (addr_bits: nat) (wide_int: int_mod word_bits) : int_mod addr_bits :=
+    ZMod.resize word_bits addr_bits wide_int.
+
+  (** All memory addresses are initialized to the default value at memory
+  genesis. *)
   Definition load (addr : address) (m : mem_parameterized) : addressable_block :=
     match PositiveMap.find (addr_to_key addr) m.(contents) with
     | None => default_value
     | Some v => v
     end.
 
-  Definition store (val:addressable_block) (addr : address) (m : mem_parameterized)
-    : mem_parameterized :=
+  Definition store (val:addressable_block) (addr : address) (m : mem_parameterized) : mem_parameterized :=
     mk_mem (PositiveMap.add (addr_to_key addr) val m).
 
+  (** An empty memory. *)
   Definition empty := mk_mem (PositiveMap.empty addressable_block).
 
   Inductive load_result (addr: address) (m: mem_parameterized) (v:addressable_block) : Prop :=
@@ -50,9 +65,12 @@ Section Mem.
   Inductive store_result (addr: address) (m : mem_parameterized) (v:addressable_block) (m'
       : mem_parameterized) : Prop :=
     | StoreResultOK:
-      mem_params.(writable) = true ->
+      writable mem_params = true ->
       store v addr m = m' -> store_result addr m v m'.
 
+  (** Heap variants are byte-addressable, but reads and words operate on 256-bit
+  [%word]s. Multicell loads return [%len] consecutive bytes from memory [%m] at
+  an address [%a]. *)
   Fixpoint load_multicell (a:address) (len:nat) (m:mem_parameterized)
     : option (list addressable_block) :=
     match len with
@@ -119,6 +137,7 @@ Proof.
   }
 Qed.
 
+(** Similarly, [%store_multicell] accepts a list of values and puts them in memory starting from the address [%a]. *)
 Fixpoint store_multicell (a:address) (vals: list addressable_block) (m:mem_parameterized)
   : option mem_parameterized  :=
   if writable mem_params then
@@ -169,34 +188,5 @@ Proof.
 Qed.
 
 
-End Mem.
-Import BinInt Z List ZMod.
+End MemoryBase.
 
-Section Util.
-Import BinInt ZArith Z List ZMod Common.
-Variable bits: nat.
-
-Definition concat_z z1 z2 : Z:=
-  ((Z.shiftl z1 (Z.of_nat bits)) + z2)%Z.
-
-Definition concat_bytes_Z (ls: list Z)  : Z :=
-  @fold_left Z Z concat_z ls 0%Z.
-
-Definition word_to_bytes (w:u256) : list u8 :=
-  let zs := extract_digits w.(int_val _) bits_in_byte (256 / bits_in_byte) in
-  List.map u8_of zs.
-
-
-End Util.
-
-Definition merge_bytes (bits resbits: nat) (ls: list (int_mod bits)) : int_mod resbits
-  :=
-  let only_zs := List.map (int_val bits) ls in
-  int_mod_of resbits
-    (concat_bytes_Z bits only_zs).
-
-
-Inductive extract_address {word_bits} (addr_bits: nat) : int_mod word_bits-> int_mod addr_bits -> Prop :=
-|ea_extract: forall val val_adj,
-    val_adj = ZMod.resize word_bits addr_bits val ->
-    extract_address addr_bits val val_adj.

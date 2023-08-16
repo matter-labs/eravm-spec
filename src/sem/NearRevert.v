@@ -34,12 +34,12 @@ Section NearRevert.
 6. Proceed with executing $E$.
    *)
   | step_NearRevert:
-    forall cf caller_stack caller_reimbursed _eh _sp _pc _ergs saved ctx gs new_gs pages,
+    forall cf caller_stack new_caller _eh _sp _pc _ergs saved ctx gs new_gs pages,
       `(
           let cs := InternalCall (mk_cf _eh _sp _pc _ergs saved) caller_stack in
           let handler := active_exception_handler cs in
 
-          ergs_reimburse_caller_and_drop cs caller_reimbursed ->
+          ergs_return_caller_and_drop cs new_caller ->
           rollback saved gs new_gs ->
           step_nearrevert OpNearRevert
                           {|
@@ -56,7 +56,7 @@ Section NearRevert.
                           {|
                             gs_transient := {|
                                              gs_flags        := flags_clear;
-                                             gs_callstack    := pc_set handler caller_reimbursed;
+                                             gs_callstack    := pc_set handler new_caller;
 
                                              gs_regs         := regs;
                                              gs_pages        := pages;

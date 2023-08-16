@@ -3,7 +3,7 @@ Require sem.SemanticCommon.
 Import Bool Core Modifiers Common Flags isa.CoreSet CallStack Memory MemoryOps State ZMod
   ZArith PrimitiveValue SemanticCommon List ListNotations.
 
-Section Def.
+Section MulDefinition.
   Open Scope ZMod_scope.
 
   Generalizable Variables tag.
@@ -14,10 +14,7 @@ Section Def.
 
 ## Abstract Syntax
 
-```
-OpMul (in1: in_any) (in2: in_reg) (out1: out_any) (out2: out_any)
-      (swap:mod_swap) (flags:mod_set_flags)
-```
+[%OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -33,37 +30,17 @@ bits of the result are returned in two separate operands.
 
 ## Semantic
 
-1. Resolve `in1` and apply its addressing effects, resolve `in2`, resolve `out1` and apply its addressing effects, resolve `out2`.
-
-2. Compute result by unsigned multiplication of `in1` by `in2`.
+1. Compute result by unsigned multiplication of `in1` by `in2`.
 
    $$\begin{cases}result_{high} := \frac{ op_1 \times op_2}{2^{256}}\\
 result_{low} := op_1 \times op_2 \mod 2^{256} \end{cases}$$
 
-3. Flags are computed as follows:
+2. Flags are computed as follows:
    - `LT_OF` is set if overflow occurs, i.e. $op_1 \times op_2 \geq 2^{256}$
    - `EQ` is set if $result_{low} = 0$.
    - `GT` is set if `LT_OF` and `EQ` are cleared.
 
    Reminder: flags are only set if `set_flags` modifier is set.
-
-4. Wtore results in the locations corresponding to `out1` and `out2`.
-
-## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out1` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, by `out2` and `out1`, provided `out1` resolves to GPR.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
-Arithmetic operations.
-
-## Similar instructions
-
-- See [%OpDiv].
-
  *)
   | step_Mul:
     forall mod_sf old_flags new_flags high low high256 low256 (x y:Z) op1 op2,
@@ -83,5 +60,21 @@ Arithmetic operations.
 
           step_mul (OpMul (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue low256) (IntValue high256) mod_sf) old_flags new_flags
         ).
+
+  (** ## Affected parts of VM state
+
+- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out1` uses `RelPush` addressing mode.
+- Current stack memory page, if `out` resolves to it.
+- GPRs, by `out2` and `out1`, provided `out1` resolves to GPR.
+- flags, if `set_flags` modifier is set.
+
+## Usage
+
+Arithmetic operations.
+
+## Similar instructions
+
+- See [%OpDiv].
+*)
   Generalizable No Variables.
-End Def.
+End MulDefinition.

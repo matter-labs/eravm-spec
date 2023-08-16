@@ -24,7 +24,8 @@ To execute the code of a contract in static mode, use one of far call
 instructions with a static modifier, for example:
 
 ```
-OpFarCall (Reg R1) (Reg R2) (Imm zero16) (* is_static := *) true false
+OpFarCall (Reg R1) (Reg R2) (Imm zero16) true false
+                                         ^ is_static
 ```
 
 The same applies to [%OpMimicCall] and [%OpDelegateCall].

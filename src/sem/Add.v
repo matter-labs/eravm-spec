@@ -3,7 +3,7 @@ Require SemanticCommon.
 Import Bool Common Flags CoreSet Memory Modifiers State ZMod
   PrimitiveValue SemanticCommon.
 
-Section Def.
+Section AddDefinition.
   Open Scope ZMod_scope.
 
   Generalizable Variables op tag.
@@ -14,7 +14,7 @@ Section Def.
 
 ## Abstract Syntax
 
-[%OpAdd (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
+[%OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -58,9 +58,9 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
 
    *)
   | step_Add:
-    forall mod_sf old_flags new_flags,
+    forall mod_sf old_flags new_flags result new_OF,
       `(
-          let (result, new_OF) := op1 + op2 in
+          (result, new_OF) = op1 + op2 ->
           let new_EQ := result == zero256 in
           let new_GT := negb new_EQ && negb new_OF in
 
@@ -72,4 +72,4 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
   .
   Generalizable No Variables.
 
-End Def.
+End AddDefinition.

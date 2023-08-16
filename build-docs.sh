@@ -9,7 +9,7 @@ PRINCE=~/distr/usr/local/bin/prince
 rm -rf doc/*
 mkdir -p doc
 echo "Using coqdoc at $COQDOC"
-$COQDOC -toc --parse-comments --interpolate -utf8  -html -coqlib $COQLIB -R src EraVM -d doc `find src -name '*.v'` && echo "Docs are generated in the 'doc' directory"
+$COQDOC -g -toc --parse-comments --interpolate -utf8  -html -coqlib $COQLIB -R src EraVM -d doc `find src -name '*.v'` && echo "Docs are generated in the 'doc' directory"
 cp -fr img coqdoc.css doc
 for f in `find doc -name '*.html'`
 do
@@ -20,5 +20,6 @@ NAME=spec
 python3 collate.py `cat docseq` > "doc/$NAME.html"
 #wkhtmltopdf --enable-local-file-access --no-stop-slow-scripts --enable-javascript --javascript-delay 60000  "$NAME.html" "$NAME.pdf"
 
-# Prince is capable of collating multiple files together, but it is faster to use a script `collate.py`. Additionally, `collate.py` cuts out some unwanted parts
+# Prince is capable of collating multiple files together, but it is much faster to use a script `collate.py`. Additionally, `collate.py` cuts out some unwanted parts
+echo "Generating PDF doc/$NAME.pdf"
 "$PRINCE" --raster-dpi=300 -j "doc/$NAME.html" -o "doc/$NAME.pdf"

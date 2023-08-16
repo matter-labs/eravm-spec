@@ -217,3 +217,13 @@ Fixpoint extract_digits (w:Z) (bits_per_digit: nat) (units:nat) : list Z :=
       h:: tail
 
   end.
+
+Section ConcatBytes.
+  Variable bits: nat.
+
+  Definition concat_z z1 z2 : Z:=
+    ((Z.shiftl z1 (Z.of_nat bits)) + z2)%Z.
+
+  Definition concat_bytes_Z (ls: list Z)  : Z :=
+    @List.fold_left Z Z concat_z ls 0%Z.
+End ConcatBytes.

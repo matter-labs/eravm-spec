@@ -5,9 +5,8 @@ Require SemanticCommon.
 Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory MemoryOps isa.CoreSet State ZMod
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParameters.
 
-(**
-
-# ContextThis
+Section ContextDefinitions.
+(** # ContextThis
 
 ## Abstract Syntax
 
@@ -16,13 +15,12 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory M
 ## Syntax
 
 ```
-context.self_address out
+context.this out
 ```
 
 ## Summary
 
 Retrieves the address of the currently executed contract.
-
 
 ## Semantic
 
@@ -37,8 +35,8 @@ from the active external frame.
 
 ## Usage
 
-On delegatecall this address is preserved to be one of the caller.
-See [%FarCall.select_this_address].
+On [%OpDelegateCall] this address is preserved to be one of the caller.
+See [%select_this_address].
 
 ## Similar instructions
 
@@ -46,7 +44,7 @@ See [%OpContextCaller], [%OpContextCodeAddress].
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 Inductive step_context: instruction -> smallstep :=
@@ -59,9 +57,7 @@ Inductive step_context: instruction -> smallstep :=
 
 
     step_context (OpContextThis (IntValue this_addr_truncated)) s1 s2
-(**
-
-# ContextCaller
+(** # ContextCaller
 
 ## Abstract Syntax
 
@@ -90,8 +86,8 @@ Retrieves the address of the contract which has called the currently executed co
 
 ## Usage
 
-On delegatecall this address is preserved to be the caller of the caller.
-See [%FarCall.select_sender].
+On [%OpDelegateCall] this address is preserved to be the caller of the caller.
+See [%select_sender].
 
 ## Similar instructions
 
@@ -99,7 +95,7 @@ See [%OpContextThis], [%OpContextCodeAddress].
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextCaller:
@@ -108,9 +104,7 @@ See [%OpContextThis], [%OpContextCodeAddress].
     sender_addr_truncated = resize contract_address_bits word_bits sender_addr ->
 
     step_context (OpContextCaller (IntValue sender_addr_truncated)) s1 s2
-(**
-
-# ContextCodeAddress
+(** # ContextCodeAddress
 
 ## Abstract Syntax
 
@@ -119,7 +113,7 @@ See [%OpContextThis], [%OpContextCodeAddress].
 ## Syntax
 
 ```
-context.code_address out
+context.code_source out
 ```
 
 ## Summary
@@ -148,7 +142,7 @@ See [%OpContextThis], [%OpContextCaller].
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextCodeAddress:
@@ -158,9 +152,7 @@ See [%OpContextThis], [%OpContextCaller].
     code_addr_truncated = resize contract_address_bits word_bits code_addr ->
     step_context (OpContextCodeAddress (IntValue code_addr_truncated)) s1 s2
 
-(**
-
-# ContextErgsLeft
+(** # ContextErgsLeft
 
 ## Abstract Syntax
 
@@ -199,7 +191,7 @@ The `context` instruction family.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextErgsLeft:
@@ -207,9 +199,7 @@ The `context` instruction family.
     ergs_left_truncated = resize _ word_bits (ergs_remaining (gs_callstack s1)) ->
     step_context (OpContextErgsLeft (IntValue ergs_left_truncated)) s1 s2
 
-(**
-
-# ContextSP
+(** # ContextSP
 
 ## Abstract Syntax
 
@@ -247,7 +237,7 @@ The `context` instruction family.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextSP:
@@ -255,9 +245,7 @@ The `context` instruction family.
     sp_zero_padded = resize _ word_bits (sp_get (gs_callstack s1)) ->
 
     step_context (OpContextSp (IntValue sp_zero_padded)) s1 s2
-(**
-
-# ContextGetContextU128
+(** # ContextGetContextU128
 
 
 ## Abstract Syntax
@@ -296,16 +284,14 @@ Does not interact with the context register.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextGetContextU128:
   forall wcontext (s1 s2: state),
     wcontext = resize _ word_bits (gs_context_u128 s1) ->
     step_context (OpContextGetContextU128 (IntValue wcontext)) s1 s2
-(**
-
-# ContextSetContextU128
+(** # ContextSetContextU128
 
 - Only in kernel mode.
 - Forbidden in static calls.
@@ -346,7 +332,7 @@ Does not interact with the captured context value in the active external frame.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextSetContextU128:
@@ -356,9 +342,7 @@ Does not interact with the captured context value in the active external frame.
     step_transient_only xs1 xs2 s1 s2 ->
 
     step_context (OpContextSetContextU128 (mk_pv any_tag new_context256)) s1 s2
-(**
-
-# ContextMeta
+(** # ContextMeta
 
 VM internal state introspection.
 
@@ -395,23 +379,20 @@ Record params := {
 
 - registers : `out` register is modified.
 
-## Usage TODO
-
-
 ## Similar instructions
 
 - The `context` instruction family.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 | step_ContextMeta:
-  forall params encoded
+  forall params encoded cs shards
     (s1 s2: state),
-    let cs := gs_callstack s1 in
-    let shards := (active_extframe cs).(ecf_shards) in
+    cs = gs_callstack s1 ->
+    shards = (active_extframe cs).(ecf_shards) ->
     params = {|
                ergs_per_pubdata_byte := gs_current_ergs_per_pubdata_byte s1;
                heap_size := heap_bound cs;
@@ -421,9 +402,7 @@ Record params := {
                code_shard_id := shard_code shards;
              |} ->
     step_context (OpContextMeta (params,encoded)) s1 s2
-(**
-
-# ContextIncrementTxNumber
+(** # ContextIncrementTxNumber
 
 - Kernel only.
 - Forbidden in static context.
@@ -432,10 +411,10 @@ Record params := {
 
 [%OpContextIncrementTxNumber]
 
-## Syntax  TODO
+## Syntax
 
 ```
-context.??? out
+context.inc_tx_num out
 ```
 
 ## Summary
@@ -459,7 +438,7 @@ Utility in system contracts.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 
@@ -475,9 +454,7 @@ Utility in system contracts.
            gs_transient    := transient;
            gs_global       := new_gs;
          |}
-(**
-
-# SetErgsPerPubdataByte
+(** # SetErgsPerPubdataByte
 
 - Kernel only.
 - Forbidden in static context.
@@ -486,10 +463,10 @@ Utility in system contracts.
 
 [%OpContextSetErgsPerPubdataByte (value:in_reg)]
 
-## Syntax  TODO
+## Syntax
 
 ```
-context.??? in
+context.set_ergs_per_pubdata in
 ```
 
 ## Summary
@@ -512,7 +489,7 @@ Utility in system contracts.
 
 ## Encoding
 
-- Shares opcode with other `contextX` instructions.
+- A variant of `context` [%mach_instruction].
 
  *)
 
@@ -533,3 +510,4 @@ Utility in system contracts.
         |}
 
 .
+End ContextDefinitions.

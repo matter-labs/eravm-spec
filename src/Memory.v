@@ -1,7 +1,6 @@
 Require Core PrimitiveValue MemoryBase lib.PMap_ext.
 
 Import Bool Common Core MemoryBase BinInt List PrimitiveValue PMap_ext.
-
 Import ListNotations.
 
 (** # Informal overview
@@ -67,7 +66,11 @@ Pages hold one of:
 
 
 The following describes all types of memory formally and with greater detail.
+ *)
 
+
+Section Depot.
+  (*
 # Storage of a contract
 
 A **storage** is a persistent linear mapping from $2^{256}$ addresses to words.
@@ -84,20 +87,20 @@ All words in a storage are zero-initialized on genesis.
 Therefore, reading storage word prior to writing yields zero. It is a
 well-defined behavior. *)
 
-Definition storage_params := {|
-                              addressable_block := word;
-                              address_bits := 256;
-                              default_value := word0;
-                              writable := true
-                            |}.
+  Definition storage_params := {|
+                                addressable_block := word;
+                                address_bits := 256;
+                                default_value := word0;
+                                writable := true
+                              |}.
 
-Definition storage_address := ZMod.int_mod (address_bits storage_params).
-Definition storage: Type := mem_parameterized storage_params.
+  Definition storage_address := ZMod.int_mod (address_bits storage_params).
+  Definition storage: Type := mem_parameterized storage_params.
 
-(**  Storage start blanks. *)
-Definition storage_empty : storage := empty storage_params.
+  (**  Storage start blanks. *)
+  Definition storage_empty : storage := empty storage_params.
 
-(** Storage does not hold contract code, it is a responsibility of decommittment
+  (** Storage does not hold contract code, it is a responsibility of decommittment
 processor [%decommitter].
 
 Storage is a part of a [%shard], which is a part of [%depot].
@@ -130,18 +133,18 @@ A **shard** is a mapping of contract addresses to storages.
 Therefore, every contract is associated with as many storages as there are
 shards. *)
 
-Definition shard_params := {|
-                            addressable_block := storage;
-                            address_bits := 160;
-                            default_value := storage_empty;
-                            writable := true
-                          |}.
+  Definition shard_params := {|
+                              addressable_block := storage;
+                              address_bits := 160;
+                              default_value := storage_empty;
+                              writable := true
+                            |}.
 
-Definition contract_address := address shard_params.
-Definition contract_address_bits := address_bits shard_params.
-Definition shard := mem_parameterized shard_params.
+  Definition contract_address := address shard_params.
+  Definition contract_address_bits := address_bits shard_params.
+  Definition shard := mem_parameterized shard_params.
 
-(** Contracts are also associated with code. The association is global per depot
+  (** Contracts are also associated with code. The association is global per depot
 and implemented by [%Decommitter]. Therefore, the contract code is the same for
 all shards, but the storages of a contract in different shards differ.
 
@@ -157,38 +160,38 @@ instructions.
 **Depot** is a collection of shards.
 Depot is the global storage of storages of all contracts.
 
- *)
-Definition depot_params :=
-  {|
-    addressable_block := shard;
-    address_bits := 8;
-    default_value := empty _;
-    writable := true
-  |}.
+   *)
+  Definition depot_params :=
+    {|
+      addressable_block := shard;
+      address_bits := 8;
+      default_value := empty _;
+      writable := true
+    |}.
 
-Definition depot := mem_parameterized depot_params.
+  Definition depot := mem_parameterized depot_params.
 
-Definition shard_id := ZMod.int_mod (address_bits depot_params).
-(** There are currently two shards: one for zkRollup, one for zkPorter. *)
+  Definition shard_id := ZMod.int_mod (address_bits depot_params).
+  (** There are currently two shards: one for zkRollup, one for zkPorter. *)
 
-Inductive shard_exists: shard_id -> Prop :=
-| se_rollup: shard_exists (ZMod.int_mod_of _ 0%Z)
-| se_porter: shard_exists (ZMod.int_mod_of _ 1%Z)
-.
+  Inductive shard_exists: shard_id -> Prop :=
+  | se_rollup: shard_exists (ZMod.int_mod_of _ 0%Z)
+  | se_porter: shard_exists (ZMod.int_mod_of _ 1%Z)
+  .
 
 
-(** The **fully qualified address** of a word in depot is a triple:
+  (** The **fully qualified address** of a word in depot is a triple:
 
 
 $(\texttt{shard\_id}, \texttt{contract\_id} , \texttt{key})$
 
 It is formalized by [%fqa_key].
-*)
+   *)
 
   Record fqa_storage := mk_fqa_storage {
-                          k_shard: shard_id;
-                          k_contract: contract_address;
-                        }.
+                            k_shard: shard_id;
+                            k_contract: contract_address;
+                          }.
   Record fqa_key := mk_fqa_key {
                         k_storage :> fqa_storage;
                         k_key: storage_address
@@ -213,6 +216,8 @@ It is formalized by [%fqa_key].
       MemoryBase.store_result shard_params c shard storage' shard'  ->
       MemoryBase.store_result depot_params s d shard' depot' ->
       storage_write d (mk_fqa_key sk k) w depot'.
+
+End Depot.
 
 Section Memory.
 
@@ -246,8 +251,8 @@ and code pages. **)
     .
 
     Record page := mk_page {
-        type:> page_type
-        }.
+                       type:> page_type
+                     }.
     (** **Memory** is a collection of pages [%memory], each page is attributed a
     unique identifier [%page_id]. Pages persist for as long as they can be read
     by some code; in presence of [%FatPointer] the page lifetime may exceed the
@@ -256,8 +261,8 @@ and code pages. **)
     Definition page_id := nat.
     Definition pages := list (page_id * page).
     Record memory := mk_pages {
-        mem_pages:> pages;
-      }.
+                         mem_pages:> pages;
+                       }.
 
     Inductive page_has_id : memory -> page_id -> page -> Prop :=
     | mpid_select : forall mm id page,
@@ -290,7 +295,7 @@ and code pages. **)
         page_replace_list id p ((not_id,oldpage)::tail) ((not_id,oldpage)::tail').
 
     Inductive page_replace (id:page_id) (p:page): memory -> memory -> Prop :=
-      | prl_apply: forall ls ls',
+    | prl_apply: forall ls ls',
         page_replace_list id p ls ls' ->
         page_replace id p (mk_pages ls) (mk_pages ls').
 
@@ -304,7 +309,7 @@ and code pages. **)
   End Pages.
 
 
-(** ### Data pages
+  (** ### Data pages
 
 A **data page** contains individually addressable bytes. Each data page holds
 $2^{32}$ bytes. *)
@@ -336,7 +341,7 @@ $2^{32}$ bytes. *)
     : mem_address :=
     if query_bound < current_bound then zero32 else
       fst (query_bound - current_bound).
-(**
+  (**
 
 Note: only selected few instructions can access data pages:
 
@@ -356,7 +361,7 @@ between contracts.
 A **stack page** contains $2^{16}$ primitive values (see [%primitive_value]).
 Reminder: primitive values are tagged words.
 
-*)
+   *)
   Definition stack_page_params := {|
                                    addressable_block := primitive_value;
                                    address_bits := 16;
@@ -370,7 +375,7 @@ Reminder: primitive values are tagged words.
 
   Definition stack_page := mem_parameterized stack_page_params.
 
-(** #### Data stack in EraVM
+  (** #### Data stack in EraVM
 
 There are two stacks in EraVM: call stack to support the execution of functions
 and contracts, and data stack to facilitate computations. This section details
@@ -400,7 +405,7 @@ A **const page** contains $2^{16}$ non tagged [%word]s.
 They are not writable.
 
 Implementation may put constants and code on the same pages.
-*)
+   *)
   Definition const_address_bits := 16.
 
   Definition const_page_params := {|
@@ -412,7 +417,7 @@ Implementation may put constants and code on the same pages.
   Definition const_address :=  address const_page_params.
   Definition const_page := mem_parameterized const_page_params.
 
-(** ### Code pages
+  (** ### Code pages
 
 A **code page** contains $2^{16}$ instructions.
 They are not writable.
@@ -440,8 +445,8 @@ Const pages can coincide with code pages. *)
                                   writable := false
                                 |}.
   Record code_page := mk_code_page {
-      cp_insns:> mem_parameterized code_page_params;
-      }.
+                          cp_insns:> mem_parameterized code_page_params;
+                        }.
   Definition code_length := code_address.
 
 End Memory.

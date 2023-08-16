@@ -4,7 +4,7 @@ Require Common Ergs Memory MemoryContext.
 
 Import Common Ergs MemoryContext Memory List ListNotations.
 
-Section Stack.
+Section Callstack.
 
   Context (CALLSTACK_LIMIT : nat).
   Context {state_checkpoint: Type} {ins: Type} (ins_invalid: ins).
@@ -13,10 +13,14 @@ Section Stack.
 
   (** # Call stack
 
-EraVM operates with two stacks: the call stack, which supports function and
-contract execution, and the data stack, aiding in computations.
+EraVM operates with two stacks:
+
+1. call stack, which supports function and contract execution
+2. data stack, aiding in computations.
+
 Data stack has a role similar to the stack in JVM and other language virtual
-machines; call stack may be implemented in any way, but it is separate from data
+machines.
+Call stack may be implemented in any way, but it is separated from data
 stack.
 This section covers the call stack in detail.
 
@@ -40,17 +44,16 @@ moment of time any contract may have multiple external frames associated to it.
 **[%callstack]** is a stack of a maximum of [%CALLSTACK_LIMIT] stack frames.
 It is unrelated to the [%stack_page] which holds data stack.
 
-Global [%state] holds the call stack; there is one call stack per execution.
+There is one callstack per execution, stored in [%state] in [%gs_callstack] field.
 
 Internal call frames hold the following information:
 
 - [%cf_exception_handler_location]: a [%code_address] of an exception handler.
-  If the current function reverts or panics, VM will destroy the topmost frame
-  and jump to this handler.
-- [%cf_sp]: current data stack pointer. The topmost element in data stack is located
-  at [%cf_sp-1].
-- [%cf_ergs_remaining]: current balance. Price of all actions in ergs is
-  deducted from it.
+  On revert or panic VM destroys the topmost frame and jumps to this handler.
+- [%cf_sp]: current **data stack** pointer. The topmost element in data stack is located
+  at [%cf_sp-1] in the currently [%active_stackpage].
+- [%cf_ergs_remaining]: ergs allocated for the current function or contract.
+  It decreases as VM spends ergs for its operation.
 - [%cf_saved_checkpoint] : a snapshot of the state for a rollback. In case of panic or revert, the state of storage and event queues will be restored.
 *)
   Record callstack_common := mk_cf {
@@ -65,17 +68,6 @@ Internal call frames hold the following information:
   #[export] Instance etaCFC : Settable _ :=
     settable! mk_cf < cf_exception_handler_location; cf_sp; cf_pc; cf_ergs_remaining; cf_saved_checkpoint >.
   (* end hide *)
-
-  Record active_shards := mk_shards {
-                              shard_this: shard_id;
-                              shard_caller: shard_id;
-                              shard_code: shard_id;
-                            }.
-
-  (* begin hide *)
-  #[export] Instance etaSH: Settable _ :=
-    settable! mk_shards < shard_this; shard_caller; shard_code>.
-  (* end hide *)
 (** External call frames hold the same information as internal. Additionally, they
 hold:
 
@@ -87,10 +79,24 @@ hold:
    3. [%ecf_code_address] : which contract owns the code associated with the stack frame. It is not always the same contract as [%ecf_this_address].
 
 - [%ecf_mem_ctx] : current [%mem_ctx] holding ids of active stack, heap variants, code, const pages and bounds of data pages.
-- [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
-- [%ecf_context_u128_value] : captured value of [%gs_context_u128]. It represents a snapshot of the value of global register [%gs_context_u128] in the moment when the external call frame was created i.e. when a far call instruction was executed.
+- boolean [%ecf_is_static] : true if the code associated with this frame is being executed in static mode.
+- [%ecf_context_u128_value] : captured value of [%gs_context_u128]. It
+  represents a snapshot of the value of global register [%gs_context_u128] in a
+  moment of far call to the current contract.
 - [%ecf_shards] : shards associated with [%ecf_this_address], [%ecf_msg_sender] and [%ecf_code_address].
  *)
+
+  Record active_shards := mk_shards {
+                              shard_this: shard_id;
+                              shard_caller: shard_id;
+                              shard_code: shard_id;
+                            }.
+
+  (* begin hide *)
+  #[export] Instance etaSH: Settable _ :=
+    settable! mk_shards < shard_this; shard_caller; shard_code>.
+  (* end hide *)
+
   Record associated_contracts :=
     mk_assoc_contracts {
         ecf_this_address: contract_address;
@@ -127,9 +133,9 @@ hold:
 
   (** ## Operation
 
-When the server starts forming a new block, it starts a new instance of VM to execute the code called bootloader (see [%Core]).
+When the server starts forming a new block, it starts a new instance of VM to execute the code called [%Bootloader].
 Bootloader is a contract with an address [%BOOTLOADER_SYSTEM_CONTRACT_ADDRESS].
-To support its execution, an [%ExternalCall] frame is pushed to the call stack.
+To support its execution, a corresponding [%ExternalCall] frame with is pushed to the call stack.
 
 Handling each transaction requires executing [%OpFarCall], which pushes another
 call frame to the callstack.
@@ -179,23 +185,23 @@ Executing any instruction $I$ changes the topmost frame:
       := cfc_map (fun x => x <| cf_ergs_remaining ::= f |>) ef.
     Definition ergs_set newergs := ergs_map (fun _ => newergs).
 
-    Inductive ergs_reimburse : ergs -> callstack -> callstack -> Prop :=
-    | er_reimburse: forall delta new_ergs ef ef',
+    Inductive ergs_return: ergs -> callstack -> callstack -> Prop :=
+    | er_return: forall delta new_ergs ef ef',
         delta + ergs_remaining ef = (new_ergs, false) ->
         ef' = ergs_set new_ergs ef ->
-        ergs_reimburse delta ef ef'.
+        ergs_return delta ef ef'.
 
 
-    Inductive ergs_reimburse_caller_and_drop : callstack -> callstack -> Prop
+    Inductive ergs_return_caller_and_drop : callstack -> callstack -> Prop
       :=
     |erc_internal: forall caller new_caller cf,
-        ergs_reimburse (ergs_remaining (InternalCall cf caller)) caller
+        ergs_return (ergs_remaining (InternalCall cf caller)) caller
           new_caller ->
-        ergs_reimburse_caller_and_drop (InternalCall cf caller) new_caller
+        ergs_return_caller_and_drop (InternalCall cf caller) new_caller
     |erc_external: forall caller new_caller cf,
-        ergs_reimburse (ergs_remaining (ExternalCall cf (Some caller))) caller
+        ergs_return (ergs_remaining (ExternalCall cf (Some caller))) caller
           new_caller ->
-        ergs_reimburse_caller_and_drop (ExternalCall cf (Some caller)) new_caller.
+        ergs_return_caller_and_drop (ExternalCall cf (Some caller)) new_caller.
 
     Definition ergs_reset := ergs_set zero32.
 
@@ -438,4 +444,4 @@ Executing any instruction $I$ changes the topmost frame:
     End ActivePages.
 
   End ActiveMemory.
-End Stack.
+End Callstack.

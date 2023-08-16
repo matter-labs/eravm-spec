@@ -5,28 +5,26 @@ Require SemanticCommon.
 Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State ZMod
   PrimitiveValue SemanticCommon RecordSetNotations.
 
-Section Def.
+Section JumpDefinition.
 
 
 Inductive step_jump_aux: @instruction bound -> callstack -> callstack -> Prop :=
-(**
+(** # Jump
 
-## `jump`
+Unconditional jump (becomes conditional through predication).
 
-Unconditional jump.
-
-### Abstract Syntax
+## Abstract Syntax
 
 [% OpJump (dest: in_any)]
 
-### Syntax
+## Syntax
 
 - `jump destination`
 
 Note: Argument `destination` uses the full addressing mode [%in_any], therefore can be immediate
 16-bit value, register, a register value with an offset, and so on.
 
-### Semantic
+## Semantic
 
 - Fetch a new address from operand `destination`.
 
@@ -40,13 +38,11 @@ Note: Argument `destination` uses the full addressing mode [%in_any], therefore 
 
     step_jump_aux (OpJump (mk_pv __ dest_val)) cs new_cs.
 
-(**
-
-### Affected parts of VM state
+(** ## Affected parts of VM state
 
 - execution stack: PC is overwritten with a new value.
 
-### Usage
+## Usage
 
 - Unconditional jumps
 
@@ -58,15 +54,15 @@ Note: Argument `destination` uses the full addressing mode [%in_any], therefore 
   not require to install a non-default [%cf_exception_handler_location], nor
   passing less than all available ergs.
 
-### Similar instructions
+## Similar instructions
 
 - Calls: see [%OpNearCall], [%OpFarCall], [%OpDelegateCall], [%OpMimicCall].
 
 *)
 
-End Def.
-
 Inductive step_jump: @instruction bound -> smallstep :=
 | step_Jump: forall ins (s1 s2:state),
     step_callstack (step_jump_aux ins) s1 s2 ->
     step_jump ins s1 s2.
+
+End JumpDefinition.

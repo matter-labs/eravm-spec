@@ -10,7 +10,7 @@ Section Parameters.
 # EraVM architecture overview
 
 
-EraVM is a 256-bit register-based language machine with two stacks, and dedicated memory for code, data, stack and constants.
+EraVM is a 256-bit register-based language machine with two stacks and dedicated memory for code, data, stack and constants.
    *)
   Definition word_bits: nat := 256.
 
@@ -20,15 +20,30 @@ EraVM is a 256-bit register-based language machine with two stacks, and dedicate
   Import Nat.
   Definition bytes_in_word : nat := word_bits/bits_in_byte.
   Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
+
+(* begin details: Helpers *)
+  Definition word_to_bytes (w:u256) : list u8 :=
+    let zs := extract_digits w.(int_val _) bits_in_byte (256 / bits_in_byte) in
+    List.map u8_of zs.
+
+  Definition merge_bytes (bits resbits: nat) (ls: list (int_mod bits)) : int_mod resbits
+    :=
+    let only_zs := List.map (int_val bits) ls in
+    int_mod_of resbits
+      (concat_bytes_Z bits only_zs).
+(* end details *)
+
+
+  
 End Parameters.
   (**
 ![](img/arch-overview.png)
 
 
-- **Memory** provides access to transient memory, consisting of pages. See [%Memory].
-- **Storage** provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage.   See [%Memory].
-- **EventSink** collects events and L2→L1 messages. See [%Events].
-- **Precompile processor** executes precompiles e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
+- **Memory** provides access to transient memory pages. See [%Memory].
+- **Storage** provides access to persistent storage with two shards, each shard maps $2^{160}$ contracts, to a key-value storage. See [%Depot].
+- **EventSink** collects events and messages to L1. See [%Events].
+- **Precompile processor** executes system contract-specific extensions to the EraVM instruction set, called precompiles, e.g. `keccak256`, `sha256`, and so on. See [%Precompiles].
 - **Decommitment processor** stores and decommits the code of contracts. See [%Decommitter].
 
 ## Functions and contracts
@@ -39,28 +54,28 @@ functions by using **near call** instruction [%OpNearCall].
 A contract may also call other contracts by using **far call** instructions
 [%OpFarCall], [%OpMimicCall], or [%OpDelegateCall].
 
-By **running instance** of a function or a contract we mean a piece of VM runtime
+A **running instance** of a function or a contract is a piece of VM runtime
 state associated with the current execution of a function or a contract, as
 described by [%callstack].
 
 EraVM allows recursive execution of functions and contracts.
 For example, a contract $A$ calls a function $f_1$ which calls a function $f_2$
-which calls a contract $B$, which calls a function $g_1$
+which calls a contract $B$, which calls a function $g_1$, which calls $A$ again
 ...
+
+$$A \rightarrow f_1 \rightarrow f_2 \rightarrow B \rightarrow g_1 \rightarrow A \rightarrow \dots$$
+
 During the execution of $g_1$, **running instances** of $A$, $f_1$, $f_2$ keep
 existing, waiting for the control to return to them.
 
-Recursive execution is also allowed, so a contract $C$ may call itself directly,
-or call either functions or other contracts, which may call $C$ again.
-
-Launching a contract allocates memory pages dedicated to it (see
+Executing a contract allocates memory pages dedicated to it (see
 [%alloc_pages_extframe]).
 In a running instance of a contract, this contract's functions share these
 memory pages.
 
-Contracts have more contract-specific state associated to them than functions.
+Contracts have more contract-specific state associated to them than functions (compare [%InternalCall] and [%ExternalCall]).
 However, running instances of both functions and contracts have their own
-balance in ergs, exception handlers, program counter and stack pointer values.
+exception handlers, program counters, stack pointers and allocated ergs (see [%callstack_common]).
 
 ## Execution state
 
@@ -68,46 +83,43 @@ EraVM's functionality is to sequentially execute instructions.
 
 The main components of EraVM's execution state are:
 
-- 256-bit tagged general-purpose registers R1--R15 and a reserved register R0
-  holding a constant 0. See [%regs_state].
-- Three flags: overflow/less-than, equals, greater-than. See
+- 256-bit tagged general-purpose registers R1--R15 and a reserved constant register R0 holding 0. See [%regs_state].
+- Three flags: OverFlow/Less-Than, EQuals, Greater-Than. See
   [%flags_state].
-- Data stack holding tagged words. It is located on a dedicated [%stack_page].
+- Data stack containing tagged words. It is located on a dedicated [%stack_page].
 - Callstack, holding callframes, which contain such information as the program
-  counter, data stack pointer, current ergs balance, current contract's address,
+  counter, data stack pointer, ergs for the current function/contract instance, current contract's address,
   and so on. See [%CallStack].
-- Frames in callstack can be internal (belong to a function, near called) frames
+- Frames in callstack; can be internal (belong to a function, near called) frames
   or external frames (belong to a contract, far called, richer state).
 - Read-only pages for constants and code, one per contract stack frame.
 
-
 ## Instructions
 
-Refer to the section [%Instructions] for the list of supported instructions.
+The type [%asm_instruction] describes the supported instructions.
 
-All instructions are predicated; it means, that they contain an explicit
-condition about the current flags state. If the condition is satisfied, they are
-executed, otherwise they are skipped (but their basic cost is still paid). See
-[%instruction_predicated].
+All instructions are [%predicated]: they contain an explicit
+condition related to the current flags state. If the condition is satisfied, they are
+executed, otherwise they are skipped (but their [%basic_cost] is still paid).
 
-Instruction can accept data and return results in various formats.
+Instructions accept data and return results in various formats:
 
 - The formats of instruction operands are described in [%Addressing].
-- The address resolution to locations in memory is described in [%resolve]
+- The address resolution to locations in memory/registers is described in [%resolve]
 - Reading and writing to memory is described in [%MemoryOps].
 
 
 ## Modes
-VM has two modes which can be independently turned on and off.
+EraVM has two modes which can be independently turned on and off.
 
-1. Kernel mode
+1. Kernel mode/User Mode
 
-  First [%KERNEL_MODE_MAXADDR_LIMIT] contracts are marked as system contracts.
-  VM executes them in kernel mode, allowing an access to a richer instruction
+  First [%KERNEL_MODE_MAXADDR_LIMIT] contracts are marked as **system contracts**.
+  EraVM executes them in kernel mode, allowing an access to a richer instruction
   set, containing instructions potentially harmful to the global state e.g.
   [%OpContextIncrementTxNumber]. See [%KernelMode].
 
-2. Static mode
+2. Static mode/Non-static mode
 
    Intuitively, executing code in static mode aims at limiting its effects on
    the global state, similar to executing pure functions. Globally visible

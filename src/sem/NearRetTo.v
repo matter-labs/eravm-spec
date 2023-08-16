@@ -31,9 +31,9 @@ Section NearRetTo.
 4. Set PC to the label value.
    *)
   | step_NearRetTo:
-    forall cf caller_stack caller_reimbursed label,
+    forall cf caller_stack new_caller label,
       `(
-          ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
+          ergs_return_caller_and_drop (InternalCall cf caller_stack) new_caller ->
 
           step_nearretto (OpNearRetTo label) {|
                      gs_flags        := __;
@@ -46,7 +46,7 @@ Section NearRetTo.
                    |}
                    {|
                      gs_flags        := flags_clear;
-                     gs_callstack    := pc_set label caller_reimbursed;
+                     gs_callstack    := pc_set label new_caller;
 
 
                      gs_regs         := regs;

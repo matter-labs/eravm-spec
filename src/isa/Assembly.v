@@ -29,8 +29,8 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
   Inductive asm_instruction: Type :=
   | OpInvalid
   | OpNoOp
-  | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with $out_1$ in address mode [%Addressing.RelSpPush]*)
-  | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with $in_1$ in address mode [%Addressing.RelSpPop] *)
+  | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with out_1 in address mode [%Addressing.RelSpPush]*)
+  | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with in_1  in address mode [%Addressing.RelSpPop] *)
   | OpJump        (dest: in_reg)
   | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
   | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
@@ -45,7 +45,8 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
   | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
-  | OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)
+                  
+  | OpNearCall    (arg: in_reg) (dest: imm_in) (handler: imm_in)
   | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
   | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
   | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
@@ -76,13 +77,13 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
   | OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
 
 
-  | OpContextThis                                   (out: out_reg)
-  | OpContextCaller                                 (out: out_reg)
-  | OpContextCodeAddress                            (out: out_reg)
-  | OpContextMeta                                   (out: out_reg)
-  | OpContextErgsLeft                               (out: out_reg)
-  | OpContextSp                                     (out: out_reg)
-  | OpContextGetContextU128                         (out: out_reg)
+  | OpContextThis                  (out: out_reg)
+  | OpContextCaller                (out: out_reg)
+  | OpContextCodeAddress           (out: out_reg)
+  | OpContextMeta                  (out: out_reg)
+  | OpContextErgsLeft              (out: out_reg)
+  | OpContextSp                    (out: out_reg)
+  | OpContextGetContextU128        (out: out_reg)
   | OpContextSetContextU128        (in1: in_reg)
   | OpContextSetErgsPerPubdataByte (in1: in_reg)
   | OpContextIncrementTxNumber

@@ -5,15 +5,21 @@ Import Addressing Core Common ZArith ZMod CallStack GPR Memory PrimitiveValue.
 Section AddressingUtils.
   Import MemoryBase.
   Open Scope ZMod_scope.
-  Definition extract_stack_address: word -> stack_address -> Prop := extract_address _.
-  Definition extract_code_address: word -> code_address -> Prop := extract_address _.
-  Definition extract_const_address: word -> const_address -> Prop := extract_address _.
+  (* Definition extract_stack_address: word -> stack_address -> Prop := extract_address _. *)
+  (* Definition extract_code_address: word -> code_address -> Prop := extract_address _. *)
+  (* Definition extract_const_address: word -> const_address -> Prop := extract_address _. *)
 
+  (** Predicate [%reg_rel] implements the resolution for register-based relative addressing. Its specializations implement relative addressing for:
+
+- the [%code_page]: [%reg_rel_code];
+- the [%const_page]: [%reg_rel_const];
+- the [%stack_page]: [%reg_rel_const];
+   *)
   Inductive reg_rel addr_bits : regs_state -> reg_name -> int_mod addr_bits -> int_mod addr_bits -> Prop :=
   | rca_code_pp: forall regs reg reg_val base ofs
                    abs OF_ignored,
       fetch_gpr regs reg = IntValue reg_val ->
-      extract_address addr_bits reg_val base ->
+      base = extract_address addr_bits reg_val ->
       base + ofs = (abs, OF_ignored) ->
       reg_rel addr_bits regs reg ofs abs.
 

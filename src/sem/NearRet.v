@@ -31,9 +31,9 @@ Section NearRet.
 
    *)
   | step_NearRet:
-    forall cf caller_stack caller_reimbursed pages,
+    forall cf caller_stack new_caller pages,
       `(
-          ergs_reimburse_caller_and_drop (InternalCall cf caller_stack) caller_reimbursed ->
+          ergs_return_caller_and_drop (InternalCall cf caller_stack) new_caller ->
 
           step_nearret OpNearRet {|
                          gs_flags        := __;
@@ -46,7 +46,7 @@ Section NearRet.
                        |}
                        {|
                          gs_flags        := flags_clear;
-                         gs_callstack    := caller_reimbursed;
+                         gs_callstack    := new_caller;
 
 
                          gs_regs         := regs;

@@ -1,7 +1,7 @@
 Require sem.SemanticCommon.
 Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
 
-Section Ror.
+Section RorDefinition.
   Open Scope ZMod_scope.
   Generalizable Variables tag.
   Inductive step_ror: instruction -> flags_tsmallstep :=
@@ -24,8 +24,6 @@ Section Ror.
 Bitwise circular left shift of `in1` by the number of binary digits specified by the lowest byte of `in2`. New binary digits (most significant bits in `out`) are taken from the least significant bits of `in1`.
 
 ## Semantic
-
-Follows the scheme described in [%binop_state_bitwise_effect_spec].
 
 - result is computed as `in1 >>> (in2 mod 256)`
 - flags are computed as follows:
@@ -56,4 +54,4 @@ Reminder: flags are only set if `set_flags` modifier is set. *)
 
 - `shl`, `shr`, `rol` and `ror` are encoded as variants of the same instruction.
  *)
-End Ror.
+End RorDefinition.

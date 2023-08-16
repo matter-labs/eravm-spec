@@ -6,7 +6,9 @@ Section Predication.
   (** # Predication
 
 Every instruction on the [%code_page] is predicated, meaning it is augmented with a [%predicate].
-A predicate describes a condition on flags; if this condition is satisfied, then the instruction is executed; otherwise, it is skipped.
+A predicate describes a condition on flags; if this condition is satisfied, then
+the instruction is executed; otherwise, EraVM skips the instruction.
+
 
 When an instruction is skipped, its base cost is still paid. *)
   Inductive predicate : Set :=
@@ -94,9 +96,8 @@ When an instruction is skipped, its base cost is still paid. *)
         ins_cond: predicate;
       }.
 
-  (** Invalid instruction. It is a default value on code memory pages. See
-  [%code_page]. It is parameterized by an instruction type for convenience of
-  defining it. *)
+  (** Invalid instruction. It is a default value on [%code_page]s. See
+  [%code_page]. *)
 
   Definition invalid {I} (ins:I) : predicated I :=
     {|

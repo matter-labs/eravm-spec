@@ -2,7 +2,6 @@ doc/EraVM.Glossary.html
 doc/EraVM.Common.html
 doc/EraVM.Core.html
 doc/EraVM.PrimitiveValue.html
-doc/EraVM.History.html
 doc/EraVM.State.html
 doc/EraVM.CallStack.html
 doc/EraVM.KernelMode.html
@@ -13,6 +12,7 @@ doc/EraVM.Bootloader.html
 doc/EraVM.Coder.html
 doc/EraVM.Decommitter.html
 doc/EraVM.Ergs.html
+doc/EraVM.History.html
 doc/EraVM.Event.html
 doc/EraVM.Flags.html
 doc/EraVM.GPR.html
@@ -31,6 +31,8 @@ doc/EraVM.isa.CoreSet.html
 doc/EraVM.isa.AssemblyToCore.html
 doc/EraVM.isa.Modifiers.html
 
+doc/EraVM.Semantics.html
+doc/EraVM.VMPanic.html
 doc/EraVM.sem.SemanticCommon.html
 doc/EraVM.sem.SpAdd.html
 doc/EraVM.sem.SpSub.html

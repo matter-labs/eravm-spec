@@ -1,7 +1,7 @@
 Require sem.SemanticCommon.
 Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
 
-Section Shr.
+Section ShrDefinition.
   Open Scope ZMod_scope.
   Generalizable Variables tag.
   Inductive step_shr: instruction -> flags_tsmallstep :=
@@ -21,7 +21,9 @@ Section Shr.
 
 ## Summary
 
-Bitwise left shift of `in1` by the number of binary digits specified by the lowest byte of `in2`. New binary digits (most significant bits in `out`) are zeros.
+Bitwise left shift of `in1` by the number of binary digits specified by the
+lowest byte of `in2`. New binary digits (most significant bits in `out`) are
+zeros.
 
 ## Semantic
 
@@ -56,4 +58,4 @@ Reminder: flags are only set if `set_flags` modifier is set. *)
 
 - `shl`, `shr`, `rol` and `ror` are encoded as variants of the same instruction.
  *)
-End Shr.
+End ShrDefinition.

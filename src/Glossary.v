@@ -20,6 +20,7 @@
 *)
 
 (**
+
 # Glossary
 
 - **ABI** --  application binary interface. See [%ABI].
@@ -75,7 +76,6 @@ executes an instruction [%OpPrecompileCall], EraVM executes an
 algorithm specific to this contract. See [%Precompiles].
 - **Precompile processor** -- a module responsible for encoding the algorithms of precompile calls and executing them.
 - **Primitive value** -- a tagged word. See [%primitive_value].
-- **Shrinking a heap pointer** -- see [%hp_shrink].
 - **Shrinking a fat pointer** -- subtract a given number from its length; it is guaranteed to not overflow. See [%fat_ptr_shrink]. Triggered by [%OpPtrShrink] instruction.
 - **Slice** -- see [%slice].
 - **Span** -- see [%span].
@@ -84,7 +84,6 @@ algorithm specific to this contract. See [%Precompiles].
 - **Topmost callstack frame** -- the last frame pushed to call stack.
 - **Word** -- 256-bit unsigned untagged integer value.
 - **address resolution** -- a matching between instruction operands and locations using the supported address modes. See [%resolve].
-- **balance** -- the number of currently available ergs in the topmost frame in [%callstack].
 - **base cost** -- the fixed cost of executing instruction, in ergs. Some instructions imply additional costs, e.g. far calls may require paying for code decommitment.
 - **bootloader** -- a system contract written in YUL in charge of block construction.
 - **cell** -- alias to "word". Often used to distinguish between values themselves and the memory locations holding them.
@@ -109,7 +108,7 @@ algorithm specific to this contract. See [%Precompiles].
 - **server** -- a program that launches EraVM and controls it. Feeds the transactions to the bootloader, provides decommitter and other external modules, restarts EraVM from the latest snapshot in case of malformed transactions.
 - **stack pointer** -- the [%stack_address] where the next element will be pushed. It is the address of the (top of the stack + 1).
 - **static mode** -- see [%StaticMode].
-- **storage** -- see [%storage]. 
+- **storage** -- see [%storage].
 - **total cost** -- a sum of [%base_cost] of an instruction and all its additional costs.
 - **versioned hash** -- a key used to retrieve the contract code from decommitter. See [%versioned_hash] and [%Decommitter].
 - **VM** -- the same as EraVM, the abstract virtual machine that this document specifies.

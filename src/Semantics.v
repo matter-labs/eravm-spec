@@ -1,9 +1,9 @@
 From RecordUpdate Require Import RecordSet.
 Require VMPanic StaticMode isa.AssemblyToCore sem.SemanticCommon.
 
+(* begin hide *)
 Import ZArith Common GPR Predication Ergs CallStack Memory MemoryOps Assembly CoreSet State ZMod
   RecordSetNotations SemanticCommon KernelMode StaticMode VMPanic Binding Steps.
-
 Import List ListNotations AssemblyToCore.Coercions.
 Require Import
   sem.Add
@@ -47,6 +47,17 @@ Require Import
   sem.ToL1
   sem.Xor
 .
+(* end hide *)
+
+Section VMParameters.
+  Local Open Scope ZMod_scope.
+  Local Coercion int_val : int_mod >-> Z.
+
+  Definition VM_INITIAL_FRAME_ERGS: nat := Z.to_nat (unsigned_max ergs_bits).
+  Context (CALL_LIKE_ERGS_COST  := Z.to_nat CALL_LIKE_ERGS_COST).
+  Definition VM_MAX_STACK_DEPTH: nat := VM_INITIAL_FRAME_ERGS / CALL_LIKE_ERGS_COST + 80.
+End VMParameters.
+
 Section SmallStep.
   Local Open Scope ZMod_scope.
 
@@ -60,10 +71,19 @@ Section SmallStep.
       let ef' := pc_set pc' ef in
       update_pc_regular ef ef'.
 
+  (** Every instruction is either executed, skipped, or triggers panic
+  instantly. Panic can also be triggered later during the execution. *)
   Inductive action: Type := Execute | Skip | Panic : reason -> action.
 
+  (** After the instruction is selected, panic is immediately triggered:
+
+- on call stack overflow;
+- if the [%base_cost] of instruction is unaffordable;
+- if the instruction is not allowed in kernel mode, and VM is in kernel mode;
+- if the instruction is not allowed in static mode, and VM is in static mode.
+   *)
   Definition chose_action (s:transient_state) (i:@predicated asm_instruction) : action :=
-    if stack_overflow CALLSTACK_LIMIT (gs_callstack s) then
+    if stack_overflow VM_MAX_STACK_DEPTH (gs_callstack s) then
       Panic CallStackOverflow
     else if negb (check_requires_kernel i.(ins_spec _) (in_kernel_mode (gs_callstack s))) then
            Panic NotInKernelMode
@@ -73,6 +93,8 @@ Section SmallStep.
                      Skip
                    else Execute.
 
+  (** The definition [%smallsteps] gathers the references to all the small step
+  predicates for various [%asm_instruction]s. *)
   Definition smallsteps : list (@instruction bound -> smallstep) :=
   [
   fun i => step_transient (tstep_flags     step_add          i);
@@ -127,7 +149,6 @@ Section SmallStep.
 
   Generalizable Variables cs.
 
-
   Inductive execute_action: action -> @instruction decoded -> smallstep :=
   | ea_execute:
     `(forall instr gs instr_bound new_s xs0 xs1,
@@ -162,6 +183,10 @@ Section SmallStep.
     @fetch_instr _ instruction_invalid _ (gs_regs s) (gs_callstack s) (gs_pages s)
       (@FetchIns (predicated asm_instruction) ins).
 
+
+
+ (** [%step] is the main predicate defining a VM transition in a small step
+ structural operational style. *)
   Inductive step: smallstep :=
   | step_correct:
     forall (s new_s : state) cond

@@ -78,13 +78,13 @@ Inductive fwd_memory :=
  7. Context register is zeroed.
 *)
 | step_RevertExt_heapvar:
-  forall gs gs' pages cf caller_stack cs1 caller_reimbursed params out_ptr heap_type hspan __ ___ ____ _____,
+  forall gs gs' pages cf caller_stack cs1 new_caller params out_ptr heap_type hspan __ ___ ____ _____,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     params = ForwardNewHeapPointer heap_type hspan ->
 
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
-    ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
+    ergs_return_caller_and_drop cs1 new_caller ->
 
     rollback cf.(cf_saved_checkpoint) gs gs' ->
     step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
@@ -102,7 +102,7 @@ Inductive fwd_memory :=
           {|
             gs_transient := {|
                           gs_flags        := flags_clear;
-                          gs_callstack    := caller_reimbursed;
+                          gs_callstack    := new_caller;
                           gs_regs         := regs_state_zero
                              <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |>
                              <| r2 := reserved |>
@@ -115,7 +115,7 @@ Inductive fwd_memory :=
           gs_global       := gs';
           |}
 | step_RevertExt_ForwardFatPointer:
-  forall pages cf caller_stack cs1 caller_reimbursed __ ___ ____ _____ in_ptr out_ptr page params gs gs',
+  forall pages cf caller_stack cs1 new_caller __ ___ ____ _____ in_ptr out_ptr page params gs gs',
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     (* Panic if not a pointer *)
@@ -129,7 +129,7 @@ Inductive fwd_memory :=
 
     fat_ptr_narrow in_ptr out_ptr ->
 
-    ergs_reimburse_caller_and_drop cs1 caller_reimbursed ->
+    ergs_return_caller_and_drop cs1 new_caller ->
 
     rollback cf.(cf_saved_checkpoint) gs gs' ->
     step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
@@ -148,7 +148,7 @@ Inductive fwd_memory :=
           {|
             gs_transient := {|
                           gs_flags        := flags_clear;
-                          gs_callstack    := caller_reimbursed;
+                          gs_callstack    := new_caller;
                           gs_regs         := regs_state_zero
                              <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
                              <| r2 := reserved |>

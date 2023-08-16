@@ -8,10 +8,10 @@ Context {contract_address precompile_params: Type}.
 
 VM interfaces with two queues:
 
-1. L2 [%events] events (see [%gs_events]),  emitted by [%OpEvent].
-2. L1 [%l1_msg] events (see [%gs_l1_msgs]), emitted by [%OpToL1Message].
+1. L1 [%l1_msg] events (see [%gs_l1_msgs]), emitted by [%OpToL1Message].
+2. L2 [%events] events (see [%gs_events]),  emitted by [%OpEvent].
 
-These queues are subject to rollbacks: in case of revert or panic, the
+These queues are subject to [%rollback]s: in case of revert or panic, the
 events emitted during the function or contract execution are rolled back.
  *)
 Record event := {
