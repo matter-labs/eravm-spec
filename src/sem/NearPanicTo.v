@@ -3,11 +3,9 @@ Require SemanticCommon.
 
 Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon VMPanic RecordSetNotations isa.CoreSet.
 
-Section NearPanicTo.
+Section NearPanicToDefinition.
 Inductive step_panicto: instruction -> smallstep :=
-(**
-
-# NearPanic (abnormal return, not return/panic)
+(** # NearPanic (abnormal return, not return/panic)
 
 ## Abstract Syntax
 
@@ -50,4 +48,4 @@ Inductive step_panicto: instruction -> smallstep :=
 
 Return from a recoverable error, fail-safe.
  *)
-End NearPanicTo.
+End NearPanicToDefinition.

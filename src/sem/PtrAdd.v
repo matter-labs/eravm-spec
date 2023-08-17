@@ -12,29 +12,30 @@ ZMod
 isa.CoreSet
 .
 
-Section Def.
+Section PtrAddDefinition.
   Open Scope ZMod_scope.
-  (**
-
-# PtrAdd
+  (** # PtrAdd
 
 ## Abstract Syntax
 
-[%OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
+[%OpPtrAdd (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
 
 ## Summary
 
-Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`.
-Advances the fat pointer's offset by that number, and writes (`in2` || incremented pointer) to `out`.
+Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`. Advances
+the fat pointer's offset by that number, and writes (`in2`{128...255} ||
+incremented pointer) to `out`.
 
 ## Semantic
 
-1. Fetch input operands, swap them if `swap` modifier is set. Now operands are $\mathit{op_1}$ and $\mathit{op_2}$.
-2. Ensure the $\mathit{op_1}$ is tagged as a pointer, and $\mathit{op_2}$ is not tagged as a pointer. Otherwise panic.
+1. Fetch input operands, swap them if `swap` modifier is set. Now operands are
+   $\mathit{op_1}$ and $\mathit{op_2}$.
+2. Ensure the $\mathit{op_1}$ is tagged as a pointer, and $\mathit{op_2}$ is not
+   tagged as a pointer. Otherwise panic.
 3. Decode fat pointer $\mathit{ptr_{in}}$ from $\mathit{op_1}$
 4. Let $\mathit{diff}$ be $\mathit{op_2}$ truncated to 32 bits:
 
-$$\mathit{diff} := \mathit{op}_2 \mod 2^{32}$$
+   $$\mathit{diff} := \mathit{op}_2 \mod 2^{32}$$
 
 5. Advance pointer offset of $\mathit{ptr_{in}}$ by $\mathit{diff}$:
 
@@ -87,4 +88,4 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
  *)
-End Def.
+End PtrAddDefinition.

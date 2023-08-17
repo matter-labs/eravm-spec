@@ -240,7 +240,7 @@ grow heap; far calls also may induce code
                     + RAM_PERMUTATION_COST_IN_ERGS
                     + 2 * LOG_DEMUXER_COST_IN_ERGS
                     + 2 * STORAGE_SORTER_COST_IN_ERGS)
-     | OpToL1Message _ _ _ =>
+     | OpToL1Message _ _ _ _ =>
                 let intrinsic_cost := L1_MESSAGE_IO_PRICE
                     + 2 * VM_CYCLE_COST_IN_ERGS
                     + RAM_PERMUTATION_COST_IN_ERGS

@@ -2,14 +2,12 @@ Require SemanticCommon Slice.
 
 Import Memory MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue Slice State ZMod.
 
-Section Defs.
+Section LoadPtrDefinition.
 
   Open Scope ZMod_scope.
   Inductive step_load_ptr : instruction -> tsmallstep :=
 
- (**
-# LoadPointer
-
+ (** # LoadPointer
 
 ## Abstract Syntax
 
@@ -19,29 +17,28 @@ Section Defs.
 
 - `uma.fat_ptr_read in1, out` aliased as `ld in1, out`
 
-
 ## Summary
 
-Read 32 consecutive bytes from address `ptr` of active `heap` or `aux_heap` page as a 256-bit word, Big Endian. Reading bytes past the slice bound yields zero bytes.
+Read 32 consecutive bytes from address provided by a fat pointer `ptr` of active `heap` or `aux_heap` page
+as a 256-bit word, Big Endian. Reading bytes past the slice bound yields zero
+bytes.
 
 ## Semantic
 
-1. Decode a [%fat_ptr] `in_ptr` from `ptr`.
-
+1. Let `in_ptr = (page, start, offset, length)` be a [%fat_ptr] decoded from `in1`. Requires that `in1` is tagged as a pointer.
 2. Validate that offset is in bounds: `offset < length`.
+3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `offset` in heap variant.
 
-3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in heap variant.
-
-   Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
-
-```
-{|
-page   := _;
-start  := 0;
-length := 5;
-offset := 2
-|}
-```
+   Reading bytes past `start + length` returns zero bytes. For example, consider a pointer with:
+ 
+   ```
+   {|
+   page   := _;
+   start  := 0;
+   length := 5;
+   offset := 2
+   |}
+   ```
 
    Reading will produce a word with 3 most significant bytes read from memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
 
@@ -62,8 +59,7 @@ offset := 2
                     (mk_transient_state _flags _regs mem _cs _ctx)
   .
 
-(**
-## Affected parts of VM state
+(** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction;
 - GPRs, because `res` only resolves to a register.
@@ -78,4 +74,4 @@ offset := 2
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
  *)
-End Defs.
+End LoadPtrDefinition.

@@ -2,31 +2,31 @@ Require SemanticCommon.
 Import Core Common Memory MemoryOps isa.CoreSet State ZMod
   SemanticCommon Pointer PrimitiveValue.
 
-Section Defs.
+Section StoreDefinition.
   Open Scope ZMod_scope.
 
   Inductive step_store: instruction -> tsmallstep :=
 
-  (**
-# Store
+    (** # Store
 
 ## Abstract Syntax
 
-[%OpStore (ptr: in_regimm) (val: in_reg) (mem:data_page_type)]
+[% OpStore    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (swap: mod_swap)]
 
 ## Syntax
 
-- `uma.heap_write in1, in2` aliased as `st.1 in1, out`
-- `uma.aux_heap_write in1, in2` aliased as `st.2 in1, out`
+- `uma.heap_write in1, in2` aliased as `st.1.inc in1, out`
+- `uma.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`
 
 
 ## Summary
 
-Decode the heap address from `in1`, store 32 consecutive bytes to the specified active heap variant.
+Decode the heap address from `in1`, load 32 consecutive bytes from the specified active heap variant.
 
 ## Semantic
 
-1. Decode a [%heap_ptr] $\mathit{(addr,limit)}$ from `ptr`.
+1. Apply `swap` modifier.
+2. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
 
@@ -34,11 +34,9 @@ Decode the heap address from `in1`, store 32 consecutive bytes to the specified 
    heap variant bound and pay for the growth. We are aiming at reading a 256-bit
    word starting from address $\mathit{addr}$ so the heap variant bound should
    contain all of it.
-4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to $\mathit{addr}$ in the heap variant.
-5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte word in the heap variant in `inc_ptr`.
-
-   *)
-
+4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to
+   $\mathit{addr}$ in the heap variant.
+*)
   | step_Store:
     forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page query modified_page cs regs mem __ ___ addr ctx,
 
@@ -100,4 +98,4 @@ Decode the heap address from `in1`, store 32 consecutive bytes to the specified 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
  *)
-End Defs.
+End StoreDefinition.

@@ -3,9 +3,7 @@ Import Addressing isa.Modifiers CoreSet.
 
 Import Addressing.Coercions.
 Section AssemblyToCore.
-  (**
-
-Syntactically translate [%asm_instruction] to a core [%instruction], preceding execution:
+  (** Syntactically translate [%asm_instruction] to a core [%instruction], preceding execution:
 
 1. apply [%mod_swap] modifier to instructions where applicable;
 2. remove the restrictions on operand types e.g. in assembly [%OpAdd] may
@@ -13,7 +11,6 @@ Syntactically translate [%asm_instruction] to a core [%instruction], preceding e
    but in core set both arguments can be fetched from either memory or registers.
    This simplifies attributing semantic to instructions.
    *)
-  Context (swap := @apply_swap in_any).
 
   Definition to_core (input: Assembly.asm_instruction) : @instruction decoded :=
     match input with
@@ -108,10 +105,12 @@ Syntactically translate [%asm_instruction] to a core [%instruction], preceding e
     | Assembly.OpContextSetErgsPerPubdataByte in1  => @OpContextSetErgsPerPubdataByte decoded  in1
     | Assembly.OpContextIncrementTxNumber  => @OpContextIncrementTxNumber decoded
     | Assembly.OpSLoad in1 out  => @OpSLoad decoded  in1 out
-    | Assembly.OpSStore in1 in2  swap =>
+    | Assembly.OpSStore in1 in2 swap =>
         let (in1', in2') := @apply_swap in_any swap in1 in2 in
         @OpSStore decoded in1' in2'
-    | Assembly.OpToL1Message in1 in2 is_first  => @OpToL1Message decoded  in1 in2 is_first
+    | Assembly.OpToL1Message in1 in2 is_first swap =>
+        let (in1', in2') := @apply_swap in_any swap in1 in2 in
+        @OpToL1Message decoded  in1' in2' is_first
     | Assembly.OpEvent in1 in2 is_first swap =>
         let (in1', in2') := @apply_swap in_any swap in1 in2 in
         @OpEvent decoded  in1' in2' is_first

@@ -9,8 +9,7 @@ Section AddDefinition.
   Generalizable Variables op tag.
 
   Inductive step_add: instruction -> flags_tsmallstep :=
-  (**
-# Add
+  (** # Add
 
 ## Abstract Syntax
 
@@ -36,7 +35,7 @@ Unsigned overflowing addition of two numbers modulo $2^{256}$.
 - flags are computed as follows:
    - `LT_OF` is set if overflow occurs, i.e. $op_1 + op_2 \geq 2^{256}$
    - `EQ` is set if $result = 0$.
-   - `GT` is set if $op_1 \gt op_2$. An equivalent condition is: both `LT_OF` and `EQ` are cleared.
+   - `GT` is set if both `LT_OF` and `EQ` are cleared.
 
 Reminder: flags are only set if `set_flags` modifier is set.
 

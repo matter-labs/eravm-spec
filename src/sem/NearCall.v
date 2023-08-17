@@ -4,15 +4,13 @@ Import ABI.NearCall Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet 
 
 Section NearCall.
   Open Scope ZMod_scope.
-  (**
+  (** # NearCall
 
-## NearCall
-
-### Abstract Syntax
+## Abstract Syntax
 
 [%OpNearCall    (in1: in_reg) (dest: imm_in) (handler: imm_in)]
 
-### Syntax
+## Syntax
 
 - `call abi_reg, callee_address, exception_handler` as a fully expanded form.
 - `call abi_reg, callee_address`
@@ -27,12 +25,12 @@ Section NearCall.
       to the default exception handler.
     * `R0` is a reserved read-only register that holds 0. This variation passes all ergs to the callee.
 
-### Summary
+## Summary
 
 Reserves a portion of the currently available ergs for a new function instance
 and calls the code inside the current contract space.
 
-### Semantic
+## Semantic
 
 Reminder: the *callee* is the function that we call; the *caller* is the
 currently executing function where a call takes place. In other words, the
@@ -44,13 +42,12 @@ Step-by-step explanation:
    The `ergs_passed` field indicates the amount of ergs we intend to pass, but
    the actual amount of ergs passed gets decided at runtime (see step 2).
 
-```
-Record params := {
-   ergs_passed: u32;
-}.
-```
+   ```
+   Record params := { ergs_passed: u32; }.
+   ```
 
-2. The actual amount of ergs passed is determined by [%split_ergs_callee_caller] based on:
+   The actual amount of passed ergs is determined by [%split_ergs_callee_caller]
+   based on:
 
    - The current balance of the caller frame.
    - The value of `ergs_passed`.
@@ -64,34 +61,33 @@ Record params := {
       end.
 
   (**
-Explanation for [%split_ergs_caller_callee]:
+2. Explanation for [%split_ergs_caller_callee]:
 
-- if `ergs_passed` = 0, pass all available ergs to the callee and set
-  the caller's balance to zero. Upon the callee's normal return, its unspent
-  ergs are returned back to the caller.
+   - if `ergs_passed` = 0, pass all available ergs to the callee and set
+     the caller's balance to zero. Upon the callee's normal return, its unspent
+     ergs are returned back to the caller.
+   
+   - otherwise, if `balance` $\geq$ `ergs_passed`, pass exactly
+     `ergs_passed`. The caller's balance is set to the unspent amount
+     `ergs_passed - balance`.
+   
+   - otherwise, if the call is not affordable (`ergs_passed` $\gt$
+     `balance`), pass all available ergs to the callee.
 
-- otherwise, if `balance` $\geq$ `ergs_passed`, pass exactly
-  `ergs_passed`. The caller's balance is set to the unspent amount
-  `ergs_passed - balance`.
+   Function [%split_ergs_callee_caller] returns a pair of erg values, where:
+   
+   - the first component is the amount of ergs actually passed to the callee;
+   - the second component is the amount of ergs left to the caller.
+   
+   Note: after a normal return (not `panic`), the remaining ergs are returned to
+   the caller.
 
-- otherwise, if the call is not affordable (`ergs_passed` $\gt$
-  `balance`), pass all available ergs to the callee.
-
-Function [%split_ergs_callee_caller] returns a pair of erg values, where:
-
-- the first component is the amount of ergs actually passed to the callee;
-- the second component is the amount of ergs left to the caller.
-
-Note: after a normal return (not `panic`), the remaining ergs are returned to
-the caller.
-
-
-
-3. Decrease the balance of the caller frame.
+3. Decrease the number of ergs in the caller frame.
 4. Set up the new frame:
    - new PC is assigned the instruction's `callee_address` argument.
    - new exception handler is assigned the instruction's `handler_address` argument.
    - new SP is copied from the old frame as is.
+   - the allocated ergs are determined by [%split_ergs_caller_callee] in (2).
 5. Clear flags.
 
    *)
@@ -130,10 +126,7 @@ the caller.
           gs_global       := gs;
         |}.
 
-(**
-
-
-### Affected parts of VM state
+(** ## Affected parts of VM state
 
 - Execution stack: a new frame is pushed on top of the execution stack, and the caller frame is changed.
   + Caller frame:
@@ -146,7 +139,7 @@ the caller.
     * exception handler
 - Flags are always cleared.
 
-### Usage
+## Usage
 
 
 - Set `ergs_passed=0` to pass all available ergs to callee.
@@ -162,7 +155,7 @@ the caller.
   pair of AA call + fee payment in any order in such `near_call`, and then
   rollback the entire frame atomically.
 
-### Similar instructions
+## Similar instructions
 
 - See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
  *)

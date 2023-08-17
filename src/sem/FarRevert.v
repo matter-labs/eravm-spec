@@ -5,164 +5,122 @@ Require SemanticCommon.
 Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps isa.CoreSet State ZMod
   ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 
-Inductive step_farrevert: instruction -> smallstep :=
+Section FarRevertDefinition.
 
-(** ## Far revert (return with recoverable error)
+  Let reserve regs :=
+   regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
+  
+  Inductive step_farrevert: instruction -> smallstep :=
+  (** # Far revert (return from recoverable error, not panic/normal return)
 
-Return from a function signaling an error; execute exception handler, possibly
-return data like normal `ret`.
-
-### Abstract Syntax
+## Abstract Syntax
 
 [%OpFarRevert (args: in_reg)]
 
-### Syntax
+## Syntax
 
-`revert abi_reg`
+`ret.revert in1` aliased as `revert in1`
 
-An abnormal return from a **far** call. Will pop up current callframe, give back
+An abnormal return from a far call. Will pop up current callframe, give back
 unspent ergs and execute a currently active exception handler. The register
-`abi_reg` describes a slice of memory passed to the external caller.
+abi_reg describes a slice of memory passed to the external caller.
 
 Restores storage to the state before external call.
 
-The assembler expands `revert` to `revert r1`, but `r1` is ignored by reverts from near calls.
+The assembler expands `revert` to `revert r1`; `r1` is ignored by returns from
+near calls.
 
-### Semantic
+## Semantic
 
-Effectively the same as `ret abi_reg`, but restores storage and executes the exception handler.
+1. Let $E$ be the address of the [%active_exception_handler].
+2. Perform a [%rollback].
+3. Proceed with the same steps as [%OpFarRet] (see [%step_farret]).
+3. Set PC to $E$.
+   *)
+  | step_RevertExt_heapvar:
+    forall gs gs' pages cf caller_stack cs1 cs2 new_caller new_regs params out_ptr heap_type hspan __ ___ ____ _____,
+      let cs0 := ExternalCall cf (Some caller_stack) in
 
-1. Perform a [%rollback].
-2. Fetch the value from register `abi_reg` and decode the value of type [%fwd_memory]:
+      params = ForwardNewHeapPointer heap_type hspan ->
 
-```
-Inductive fwd_memory :=
-  ForwardFatPointer (p:fat_ptr)
-| ForwardNewHeapPointer (heap_var: data_page_type) (s:span).
-```
+      paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
+      ergs_return_caller_and_drop cs1 cs2 ->
 
-   The exact encoding is described by ABI.
+      new_caller = pc_set (active_exception_handler cs0) cs2 ->
+      
+      rollback cf.(cf_saved_checkpoint) gs gs' ->
+      new_regs = reserve (regs_state_zero <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |> )->
 
-3. Forward a memory span to the caller (see [%paid_forward_heap_span]):
-   - For [%ForwardFatPointer p]:
-      + ensure that the register containing `abi_reg`  is tagged as pointer.
-      + ensure that the memory page of `p` does NOT refer to a page owned by an older frame.
-      + [%fp_narrow] [%p] so it starts at its current offset, and the offset is reset to zero. See [%free_ptr_narrow].
+      step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
+                     {|
+                       gs_transient := {|
+                                        gs_flags        := __ ;
+                                        gs_callstack    := cs0;
+                                        gs_regs         := ___;
+                                        gs_context_u128 := ____;
 
-        TODO Explanation why the circularity check is necessary.
+                                        gs_pages        := pages;
+                                      |};
+                       gs_global       := gs;
+                     |}
+                     {|
+                       gs_transient := {|
+                                        gs_flags        := flags_clear;
+                                        gs_callstack    := new_caller;
+                                        gs_regs         := new_regs;                                                                        
+                                        gs_context_u128 := zero128;
 
-     There is no payment because the existing fat pointer has already been paid for
+                                        gs_pages        := pages;
+                                      |};
+                       gs_global       := gs';
+                     |}
+  | step_RevertExt_ForwardFatPointer:
+    forall pages cf caller_stack cs1 cs2 new_caller new_regs __ ___ ____ _____ in_ptr out_ptr page params gs gs',
+      let cs0 := ExternalCall cf (Some caller_stack) in
 
-   - For [%ForwardNewHeapPointer heap_var (start, limit)]:
-      + let $B$ be the bound of the heap variant [%heap_var] taken from
-        [%ctx_heap_bound] field of [%ecf_mem_ctx] of the active external frame.
-      + let $I$ be the page id of the heap variant [%heap_var] taken from
-        [%ctx_heap_page_id] field of [%ecf_mem_ctx] of the active external frame.
-      + form a fat pointer $P$ from the span as described in
-        [%paid_forward_heap_span].
+      (* Panic if not a pointer *)
 
-         $$P := (I, (\mathit{addr}, \mathit{length}), 0)$$
+      params = ForwardFatPointer in_ptr ->
+      in_ptr.(fp_page) = Some page ->
 
-      + if $\mathit{start} + \mathit{limit} >B$, pay for the growth difference
-        [%Ergs.growth_cost] $(\mathit{start} + \mathit{limit} - B)$.
+      MemoryContext.page_older page (get_mem_ctx cs0) = false ->
 
-     Note: it is not useful to readjust the current heap/auxheap bounds after
-     paying for growth. The bounds are part of [%mem_ctx] of the topmost frame, which is about to be discarded.
+      validate in_ptr = no_exceptions ->
 
-4. Return the remaining ergs to the caller.
-5. Clear flags.
-6. Encode $P$ and store it in register [%r1], setting its pointer tag.
+      fat_ptr_narrow in_ptr out_ptr ->
 
-   All other registers are zeroed. Registers [%r2], [%r3], and [%r4] are
-   reserved and may gain a special meaning in newer versions of EraVM.
- 7. Context register is zeroed.
-*)
-| step_RevertExt_heapvar:
-  forall gs gs' pages cf caller_stack cs1 new_caller params out_ptr heap_type hspan __ ___ ____ _____,
-    let cs0 := ExternalCall cf (Some caller_stack) in
+      ergs_return_caller_and_drop cs1 cs2 ->
 
-    params = ForwardNewHeapPointer heap_type hspan ->
+      new_caller = pc_set (active_exception_handler cs0) cs2 ->
+      new_regs = (reserve regs_state_zero) <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |> ->
+      rollback cf.(cf_saved_checkpoint) gs gs' ->
+      step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
+                     {|
+                       gs_transient := {|
+                                        gs_flags        := __ ;
+                                        gs_callstack    := cs0;
+                                        gs_regs         := ___ ;
+                                        gs_context_u128 := ____;
 
-    paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
-    ergs_return_caller_and_drop cs1 new_caller ->
+                                        gs_pages        := pages;
+                                      |};
 
-    rollback cf.(cf_saved_checkpoint) gs gs' ->
-    step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
-          {|
-            gs_transient := {|
-                          gs_flags        := __ ;
-                          gs_callstack    := cs0;
-                          gs_regs         := ___;
-                          gs_context_u128 := ____;
+                       gs_global       := gs;
+                     |}
+                     {|
+                       gs_transient := {|
+                                        gs_flags        := flags_clear;
+                                        gs_callstack    := new_caller;
+                                        gs_regs         := new_regs;
+                                        gs_context_u128 := zero128;
 
-                          gs_pages        := pages;
-                        |};
-            gs_global       := gs;
-          |}
-          {|
-            gs_transient := {|
-                          gs_flags        := flags_clear;
-                          gs_callstack    := new_caller;
-                          gs_regs         := regs_state_zero
-                             <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |>
-                             <| r2 := reserved |>
-                             <| r3 := reserved |>
-                             <| r4 := reserved |> ;
-                          gs_context_u128 := zero128;
+                                        gs_pages        := pages;
+                                      |};
 
-                          gs_pages        := pages;
-                          |};
-          gs_global       := gs';
-          |}
-| step_RevertExt_ForwardFatPointer:
-  forall pages cf caller_stack cs1 new_caller __ ___ ____ _____ in_ptr out_ptr page params gs gs',
-    let cs0 := ExternalCall cf (Some caller_stack) in
-
-    (* Panic if not a pointer *)
-
-    params = ForwardFatPointer in_ptr ->
-    in_ptr.(fp_page) = Some page ->
-
-    MemoryContext.page_older page (get_mem_ctx cs0) = false ->
-
-    validate in_ptr = no_exceptions ->
-
-    fat_ptr_narrow in_ptr out_ptr ->
-
-    ergs_return_caller_and_drop cs1 new_caller ->
-
-    rollback cf.(cf_saved_checkpoint) gs gs' ->
-    step_farrevert (OpFarRevert (Some (FarRet.mk_params params), _____))
-          {|
-            gs_transient := {|
-                          gs_flags        := __ ;
-                          gs_callstack    := cs0;
-                          gs_regs         := ___ ;
-                          gs_context_u128 := ____;
-
-                          gs_pages        := pages;
-                        |};
-
-            gs_global       := gs;
-          |}
-          {|
-            gs_transient := {|
-                          gs_flags        := flags_clear;
-                          gs_callstack    := new_caller;
-                          gs_regs         := regs_state_zero
-                             <| r1 := PtrValue (FatPointer.ABI.(encode) out_ptr) |>
-                             <| r2 := reserved |>
-                             <| r3 := reserved |>
-                             <| r4 := reserved |> ;
-                          gs_context_u128 := zero128;
-
-                          gs_pages        := pages;
-                          |};
-
-          gs_global       := gs';
-          |}
-.
-(** ### Affected parts of VM state
+                       gs_global       := gs';
+                     |}
+  .
+(** ## Affected parts of VM state
 
 - Flags are cleared.
 - Context register is zeroed (only returns from far calls).
@@ -176,13 +134,14 @@ Inductive fwd_memory :=
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
 
-### Usage
+## Usage
 
 - Abnormal returns from near/far calls when a recoverable error happened.
 Use `panic` for irrecoverable errors.
 
-### Similar instructions
+## Similar instructions
 
 - `ret` returns to the caller instead of executing an exception handler.
 - `panic` acts similar to `revert` but does not let pass any data to the caller
   and sets an overflow flag, and burns ergs in current frame. *)
+End FarRevertDefinition.

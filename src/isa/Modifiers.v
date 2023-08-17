@@ -1,5 +1,4 @@
 Require Flags.
-
 Import Flags.
 
 Section Modifiers.
@@ -29,7 +28,7 @@ The function [%to_core] transforms [%asm_instruction] into a core [%instruction]
     | Swap => (b,a)
     end.
 
-  (* ## Set flags
+  (** ## Set flags
 
 Only instructions *with the modifier [%mod_set_flags] set* may change the state
 of flags in [%gs_flags].

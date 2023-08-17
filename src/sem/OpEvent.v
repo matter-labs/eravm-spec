@@ -8,7 +8,7 @@ Inductive step_event: instruction -> smallstep :=
 
 ## Abstract Syntax
 
-[%OpEvent (key: in_reg) (value: in_reg) (is_first: bool)]
+[%OpEvent (in1: in_reg) (in2: in_reg) (is_first: bool) (swap:mod_swap)]
 
 ## Syntax
 
@@ -17,11 +17,13 @@ Inductive step_event: instruction -> smallstep :=
 
 ## Summary
 
-Emit an event with provided key and value. See [%event] for more details on events system.
+Emit an event with provided key and value. See [%event] for more details on
+events system.
 
 ## Semantic
 
-- Fetch key and value from `key` and `value`.
+- Apply `swap` modifier.
+- Fetch key and value from `in1` and `in2`.
 - If `is_first` is `true`, mark the event as the first in a chain of events.
 - Emit event.
 
@@ -61,6 +63,6 @@ Emit an event with provided key and value. See [%event] for more details on even
 
 ## Similar instructions
 
-- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
+- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] are variants of the same [%mach_instruction].
 
  *)

@@ -69,7 +69,7 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
   | OpLoad        (ptr: in_regimm) (res: out_reg) (mem:data_page_type)
   | OpLoadInc     (ptr: in_regimm) (res: out_reg) (mem:data_page_type) (inc_ptr: out_reg)
-  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)                    (swap:mod_swap)
+  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)                    (swap: mod_swap)
   | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg) (swap: mod_swap)
 
 
@@ -95,7 +95,7 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
   | OpPrecompileCall (in1: in_reg) (in2: in_reg)    (out: out_reg) (swap:mod_swap)
 
   | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool) (swap:mod_swap)
-  | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
+  | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool) (swap:mod_swap)
   .
 
 End AssemblyInstructionSet.

@@ -3,19 +3,17 @@ Require SemanticCommon.
 Import Bool Common Flags CoreSet Memory Modifiers State ZMod
   PrimitiveValue SemanticCommon.
 
-Section Def.
+Section SubDefinition.
   Open Scope ZMod_scope.
 
   Generalizable Variables op tag.
 
   Inductive step_sub: instruction -> flags_tsmallstep :=
-  (**
-
-# Sub
+  (** # Sub
 
 ## Abstract Syntax
 
-[%OpSub (in1: in_any) (in2: in_reg)  (out1: out_any) (swap:mod_swap) (flags:mod_set_flags)]
+[%OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
 
 ## Syntax
 
@@ -37,7 +35,7 @@ Unsigned overflowing subtraction of two numbers modulo $2^{256}$.
 - flags are computed as follows:
    - `LT_OF` is set if overflow occurs, i.e. $op_1 \lt op_2$
    - `EQ` is set if $result = 0$.
-   - `GT` is set if $op_1 \gt op_2$. An equivalent condition is: both `LT_OF` and `EQ` are cleared.
+   - `GT` is set if both `LT_OF` and `EQ` are cleared.
 
 Reminder: flags are only set if `set_flags` modifier is set.
 
@@ -71,4 +69,4 @@ Flags are computed exactly as in `add`, but the meaning of overflow is different
           step_sub (OpSub (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_sf) old_flags new_flags)
   .
   Generalizable No Variables.
-End Def.
+End SubDefinition.

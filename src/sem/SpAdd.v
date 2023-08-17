@@ -7,23 +7,23 @@ Section SpAdd.
   Open Scope ZMod_scope.
   (* # SpAdd
  ## Abstract Syntax
-
-[%OpSpAdd (in1: src_pv) (ofs: imm_in)]
+ 
+[%OpSpAdd       (in1: in_reg) (ofs: imm_in)]
 
  ## Syntax
 
  ```
- SpAdd in1, imm1
+ nop r0, r0, stack+=[reg+ofs]
  ```
 
  ## Summary
 
-Add `(in1 + imm1)` to SP.
+Add `(in1 + ofs)` to SP.
 
  ## Semantic
 
  - Advances PC
- - $\mathit{SP_{new} := SP + (in_1 + imm1)}$, but only if there was no overflow.
+ - $\mathit{SP_{new} := SP + (in_1 + ofs)}$, but only if there was no overflow.
 
  ## Affected parts of VM state
 
@@ -36,7 +36,7 @@ Adjusting SP e.g. reserving space on stack.
 
  ## Similar instructions
 
-[%OpSpSub] subtracts value from SP.
+[%OpSpSub] subtracts a value from SP.
 
  ## Encoding
 

@@ -5,16 +5,16 @@ Require SemanticCommon.
 Import Common Ergs CallStack Event Memory isa.CoreSet State ZMod
   PrimitiveValue SemanticCommon RecordSetNotations.
 
-Section ToL1.
+Section ToL1Definition.
 
   Open Scope ZMod_scope.
-  (**
-# ToL1Message
+  (** # ToL1Message
 
 ## Abstract Syntax
 
 [%OpToL1Message (key: in_reg) (value: in_reg) (is_first: bool)]
 
+  OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
 ## Syntax
 
 - `log.event in1, in2` aliased as `event in1, in2`
@@ -22,10 +22,12 @@ Section ToL1.
 
 ## Summary
 
-Emit a message to L1 with provided key and value. See [%event] for more details on events system.
+Emit a message to L1 with provided key and value. See [%event] for more details
+on events system.
 
 ## Semantic
 
+- apply `swap` modifier.
 - Fetch key and value from `key` and `value`.
 - If `is_first` is `true`, mark the event as the first in a chain of events.
 - Emit L1 message event.
@@ -73,4 +75,4 @@ Communicating with L1.
 - [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
  *)
-End ToL1.
+End ToL1Definition.

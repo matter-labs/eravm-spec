@@ -28,14 +28,14 @@ active heap variant.
 1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure reading 32 consecutive bytes is possible; for that, check if
-$\mathit{addr < 2^{32}-32}$.
+   $\mathit{addr < 2^{32}-32}$.
 
 3. Let $B$ be the selected heap variant bound. If $\mathit{addr + 32} > B$, grow
    heap variant bound and pay for the growth. We are aiming at reading a 256-bit
    word starting from address $\mathit{addr}$ so the heap variant bound should
    contain all of it.
 4. Read 32 consecutive bytes as a Big Endian 256-bit word from $\mathit{addr}$
-in the heap variant, store result to `res`.
+   in the heap variant, store result to `res`.
 *)
   | step_Load:
     forall new_cs heap_variant ctx result __ mem selected_page query addr,
@@ -69,8 +69,7 @@ in the heap variant, store result to `res`.
          |}
         )
   .
-(**
-## Affected parts of VM state
+(** ## Affected parts of VM state
 
 - execution stack:
 

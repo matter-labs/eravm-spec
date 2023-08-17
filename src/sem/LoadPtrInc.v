@@ -3,18 +3,14 @@ Require SemanticCommon Slice.
 Import isa.CoreSet Memory MemoryOps Pointer SemanticCommon PrimitiveValue Slice State ZMod.
 
 
-Section Defs.
+Section LoadPtrIncDefinition.
   Open Scope ZMod_scope.
 
-  (**
-# LoadPointerInc
-
+  (** # LoadPointerInc
 
 ## Abstract Syntax
 
-```
-OpLoadPointerInc (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
-```
+[%OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)]
 
 ## Syntax
 
@@ -29,33 +25,33 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 ## Semantic
 
-1. Decode a [%fat_ptr] `in_ptr` from `ptr`.
+1. Let `in_ptr = (page, start, offset, length)` be a [%fat_ptr] decoded from `in1`. Requires that `in1` is tagged as a pointer.
+2. Validate that offset is in bounds: `offset < length`.
+3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `offset` in heap variant.
 
-2. Validate that offset is in bounds: `fp_offset < fp_length`.
-
-3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `fp_offset` in heap variant.
-
-   Reading bytes past `fp_start + fp_length` returns zero bytes. For example, consider a pointer with:
-```
-{|
-page   := _;
-start  := 0;
-length := 5;
-offset := 2
-|}
-```
+   Reading bytes past `start + length` returns zero bytes. For example, consider a pointer with:
+ 
+   ```
+   {|
+   page   := _;
+   start  := 0;
+   length := 5;
+   offset := 2
+   |}
+   ```
 
    Reading will produce a word with 3 most significant bytes read from memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from attempted reads past `fp_start + fp_length` bound.
 
 4. Store the word to `res`.
-6. Store an encoded fat pointer to the next 32-byte word in heap variant in `inc_ptr`. Its fields are assigned as follows:
+5. Store an encoded fat pointer to the next 32-byte word in heap variant in
+   `inc_ptr`. Its fields are assigned as follows:
 
-```
-fp_page := in_ptr.(fp_page);
-fp_start := in_ptr.(fp_page);
-fp_length := in_ptr.(fp_length);
-fp_offset := in_ptr.(fp_offset) + 32;
-```
+   ```
+   page := in_ptr.(fp_page);
+   start := in_ptr.(fp_page);
+   length := in_ptr.(fp_length);
+   offset := in_ptr.(fp_offset) + 32;
+   ```
 *)
   Inductive step_load_ptr_inc : instruction -> tsmallstep :=
   | step_LoadPointerInc:
@@ -74,4 +70,4 @@ fp_offset := in_ptr.(fp_offset) + 32;
 
       step_load_ptr_inc (OpLoadPointerInc (Some in_ptr, PtrValue __)(IntValue result) (out_ptr, PtrValue ___)) s s
   .
-End Defs.
+End LoadPtrIncDefinition.
