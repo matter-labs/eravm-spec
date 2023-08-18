@@ -67,7 +67,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 - execution stack:
 
   + PC, as by any instruction;
-  + ergs balance if the heap variant has to be grown;
+  + allocated ergs if the heap variant has to be grown;
   + heap variant bounds, if heap variant has to be grown.
 
 - GPRs, because `res` and `inc_ptr` only resolve to registers.

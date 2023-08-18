@@ -49,30 +49,30 @@ Step-by-step explanation:
    The actual amount of passed ergs is determined by [%split_ergs_callee_caller]
    based on:
 
-   - The current balance of the caller frame.
+   - The ergs allocated for the caller frame.
    - The value of `ergs_passed`.
    *)
 
-  Definition split_ergs_callee_caller (ergs_passed balance:ergs) : ergs * ergs :=
-    if ergs_passed == zero32 then (balance, zero32) else
-      match balance - ergs_passed with
+  Definition split_ergs_callee_caller (ergs_passed caller_ergs:ergs) : ergs * ergs :=
+    if ergs_passed == zero32 then (caller_ergs, zero32) else
+      match caller_ergs - ergs_passed with
       | (remaining, false) => (ergs_passed, remaining)
-      | (remaining, true) => (balance, zero32)
+      | (remaining, true) => (caller_ergs, zero32)
       end.
 
   (**
 2. Explanation for [%split_ergs_caller_callee]:
 
    - if `ergs_passed` = 0, pass all available ergs to the callee and set
-     the caller's balance to zero. Upon the callee's normal return, its unspent
+     the `caller_ergs` to zero. Upon the callee's normal return, its unspent
      ergs are returned back to the caller.
    
-   - otherwise, if `balance` $\geq$ `ergs_passed`, pass exactly
-     `ergs_passed`. The caller's balance is set to the unspent amount
-     `ergs_passed - balance`.
+   - otherwise, if `caller_ergs` $\geq$ `ergs_passed`, pass exactly
+     `ergs_passed`. The `caller_ergs` is set to the unspent amount
+     `ergs_passed - caller_ergs`.
    
    - otherwise, if the call is not affordable (`ergs_passed` $\gt$
-     `balance`), pass all available ergs to the callee.
+     `caller_ergs`), pass all available ergs to the callee.
 
    Function [%split_ergs_callee_caller] returns a pair of erg values, where:
    

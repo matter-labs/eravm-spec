@@ -166,12 +166,12 @@ context.ergs_left out
 
 ## Summary
 
-Retrieves the balance in the current frame.
+Retrieves the number of ergs allocated for the current frame.
 
 
 ## Semantic
 
-- Fetch the current balance in ergs from the topmost frame, external or internal.
+- Fetch the currently allocated ergs from the topmost frame, external or internal.
   The `ergs` belonging to the parent frames are not counted.
 - Widen the ergs number to [%word_bits], zero-extended, and write to `out`.
 

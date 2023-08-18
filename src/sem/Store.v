@@ -82,7 +82,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 - execution stack:
 
   + PC, as by any instruction;
-  + ergs balance if the heap variant has to be grown;
+  + allocated ergs if the heap variant has to be grown;
   + heap bounds, if heap variant has to be grown.
 
 - GPRs, because `out` only resolves to a register.

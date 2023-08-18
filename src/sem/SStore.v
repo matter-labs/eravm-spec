@@ -59,7 +59,7 @@ Store word in current storage by key.
 
 - execution stack:
   + PC, as by any instruction;
-  + ergs balance
+  + allocated ergs 
 - GPRs, because `res` only resolves to a register.
 - Depot of current shard.
 
