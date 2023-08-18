@@ -62,7 +62,7 @@ Section FarRetDefinition.
    ```
    Inductive fwd_memory :=
      ForwardFatPointer (p:fat_ptr)
-   | ForwardNewHeapPointer (heap_var: data_page_type) (s:span).
+   | ForwardNewFatPointer (heap_var: data_page_type) (s:span).
    ```
 
    The exact encoding is described by ABI.
@@ -77,7 +77,9 @@ Section FarRetDefinition.
 
      There is no payment because the existing fat pointer has already been paid for.
 
-   - If `args` is [%ForwardNewHeapPointer heap_variant [start; limit)], a new
+     **Attention**: **shrinking** and **narrowing** far pointers are different. See [%fat_ptr_shrink] and [%fat_ptr_narrow].
+
+   - If `args` is [%ForwardNewFatPointer heap_variant [start; limit)], a new
      [%fat_ptr] is created:
       + let $B$ be the bound of the [%heap_variant] taken from
         [%ctx_heap_bound] field of [%ecf_mem_ctx] of the [%active_extframe].
@@ -108,7 +110,7 @@ Section FarRetDefinition.
 
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
     ergs_return_caller_and_drop cs1 new_caller ->
-    params = FarRet.mk_params (ForwardNewHeapPointer heap_type hspan) ->
+    params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
     new_regs = (reserve regs_state_zero)
                              <| r1 := PtrValue (encode_fat_ptr out_ptr) |> ->
     step_transient_only {|
@@ -144,7 +146,7 @@ Section FarRetDefinition.
     fat_ptr_narrow in_ptr out_ptr ->
 
     ergs_return_caller_and_drop cs1 new_caller ->
-    params = FarRet.mk_params (ForwardFatPointer in_ptr) ->
+    params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
     new_regs = (reserve regs_state_zero)
                              <| r1 := PtrValue (encode_fat_ptr out_ptr) |> ->
     step_transient_only {|

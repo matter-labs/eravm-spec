@@ -37,7 +37,6 @@ Import Addressing.Coercions.
 Local Coercion Z.b2z: bool >-> Z.
 Local Coercion int_mod_of : Z >-> int_mod.
 
-
 (** # Far calls
 
 Far calls are calls to the code outside the current contract space.
@@ -191,9 +190,9 @@ A system call is a far call that satisfies the following conditions:
     instruction of B after delegate call.
     In case of `revert` or `panic` in C, all the usual rules apply.
 
-## Syntax
+## Abstract and concrete syntax
 
-- [%OpFarCall] `abi_params address handler is_static`
+- [%OpFarCall] `abi_params address handler is_static swap `
    + `farcall        abi_reg, dest_addr`
    + `farcall        abi_reg, dest_addr, handler `
    + `farcall.static abi_reg, dest_addr`
@@ -201,7 +200,9 @@ A system call is a far call that satisfies the following conditions:
    + `farcall.shard  abi_reg, dest_addr`
    + `farcall.shard  abi_reg, dest_addr, handler`
 
-- [%OpDelegateCall] abi_params address handler is_static`
+   These variants also support the `.s` swap modifier.
+
+- [%OpDelegateCall] abi_params address handler is_static swap `
    + `delegatecall        abi_reg, dest_addr`
    + `delegatecall        abi_reg, dest_addr, handler`
    + `delegatecall.static abi_reg, dest_addr`
@@ -209,7 +210,9 @@ A system call is a far call that satisfies the following conditions:
    + `delegatecall.shard  abi_reg, dest_addr`
    + `delegatecall.shard  abi_reg, dest_addr, handler`
 
-- [%OpMimicCall] `abi_params address handler is_static`
+   These variants also support the `.s` swap modifier.
+
+- [%OpMimicCall] `abi_params address handler is_static swap`
    + `mimic        abi_reg, dest_addr`
    + `mimic        abi_reg, dest_addr, handler`
    + `mimic.static abi_reg, dest_addr`
@@ -217,6 +220,7 @@ A system call is a far call that satisfies the following conditions:
    + `mimic.shard  abi_reg, dest_addr`
    + `mimic.shard  abi_reg, dest_addr, handler`
 
+   These variants also support the `.s` swap modifier.
 
 - **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.
   Calls from a static calls are automatically marked static.
@@ -225,45 +229,38 @@ A system call is a far call that satisfies the following conditions:
 
 ## Semantic
 
-First two steps are formalized by predicates [%Semantics.step] and [%fetch_operands].
-
-1. Fetch the instruction, adjust PC and perform the usual checks (such as kernel
-   mode), pay basic costs, and so on.
-
-   See [%Semantics.step] for details.
-
-2. Retrieve the operands and decode the following structure from `abi_reg`:
+1. Decode the structure `params` from `abi_reg`:
 
 ```
-   Record params := {
-       memory_quasi_fat_ptr: fat_ptr;
-       ergs_passed: ergs;
-       shard_id: u8;
-       forwarding_mode: forward_page_type;
-       constructor_call: bool;
-       to_system: bool;
-     }.
+   Inductive fwd_memory :=
+     ForwardFatPointer (p:fat_ptr)
+   | ForwardNewFatPointer (heap_var: data_page_type) (s:span).
+  
+
+  Record params :=
+    mk_params {
+        fwd_memory: fwd_memory;
+        ergs_passed: ergs;
+        shard_id: shard_id;
+        constructor_call: bool;
+        to_system: bool;
+      }.
 ```
-
-   See [%fetch_operands] for details.
-
-   The [%farcall] predicate encodes the important part of instruction semantics for
-   [%OpFarCall], [%OpDelegateCall], and [%OpMimicCall].
 
 3. Decommit code of the callee contract (formalized by [%paid_code_fetch]):
 
    - load the [%versioned_hash] of the called code from the storage of a
      special contract located at [%DEPLOYER_SYSTEM_CONTRACT_ADDRESS].
 
-```
-Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
-
-Record versioned_hash := {
-   code_length_in_words: u16;
-   extra_marker: marker;
-   partial_hash: int_mod (28*8)%nat
-}.
-```
+     ```
+     Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
+     
+     Record versioned_hash := {
+        code_length_in_words: u16;
+        extra_marker: marker;
+        partial_hash: int_mod (28*8)%nat
+     }.
+     ```
    - for non-system calls, if there is no code stored for a provided hash value,
      mask it into [%VersionedHash.DEFAULT_AA_VHASH] and execute
      [%VersionedHash.DEFAULT_AA_CODE].
@@ -272,23 +269,18 @@ Record versioned_hash := {
      for decommitment.
 
 4. Forward data to the new frame (formalized by [%paid_forward_and_adjust_bounds]).
-
-   - use the forwarding mode from `abi_reg` -> [%forwarding_mode]. Can be `ForwardFatPointer`, `UseHeap` or `UseAuxHeap`;
-   - take the fat pointer to the data slice is taken from `abi_reg` -> [%memory_quasi_fat_ptr];
-   - for the forwarding mode `ForwardFatPointer`:
-     - check the pointer validity;
-     - narrow the pointer;
+   - If [%params.(fwd_memory)] is [%ForwardExistingFatPointer p], we are forwarding an existing fat pointer. 
      - ensure that `abi_reg` is tagged as a pointer.
-   - for the forwarding modes `UseHeap`/`UseAuxHeap`:
      - check the pointer validity;
-     - overwrite the pointer's [%page_id] with the ID of current (aux)heap's memory page;
-     - if the pointer bounds surpass current heap/auxheap bounds, pay for growth
-       and adjust the bounds of heap/auxheap in the current stack frame.
+     - [%fat_ptr_narrow] the pointer;
+   - If [%params.(fwd_memory)] is [%ForwardNewFatPointer variant span], a new
+     [%fat_ptr] is created. This pointer refers to the provided [%span] of
+     specified heap `variant`.
 
 5. Allocate new pages for code, constants, stack, heap and auxheap (formalized by [%alloc_pages_extframe]).
 6. Reserve ergs for the new external frame (formalized by [%pass_allowed_ergs]).
 
-   - Maximum amount of ergs passed to an external call is 63/64 of current balance.
+   - Maximum amount of ergs passed to an external call is 63/64 of ergs allocated for the caller.
    - Attempting to pass more ergs will result in only passing the maximum amount allowed.
    - Trying to pass 0 ergs will result in passing maximum amount of ergs allowed.
 
@@ -369,7 +361,6 @@ Inductive farcall_type : Set := Normal | Mimic | Delegate.
         * `this_address` <- destination address;
         * `msg_sender` <- value of `r3`;
         * `context` <- value of context register [%gs_context_u128].
-
  *)
 Definition select_this_address type (caller dest: contract_address) :=
   match type with
@@ -421,7 +412,7 @@ Definition select_shards (type: farcall_type) (is_call_shard: bool) (provided: s
       |}
   end.
 
-Section Def.
+Section FarCallDefinitions.
 
   Import Pointer.
   Context (type:farcall_type) (is_static_call is_shard_provided:bool) (dest:contract_address) (handler: code_address) (gs:global_state).
@@ -462,7 +453,7 @@ Section Def.
 
       farcall
         ({|
-          fwd_memory           := ForwardFatPointer in_ptr;
+          fwd_memory           := ForwardExistingFatPointer in_ptr;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
@@ -518,7 +509,7 @@ Section Def.
 
       farcall
         ({|
-          fwd_memory           := ForwardNewHeapPointer page_type in_span;
+          fwd_memory           := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
@@ -541,7 +532,7 @@ Section Def.
 
         .
 
-End Def.
+End FarCallDefinitions.
 
 Inductive step_farcall : instruction -> smallstep :=
 

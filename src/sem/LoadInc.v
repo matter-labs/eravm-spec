@@ -7,7 +7,7 @@ Section LoadIncDefinition.
   Open Scope ZMod_scope.
   Generalizable Variables cs flags regs mem.
   Inductive step_load_inc : instruction -> tsmallstep :=
-    (** # LoadInc
+  (** # LoadInc
 
 ## Abstract Syntax
 
@@ -26,7 +26,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 ## Semantic
 
-1. Decode a [%heap_ptr] $\mathit{(addr,limit)}$ from `ptr`.
+1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure reading 32 consecutive bytes is possible; for that, check if
    $\mathit{addr < 2^{32}-32}$.
@@ -37,7 +37,8 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    contain all of it.
 4. Read 32 consecutive bytes as a Big Endian 256-bit word from $\mathit{addr}$
    in the heap variant, store result to `res`.
-5. Store an encoded [%heap_ptr] $\mathit{(addr+32, limit)}$ to the next 32-byte
+
+5. Store an encoded [%heap_ptr] $\mathit{addr+32}$ to the next 32-byte
    word in the heap variant in `inc_ptr`.
 *)
   | step_LoadInc:

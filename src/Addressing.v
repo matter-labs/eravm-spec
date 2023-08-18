@@ -80,20 +80,15 @@ Some of them only support reading (indicated by "in"), or writing (indicated by 
    add stack-[r1+42], r0, r3
    ```
 
-   See the note about addressing relative to SP for an explanation of the
-   additional `-1` appearing here.
 
 7. Stack page, relative to GPR and SP, with decreasing SP (in)
 
-   *Concrete syntax example*. Use `SP-1-(r1+42)`-th [%word] on the stack page as a
+   *Concrete syntax example*. Use `SP-(r1+42)`-th [%word] on the stack page as a
     source:
 
    ```
    add stack-=[r1+42], r0, r3
    ```
-
-   See the note about addressing relative to SP for an explanation of the
-   additional `-1` appearing here.
 
    Note, that the following form is forbidden:
 
@@ -103,43 +98,12 @@ Some of them only support reading (indicated by "in"), or writing (indicated by 
 
 8. Stack page, relative to GPR and SP, with increasing SP (out)
 
-   *Concrete syntax example*. Use `SP-1+(r1+42)`-th [%word] on the stack page as a
+   *Concrete syntax example*. Use `SP+(r1+42)`-th [%word] on the stack page as a
     destination:
 
    ```
    add r3, r0, stack+=[r1+42]
    ```
-
-   See the note about addressing relative to SP for an explanation of the
-   additional `-1` appearing here.
-
------
-
-## Note about addressing relative to SP
-
-**The instructions accepted by EraVM, in their abstract syntax, do not perform
-any +-1 adjustment on the operands**. If the operand is addressed via
-[%Addressing.RelSpPop reg offset], it is resolved to the location
-$\mathit{(SP - (reg + imm))\mod 2^{16}}$ and $\mathit{SP}$ is assigned
-$\mathit{(SP - (reg + imm))\mod 2^{16}}$ as well.
-
-However, the assembler, as a program that translates the mnemonics between text assembly instructions fed to
-the assembler, and the encoded instructions accepted by EraVM.
-
-The address of the topmost element in stack is $SP-1$, and SP points to the
-address of the next element after it.
-In the text assembly code, the construction `stack[0]` refers to the topmost element in the stack, that is, the $SP-1$-th word on the stack page.
-
-Therefore, the concrete *syntax* to perform an operation that accesses the element at an address
-$\mathit{SP - (reg + imm)}$ is:
-
-```
-add stack-[reg+imm_adjusted]
-```
-
-where `imm_adjusted := imm + 1`.
-
------
 
 Note that the current implementation encodes some of these modes in the same way
 e.g. mode 7 and mode 8 only differ by *in* or *out* position.

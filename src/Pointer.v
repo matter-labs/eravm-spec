@@ -220,6 +220,7 @@ A fat pointer is automatically narrowed in two situations:
 - by far calls with forwarding mode [%ForwardFatPointer];
 - by returns from far calls with forwarding mode [%ForwardFatPointer].
 
+**Attention**: **shrinking** and **narrowing** far pointers are different. See [%fat_ptr_shrink] and [%fat_ptr_narrow].
      *)
     Inductive free_ptr_narrow: free_ptr -> free_ptr -> Prop :=
     | tps_narrow: forall start start' length length' ofs,

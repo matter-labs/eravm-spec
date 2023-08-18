@@ -2,12 +2,10 @@ Require SemanticCommon.
 
 Import Common Flags CallStack isa.CoreSet State SemanticCommon.
 
-Section NearRet.
+Section NearRetDefinition.
   Generalizable Variables __ regs pages ctx.
   Inductive step_nearret: @instruction bound -> tsmallstep :=
-  (**
-
-# NearRet (normal return, not panic/revert)
+  (** # NearRet (normal return, not panic/revert)
 
 ## Abstract Syntax
 
@@ -20,15 +18,11 @@ Section NearRet.
   A normal return from a **near** call. Will pop up current callframe, give back unspent ergs and
   continue execution from the saved return address (from where the call had taken place).
 
-  The assembler expands `ret` to `ret r1`, but `r1` is ignored by returns from near calls.
-
 ## Semantic
-
 
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame.
-3. Clear flags
-
+3. Clear flags.
    *)
   | step_NearRet:
     forall cf caller_stack new_caller pages,
@@ -55,9 +49,7 @@ Section NearRet.
                        |}
         )
   .
-  (**
-
-## Affected parts of VM state
+  (** ## Affected parts of VM state
 
 - Flags are cleared.
 - Execution stack:
@@ -71,4 +63,4 @@ Normal return from functions.
    *)
 
   Generalizable No Variables.
-End NearRet.
+End NearRetDefinition.

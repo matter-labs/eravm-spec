@@ -2,12 +2,10 @@ Require SemanticCommon.
 
 Import Common Flags CallStack isa.CoreSet State SemanticCommon.
 
-Section NearRetTo.
+Section NearRetToDefinition.
   Generalizable Variables __ regs pages ctx.
   Inductive step_nearretto: @instruction bound -> tsmallstep :=
-  (**
-
-# NearRetTo (normal return to label, not panic/revert)
+  (** # NearRetTo (normal return to label, not panic/revert)
 
 ## Abstract Syntax
 
@@ -19,9 +17,6 @@ Section NearRetTo.
 
   A normal return from a **near** call. Will pop up current callframe, give back unspent ergs and
   continue execution from an explicitly provided label.
-
-  The assembler expands `ret` to `ret r1`, but `r1` is ignored by returns from near calls.
-
 
 ## Semantic
 
@@ -55,9 +50,7 @@ Section NearRetTo.
                    |}
         )
   .
-  (**
-
-## Affected parts of VM state
+  (** ## Affected parts of VM state
 
 - Flags are cleared.
 - Execution stack:
@@ -68,7 +61,7 @@ Section NearRetTo.
 
 ## Usage
 
-Normal return from functions.
+A combination of return and jump.
    *)
   Generalizable No Variables.
-End NearRetTo.
+End NearRetToDefinition.

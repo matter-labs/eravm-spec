@@ -9,9 +9,17 @@ Section PtrShrinkDefinition.
   Inductive step_ptrshrink: instruction -> smallstep :=
   (** # PtrShrink
 
+**Attention**: **shrinking** and **narrowing** far pointers are different. See
+  [%fat_ptr_shrink] and [%fat_ptr_narrow].
+
 ## Abstract Syntax
 
 [%OpPtrShrink   (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
+
+## Syntax
+
+- `ptr.shrink in1, in2, ou1`
+- `ptr.shrink.s in1, in2, ou1`
 
 ## Summary
 

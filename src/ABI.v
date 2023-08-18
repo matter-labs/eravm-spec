@@ -55,8 +55,8 @@ End NearCall.
 
 (* TODO find better place to describe memory forwarding *)
 Inductive fwd_memory :=
-  ForwardFatPointer (p:fat_ptr)
-| ForwardNewHeapPointer (heap_var: data_page_type) (s:span).
+  ForwardExistingFatPointer (p:fat_ptr)
+| ForwardNewFatPointer (heap_var: data_page_type) (s:span).
 
 
 (** ## Far returns *)
@@ -65,7 +65,7 @@ Module FarRet.
                            forwarded_memory :> fwd_memory
                           }.
   Axiom ABI: @coder params.
-  Axiom ABI_decode_zero: ABI.(decode) word0 = Some (mk_params (ForwardNewHeapPointer Heap span_empty)).
+  Axiom ABI_decode_zero: ABI.(decode) word0 = Some (mk_params (ForwardNewFatPointer Heap span_empty)).
 End FarRet.
 
 (** ## Far call *)

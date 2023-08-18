@@ -2,7 +2,7 @@ Require SemanticCommon.
 
 Import Addressing CallStack Core isa.CoreSet Memory Resolution State SemanticCommon PrimitiveValue ZMod.
 
-Section SpSub.
+Section SpSubDefinition.
 
   Open Scope ZMod_scope.
   (* # SpSub
@@ -52,4 +52,4 @@ Adjusting SP e.g. deallocating space on stack.
       step_sp_sub (OpSpSub (mk_pv __ op) ofs) cs0 new_cs
   .
 
-End SpSub.
+End SpSubDefinition.

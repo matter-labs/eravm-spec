@@ -41,7 +41,7 @@ near calls.
     forall gs gs' pages cf caller_stack cs1 cs2 new_caller new_regs params out_ptr heap_type hspan __ ___ ____ _____,
       let cs0 := ExternalCall cf (Some caller_stack) in
 
-      params = ForwardNewHeapPointer heap_type hspan ->
+      params = ForwardNewFatPointer heap_type hspan ->
 
       paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
       ergs_return_caller_and_drop cs1 cs2 ->
@@ -80,7 +80,7 @@ near calls.
 
       (* Panic if not a pointer *)
 
-      params = ForwardFatPointer in_ptr ->
+      params = ForwardExistingFatPointer in_ptr ->
       in_ptr.(fp_page) = Some page ->
 
       MemoryContext.page_older page (get_mem_ctx cs0) = false ->

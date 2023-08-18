@@ -3,8 +3,7 @@ Require SemanticCommon VMPanic.
 Import isa.CoreSet SemanticCommon VMPanic.
 
 Inductive step_oppanic: @instruction bound -> smallstep :=
-(**
-# Panic (irrecoverable error, not normal return/not return from recoverable error)
+(** # Panic (irrecoverable error, not normal return/not return from recoverable error)
 
 Return from a function/contract signaling an error; execute exception handler,
 burn all ergs in current frame, set OF flag, return nothing, perform [%rollback].
@@ -34,8 +33,7 @@ Trigger panic with a reason [%TriggeredExplicitly]. See [%Panics].
     step_panic TriggeredExplicitly s s' ->
     step_oppanic OpPanic s s'.
 
-(**
-## Affected parts of VM state
+(** ## Affected parts of VM state
 
 - Flags are cleared, then OF is set.
 - Context register is zeroed (only returns from far calls).
@@ -58,6 +56,4 @@ Trigger panic with a reason [%TriggeredExplicitly]. See [%Panics].
 
 - `ret` returns to the caller instead of executing an exception handler, and does not burn ergs.
 - `revert` acts similar to `panic` but does not burn ergs, returns data to the caller, and does not set an overflow flag.
-
-
  *)

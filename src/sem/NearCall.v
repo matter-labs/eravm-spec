@@ -2,7 +2,7 @@ Require SemanticCommon.
 
 Import ABI.NearCall Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet Memory State ZMod SemanticCommon.
 
-Section NearCall.
+Section NearCallDefinition.
   Open Scope ZMod_scope.
   (** # NearCall
 
@@ -159,5 +159,5 @@ Step-by-step explanation:
 
 - See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
  *)
-End NearCall.
+End NearCallDefinition.
 

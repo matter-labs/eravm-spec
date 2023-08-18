@@ -20,6 +20,11 @@ Section PtrSubDefinition.
 
 [%OpPtrSub (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
 
+## Syntax
+
+- `ptr.sub in1, in2, out`
+- `ptr.sub.s in1, in2, out`
+
 ## Summary
 
 Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`. Advances
