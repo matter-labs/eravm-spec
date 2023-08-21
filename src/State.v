@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
-Require ABI Core Decommitter GPR Ergs Event Memory History CallStack .
+Require ABI Core Decommitter GPR Ergs Event Memory History CallStack VMPanic.
 
-Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory ZMod List Decommitter Predication.
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory ZMod List Decommitter Predication VMPanic.
 Import ListNotations RecordSetNotations.
 
 Section Definitions.
@@ -75,6 +75,7 @@ Record transient_state :=
       gs_pages: memory;
       gs_callstack: callstack;
       gs_context_u128: u128;
+      gs_status: status;
     }.
 
 Record state :=
@@ -109,7 +110,7 @@ A system contract `MsgValueSimulator` is respondible for ensuring that whenever 
 (* begin hide *)
 
 #[export] Instance etaXGS : Settable _ := settable! mk_gstate <gs_current_ergs_per_pubdata_byte; gs_tx_number_in_block; gs_contracts; gs_revertable>.
-#[export] Instance etaXS : Settable _ := settable! mk_transient_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128>.
+#[export] Instance etaXS : Settable _ := settable! mk_transient_state <gs_flags ; gs_regs; gs_pages; gs_callstack; gs_context_u128; gs_status>.
 #[export] Instance etaXGGS : Settable _ := settable! mk_state <gs_transient; gs_global> .
 
 (* end hide *)

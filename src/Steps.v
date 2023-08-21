@@ -48,7 +48,7 @@ Definition tstep_flags {descr:CoreSet.descr} (P: @instruction descr -> flags_tsm
 smallstep relations where only callstack is changing. *)
 Inductive step_transient_callstack (S: callstack -> callstack -> Prop) : transient_state -> transient_state -> Prop :=
 | scs_apply:
-  forall flags regs pages ctx cs1 cs2 xs1 xs2 ,
+  forall flags regs pages ctx cs1 cs2 xs1 xs2 status,
     S cs1 cs1 ->
     xs1 = {|
             gs_callstack    := cs1;
@@ -57,6 +57,7 @@ Inductive step_transient_callstack (S: callstack -> callstack -> Prop) : transie
             gs_regs         := regs;
             gs_pages        := pages;
             gs_context_u128 := ctx;
+            gs_status       := status;
           |} ->
     xs2 = {|
             gs_callstack    := cs2;
@@ -66,6 +67,7 @@ Inductive step_transient_callstack (S: callstack -> callstack -> Prop) : transie
             gs_regs         := regs;
             gs_pages        := pages;
             gs_context_u128 := ctx;
+            gs_status       := status;
           |} ->
 
     step_transient_callstack S xs1 xs2.

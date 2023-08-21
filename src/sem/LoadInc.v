@@ -57,8 +57,8 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
       hp_inc hptr ptr_inc ->
 
       step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant (ptr_inc, mk_pv src_tag ___))
-        (mk_transient_state flags regs mem cs0 ctx)
-        (mk_transient_state flags new_regs mem new_cs ctx)
+        (mk_transient_state flags regs mem cs0 ctx NoPanic)
+        (mk_transient_state flags new_regs mem new_cs ctx NoPanic)
         )
   .
 (**

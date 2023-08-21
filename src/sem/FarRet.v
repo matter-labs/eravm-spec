@@ -36,7 +36,7 @@ Section FarRetDefinition.
 
   Let reserve regs :=
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
-  
+
   Inductive step_farret: instruction -> tsmallstep :=
 (** # Far return (normal return, not panic/revert)
 
@@ -105,7 +105,7 @@ Section FarRetDefinition.
 6. Clear context register.
 *)
 | step_RetExt_heapvar:
-  forall pages cf caller_stack cs1 new_caller new_regs enc  ___ ____ _____ out_ptr heap_type hspan params s1 s2,
+  forall pages cf caller_stack cs1 new_caller new_regs enc  ___ ____ _____ out_ptr heap_type hspan params s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
@@ -121,6 +121,7 @@ Section FarRetDefinition.
 
 
                           gs_pages        := pages;
+                          gs_status       := status;
                         |}
                         {|
                           gs_flags        := flags_clear;
@@ -130,11 +131,12 @@ Section FarRetDefinition.
 
 
                           gs_pages        := pages;
+                          gs_status       := status;
                            |} s1 s2 ->
     step_farret (OpFarRet (Some params, enc)) s1 s2
 
   | step_RetExt_ForwardFatPointer:
-  forall pages cf caller_stack cs1 new_caller new_regs __ ___ ____ in_ptr out_ptr page params enc s1 s2,
+  forall pages cf caller_stack cs1 new_caller new_regs __ ___ ____ in_ptr out_ptr page params enc s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     in_ptr.(fp_page) = Some page ->
@@ -157,6 +159,7 @@ Section FarRetDefinition.
 
 
                           gs_pages        := pages;
+                          gs_status       := status;
                         |}
                         {|
                           gs_flags        := flags_clear;
@@ -165,6 +168,7 @@ Section FarRetDefinition.
 
                           gs_context_u128 := zero128;
                           gs_pages        := pages;
+                          gs_status       := status;
                           |} s1 s2 ->
     step_farret (OpFarRet (Some params, enc)) s1 s2
   .

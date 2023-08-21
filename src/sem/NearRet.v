@@ -37,6 +37,7 @@ Section NearRetDefinition.
                          gs_regs         := regs;
                          gs_pages        := pages;
                          gs_context_u128 := ctx;
+                         gs_status       := NoPanic;
                        |}
                        {|
                          gs_flags        := flags_clear;
@@ -46,6 +47,7 @@ Section NearRetDefinition.
                          gs_regs         := regs;
                          gs_pages        := pages;
                          gs_context_u128 := ctx;
+                         gs_status       := NoPanic;
                        |}
         )
   .

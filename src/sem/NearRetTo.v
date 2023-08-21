@@ -31,23 +31,25 @@ Section NearRetToDefinition.
           ergs_return_caller_and_drop (InternalCall cf caller_stack) new_caller ->
 
           step_nearretto (OpNearRetTo label) {|
-                     gs_flags        := __;
-                     gs_callstack    := InternalCall cf caller_stack;
+                           gs_flags        := __;
+                           gs_callstack    := InternalCall cf caller_stack;
 
 
-                     gs_regs         := regs;
-                     gs_pages        := pages;
-                     gs_context_u128 := ctx;
-                   |}
-                   {|
-                     gs_flags        := flags_clear;
-                     gs_callstack    := pc_set label new_caller;
+                           gs_regs         := regs;
+                           gs_pages        := pages;
+                           gs_context_u128 := ctx;
+                           gs_status       := NoPanic;
+                         |}
+                         {|
+                           gs_flags        := flags_clear;
+                           gs_callstack    := pc_set label new_caller;
 
 
-                     gs_regs         := regs;
-                     gs_pages        := pages;
-                     gs_context_u128 := ctx;
-                   |}
+                           gs_regs         := regs;
+                           gs_pages        := pages;
+                           gs_context_u128 := ctx;
+                           gs_status       := NoPanic;
+                         |}
         )
   .
   (** ## Affected parts of VM state

@@ -4,7 +4,7 @@ Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon.
 
 Section NearRevertDefinition.
   Generalizable Variables regs __.
-  
+
   Inductive step_nearrevert: @instruction bound -> smallstep :=
   (** # NearRevert (return with recoverable error)
 
@@ -51,6 +51,7 @@ Section NearRevertDefinition.
                                              gs_regs         := regs;
                                              gs_pages        := pages;
                                              gs_context_u128 := ctx;
+                                             gs_status       := NoPanic;
                                            |};
                             gs_global := gs;
                           |}
@@ -62,6 +63,7 @@ Section NearRevertDefinition.
                                              gs_regs         := regs;
                                              gs_pages        := pages;
                                              gs_context_u128 := ctx;
+                                             gs_status       := NoPanic;
                                            |};
                             gs_global := new_gs;
                           |}

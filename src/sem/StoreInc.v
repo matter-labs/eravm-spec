@@ -69,6 +69,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
              gs_regs         := regs;
              gs_flags        := flags;
              gs_context_u128 := ctx;
+             gs_status       := NoPanic;
            |}
            {|
              gs_callstack    := new_cs;
@@ -78,6 +79,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
              gs_regs         := regs;
              gs_flags        := flags;
              gs_context_u128 := ctx;
+             gs_status       := NoPanic;
            |}
 
  .

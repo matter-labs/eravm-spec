@@ -23,6 +23,7 @@ Section Def.
           gs_flags        := flags;
           gs_pages        := pages;
           gs_context_u128 := ctx;
+          gs_status       := NoPanic;
         |}
         {|
           gs_callstack    := ergs_reset cs;
@@ -31,6 +32,7 @@ Section Def.
           gs_flags        := flags;
           gs_pages        := pages;
           gs_context_u128 := ctx;
+          gs_status       := NoPanic;
         |} s1 s2 ->
       step_precompile (OpPrecompileCall __ (mk_pv ___ extra_ergs) (IntValue result)) s1 s2
   | step_PrecompileCall_affordable:
@@ -50,6 +52,7 @@ Section Def.
                      gs_pages        := pages;
                      gs_flags        := flags;
                      gs_context_u128 := ctx;
+                     gs_status       := NoPanic;
                    |} in
       Precompiles.precompile_processor (current_contract cs) params xs new_xs ->
 
@@ -67,6 +70,7 @@ Section Def.
                                       gs_callstack    := cs;
                                       gs_flags        := flags;
                                       gs_context_u128 := ctx;
+                                      gs_status       := NoPanic;
                                     |};
                         gs_global       := gs;
 

@@ -47,6 +47,7 @@ Section NearRevert.
                                                gs_regs         := regs;
                                                gs_pages        := pages;
                                                gs_context_u128 := ctx;
+                                               gs_status       := NoPanic;
                                              |};
                               gs_global := gs;
                             |}
@@ -58,6 +59,7 @@ Section NearRevert.
                                                gs_regs         := regs;
                                                gs_pages        := pages;
                                                gs_context_u128 := ctx;
+                                               gs_status       := NoPanic;
                                              |};
                               gs_global := new_gs;
                             |}

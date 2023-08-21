@@ -64,6 +64,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
              gs_regs         := regs;
              gs_flags        := flags;
              gs_context_u128 := ctx;
+             gs_status       := NoPanic;
            |}
            {|
              gs_callstack    := new_cs;
@@ -73,6 +74,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
              gs_regs         := regs;
              gs_flags        := flags;
              gs_context_u128 := ctx;
+             gs_status       := NoPanic;
            |}
 
   .

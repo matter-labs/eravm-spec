@@ -66,19 +66,19 @@ Step-by-step explanation:
    - if `ergs_passed` = 0, pass all available ergs to the callee and set
      the `caller_ergs` to zero. Upon the callee's normal return, its unspent
      ergs are returned back to the caller.
-   
+
    - otherwise, if `caller_ergs` $\geq$ `ergs_passed`, pass exactly
      `ergs_passed`. The `caller_ergs` is set to the unspent amount
      `ergs_passed - caller_ergs`.
-   
+
    - otherwise, if the call is not affordable (`ergs_passed` $\gt$
      `caller_ergs`), pass all available ergs to the callee.
 
    Function [%split_ergs_callee_caller] returns a pair of erg values, where:
-   
+
    - the first component is the amount of ergs actually passed to the callee;
    - the second component is the amount of ergs left to the caller.
-   
+
    Note: after a normal return (not `panic`), the remaining ergs are returned to
    the caller.
 
@@ -112,6 +112,7 @@ Step-by-step explanation:
                            gs_regs         := regs;
                            gs_context_u128 := ctx;
                            gs_pages        := pages;
+                           gs_status       := NoPanic;
                          |};
           gs_global       := gs;
         |}
@@ -122,6 +123,7 @@ Step-by-step explanation:
                            gs_regs         := regs;
                            gs_context_u128 := ctx;
                            gs_pages        := pages;
+                           gs_status       := NoPanic;
                          |};
           gs_global       := gs;
         |}.
@@ -160,4 +162,3 @@ Step-by-step explanation:
 - See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall]. They are used to call code of other contracts.
  *)
 End NearCallDefinition.
-

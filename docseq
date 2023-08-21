@@ -34,6 +34,7 @@ doc/EraVM.isa.Modifiers.html
 doc/EraVM.Semantics.html
 doc/EraVM.VMPanic.html
 doc/EraVM.sem.SemanticCommon.html
+doc/EraVM.sem.StepPanic.html
 doc/EraVM.sem.SpAdd.html
 doc/EraVM.sem.SpSub.html
 doc/EraVM.sem.Jump.html

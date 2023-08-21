@@ -235,7 +235,7 @@ A system call is a far call that satisfies the following conditions:
    Inductive fwd_memory :=
      ForwardFatPointer (p:fat_ptr)
    | ForwardNewFatPointer (heap_var: data_page_type) (s:span).
-  
+
 
   Record params :=
     mk_params {
@@ -254,7 +254,7 @@ A system call is a far call that satisfies the following conditions:
 
      ```
      Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
-     
+
      Record versioned_hash := {
         code_length_in_words: u16;
         extra_marker: marker;
@@ -269,7 +269,7 @@ A system call is a far call that satisfies the following conditions:
      for decommitment.
 
 4. Forward data to the new frame (formalized by [%paid_forward_and_adjust_bounds]).
-   - If [%params.(fwd_memory)] is [%ForwardExistingFatPointer p], we are forwarding an existing fat pointer. 
+   - If [%params.(fwd_memory)] is [%ForwardExistingFatPointer p], we are forwarding an existing fat pointer.
      - ensure that `abi_reg` is tagged as a pointer.
      - check the pointer validity;
      - [%fat_ptr_narrow] the pointer;
@@ -466,6 +466,7 @@ Section FarCallDefinitions.
           gs_pages        := old_pages;
           gs_callstack    := cs0;
           gs_context_u128 := reg_context_u128;
+          gs_status       := NoPanic;
         |}
         {|
           gs_flags        := flags_clear;
@@ -473,6 +474,7 @@ Section FarCallDefinitions.
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
+          gs_status       := NoPanic;
         |}
 
   | farcall_fwd_memory: forall flags old_regs old_pages cs0 cs1 cs2 new_caller_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx abi_shard ergs_query ergs_actual is_syscall_query out_ptr __ in_span page_type,
@@ -521,6 +523,7 @@ Section FarCallDefinitions.
           gs_pages        := old_pages;
           gs_callstack    := cs0;
           gs_context_u128 := reg_context_u128;
+          gs_status       := NoPanic;
         |}
         {|
           gs_flags        := flags_clear;
@@ -528,6 +531,7 @@ Section FarCallDefinitions.
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
+          gs_status       := NoPanic;
         |}
 
         .
@@ -603,4 +607,3 @@ Record FarCallExceptions : Set := {
     fce_call_in_now_constructed_system_contract : bool;
     fce_note_enough_ergs_for_extra_far_call_costs : bool;
   }.
-

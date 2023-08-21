@@ -9,7 +9,7 @@ Section FarRevertDefinition.
 
   Let reserve regs :=
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
-  
+
   Inductive step_farrevert: instruction -> smallstep :=
   (** # Far revert (return from recoverable error, not panic/normal return)
 
@@ -47,7 +47,7 @@ near calls.
       ergs_return_caller_and_drop cs1 cs2 ->
 
       new_caller = pc_set (active_exception_handler cs0) cs2 ->
-      
+
       rollback cf.(cf_saved_checkpoint) gs gs' ->
       new_regs = reserve (regs_state_zero <| r1 := PtrValue (encode FatPointer.ABI out_ptr) |> )->
 
@@ -60,6 +60,7 @@ near calls.
                                         gs_context_u128 := ____;
 
                                         gs_pages        := pages;
+                                        gs_status       := NoPanic;
                                       |};
                        gs_global       := gs;
                      |}
@@ -67,10 +68,11 @@ near calls.
                        gs_transient := {|
                                         gs_flags        := flags_clear;
                                         gs_callstack    := new_caller;
-                                        gs_regs         := new_regs;                                                                        
+                                        gs_regs         := new_regs;
                                         gs_context_u128 := zero128;
 
                                         gs_pages        := pages;
+                                        gs_status       := NoPanic;
                                       |};
                        gs_global       := gs';
                      |}
@@ -103,6 +105,7 @@ near calls.
                                         gs_context_u128 := ____;
 
                                         gs_pages        := pages;
+                                        gs_status       := NoPanic;
                                       |};
 
                        gs_global       := gs;
@@ -115,6 +118,7 @@ near calls.
                                         gs_context_u128 := zero128;
 
                                         gs_pages        := pages;
+                                        gs_status       := NoPanic;
                                       |};
 
                        gs_global       := gs';

@@ -1,6 +1,6 @@
-Require SemanticCommon VMPanic.
+Require SemanticCommon VMPanic StepPanic.
 
-Import isa.CoreSet SemanticCommon VMPanic.
+Import isa.CoreSet SemanticCommon VMPanic StepPanic.
 
 Inductive step_oppanic: @instruction bound -> smallstep :=
 (** # Panic (irrecoverable error, not normal return/not return from recoverable error)
@@ -15,7 +15,7 @@ See [%Panics].
 
 ## Syntax
 
-`ret.panic` aliased as `panic` 
+`ret.panic` aliased as `panic`
 
 An abnormal return from a **near** call. Will pop up current callframe, burn
 all ergs and pass control to the current exception handler, setting OF flag.

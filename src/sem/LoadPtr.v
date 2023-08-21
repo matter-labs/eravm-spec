@@ -30,7 +30,7 @@ bytes.
 3. Read 32 consecutive bytes as a Big Endian 256-bit word from address `offset` in heap variant.
 
    Reading bytes past `start + length` returns zero bytes. For example, consider a pointer with:
- 
+
    ```
    {|
    page   := _;
@@ -55,8 +55,8 @@ bytes.
       mb_load_slice_result BigEndian slice addr result ->
 
       step_load_ptr (OpLoadPointer (Some in_ptr, PtrValue __) (IntValue result))
-                    (mk_transient_state _flags _regs mem _cs _ctx)
-                    (mk_transient_state _flags _regs mem _cs _ctx)
+                    (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
+                    (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
   .
 
 (** ## Affected parts of VM state

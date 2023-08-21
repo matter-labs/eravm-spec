@@ -1,5 +1,5 @@
 From RecordUpdate Require Import RecordSet.
-Require Addressing Binding Common Flags CallStack Memory MemoryContext State MemoryOps ABI KernelMode Steps VMPanic.
+Require Addressing Binding Common Flags CallStack Memory MemoryContext State MemoryOps ABI KernelMode Steps VMPanic sem.StepPanic.
 
 Import
   Addressing
@@ -25,7 +25,7 @@ Import
     ZArith
     ZBits
     ZMod.
-Export Steps Binding.
+Export Steps Binding VMPanic StepPanic.
 
 Section Params.
   Open Scope ZMod_scope.

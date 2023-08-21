@@ -46,6 +46,7 @@ Require Import
   sem.Sub
   sem.ToL1
   sem.Xor
+  sem.StepPanic
 .
 (* end hide *)
 

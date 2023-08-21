@@ -57,6 +57,7 @@ active heap variant.
            gs_pages        := mem;
            gs_flags        := flags;
            gs_context_u128 := ctx;
+          gs_status       := NoPanic;
          |}
          {|
            gs_callstack    := new_cs;
@@ -66,6 +67,7 @@ active heap variant.
            gs_pages        := mem;
            gs_flags        := flags;
            gs_context_u128 := ctx;
+          gs_status       := NoPanic;
          |}
         )
   .

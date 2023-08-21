@@ -167,9 +167,9 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
 
   Inductive relate_transient_states (P: binding_state -> binding_state -> Prop): transient_state -> transient_state -> Prop :=
   | rts_apply:
-    forall r1 r2 m1 m2 c1 c2 ctx flags,
+    forall r1 r2 m1 m2 c1 c2 ctx flags status,
       P (mk_bind_st c1 r1 m1 ) (mk_bind_st c1 r1 m1) ->
-      relate_transient_states P (mk_transient_state flags r1 m1 c1 ctx) (mk_transient_state flags r2 m2 c2 ctx).
+      relate_transient_states P (mk_transient_state flags r1 m1 c1 ctx status) (mk_transient_state flags r2 m2 c2 ctx status).
 
   #[local]
   Definition merge_binding_transient_state: binding_state -> transient_state -> transient_state :=
