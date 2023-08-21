@@ -1,9 +1,9 @@
 From RecordUpdate Require Import RecordSet.
 
-Require SemanticCommon.
+Require SemanticCommon MemoryManagement.
 
 Import Addressing Bool Coder Common Flags CallStack GPR Memory MemoryOps isa.CoreSet State ZMod
-  ABI ABI.FarRet ABI.FatPointer Addressing.Coercions Pointer PrimitiveValue SemanticCommon RecordSetNotations.
+  ABI ABI.FarRet ABI.FatPointer Addressing.Coercions MemoryManagement Pointer PrimitiveValue SemanticCommon RecordSetNotations.
 
 Section FarRevertDefinition.
 
@@ -43,7 +43,7 @@ near calls.
 
       params = ForwardNewFatPointer heap_type hspan ->
 
-      paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
+      paid_forward_new_fat_ptr heap_type hspan cs0 (out_ptr, cs1) ->
       ergs_return_caller_and_drop cs1 cs2 ->
 
       new_caller = pc_set (active_exception_handler cs0) cs2 ->

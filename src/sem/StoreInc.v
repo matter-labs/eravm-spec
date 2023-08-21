@@ -1,5 +1,5 @@
-Require SemanticCommon.
-Import Core Common Memory MemoryOps isa.CoreSet State ZMod
+Require SemanticCommon MemoryManagement.
+Import Core Common Memory MemoryOps MemoryManagement isa.CoreSet State ZMod
   SemanticCommon Pointer PrimitiveValue.
 
 
@@ -42,7 +42,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    word in the heap variant in `inc_ptr`.
 *)
   | step_StoreInc:
-    forall hptr flags new_cs heap_variant enc_ptr value new_mem selected_page query modified_page cs regs mem __ ___ addr hptr_mod ctx ____,
+    forall hptr flags new_cs heap_variant enc_ptr value new_mem selected_page bound modified_page cs regs mem __ ___ addr hptr_mod ctx ____,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
@@ -52,8 +52,8 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
       heap_variant_page heap_variant cs mem selected_page ->
 
-      word_upper_bound hptr query ->
-      grow_and_pay heap_variant query cs new_cs ->
+      word_upper_bound hptr bound ->
+      bound_grow_pay (heap_variant, bound) cs new_cs ->
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->
       page_replace selected_page_id (mk_page (DataPage modified_page)) mem new_mem ->

@@ -1,5 +1,5 @@
-Require SemanticCommon.
-Import Core Common Memory MemoryOps isa.CoreSet State ZMod
+Require SemanticCommon MemoryManagement.
+Import Core Common Memory MemoryOps MemoryManagement isa.CoreSet State ZMod
   SemanticCommon Pointer PrimitiveValue.
 
 Section StoreDefinition.
@@ -38,7 +38,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
    $\mathit{addr}$ in the heap variant.
 *)
   | step_Store:
-    forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page query modified_page cs regs mem __ ___ addr ctx,
+    forall flags new_cs heap_variant enc_ptr hptr value new_mem selected_page bound modified_page cs regs mem __ ___ addr ctx,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
@@ -48,8 +48,8 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 
       heap_variant_page heap_variant cs mem selected_page ->
 
-      word_upper_bound hptr query ->
-      grow_and_pay heap_variant query cs new_cs ->
+      word_upper_bound hptr bound ->
+      bound_grow_pay (heap_variant, bound) cs new_cs ->
 
       mb_store_word_result BigEndian selected_page addr value modified_page ->
 

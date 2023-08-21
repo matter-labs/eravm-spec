@@ -207,9 +207,4 @@ Definition heap_variant_id (page_type: data_page_type)
   | AuxHeap => @active_auxheap_id
   end state_checkpoint.
 
-Definition heap_variant_bound (page_type:data_page_type):  callstack -> mem_address :=
-  match page_type with
-  | Heap => @heap_bound
-  | AuxHeap => @auxheap_bound
-  end state_checkpoint.
 (* end details *)

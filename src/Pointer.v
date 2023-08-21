@@ -23,6 +23,15 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
 
   Definition span_empty := mk_span zero32 zero32.
 
+  Inductive span_limit: span -> mem_address -> Prop :=
+    | sl_apply:forall start length limit,
+      (limit, false) = start + length ->
+      span_limit (mk_span start length) limit.
+
+  Inductive bound_of_span : span -> data_page_type -> page_bound -> Prop :=
+    | qos_apply: forall s limit hv,
+        span_limit s limit ->
+        bound_of_span s hv (hv, limit).
   (** ## Usage
 
 Passing a span in [%ForwardNewHeapPointer] as an argument to far calls or far

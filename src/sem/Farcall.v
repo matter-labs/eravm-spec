@@ -1,6 +1,6 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Common Decommitter Ergs CallStack Memory isa.CoreSet State MemoryOps ABI Pointer SemanticCommon.
+Require Common Decommitter Ergs CallStack Memory isa.CoreSet State MemoryOps MemoryManagement ABI Pointer SemanticCommon.
 
 Import
   BinIntDef.Z
@@ -27,6 +27,7 @@ Import
     MemoryBase
     MemoryOps
     MemoryContext
+    MemoryManagement
     PrimitiveValue
     RecordSetNotations
     SemanticCommon
@@ -453,7 +454,7 @@ Section FarCallDefinitions.
 
       farcall
         ({|
-          fwd_memory           := ForwardExistingFatPointer in_ptr;
+          FarCall.fwd_memory           := ForwardExistingFatPointer in_ptr;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
@@ -486,7 +487,7 @@ Section FarCallDefinitions.
       paid_code_fetch allow_masking callee_shard
         gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest cs0 (cs1, new_code_page, new_const_page) ->
 
-      (*!*)paid_forward_heap_span page_type (in_span, cs1) (out_ptr, cs2) ->
+      (*!*)paid_forward_new_fat_ptr page_type in_span cs0 (out_ptr, cs1) ->
 
       let caller_extframe := active_extframe cs2 in
       let mem_ctx0 := caller_extframe.(ecf_mem_ctx) in
@@ -511,7 +512,7 @@ Section FarCallDefinitions.
 
       farcall
         ({|
-          fwd_memory           := ForwardNewFatPointer page_type in_span;
+          FarCall.fwd_memory           := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;

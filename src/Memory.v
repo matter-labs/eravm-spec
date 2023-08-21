@@ -334,6 +334,7 @@ $2^{32}$ bytes. *)
   We call both of them **heap variants** for brevity, as in almost all cases
   they are handled in a similar way. *)
   Inductive data_page_type := Heap | AuxHeap.
+  Definition page_bound := prod data_page_type mem_address.
 
   Import ZMod.
   Open Scope ZMod_scope.
@@ -457,4 +458,3 @@ EraVM semantic. *)
   Canonical vm_page {instr} (inv:instr) type : page := @mk_page (code_page inv) const_page data_page stack_page type.
 #[global]
   Canonical vm_mem {instr} (inv:instr) type : memory := @mk_pages (code_page inv) const_page data_page stack_page type.
-

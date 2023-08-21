@@ -1,6 +1,6 @@
-Require SemanticCommon.
+Require SemanticCommon MemoryManagement.
 
-Import MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
+Import MemoryOps MemoryManagement isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
 
 Section LoadIncDefinition.
 
@@ -42,7 +42,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    word in the heap variant in `inc_ptr`.
 *)
   | step_LoadInc:
-    forall heap_variant result new_regs selected_page ptr_inc query new_cs addr src_tag __ ___ ctx,
+    forall heap_variant result new_regs selected_page ptr_inc bound new_cs addr src_tag __ ___ ctx,
       `(
       let hptr := mk_hptr addr in
 
@@ -51,8 +51,8 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
       heap_variant_page heap_variant cs0 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound hptr query ->
-      grow_and_pay heap_variant query cs0 new_cs ->
+      word_upper_bound hptr bound ->
+      bound_grow_pay (heap_variant, bound) cs0 new_cs ->
 
       hp_inc hptr ptr_inc ->
 

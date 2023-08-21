@@ -9,6 +9,7 @@ Common
 Flags
 GPR
 MemoryContext
+MemoryManagement
 Pointer
 PrimitiveValue
 SemanticCommon
@@ -25,11 +26,13 @@ Flags
 GPR
 isa.CoreSet
 MemoryContext
+MemoryManagement
 Pointer
 PrimitiveValue
 RecordSetNotations
 SemanticCommon
 State
+StepPanic
 .
 
 Section FarRetDefinition.
@@ -73,8 +76,6 @@ Section FarRetDefinition.
       + ensure that the memory page of `p` does NOT refer to a page owned by an older frame.
       + [%fat_ptr_narrow p] so it starts at its current offset, and the offset is reset to zero.
 
-        TODO Explanation why the circularity check is necessary.
-
      There is no payment because the existing fat pointer has already been paid for.
 
      **Attention**: **shrinking** and **narrowing** far pointers are different. See [%fat_ptr_shrink] and [%fat_ptr_narrow].
@@ -108,7 +109,7 @@ Section FarRetDefinition.
   forall pages cf caller_stack cs1 new_caller new_regs enc  ___ ____ _____ out_ptr heap_type hspan params s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
-    paid_forward_heap_span heap_type (hspan, cs0) (out_ptr, cs1) ->
+    paid_forward_new_fat_ptr heap_type hspan cs0 (out_ptr, cs1) ->
     ergs_return_caller_and_drop cs1 new_caller ->
     params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
     new_regs = (reserve regs_state_zero)
@@ -136,7 +137,7 @@ Section FarRetDefinition.
     step_farret (OpFarRet (Some params, enc)) s1 s2
 
   | step_RetExt_ForwardFatPointer:
-  forall pages cf caller_stack cs1 new_caller new_regs __ ___ ____ in_ptr out_ptr page params enc s1 s2 status,
+  forall pages cf caller_stack cs1 new_caller new_regs __ ___ ____ _____ in_ptr out_ptr page params s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     in_ptr.(fp_page) = Some page ->
@@ -170,9 +171,7 @@ Section FarRetDefinition.
                           gs_pages        := pages;
                           gs_status       := status;
                           |} s1 s2 ->
-    step_farret (OpFarRet (Some params, enc)) s1 s2
-  .
-
+    step_farret (OpFarRet (Some params, PtrValue _____)) s1 s2
 (** ## Affected parts of VM state
 
 - Flags are cleared.

@@ -21,14 +21,21 @@ Providing an integer value (with the tag cleared) instead of a pointer value (wi
 The type [%reason] describes all situations where EraVM panics.
    *)
   Inductive reason :=
-  | NotEnoughErgs
+  (** - See [%step_RetExt_ForwardFatPointer_requires_ptrtag]. *)
+  | RetABIExistingFatPointerWithoutTag
+  (** - See [%step_RetExt_ForwardFatPointer_returning_older_pointer]. *)
+  | RetABIReturnsPointerCreatedByCaller
+  (** - Malformed [%fat_ptr] is such that [%validate] returns [%false].*)
+  | FatPointerMalformed
   | NotInKernelMode
   | ForbiddenInStaticMode
   | InvariantViolation
   | CallStackOverflow
   | InvalidInstruction
   | ExpectedPointerInInstruction {descr} (op:@instruction descr)
+  (** - Executing [%OpPanic] or [%OpNearPanicTo]. *)
   | TriggeredExplicitly
+  | NotEnoughErgs
   .
 
   Inductive status :=

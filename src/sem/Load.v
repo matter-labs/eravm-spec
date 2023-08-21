@@ -1,6 +1,6 @@
-Require SemanticCommon.
+Require SemanticCommon MemoryManagement.
 
-Import MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
+Import MemoryOps MemoryManagement isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
 
 Section LoadDefinition.
 
@@ -38,15 +38,15 @@ active heap variant.
    in the heap variant, store result to `res`.
 *)
   | step_Load:
-    forall new_cs heap_variant ctx result __ mem selected_page query addr,
+    forall new_cs heap_variant ctx result __ mem selected_page bound addr,
       `(
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
       heap_variant_page heap_variant cs1 mem selected_page ->
       mb_load_result BigEndian selected_page addr result ->
 
-      word_upper_bound (mk_hptr addr) query ->
-      grow_and_pay heap_variant query cs1 new_cs ->
+      word_upper_bound (mk_hptr addr) bound ->
+      bound_grow_pay (heap_variant, bound) cs0 new_cs ->
 
       step_load (OpLoad (Some (mk_hptr addr), __) (IntValue result) heap_variant)
          {|

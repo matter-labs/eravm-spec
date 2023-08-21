@@ -1,5 +1,5 @@
-Require Coder Ergs Pointer GPR.
-Import Core Common Coder Bool ZMod GPR Ergs Memory Pointer.
+Require Coder Ergs Pointer GPR MemoryManagement.
+Import Core Common Coder Bool ZMod GPR Ergs Memory MemoryManagement Pointer.
 
 
 #[local]
@@ -52,11 +52,6 @@ Module NearCall.
   Axiom ABI: @coder params.
 
 End NearCall.
-
-(* TODO find better place to describe memory forwarding *)
-Inductive fwd_memory :=
-  ForwardExistingFatPointer (p:fat_ptr)
-| ForwardNewFatPointer (heap_var: data_page_type) (s:span).
 
 
 (** ## Far returns *)

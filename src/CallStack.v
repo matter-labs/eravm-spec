@@ -403,6 +403,18 @@ Executing any instruction $I$ changes the topmost frame:
 
       Definition auxheap_bound := get_mem_ctx.(ctx_auxheap_bound).
 
+      Definition heap_variant_bound (page_type:data_page_type):  mem_address :=
+        match page_type with
+        | Heap => heap_bound
+        | AuxHeap => auxheap_bound
+        end.
+
+      Definition heap_variant_page_id (page_type: data_page_type)
+        : page_id :=
+        match page_type with
+        | Heap => active_heap_id
+        | AuxHeap => active_auxheap_id
+        end.
     End ActivePageId.
 
 
