@@ -85,6 +85,14 @@ the size of a word in bytes. This is used by instructions [%OpLoadInc] and
         ofs + bytes_in_word  = (ofs', false) ->
         hp_inc (mk_hptr ofs) (mk_hptr ofs' ).
 
+    Definition hp_inc_OF (hp: heap_ptr) : option heap_ptr :=
+      match hp with
+      | mk_hptr ofs =>
+          match ofs + bytes_in_word with
+          | (ofs', false) => Some (mk_hptr ofs')
+          | _ => None
+          end
+      end.
   (** ## Usage
 
 Heap pointers are used by the following instructions:
@@ -152,9 +160,19 @@ These four components are enough to unambiguously identify a **[%slice]** of a d
         }.
 
     (* begin hide *)
-    Inductive fat_ptr_lift (P: free_ptr -> free_ptr -> Prop) : fat_ptr -> fat_ptr -> Prop :=
+    Inductive fat_ptr_liftP (P: free_ptr -> free_ptr -> Prop) : fat_ptr -> fat_ptr -> Prop :=
     |fpl_apply: forall i p1 p2, P p1 p2 ->
-                           fat_ptr_lift P (mk_fat_ptr i p1) (mk_fat_ptr i p2).
+                           fat_ptr_liftP P (mk_fat_ptr i p1) (mk_fat_ptr i p2).
+
+    Definition fat_ptr_opt_map (F: free_ptr -> option free_ptr) : fat_ptr -> option fat_ptr :=
+      fun fp =>
+        match fp with
+        | mk_fat_ptr page ptr =>
+            match F ptr with
+              | Some res => Some (mk_fat_ptr page res)
+              | None => None
+            end
+        end.
 
     #[export] Instance etaSpan : Settable _ := settable! mk_span < s_start; s_length >.
     #[export] Instance etaFreePointer: Settable _ := settable! mk_ptr < p_span; p_offset >.
@@ -238,7 +256,7 @@ A fat pointer is automatically narrowed in two situations:
         length - ofs = (length', false) ->
         free_ptr_narrow (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start' length') zero32).
 
-    Definition fat_ptr_narrow := fat_ptr_lift free_ptr_narrow.
+    Definition fat_ptr_narrow := fat_ptr_liftP free_ptr_narrow.
 
 
 (** **Shrinking a fat pointer** with [%fat_ptr_shrink] subtracts a given number [%diff] from its length; it is guaranteed to not overflow.
@@ -251,8 +269,17 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
         length - diff = (length', false) ->
         free_ptr_shrink diff (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start length') zero32).
 
-    Definition fat_ptr_shrink diff := fat_ptr_lift (free_ptr_shrink diff).
+    Definition fat_ptr_shrink diff := fat_ptr_liftP (free_ptr_shrink diff).
     (** Incrementing a fat pointer with [%fp_inc] increases its offset by 32, the size of a word in bytes. This is used by the instruction [%OpLoadPointerInc]. *)
+
+    Definition ptr_inc_OF (p: free_ptr) : option free_ptr :=
+      match p with
+      | mk_ptr s ofs =>
+        match ofs + bytes_in_word with
+        | (ofs', false) => Some (mk_ptr s ofs')
+        | _ => None
+        end
+      end.
 
     Inductive ptr_inc : free_ptr -> free_ptr -> Prop :=
     |fpf_apply :
@@ -261,7 +288,8 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
         ptr_inc (mk_ptr s ofs) (mk_ptr s ofs').
 
 
-    Definition fat_ptr_inc := fat_ptr_lift ptr_inc.
+    Definition fat_ptr_inc := fat_ptr_liftP ptr_inc.
+    Definition fat_ptr_inc_OF := fat_ptr_opt_map ptr_inc_OF.
   End FatPointer.
 
 End Definitions.
