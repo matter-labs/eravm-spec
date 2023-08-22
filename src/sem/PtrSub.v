@@ -55,6 +55,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
   | step_PtrSub:
     forall src_enc result s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
+      arg_delta <= MAX_OFFSET_FOR_ADD_SUB = true ->
       mem_delta = resize word_bits mem_address_bits arg_delta ->
       (new_ofs, false) = ofs - mem_delta ->
 
@@ -64,7 +65,6 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
               (IntValue arg_delta)
               (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
         s s
-  .
 (** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
@@ -92,6 +92,41 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 
 Instructions [%OpPtrSub], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
- *)
-End PtrSubDefinition.
+## Panic
 
+1. First argument is not a pointer (after accounting for `swap`).
+ *)
+  | step_PtrSub_in1_not_ptr:
+    forall s1 s2 __ ___ ____ _____,
+      step_panic ExpectedFatPointer s1 s2 ->
+      step_ptrsub (OpPtrSub (Some __, IntValue ___) ____ _____) s1 s2
+  (** 2. Second argument is a pointer (after accounting for `swap`). *)
+  | step_PtrSub_in2_ptr:
+    forall s1 s2 __ ___ ____ _____,
+      step_panic ExpectedFatPointer s1 s2 ->
+      step_ptrsub (OpPtrSub (Some __, ___) (PtrValue ____) _____) s1 s2
+
+  (** 3. Second argument is larger than [%MAX_OFFSET_FOR_SUB_SUB] (after
+  accounting for `swap`). *)
+  | step_PtrSub_diff_too_large:
+    forall s1 s2 (arg_delta:word) (mem_delta: mem_address) __ ___ ____,
+
+      arg_delta >= MAX_OFFSET_FOR_ADD_SUB = true ->
+      step_panic FatPointerDeltaTooLarge s1 s2 ->
+      step_ptrsub (OpPtrSub (Some __, PtrValue ___) (IntValue arg_delta) ____) s1 s2
+  (** 4. Subtraction underflows. *)
+  | step_PtrSub_underflow:
+    forall src_enc result s1 s2 ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
+
+      arg_delta < MAX_OFFSET_FOR_ADD_SUB = true ->
+      mem_delta = resize word_bits mem_address_bits arg_delta ->
+      (new_ofs, true) = ofs - mem_delta ->
+
+      step_panic FatPointerOverflow s1 s2 ->
+      step_ptrsub (OpPtrSub
+              (Some (mk_fat_ptr pid (mk_ptr span ofs)), PtrValue src_enc)
+              (IntValue arg_delta)
+              (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
+        s1 s2
+  .
+End PtrSubDefinition.

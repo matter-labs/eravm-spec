@@ -1,5 +1,5 @@
 Require SemanticCommon MemoryManagement.
-Import Core Common Memory MemoryOps MemoryManagement isa.CoreSet State ZMod
+Import Core Common Memory MemoryOps MemoryManagement  isa.CoreSet State ZMod
   SemanticCommon Pointer PrimitiveValue.
 
 Section StoreDefinition.
@@ -77,9 +77,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
              gs_status       := NoPanic;
            |}
 
-  .
-(**
-## Affected parts of VM state
+(** ## Affected parts of VM state
 
 - execution stack:
 
@@ -99,5 +97,35 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
+## Panic
+
+1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
+  | step_Store_offset_too_large:
+    forall heap_variant __ ___ addr s1 s2,
+      `(
+          addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
+          step_panic HeapPtrOffsetTooLarge s1 s2 ->
+          step_store (OpStore (Some (mk_hptr addr), __) ___ heap_variant) s1 s2
+        )
+  (** 2. Trying to store a word from an address greater than
+   [%MAX_OFFSET_TO_DEREF_LOW_U32]. *)
+  | step_Store_expects_intvalue:
+    forall s1 s2 __ ___ ____ _____,
+      `(
+          step_panic ExpectedHeapPointer  s1 s2 ->
+          step_store (OpStore (Some __, PtrValue ___) ____ _____) s1 s2
+        )
+  (** 3. Accessing an address requires growing the bound of the
+       corresponding heap variant, but the growth is unaffordable. *)
+  | step_Store_growth_unaffordable:
+    forall (s1 s2:state) cs ptr bound heap_variant __ ___,
+      `(
+          word_upper_bound ptr bound ->
+          growth_to_bound_unaffordable cs (heap_variant, bound) ->
+          gs_callstack s1 = cs ->
+          step_panic HeapGrowthUnaffordable s1 s2 ->
+          step_store (OpStore (Some ptr, __) ___ heap_variant) s1 s2
+        )
+  .
 End StoreDefinition.

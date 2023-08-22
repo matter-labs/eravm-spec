@@ -190,5 +190,70 @@ Section FarRetDefinition.
   to the caller.
 - `panic` executes the current frame's exception handler instead of returning to
   the caller, and sets overflow flag.
+
+## Panic
+
+1. Attempt to forward an existing fat pointer, but the value holding [%ABI.Ret.params] is not tagged as a pointer.
 *)
+
+  | step_RetExt_ForwardFatPointer_requires_ptrtag:
+  forall cf caller_stack __ params ___ (s1 s2:state),
+    let cs0 := ExternalCall cf (Some caller_stack) in
+    gs_callstack s1 = cs0 ->
+    params = FarRet.mk_params (ForwardExistingFatPointer __) ->
+    step_panic
+      RetABIExistingFatPointerWithoutTag
+      s1 s2 ->
+    step_farret (OpFarRet (Some params, IntValue ___)) s1 s2
+
+(** 2. Attempt to return a pointer created before the current callframe.
+It is forbidden to pass a pointer to a contract in a far call and return it back.
+Otherwise we could create a [%fat_ptr] $P$ to a heap page of contract $A$, pass it to a contract $B$, return it back to $A$, and then modify the contents on the heap page of $A$. This way we will also modify the memory [%slice] associated with $P$.
+
+In other words, this is a situation where:
+
+- caller makes far call to some contract;
+- callee does return-forward @calldataptr;
+- caller modifies calldata corresponding heap region, that leads to modification of returndata.
+
+*)
+  | step_RetExt_ForwardFatPointer_returning_older_pointer:
+  forall cf caller_stack ___ in_ptr page params (s1 s2:state) ,
+    let cs0 := ExternalCall cf (Some caller_stack) in
+    gs_callstack s1 = cs0 ->
+
+    in_ptr.(fp_page) = Some page ->
+
+    page_older page (get_mem_ctx cs0) = true ->
+    params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
+    step_panic
+      RetABIReturnsPointerCreatedByCaller
+      s1 s2 ->
+    step_farret (OpFarRet (Some params, ___)) s1 s2
+(** 3. Attempt to return a malformed pointer. *)
+  | step_RetExt_ForwardFatPointer_returning_malformed_pointer:
+  forall cf caller_stack ___ (in_ptr: fat_ptr) params (s1 s2:state) ,
+    let cs0 := ExternalCall cf (Some caller_stack) in
+    gs_callstack s1 = cs0 ->
+
+    validate in_ptr <> no_exceptions ->
+
+    params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
+    step_panic
+      FatPointerMalformed
+      s1 s2 ->
+    step_farret (OpFarRet (Some params, ___)) s1 s2
+(** 4. Attempt to return a new pointer but unable to pay for memory growth. *)
+| step_RetExt_heapvar_growth_unaffordable:
+  forall cf caller_stack __ heap_type hspan params (s1 s2:state),
+    let cs0 := ExternalCall cf (Some caller_stack) in
+    gs_callstack s1 = cs0 ->
+    params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
+    growth_to_span_unaffordable cs0 heap_type hspan ->
+    step_panic
+      FatPointerCreationUnaffordable
+      s1 s2 ->
+    step_farret (OpFarRet (Some params, __)) s1 s2
+  .
+
 End FarRetDefinition.

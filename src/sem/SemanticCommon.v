@@ -30,6 +30,7 @@ Export Steps Binding VMPanic StepPanic.
 Section Params.
   Open Scope ZMod_scope.
   Definition MAX_OFFSET_TO_DEREF_LOW_U32: u32 := int_mod_of _ (2^32 - 33)%Z.
+  Definition MAX_OFFSET_FOR_ADD_SUB: u256 := int_mod_of _ (2^32)%Z.
 End Params.
 
 

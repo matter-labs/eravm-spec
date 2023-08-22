@@ -57,8 +57,6 @@ bytes.
       step_load_ptr (OpLoadPointer (Some in_ptr, PtrValue __) (IntValue result))
                     (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
                     (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
-  .
-
 (** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction;
@@ -73,5 +71,12 @@ bytes.
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
- *)
+## Panic
+
+1. Argument is not a tagged pointer. *)
+  | step_LoadPointer_not_tagged:
+    forall __ ___ ____ (s1 s2:state),
+      step_panic ExpectedFatPointer s1 s2 ->
+      step_load_ptr (OpLoadPointer (__, IntValue ___) ____) s1 s2
+  .
 End LoadPtrDefinition.

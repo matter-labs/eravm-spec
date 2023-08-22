@@ -70,7 +70,6 @@ active heap variant.
           gs_status       := NoPanic;
          |}
         )
-  .
 (** ## Affected parts of VM state
 
 - execution stack:
@@ -94,5 +93,35 @@ active heap variant.
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
   [%OpLoadPointerInc] are variants of the same [%mach_instruction].
+
+## Panic
+
+1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
+  | step_Load_offset_too_large:
+    forall heap_variant __ ___ addr s1 s2,
+      `(
+          addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
+          step_panic HeapPtrOffsetTooLarge s1 s2 ->
+          step_load (OpLoad (Some (mk_hptr addr), __) ___ heap_variant) s1 s2
+        )
+  (** 2. Passed [%fat_ptr] instead of [%heap_ptr]. *)
+  | step_Load_expects_intvalue:
+    forall s1 s2 __ ___ ____ _____,
+      `(
+          step_panic ExpectedHeapPointer s1 s2 ->
+          step_load (OpLoad (Some __, PtrValue ___) ____ _____) s1 s2
+        )
+  (** 3. Accessing an address requires growing the bound of the
+       corresponding heap variant, but the growth is unaffordable. *)
+  | step_Load_growth_unaffordable:
+    forall (s1 s2:state) cs ptr bound heap_variant __ ___,
+      `(
+          word_upper_bound ptr bound ->
+          growth_to_bound_unaffordable cs (heap_variant, bound) ->
+          gs_callstack s1 = cs ->
+          step_panic HeapGrowthUnaffordable s1 s2 ->
+          step_load (OpLoad (Some ptr, __) ___ heap_variant) s1 s2
+        )
+  .
 End LoadDefinition.

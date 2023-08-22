@@ -267,9 +267,19 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
     Inductive free_ptr_shrink (diff: mem_address) : free_ptr -> free_ptr -> Prop :=
     | tptl_apply: forall start ofs length length',
         length - diff = (length', false) ->
-        free_ptr_shrink diff (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start length') zero32).
+        free_ptr_shrink diff (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start length') ofs).
+
+    Definition free_ptr_shrink_OF (diff: mem_address) : free_ptr -> option free_ptr :=
+      fun fp => match fp with
+              | mk_ptr (mk_span start length) p_offset =>
+                  match length - diff with
+                  | (length', false) => Some (mk_ptr (mk_span start length') p_offset)
+                  | _ => None
+                  end
+              end.
 
     Definition fat_ptr_shrink diff := fat_ptr_liftP (free_ptr_shrink diff).
+    Definition fat_ptr_shrink_OF diff := fat_ptr_opt_map (free_ptr_shrink_OF diff).
     (** Incrementing a fat pointer with [%fp_inc] increases its offset by 32, the size of a word in bytes. This is used by the instruction [%OpLoadPointerInc]. *)
 
     Definition ptr_inc_OF (p: free_ptr) : option free_ptr :=

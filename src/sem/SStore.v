@@ -1,10 +1,14 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Common Predication Ergs isa.CoreSet CallStack Event Memory MemoryOps State ZMod
+Import Common Core Predication Ergs isa.CoreSet CallStack Event Memory MemoryOps State ZMod
   PrimitiveValue SemanticCommon ZArith RecordSetNotations.
 
 Section SStoreDefinition.
+
+  Definition sstore_cost cs : ergs :=
+    let pubdata :=  (net_pubdata cs) in
+    ergs_of (pubdata * Z.of_nat bytes_in_word).
 
   Inductive step_sstore: instruction -> smallstep :=
   (** # SStore
@@ -41,25 +45,22 @@ Store word in current storage by key.
       global_state_new_depot new_depot gs new_gs ->
 
       ts2 = ts1 <| gs_callstack := new_cs |> ->
-      pay (ergs_of (net_pubdata cs)) cs new_cs ->
-
+      pay (sstore_cost cs) cs new_cs ->
 
       step_sstore (OpSLoad (mk_pv __ key) (IntValue write_value))
                   {|
                     gs_transient := ts1;
                     gs_global    := gs;
-                    
                   |}
                   {|
                     gs_transient := ts2;
                     gs_global    := new_gs;
                   |}
-  .
 (** ## Affected parts of VM state
 
 - execution stack:
   + PC, as by any instruction;
-  + allocated ergs 
+  + allocated ergs
 - GPRs, because `res` only resolves to a register.
 - Depot of current shard.
 
@@ -72,5 +73,25 @@ Store word in current storage by key.
 
 - [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
+## Panic
+
+1. Not enough ergs to pay for storage write.
  *)
+  | step_SStore_unaffordable:
+    forall cs gs ts1 ts2 __ ___,
+
+      (* there are currently no refunds *)
+      cs = gs_callstack ts1 ->
+      affordable cs (sstore_cost cs) = false ->
+      ts2 = ts1 <| gs_status := Panic StorageWriteUnaffordable |> ->
+      step_sstore (OpSLoad __ ___)
+                  {|
+                    gs_transient := ts1;
+                    gs_global    := gs;
+                  |}
+                  {|
+                    gs_transient := ts2;
+                    gs_global    := gs;
+                  |}
+.
 End SStoreDefinition.

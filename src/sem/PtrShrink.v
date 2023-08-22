@@ -56,7 +56,6 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
                         (IntValue delta)
                         (ptr_out, PtrValue result))
         s s
-  .
 (** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
@@ -82,5 +81,30 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 ## Encoding
 
 Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
+
+## Panic
+
+1. First argument is not a pointer (after accounting for `swap`).
  *)
+  | step_PtrShrink_in1_not_ptr:
+    forall s1 s2 __ ___ ____ _____,
+      step_panic ExpectedFatPointer s1 s2 ->
+      step_ptrshrink (OpPtrShrink (Some __, IntValue ___) ____ _____) s1 s2
+  (** 2. Second argument is a pointer (after accounting for `swap`). *)
+  | step_PtrShrink_in2_ptr:
+    forall s1 s2 __ ___ ____ _____,
+      step_panic ExpectedFatPointer s1 s2 ->
+      step_ptrshrink (OpPtrShrink (Some __, ___) (PtrValue ____) _____) s1 s2
+  (** 3. Shrinking underflows. *)
+  | step_PtrShrink_underflow:
+    forall s1 s2 result ptr_in ptr_out src_enc delta ,
+      let diff := resize _ mem_address_bits delta in
+      fat_ptr_shrink_OF diff ptr_in = None ->
+
+      step_ptrshrink (OpPtrShrink
+                        (Some ptr_in, PtrValue src_enc)
+                        (IntValue delta)
+                        (ptr_out, PtrValue result))
+        s1 s2
+  .
 End PtrShrinkDefinition.

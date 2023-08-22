@@ -60,9 +60,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
         (mk_transient_state flags regs mem cs0 ctx NoPanic)
         (mk_transient_state flags new_regs mem new_cs ctx NoPanic)
         )
-  .
-(**
-## Affected parts of VM state
+(** ## Affected parts of VM state
 
 - execution stack:
 
@@ -81,6 +79,43 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
+## Panic
+
+1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
+  | step_Load_offset_too_large:
+    forall heap_variant __ ___ ____ addr s1 s2,
+      `(
+          addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
+          step_panic HeapPtrOffsetTooLarge s1 s2 ->
+          step_load_inc (OpLoadInc (Some (mk_hptr addr), __) ___ heap_variant ____) s1 s2
+        )
+  (** 2. Passed [%fat_ptr] instead of [%heap_ptr]. *)
+  | step_Load_expects_intvalue:
+    forall s1 s2 __ ___ ____ _____ ______,
+      `(
+          step_panic ExpectedHeapPointer s1 s2 ->
+          step_load_inc (OpLoadInc (Some __, PtrValue ___) ____ _____ ______) s1 s2
+        )
+  (** 3. Accessing an address requires growing the bound of the
+       corresponding heap variant, but the growth is unaffordable. *)
+  | step_Load_growth_unaffordable:
+    forall (s1 s2:state) cs ptr bound heap_variant __ ___ ____,
+      `(
+          word_upper_bound ptr bound ->
+          growth_to_bound_unaffordable cs (heap_variant, bound) ->
+          gs_callstack s1 = cs ->
+          step_panic HeapGrowthUnaffordable s1 s2 ->
+          step_load_inc (OpLoadInc (Some ptr, __) ___ heap_variant ____) s1 s2
+        )
+  (** 4. Incremented pointer overflows. *)
+  | step_LoadInc_inc_overflow:
+    forall (s1 s2:state) heap_variant result src_tag hptr __ ___ ,
+      `(
+          hp_inc_OF hptr = None ->
+          step_panic HeapPtrIncOverflow s1 s2 ->
+          step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant ___) s1 s2
+        )
+  .
 
 End LoadIncDefinition.

@@ -90,9 +90,12 @@ Section SmallStep.
            Panic NotInKernelMode
          else if negb (check_forbidden_static i.(ins_spec _) (active_extframe (gs_callstack s)).(ecf_is_static)) then
                 Panic ForbiddenInStaticMode
-              else if negb (predicate_holds i.(ins_cond _) (gs_flags s)) then
-                     Skip
-                   else Execute.
+                      else if gt_unsigned _ (ergs_of (base_cost i.(ins_spec _)))
+                                (ergs_remaining (gs_callstack s)) then
+                             Panic NotEnoughErgsToPayBaseCost
+                           else if negb (predicate_holds i.(ins_cond _) (gs_flags s)) then
+                                  Skip
+                                else Execute.
 
   (** The definition [%smallsteps] gathers the references to all the small step
   predicates for various [%asm_instruction]s. *)
