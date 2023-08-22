@@ -58,4 +58,16 @@ Section MemoryForwarding.
       span_grow_pay s type cs0 cs1 ->
       heap_id = heap_variant_page_id cs0 type ->
       paid_forward_new_fat_ptr type s cs0 (mk_fat_ptr (Some heap_id) (fresh_ptr s), cs1).
+
+  Inductive growth_to_bound_unaffordable (cs:callstack) bound : Prop :=
+    | gtb_apply: forall query,
+        growth_to_bound bound cs query ->
+        false = affordable cs (cost_of_growth query) ->
+        growth_to_bound_unaffordable cs bound.
+
+  Inductive growth_to_span_unaffordable (cs:callstack) heap_type hspan : Prop :=
+    | gts_apply: forall bound,
+        bound_of_span hspan heap_type bound ->
+        growth_to_bound_unaffordable cs bound ->
+        growth_to_span_unaffordable cs heap_type hspan.
 End MemoryForwarding.
