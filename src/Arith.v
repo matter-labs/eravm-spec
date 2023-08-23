@@ -1,6 +1,6 @@
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype tuple zmodp .
 From Bits Require Import bits.
-From mathcomp Require Import ssreflect ssrfun ssrbool.
-Import eqtype.
 (** # Common project-independent definitions *)
 Section Types.
   Import ZArith bits.
@@ -10,7 +10,8 @@ Unsigned integers modulo $2^n$.
 
 Type $u_N$ holds integers in range from 0 inclusive to $2^N$ exclusive.
 
-Definitions [%uN_of] are constructors of [%uN] types; they accept an integer and return its value modulo $2^N$ packed in a type [%int_mod N].
+Definitions [%uN_of] are constructors of [%uN] types; they accept an integer and
+return its value modulo $2^N$ packed in a type [%int_mod N].
    *)
   Definition u8 := BITS 8.
   Definition u8_of := @fromZ 8.
@@ -56,30 +57,41 @@ Definitions [%uN_of] are constructors of [%uN] types; they accept an integer and
   Definition one160 := u160_of 1.
   Definition one256 := u256_of 1.
 
-  Definition uadd_of {n: nat} (a: BITS n) (b:BITS n) : bool * BITS n := adcB false a b.
-  Definition usub_uf {n: nat} (a: BITS n) (b:BITS n) : bool * BITS n := sbbB false a b.
-
-
 End Types.
 
-Declare Scope ZMod_scope.
-Locate  "==".
-Import ZArith.
-Axiom a : @BITS 8.
-Import
-Check (a == a).
-Infix "==" := beq_op (at level 70, no associativity): ZMod_scope.
-Infix "!=" := bneq_op (at level 70, no associativity): ZMod_scope.
-Infix "+" := (uadd_overflow _) : ZMod_scope.
-Infix "-" := (usub_overflow _) : ZMod_scope.
-Infix "*" := (umul_overflow _) : ZMod_scope.
+Definition a: @BITS 4 := fromNat 2.
+Section Operations.
+  Declare Scope ZMod_scope.
+  Import ZArith.
 
-Infix "<" := (lt_unsigned _) : ZMod_scope.
-Infix ">" := (gt_unsigned _) : ZMod_scope.
-Infix "<=" := (le_unsigned _) : ZMod_scope.
-Infix ">=" := (ge_unsigned _) : ZMod_scope.
+  Record udiv_result {n} := mk_divrem { div: BITS n; rem: BITS n }.
 
-Bind Scope ZMod_scope with int_mod.
+  Definition uadd_of {n: nat} (a: BITS n) (b:BITS n) : bool * BITS n := adcB false a b.
+  Definition usub_uf {n: nat} (a: BITS n) (b:BITS n) : bool * BITS n := sbbB false a b.
+  Definition umul {n: nat} (a: BITS n) (b:BITS n) : BITS (n+n) := fullmulB a b.
+  Definition udiv {n: nat} (a: BITS n) (b:BITS n) : BITS (n) :=
+   toZ
+    a b.
+
+  Definition lt_unsigned {n:nat} (a b: BITS n) := ltB a b.
+  Definition gt_unsigned {n:nat} (a b: BITS n) := lt_unsigned b a.
+  Definition le_unsigned {n:nat} (a b: BITS n) := lt_unsigned a b || (a == b).
+  Definition ge_unsigned {n:nat} (a b: BITS n) := gt_unsigned a b || (a == b).
+
+  Infix "+" := (uadd_of) : ZMod_scope.
+  Infix "-" := (usub_uf) : ZMod_scope.
+  Infix "*" := (umul_of) : ZMod_scope.
+  Infix "<" := (lt_unsigned ) : ZMod_scope.
+  Infix ">" := (gt_unsigned _) : ZMod_scope.
+  Bind Scope ZMod_scope with BITS.
+
+  Check fullmulB a a .
+  Infix "<" := (lt_unsigned _) : ZMod_scope.
+  Infix ">" := (gt_unsigned _) : ZMod_scope.
+  Infix "<=" := (le_unsigned _) : ZMod_scope.
+  Infix ">=" := (ge_unsigned _) : ZMod_scope.
+
+  Bind Scope ZMod_scope with int_mod.
 Definition bitwise_op (f:Z->Z->Z) (bits:nat) (x y: int_mod bits) : int_mod bits :=
   int_mod_of _ (f (int_val _ x) (int_val _ y)).
 

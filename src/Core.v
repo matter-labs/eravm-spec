@@ -1,9 +1,8 @@
-Require Common lib.ZMod.
+Require Common.
+From Bits Require Import bits.
 
-Import ZMod Common ZArith.
+Import Common ZArith.
 Section Parameters.
-  Open Scope ZMod_scope.
-
 
   (**
 
@@ -34,7 +33,7 @@ EraVM is a 256-bit register-based language machine with two stacks and dedicated
 (* end details *)
 
 
-  
+
 End Parameters.
   (**
 ![](img/arch-overview.png)
