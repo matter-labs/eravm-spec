@@ -5,40 +5,40 @@ Import Addressing CallStack Core isa.CoreSet Memory Resolution State SemanticCom
 Section SpSubDefinition.
 
   Open Scope ZMod_scope.
-  (* # SpSub
- ## Abstract Syntax
+  (** # SpSub
+## Abstract Syntax
 
 [%OpSpSub       (in1: in_reg) (ofs: imm_in)]
 
- ## Syntax
+## Syntax
 
- ```
- nop stack-=[reg+ofs]
- ```
+```
+nop stack-=[reg+ofs]
+```
 
- ## Summary
+## Summary
 
 Subtract `(in1 + ofs)` from SP.
 
- ## Semantic
+## Semantic
 
  - Advances PC
  - $\mathit{SP_{new} := SP - (in_1 + ofs)}$, but only if there was no overflow.
 
- ## Affected parts of VM state
+## Affected parts of VM state
 
  - execution stack : PC is increased; SP may be decreased.
 
- ## Usage
+## Usage
 
 Adjusting SP e.g. deallocating space on stack.
 
 
- ## Similar instructions
+## Similar instructions
 
 [%OpSpSub] subtracts value from SP.
 
- ## Encoding
+## Encoding
 
  - `NoOp`, `SpAdd`, `SpSub` are encoded as the same instruction.
    *)

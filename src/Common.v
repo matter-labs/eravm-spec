@@ -1,6 +1,4 @@
 Require lib.ZMod.
-Require Lib.
-Export Lib.
 
 (** # Common project-independent definitions *)
 Section Types.
@@ -63,4 +61,3 @@ End Types.
 
 (** The definition [%bits_in_byte] is provided for readability.*)
 Definition bits_in_byte : nat  := 8%nat.
-

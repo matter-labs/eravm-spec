@@ -472,6 +472,7 @@ context.set_ergs_per_pubdata in
 ## Summary
 
 Sets a new value to [%gs_current_ergs_per_pubdata_byte].
+
 ## Semantic
 
 

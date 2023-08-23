@@ -70,7 +70,7 @@ The following describes all types of memory formally and with greater detail.
 
 
 Section Depot.
-  (*
+  (**
 # Storage of a contract
 
 A **storage** is a persistent linear mapping from $2^{256}$ addresses to words.

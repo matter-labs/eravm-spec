@@ -5,9 +5,6 @@ Import Addressing Core Common ZArith ZMod CallStack GPR Memory PrimitiveValue.
 Section AddressingUtils.
   Import MemoryBase.
   Open Scope ZMod_scope.
-  (* Definition extract_stack_address: word -> stack_address -> Prop := extract_address _. *)
-  (* Definition extract_code_address: word -> code_address -> Prop := extract_address _. *)
-  (* Definition extract_const_address: word -> const_address -> Prop := extract_address _. *)
 
   (** Predicate [%reg_rel] implements the resolution for register-based relative addressing. Its specializations implement relative addressing for:
 
@@ -224,4 +221,3 @@ In the current state of EraVM, only SP modifications are allowed, therefore the 
       resolve_apply arg (cs', loc).
 
 End Resolve.
-

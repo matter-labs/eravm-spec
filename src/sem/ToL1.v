@@ -12,9 +12,8 @@ Section ToL1Definition.
 
 ## Abstract Syntax
 
-[%OpToL1Message (key: in_reg) (value: in_reg) (is_first: bool)]
+[%OpToL1Message (in1: in_reg) (in2: in_reg) (is_first: bool)]
 
-  OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
 ## Syntax
 
 - `log.event in1, in2` aliased as `event in1, in2`

@@ -8,10 +8,25 @@ Section MemoryForwarding.
 
   Context {state_checkpoint: Type} (callstack:=@callstack state_checkpoint).
 
+  (** # Memory forwarding
+
+Contracts communicate by passing each other [%fat_ptr].
+Far returns and far calls are able to:
+
+- create them [%ForwardNewFatPointer]
+- reuse existing pointers [%ForwardExistingFatPointer].
+
+They chose the action based on an instance of [%fwd_memory] passed through
+ABIs. *)
   Inductive fwd_memory :=
     ForwardExistingFatPointer (p:fat_ptr)
   | ForwardNewFatPointer (heap_var: data_page_type) (s:span).
 
+  (**
+- A fat pointer defines a [%slice] of memory and provides a read-only access to it.
+- Fat pointers are created from a slice of heap or auxheap of a current contract.
+- If the [%span] of a new fat pointer crosses the heap boundary [%heap_variant_bound] then the heap has to grow, and that difference has to be paid for.
+- [%growth_query] defines by how much a a heap variant should be grown. *)
   Definition growth_query := @option (prod data_page_type mem_address).
 
   Definition cost_of_growth (diff:growth_query) : ergs :=

@@ -65,16 +65,12 @@ Heap pointers are used in instructions:
       mk_hptr
         {
           hp_addr: mem_address;
-          (*hp_limit: mem_address;*)
         }.
     Definition heap_ptr_empty : heap_ptr := mk_hptr zero32.
 
     Inductive hp_resolves_to : heap_ptr -> mem_address -> Prop :=
     | tpr_apply: forall addr,
         hp_resolves_to (mk_hptr addr) addr.
-
-    (* Definition hp_span (hp:heap_ptr) : span := *)
-    (*   mk_span zero32 hp.(hp_limit). *)
 
     (** Incrementing a heap pointer with [%hp_inc] increases its offset by 32,
 the size of a word in bytes. This is used by instructions [%OpLoadInc] and
@@ -134,9 +130,6 @@ treatment from the VM's side.
       (ofs < length)  = true ->
       (addr, false) = start + ofs ->
       ptr_resolves_to (mk_ptr (mk_span start length) ofs) addr.
-
-  (* Definition heap_ptr_to_free (hp:heap_ptr) : free_ptr := *)
-  (*   mk_ptr (hp_span hp) hp.(hp_addr). *)
 
   Inductive word_upper_bound : heap_ptr -> mem_address -> Prop :=
   | qbu_apply : forall start upper_bound,
