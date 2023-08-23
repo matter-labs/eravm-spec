@@ -20,6 +20,7 @@ doc/EraVM.Memory.html
 doc/EraVM.MemoryBase.html
 doc/EraVM.MemoryOps.html
 doc/EraVM.MemoryContext.html
+doc/EraVM.MemoryManagement.html
 doc/EraVM.Slice.html
 doc/EraVM.Pointer.html
 doc/EraVM.StaticMode.html
