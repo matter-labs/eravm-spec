@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 Require VMPanic StaticMode isa.AssemblyToCore sem.SemanticCommon.
 
 (* begin hide *)
-Import ZArith Common GPR Predication Ergs CallStack Memory MemoryOps Assembly CoreSet State ZMod
+Import Arith ZArith Common GPR Predication Ergs CallStack Memory MemoryOps Assembly CoreSet State
   RecordSetNotations SemanticCommon KernelMode StaticMode VMPanic Binding Steps.
 Import List ListNotations AssemblyToCore.Coercions.
 Require Import
@@ -52,7 +52,6 @@ Require Import
 
 Section VMParameters.
   Local Open Scope ZMod_scope.
-  Local Coercion int_val : int_mod >-> Z.
 
   Definition VM_INITIAL_FRAME_ERGS: nat := Z.to_nat (unsigned_max ergs_bits).
   Context (CALL_LIKE_ERGS_COST  := Z.to_nat CALL_LIKE_ERGS_COST).
@@ -68,7 +67,7 @@ Section SmallStep.
   | fp_update:
     forall pc' ef,
       let pc := pc_get ef in
-      uinc_overflow _ pc = (pc',false) ->
+      uinc_of pc = (false, pc') ->
       let ef' := pc_set pc' ef in
       update_pc_regular ef ef'.
 
@@ -90,8 +89,8 @@ Section SmallStep.
            Panic NotInKernelMode
          else if negb (check_forbidden_static i.(ins_spec _) (active_extframe (gs_callstack s)).(ecf_is_static)) then
                 Panic ForbiddenInStaticMode
-                      else if gt_unsigned _ (ergs_of (base_cost i.(ins_spec _)))
-                                (ergs_remaining (gs_callstack s)) then
+                      else if ergs_of (base_cost i.(ins_spec _)) >
+                                ergs_remaining (gs_callstack s) then
                              Panic NotEnoughErgsToPayBaseCost
                            else if negb (predicate_holds i.(ins_cond _) (gs_flags s)) then
                                   Skip

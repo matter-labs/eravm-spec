@@ -1,11 +1,15 @@
 From RecordUpdate Require Import RecordSet.
+
 Require Addressing Binding Common Flags CallStack Memory MemoryContext State MemoryOps ABI KernelMode Steps VMPanic sem.StepPanic.
+
+Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
 
 Import
   Addressing
     Bool
     Common
     Coder
+    Core
     Flags
     CallStack
     Decommitter
@@ -23,22 +27,15 @@ Import
     RecordSetNotations
     State
     ZArith
-    ZBits
-    ZMod.
+    ZBits.
 Export Steps Binding VMPanic StepPanic.
 
 Section Params.
   Open Scope ZMod_scope.
-  Definition MAX_OFFSET_TO_DEREF_LOW_U32: u32 := int_mod_of _ (2^32 - 33)%Z.
-  Definition MAX_OFFSET_FOR_ADD_SUB: u256 := int_mod_of _ (2^32)%Z.
+  Definition MAX_OFFSET_TO_DEREF_LOW_U32: u32 := fromZ (2^32 - 33)%Z.
+  Definition MAX_OFFSET_FOR_ADD_SUB: u256 := fromZ (2^32)%Z.
 End Params.
 
-
-Section Payment.
-  Open Scope ZMod_scope.
-
-
-End Payment.
 
 Definition in_kernel_mode (ef:callstack) : bool :=
   let ef := active_extframe ef in
@@ -46,11 +43,8 @@ Definition in_kernel_mode (ef:callstack) : bool :=
 
 
 Section Depot.
-
-  Open Scope ZMod_scope.
   Definition is_rollup (xstack: callstack) : bool := zero8 == current_shard xstack.
-
-  Definition net_pubdata xstack : Z := if is_rollup xstack then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0.
+  Definition net_pubdata cs : Z := if is_rollup cs then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0%Z.
 
 End Depot.
 
@@ -59,8 +53,7 @@ Definition current_storage_fqa (xstack:callstack) : fqa_storage :=
 
 
 (* FIXME *)
-Import ZMod.
 Local Open Scope ZMod_scope.
 Definition bitwise_flags (result: Core.word) : Flags.flags_state := Flags.bflags false (result == zero256) false.
 
-Definition topmost_128_bits_match (x y : Core.word) : Prop := ZMod.shiftr _ (int_mod_of _ 128) x = ZMod.shiftr _ (int_mod_of _ 128) y.
+Definition topmost_128_bits_match (x y : Core.word) : Prop := @high 128 128 x = @high 128 128 y.

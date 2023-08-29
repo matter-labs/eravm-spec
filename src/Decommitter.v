@@ -1,6 +1,6 @@
 Require Common ABI lib.Decidability History MemoryOps VersionedHash.
 
-Import Coder History VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ZMod ABI.
+Import Coder Core History VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ABI bits.
 
 
 Section Decommitter.
@@ -24,10 +24,10 @@ their codes is implemented by the storage of the contract
 Note: storage with the same contract address may differ between shards.
    *)
 
-  Definition DEPLOYER_SYSTEM_CONTRACT_ADDRESS : contract_address := int_mod_of _ ((2^15) + 2).
+  Definition DEPLOYER_SYSTEM_CONTRACT_ADDRESS : contract_address := fromZ ((2^15) + 2).
 
   Definition code_hash_location (for_contract: contract_address) (sid:shard_id): fqa_key :=
-    mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (resize _ 256 for_contract).
+    mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (widen word_bits for_contract).
 
   Context {ins_type: Type} (invalid_ins: ins_type) (code_page := code_page invalid_ins)
     (empty_code : code_page := @mk_code_page _ invalid_ins (empty _))
@@ -41,24 +41,27 @@ Note: storage with the same contract address may differ between shards.
                                    |}.
 
   Definition code_storage: Type := mem_parameterized code_storage_params.
+Import VersionedHash.
 
   Record decommitter :=
     mk_code_mgr {
         cm_storage: code_storage;
-        cm_accessed: @history versioned_hash;
+        cm_accessed: history vh_eqType;
       }.
 
   (** The versioned hash is called **cold** if it was not accessed during
   construction of the current block. Otherwise, it is **warm**. See
   [%is_first_access]. *)
-  Definition is_first_access cm vh := negb (contains _ VersionedHash.eq_dec (cm_accessed cm) vh).
+  Definition is_first_access cm vh := negb (contains _ (cm_accessed cm) vh).
 
   (** Decommitting code by a cold versioned hash costs ([%ERGS_PER_CODE_WORD_DECOMMITTMENT] * (block size in words)) ergs.
 Decommitting warm code is free. *)
   Inductive decommitment_cost (cm:decommitter) vhash (code_length_in_words: code_length): ergs -> Prop :=
-  |dc_fresh: forall cost,
+  |dc_fresh: forall bigcost cost,
       is_first_access cm vhash = true->
-      (cost, false) = ergs_of Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (resize _ _ code_length_in_words) ->
+      bigcost = ergs_of Ergs.ERGS_PER_CODE_WORD_DECOMMITTMENT * (zeroExtend (ergs_bits - code_address_bits) code_length_in_words) ->
+      (toZ bigcost <= unsigned_max ergs_bits)%Z ->
+      cost = low ergs_bits bigcost ->
       decommitment_cost cm vhash code_length_in_words cost
   |dc_not_fresh:
     is_first_access cm vhash = false ->
@@ -95,7 +98,7 @@ VM does not mask the code for system contracts; see [%sem.FarCall.step].
     bool -> (versioned_hash * (code_page * const_page) * code_length) -> Prop :=
   | cfnm_no_masking: forall vhash (code_storage:code_storage) code_length_in_words pages0 masking,
       code_fetch_hash d cs sid contract_addr (Some (vhash, code_length_in_words)) ->
-      load_result code_storage_params (resize _ 256 (partial_hash vhash)) code_storage pages0 ->
+      load_result code_storage_params (widen 256 (partial_hash vhash)) code_storage pages0 ->
 
       code_fetch d cs sid contract_addr masking (vhash, pages0, code_length_in_words)
 
@@ -103,6 +106,5 @@ VM does not mask the code for system contracts; see [%sem.FarCall.step].
   | cfnm_masking: forall (code_storage:code_storage) code_length_in_words,
       code_fetch_hash d cs sid contract_addr None ->
       code_fetch d cs sid contract_addr true (DEFAULT_AA_VHASH, DEFAULT_AA_CODE,code_length_in_words).
-
 
 End Decommitter.

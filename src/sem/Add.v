@@ -1,13 +1,13 @@
 Require SemanticCommon.
 
-Import Bool Common Flags CoreSet Memory Modifiers State ZMod
-  PrimitiveValue SemanticCommon.
+Import Bool Common Flags CoreSet Memory Modifiers State PrimitiveValue SemanticCommon.
+Import ssreflect.tuple ssreflect.eqtype.
+
 
 Section AddDefinition.
   Open Scope ZMod_scope.
 
   Generalizable Variables op tag.
-
   Inductive step_add: instruction -> flags_tsmallstep :=
   (** # Add
 
@@ -59,7 +59,7 @@ Flags are computed exactly as in `sub`, but the meaning of overflow is different
   | step_Add:
     forall mod_sf old_flags new_flags result new_OF,
       `(
-          (result, new_OF) = op1 + op2 ->
+          (new_OF, result) = op1 + op2 ->
           let new_EQ := result == zero256 in
           let new_GT := negb new_EQ && negb new_OF in
 

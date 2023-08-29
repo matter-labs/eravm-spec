@@ -7,8 +7,7 @@ Import
     Bool
     List
     ListNotations
-    ZArith
-    ZMod.
+    ZArith.
 
 Import
   Addressing
@@ -37,7 +36,6 @@ Import
 Import Addressing.Coercions.
 
 Local Coercion Z.b2z: bool >-> Z.
-Local Coercion int_mod_of : Z >-> int_mod.
 
 (** # Far calls
 
@@ -78,7 +76,7 @@ Section Parameters.
    exclusive can be used as a scratch space.
    *)
 
-  Definition INITIAL_SP_ON_FAR_CALL : stack_address := 1024.
+  Definition INITIAL_SP_ON_FAR_CALL : stack_address := fromZ 1024.
 
   (**
 2. Initial heap and auxheap pages bound.
@@ -86,7 +84,7 @@ Section Parameters.
    The heap and auxheap pages start with [%NEW_FRAME_MEMORY_STIPEND] bound.
    Growing them beyond this bound costs ergs.
    *)
-  Definition NEW_FRAME_MEMORY_STIPEND : mem_address := 1024.
+  Definition NEW_FRAME_MEMORY_STIPEND : mem_address := fromZ 1024.
 
 End Parameters.
 
@@ -95,10 +93,10 @@ End Parameters.
 
    It is not allowed to pass more than 63/64th of your remaining ergs to a far call.
  *)
-Definition max_passable (remaining:ergs) : ergs := (((int_val _ remaining) / 64 ) * 63)%Z.
+Definition max_passable (remaining:ergs) : ergs := fromZ (toZ remaining * 63 / 64 ) %Z.
 Inductive pass_allowed_ergs : (ergs * callstack )-> ergs * callstack -> Prop :=
 | pae_apply: forall cs1 cs2 pass_ergs_query,
-    let pass_ergs_actual := ZMod.min _ (max_passable (ergs_remaining cs1)) pass_ergs_query in
+    let pass_ergs_actual := min (max_passable (ergs_remaining cs1)) pass_ergs_query in
     pay pass_ergs_actual cs1 cs2 ->
     pass_ergs_query <> zero32 ->
     pass_allowed_ergs (pass_ergs_query,cs1) (pass_ergs_actual, cs2)
@@ -327,7 +325,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
     let is_system_bit := Z.shiftl is_system 1 in
     let is_ctor_bit := Z.shiftl is_ctor 0 in
     let bits := Z.lor is_system_bit is_ctor_bit in
-    IntValue (int_mod_of word_bits bits) in
+    IntValue (fromZ bits) in
   let enc_ptr := FatPointer.ABI.(encode) ptr in
   if is_system then
     regs
@@ -394,7 +392,7 @@ Definition select_sender type (callers_caller caller : contract_address) regs :=
   | Delegate => callers_caller
   | Mimic =>
       let r15_value := (fetch_gpr regs CALL_IMPLICIT_PARAMETER_REG).(value) in
-      resize _ _ r15_value
+      low contract_address_bits r15_value
   end.
 
 Definition select_associated_contracts type regs (ac:associated_contracts) (call_dest: contract_address): associated_contracts :=
@@ -669,22 +667,22 @@ Inductive step_farcall : instruction -> smallstep :=
 
 | step_farcall_normal: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
-    let dest_addr := resize _ contract_address_bits dest in
-    let handler_code_addr := resize _ code_address_bits handler in
+    let dest_addr := low contract_address_bits dest in
+    let handler_code_addr := low code_address_bits handler in
     farcall Normal call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
     step_farcall (OpFarCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 | step_farcall_mimic: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
-    let dest_addr := resize _ contract_address_bits dest in
-    let handler_code_addr := resize _ code_address_bits handler in
+    let dest_addr := low contract_address_bits dest in
+    let handler_code_addr := low code_address_bits handler in
     farcall Mimic call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
     step_farcall (OpMimicCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 | step_farcall_delegate: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
-    let dest_addr := resize _ contract_address_bits dest in
-    let handler_code_addr := resize _ code_address_bits handler in
+    let dest_addr := low contract_address_bits dest in
+    let handler_code_addr := low code_address_bits handler in
     farcall Delegate call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
     step_farcall (OpDelegateCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2

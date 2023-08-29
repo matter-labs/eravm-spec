@@ -94,7 +94,7 @@ well-defined behavior. *)
                                 writable := true
                               |}.
 
-  Definition storage_address := ZMod.int_mod (address_bits storage_params).
+  Definition storage_address := BITS (address_bits storage_params).
   Definition storage: Type := mem_parameterized storage_params.
 
   (**  Storage start blanks. *)
@@ -171,12 +171,12 @@ Depot is the global storage of storages of all contracts.
 
   Definition depot := mem_parameterized depot_params.
 
-  Definition shard_id := ZMod.int_mod (address_bits depot_params).
+  Definition shard_id := BITS (address_bits depot_params).
   (** There are currently two shards: one for zkRollup, one for zkPorter. *)
 
   Inductive shard_exists: shard_id -> Prop :=
-  | se_rollup: shard_exists (ZMod.int_mod_of _ 0%Z)
-  | se_porter: shard_exists (ZMod.int_mod_of _ 1%Z)
+  | se_rollup: shard_exists (fromZ 0)
+  | se_porter: shard_exists (fromZ 1)
   .
 
 
@@ -336,12 +336,11 @@ $2^{32}$ bytes. *)
   Inductive data_page_type := Heap | AuxHeap.
   Definition page_bound := prod data_page_type mem_address.
 
-  Import ZMod.
   Open Scope ZMod_scope.
   Definition growth (current_bound: mem_address) (query_bound: mem_address)
     : mem_address :=
     if query_bound < current_bound then zero32 else
-      fst (query_bound - current_bound).
+      snd (query_bound - current_bound).
   (**
 
 Note: only selected few instructions can access data pages:
@@ -436,7 +435,7 @@ Const pages can coincide with code pages. *)
   (* Implementation note: [%code_address] should be [%address code_page_params] but we don't want to introduce
       dependency between code_address and instruction type *)
   Definition code_address_bits := 16.
-  Definition code_address :=  ZMod.int_mod code_address_bits.
+  Definition code_address := BITS code_address_bits.
   Definition code_address_zero: stack_address := zero16.
 
   Definition code_page_params := {|

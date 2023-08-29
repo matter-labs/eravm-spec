@@ -2,8 +2,9 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Common Ergs CallStack Event Memory isa.CoreSet State ZMod
+Import Arith Common Ergs CallStack Event Memory isa.CoreSet State
   PrimitiveValue SemanticCommon RecordSetNotations.
+Import ssreflect.tuple ssreflect.eqtype.
 
 Section ToL1Definition.
 
@@ -35,10 +36,12 @@ on events system.
   Inductive step_tol1: instruction -> smallstep :=
 
   | step_ToL1:
-    forall cs new_cs is_first key value gs new_gs cost ts1 ts2 __ ___,
+    forall cs new_cs is_first key value gs new_gs cost cost_truncated ts1 ts2 __ ___,
 
-      (cost, false) = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
-      pay cost cs new_cs ->
+      cost = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
+      cost < (fromZ (unsigned_max ergs_bits)) ->
+      cost_truncated = low ergs_bits cost ->
+      pay cost_truncated cs new_cs ->
 
       emit_l1_msg {|
           ev_shard_id := current_shard cs;

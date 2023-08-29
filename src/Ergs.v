@@ -1,5 +1,5 @@
-Require lib.ZMod Common isa.Assembly Memory.
-Import Common Assembly Memory ZMod ZArith.
+Require Common isa.Assembly Memory.
+Import Common Assembly Memory ZArith.
 
 Section Ergs.
 Open Scope Z_scope.
@@ -24,8 +24,8 @@ Internally, ergs are 32-bit unsigned numbers.
 *)
 
 Definition ergs_bits := 32%nat.
-Definition ergs := int_mod ergs_bits.
-Definition ergs_of := int_mod_of ergs_bits.
+Definition ergs := BITS ergs_bits.
+Definition ergs_of : Z -> ergs := fromZ.
 
 (** ## Ergs and callstack
 
@@ -99,7 +99,7 @@ The following definitions are used to derive the costs of instructions and other
 
 (* begin hide *)
 #[reversible]
-Local Coercion ergs_of : Z >-> int_mod.
+Local Coercion ergs_of : Z >-> ergs.
 (* end hide *)
 
 Definition VM_CYCLE_COST_IN_ERGS: Z := 4.
@@ -160,7 +160,6 @@ Definition growth_cost (diff:mem_address) : ergs := diff.
 End Ergs.
 
 Section Costs.
-  Import ZMod ZArith.
   Open Scope Z_scope.
 (** # Costs
 

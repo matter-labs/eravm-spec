@@ -1,6 +1,6 @@
 Require SemanticCommon MemoryManagement.
 
-Import MemoryOps MemoryManagement isa.CoreSet Pointer SemanticCommon PrimitiveValue State ZMod.
+Import Arith MemoryOps MemoryManagement isa.CoreSet Pointer SemanticCommon PrimitiveValue State.
 
 Section LoadIncDefinition.
 

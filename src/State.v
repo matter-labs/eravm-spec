@@ -1,8 +1,10 @@
 From RecordUpdate Require Import RecordSet.
 Require ABI Core Decommitter GPR Ergs Event Memory History CallStack VMPanic.
 
-Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory ZMod List Decommitter Predication VMPanic.
-Import ListNotations RecordSetNotations.
+Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple zmodp.
+Import RecordSetNotations.
+
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory Decommitter Predication VMPanic PrimitiveValue.
 
 Section Definitions.
 
@@ -13,10 +15,17 @@ Definition instruction_invalid : predicated Assembly.asm_instruction := invalid 
 Definition decommitter := decommitter instruction_invalid.
 Definition code_page := code_page instruction_invalid.
 Definition memory := @memory code_page const_page data_page stack_page.
-Definition query := @query contract_address PrecompileParameters.params.
-Definition event := @event contract_address.
+Import PrecompileParameters.
+Definition query := @query [ eqType of contract_address] [eqType of PrecompileParameters.params].
+Definition event := @event [ eqType of contract_address].
 Definition page_has_id := @page_has_id code_page const_page data_page stack_page.
 
+  (* begin hide *)
+  Definition reg_zero := IntValue word0.
+  Definition reserved := reg_zero.
+  Definition regs_state_zero := let z := reg_zero in
+                              mk_regs z z z z z z z z z z z z z z z.
+  (* end hide *)
 
 (* end details *)
 
@@ -41,8 +50,8 @@ EraVM employs a [%state] that comprises the following components:
 *)
 Record state_checkpoint := {
     gs_depot: depot;
-    gs_events: @history query;
-    gs_l1_msgs: @history event;
+    gs_events: @history [eqType of query];
+    gs_l1_msgs: @history [eqType of event];
   }.
 
 Record global_state :=
@@ -54,8 +63,8 @@ Record global_state :=
     }.
 
 Inductive rollback checkpoint: global_state -> global_state -> Prop :=
-| rb_apply: forall e tx ccs ___,
-  rollback checkpoint (mk_gstate e tx ccs ___) (mk_gstate e tx ccs checkpoint).
+| rb_apply: forall e tx ccs _cp,
+  rollback checkpoint (mk_gstate e tx ccs _cp) (mk_gstate e tx ccs checkpoint).
 
 (** 2. The [%transient_state] contains:
   - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
@@ -165,7 +174,7 @@ Inductive emit_l1_msg e: global_state -> global_state -> Prop :=
     gs_revertable := {| gs_depot := d'; gs_events := evs; gs_l1_msgs := e::l1s |} ;
   |}.
 
-Inductive tx_inc : tx_num -> tx_num -> Prop := | txi_apply: forall n m, uinc_overflow _ n = (m, false) -> tx_inc n m.
+Inductive tx_inc : tx_num -> tx_num -> Prop := | txi_apply: forall n m, uinc_of n = (false, m) -> tx_inc n m.
 
 Inductive global_state_increment_tx tx_mod: global_state -> global_state -> Prop :=
 | gsit_apply: forall current_ergs_per_pubdata_byte tx new_tx codes rev ,

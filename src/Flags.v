@@ -1,6 +1,5 @@
-Require Common.
-
-Import Bool ZArith Common ZMod.
+Require Bool.
+Import Bool.
 
 Section Flags.
 

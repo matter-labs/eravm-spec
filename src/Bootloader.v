@@ -1,9 +1,8 @@
 Require Memory.
-
-Import Memory ZMod.
+Import Memory.
 
 Section Bootloader.
-  Import ZArith.
+  Import ZArith spec.
   Open Scope Z.
 (** # Bootloader
 
@@ -15,7 +14,7 @@ Formally, bootloader is assigned an address
 [%BOOTLOADER_SYSTEM_CONTRACT_ADDRESS], but on execution start EraVM decommits its
 code directly by its [%versioned_hash].
 *)
-  Definition BOOTLOADER_SYSTEM_CONTRACT_ADDRESS : contract_address := int_mod_of _ ((2^15) + 1).
+  Definition BOOTLOADER_SYSTEM_CONTRACT_ADDRESS : contract_address := fromZ ((2^15) + 1).
 
 (** Using the bootloader [%versioned_hash], EraVM queries the bootloader code from
 decommitter and starts executing it.

@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common ZMod CoreSet Modifiers SemanticCommon PrimitiveValue.
+Import Common CoreSet Modifiers SemanticCommon PrimitiveValue.
 
 Section AndDefinition.
   Open Scope ZMod_scope.
@@ -54,7 +54,7 @@ Reminder: flags are only set if `set_flags` modifier is set.
   | step_And:
     forall mod_sf old_flags new_flags result,
       `(
-          result = bitwise_and _ op1 op2 ->
+          result = bitwise_and op1 op2 ->
           new_flags = apply_set_flags mod_sf
                         old_flags
                         (bitwise_flags result) ->

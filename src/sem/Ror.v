@@ -1,5 +1,5 @@
 Require sem.SemanticCommon.
-Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
+Import Arith Core isa.CoreSet PrimitiveValue SemanticCommon spec.
 
 Section RorDefinition.
   Open Scope ZMod_scope.
@@ -33,8 +33,8 @@ Bitwise circular left shift of `in1` by the number of binary digits specified by
 Reminder: flags are only set if `set_flags` modifier is set. *)
   | step_Ror:
     forall mod_sf result op shift w_shift old_flags new_flags,
-      `(w_shift = resize _ word_bits (resize _ 8 shift) ->
-      result = ror _ op w_shift ->
+      `(w_shift = widen word_bits (low 8 shift) ->
+      result = rorBn op (toNat w_shift) ->
       step_ror (OpRor (mk_pv tag1 op) (mk_pv tag2 shift) (IntValue result) mod_sf) old_flags new_flags)
   .
 (**

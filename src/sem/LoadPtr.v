@@ -1,6 +1,6 @@
 Require SemanticCommon Slice.
 
-Import Memory MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue Slice State ZMod.
+Import Memory MemoryOps isa.CoreSet Pointer SemanticCommon PrimitiveValue Slice State.
 
 Section LoadPtrDefinition.
 

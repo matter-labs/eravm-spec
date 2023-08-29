@@ -1,7 +1,9 @@
 From RecordUpdate Require Import RecordSet.
+
 Require Memory.
 
-Import Bool Core ZMod Common MemoryBase Memory RecordSetNotations PMap_ext BinInt.
+Import Arith Core Common MemoryBase Memory RecordSetNotations PMap_ext BinInt zmodp.
+Import ssreflect.tuple ssreflect.eqtype.
 
 Section Definitions.
   Context (bytes_in_word := u32_of z_bytes_in_word).
@@ -25,7 +27,7 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
 
   Inductive span_limit: span -> mem_address -> Prop :=
     | sl_apply:forall start length limit,
-      (limit, false) = start + length ->
+      (false, limit) = start + length ->
       span_limit (mk_span start length) limit.
 
   Inductive bound_of_span : span -> data_page_type -> page_bound -> Prop :=
@@ -48,7 +50,7 @@ If memory is accessed beyond this bound, the bound is adjusted and the growth
 computes how many bytes should the user pay for. *)
   Inductive span_induced_growth: span -> mem_address -> mem_address -> Prop :=
   | gb_bytes: forall start length query_bound current_bound diff,
-      start + length = (query_bound, false) ->
+      start + length = (false,query_bound) ->
       diff = growth current_bound query_bound ->
       span_induced_growth (mk_span start length) current_bound diff.
 
@@ -78,14 +80,14 @@ the size of a word in bytes. This is used by instructions [%OpLoadInc] and
     Inductive hp_inc : heap_ptr -> heap_ptr -> Prop :=
     |fpi_apply :
       forall ofs ofs',
-        ofs + bytes_in_word  = (ofs', false) ->
+        ofs + bytes_in_word  = (false,ofs') ->
         hp_inc (mk_hptr ofs) (mk_hptr ofs' ).
 
     Definition hp_inc_OF (hp: heap_ptr) : option heap_ptr :=
       match hp with
       | mk_hptr ofs =>
           match ofs + bytes_in_word with
-          | (ofs', false) => Some (mk_hptr ofs')
+          | (false, ofs') => Some (mk_hptr ofs')
           | _ => None
           end
       end.
@@ -128,13 +130,13 @@ treatment from the VM's side.
   Inductive ptr_resolves_to : free_ptr -> mem_address -> Prop :=
   | upr_apply: forall addr start ofs length,
       (ofs < length)  = true ->
-      (addr, false) = start + ofs ->
+      (false, addr) = start + ofs ->
       ptr_resolves_to (mk_ptr (mk_span start length) ofs) addr.
 
   Inductive word_upper_bound : heap_ptr -> mem_address -> Prop :=
   | qbu_apply : forall start upper_bound,
-      let bytes_in_word := int_mod_of _ Core.z_bytes_in_word in
-      start + bytes_in_word  = (upper_bound, false) ->
+      let bytes_in_word := fromNat Core.bytes_in_word in
+      start + bytes_in_word  = (false,upper_bound) ->
       word_upper_bound (mk_hptr start) upper_bound.
 
   Section FatPointer.
@@ -217,12 +219,13 @@ Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDel
 
 If $\mathit{offset} = \mathit{length}$, the span of the pointer is empty, but it is still valid.
      *)
+    Import ssrbool.
     Definition validate (p:free_ptr) : validation_exception :=
       match p with
       | mk_ptr (mk_span start len) ofs =>
           {|
-            ptr_deref_beyond_heap_range := is_overflowing _ (start + len);
-            ptr_bad_span := ofs > len;
+            ptr_deref_beyond_heap_range := fst (start + len);
+            ptr_bad_span := ofs > len ;
           |}
       end.
 
@@ -245,8 +248,8 @@ A fat pointer is automatically narrowed in two situations:
     Inductive free_ptr_narrow: free_ptr -> free_ptr -> Prop :=
     | tps_narrow: forall start start' length length' ofs,
         validate (mk_ptr (mk_span start length) ofs) = no_exceptions ->
-        start + ofs = (start', false) ->
-        length - ofs = (length', false) ->
+        start + ofs = (false, start') ->
+        length - ofs = (false, length')->
         free_ptr_narrow (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start' length') zero32).
 
     Definition fat_ptr_narrow := fat_ptr_liftP free_ptr_narrow.
@@ -259,14 +262,14 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
     *)
     Inductive free_ptr_shrink (diff: mem_address) : free_ptr -> free_ptr -> Prop :=
     | tptl_apply: forall start ofs length length',
-        length - diff = (length', false) ->
+        length - diff = (false, length') ->
         free_ptr_shrink diff (mk_ptr (mk_span start length) ofs) (mk_ptr (mk_span start length') ofs).
 
     Definition free_ptr_shrink_OF (diff: mem_address) : free_ptr -> option free_ptr :=
       fun fp => match fp with
               | mk_ptr (mk_span start length) p_offset =>
                   match length - diff with
-                  | (length', false) => Some (mk_ptr (mk_span start length') p_offset)
+                  | (false, length') => Some (mk_ptr (mk_span start length') p_offset)
                   | _ => None
                   end
               end.
@@ -279,7 +282,7 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
       match p with
       | mk_ptr s ofs =>
         match ofs + bytes_in_word with
-        | (ofs', false) => Some (mk_ptr s ofs')
+        | (false, ofs') => Some (mk_ptr s ofs')
         | _ => None
         end
       end.
@@ -287,7 +290,7 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
     Inductive ptr_inc : free_ptr -> free_ptr -> Prop :=
     |fpf_apply :
       forall ofs ofs' s,
-        ofs + bytes_in_word = (ofs', false) ->
+        ofs + bytes_in_word = (false, ofs') ->
         ptr_inc (mk_ptr s ofs) (mk_ptr s ofs').
 
 

@@ -177,7 +177,6 @@ Executing any instruction $I$ changes the topmost frame:
 
   Section ErgsManagement.
 
-    Import ZMod.
     Open Scope ZMod_scope.
 
     Definition ergs_remaining (ef:callstack) : ergs := (cfc ef).(cf_ergs_remaining).
@@ -187,7 +186,7 @@ Executing any instruction $I$ changes the topmost frame:
 
     Inductive ergs_return: ergs -> callstack -> callstack -> Prop :=
     | er_return: forall delta new_ergs ef ef',
-        delta + ergs_remaining ef = (new_ergs, false) ->
+        delta + ergs_remaining ef = (false, new_ergs) ->
         ef' = ergs_set new_ergs ef ->
         ergs_return delta ef ef'.
 
@@ -207,13 +206,13 @@ Executing any instruction $I$ changes the topmost frame:
 
     Definition affordable (ef: callstack) (e:ergs): bool :=
       match ergs_remaining ef - e with
-      | (paid, false) => true
-      | (overflowed, true) => false
+      | (false, paid) => true
+      | (true, overflowed) => false
       end.
 
     Inductive pay : ergs -> callstack -> callstack -> Prop :=
     | pay_ergs : forall e ef paid,
-        ergs_remaining ef - e = (paid, false) ->
+        ergs_remaining ef - e = (false, paid) ->
         pay e ef (ergs_set paid ef).
   End ErgsManagement.
 

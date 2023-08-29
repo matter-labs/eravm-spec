@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State ZMod
+Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State
   PrimitiveValue SemanticCommon RecordSetNotations.
 
 Section JumpDefinition.
@@ -33,7 +33,7 @@ Note: Argument `destination` uses the full addressing mode [%in_any], therefore 
 | step_jump_apply:
   forall (dest_val: word) (cs new_cs: callstack) __,
 
-    let dest_addr := resize _ code_address_bits dest_val in
+    let dest_addr := low code_address_bits dest_val in
     new_cs = pc_set dest_addr cs ->
 
     step_jump_aux (OpJump (mk_pv __ dest_val)) cs new_cs.

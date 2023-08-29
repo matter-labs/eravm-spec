@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common Core Memory isa.CoreSet State ZMod
+Import Common Core Memory isa.CoreSet State
   SemanticCommon PrimitiveValue ZArith.
 
 Section PtrPackDefinition.
@@ -36,8 +36,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
 
   | step_PtrPack :
     forall (op1 op2:word) (s:state) result __,
-      resize _ 128 op2 = zero128 ->
-      result = mix_lower 128 op2 (resize _ 128 op1) ->
+      low 128 op2 = zero128 ->
+      result = (@high 128 128 op2) ## (@low 128 128 op1) ->
       step_ptrpack (@OpPtrPack bound (Some __, PtrValue op1) (IntValue op2) (IntValue result)) s s
 (** ## Affected parts of VM state
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
@@ -112,7 +112,7 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
   | step_PtrPack_notzero:
     forall s1 s2 op2 __ ___,
 
-      resize _ 128 op2 <> zero128 ->
+      low 128 op2 <> zero128 ->
       step_panic PtrPackExpectsOp2Low128BitsZero s1 s2 ->
       step_ptrpack (@OpPtrPack bound __ (IntValue op2) ___) s1 s2
   .

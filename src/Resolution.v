@@ -1,31 +1,37 @@
 Require Core Addressing CallStack .
 
-Import Addressing Core Common ZArith ZMod CallStack GPR Memory PrimitiveValue.
+Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
+Import Addressing Core Common ZArith CallStack GPR Memory PrimitiveValue.
 
 Section AddressingUtils.
   Import MemoryBase.
   Open Scope ZMod_scope.
-
   (** Predicate [%reg_rel] implements the resolution for register-based relative addressing. Its specializations implement relative addressing for:
 
 - the [%code_page]: [%reg_rel_code];
 - the [%const_page]: [%reg_rel_const];
 - the [%stack_page]: [%reg_rel_const];
    *)
-  Inductive reg_rel addr_bits : regs_state -> reg_name -> int_mod addr_bits -> int_mod addr_bits -> Prop :=
+
+  (* Inductive equal_bits {n m} (x :BITS n) (y: BITS m) (H: n = m) : Prop := *)
+
+  Definition low16 (w: word) : u16 := low 16 w.
+  Definition low32 (w: word) : u32 := low 32 w.
+
+  Inductive reg_rel : regs_state -> reg_name -> u16 -> u16 -> Prop :=
   | rca_code_pp: forall regs reg reg_val base ofs
                    abs OF_ignored,
       fetch_gpr regs reg = IntValue reg_val ->
-      base = extract_address addr_bits reg_val ->
-      base + ofs = (abs, OF_ignored) ->
-      reg_rel addr_bits regs reg ofs abs.
+      base = low16 reg_val  ->
+      base + ofs = (OF_ignored, abs) ->
+      reg_rel regs reg ofs abs.
 
   Definition reg_rel_code : regs_state -> reg_name -> u16 -> code_address -> Prop
-    := reg_rel code_address_bits.
+    := reg_rel.
   Definition reg_rel_const : regs_state -> reg_name -> u16 -> const_address -> Prop
-    := reg_rel const_address_bits.
+    := reg_rel.
   Definition reg_rel_stack : regs_state -> reg_name -> u16 -> stack_address -> Prop
-    := reg_rel stack_page_params.(address_bits).
+    := reg_rel.
 
   (** Note: in [%sp_displ], [%delta = reg + imm]. *)
   Definition sp_displ: regs_state -> reg_name -> u16 -> stack_address -> Prop := reg_rel_stack.
@@ -50,7 +56,7 @@ There are five main locations that instructions can address:
 5. Constant address: data can be fetched from a read-only page holding constant words.
 
    *)
-Inductive loc : Set :=
+Inductive loc : Type :=
 | LocImm: u16 ->  loc
 | LocReg : reg_name ->  loc
 | LocStackAddress: stack_address -> loc
@@ -112,7 +118,7 @@ Section Resolve.
   | rslv_stack_rel: forall reg ofs delta_sp sp_rel,
       sp_displ rs reg ofs delta_sp ->
 
-      (sp_rel, false) = sp - delta_sp->
+      (false, sp_rel) = sp - delta_sp->
       resolve  (RelSP reg ofs) [[ LocStackAddress sp_rel ]]
 
 (**
@@ -134,7 +140,7 @@ Section Resolve.
 *)
   | rslv_stack_gpop: forall reg ofs delta_sp new_sp,
       sp_displ rs reg ofs delta_sp ->
-      (new_sp, false) = sp - delta_sp->
+      (false, new_sp) = sp - delta_sp->
       resolve  (RelSpPop reg ofs) [[ LocStackAddress new_sp ; SP <- new_sp ]]
 
 (**
@@ -157,7 +163,7 @@ Section Resolve.
 *)
   | rslv_stack_gpush: forall reg ofs delta_sp new_sp,
       sp_displ rs reg ofs delta_sp ->
-      (new_sp, false) = sp + delta_sp ->
+      (false, new_sp) = sp + delta_sp ->
       resolve  (RelSpPush reg ofs) [[ LocStackAddress sp ; SP <- new_sp ]]
 
   | rslv_code: forall reg abs_imm addr,

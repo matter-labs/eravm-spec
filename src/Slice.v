@@ -3,7 +3,7 @@ From RecordUpdate Require Import RecordSet.
 Require Pointer.
 
 Section Slices.
-Import Bool Core ZMod Common MemoryBase Memory RecordSetNotations Pointer PMap_ext ZMod.
+Import Bool Core Common MemoryBase Memory RecordSetNotations Pointer PMap_ext.
 Open Scope ZMod_scope.
 (** # Slice
 
@@ -47,7 +47,7 @@ Definition do_slice_page (from_incl to_excl: mem_address) (m:data_page) : data_s
 Inductive slice_page (m:data_page) : span -> data_slice -> Prop :=
 | sfp_apply:
   forall start length upper_bound readonly_slice,
-    start + length = (upper_bound, false) ->
+    start + length = (false, upper_bound) ->
     do_slice_page start upper_bound  m = readonly_slice ->
     slice_page m (mk_span start length) readonly_slice.
 

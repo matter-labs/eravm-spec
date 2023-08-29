@@ -3,7 +3,7 @@ Require isa.CoreSet.
 Import CoreSet Memory.
 
 Section KernelMode.
-  Import ZArith ZMod.
+  Import ZArith Arith spec.
   Open Scope Z_scope.
   Open Scope ZMod_scope.
 
@@ -19,7 +19,7 @@ Current mode is determined by the address of the currently executed contract $C$
 - if $C <$ [%KERNEL_MODE_MAXADDR_LIMIT], EraVM is in kernel mode;
 - otherwise, EraVM is in user mode.
    *)
-  Definition KERNEL_MODE_MAXADDR_LIMIT : contract_address := int_mod_of _ (2^16).
+  Definition KERNEL_MODE_MAXADDR_LIMIT : contract_address := fromZ (2^16).
 
   Definition addr_is_kernel (addr:contract_address) : bool :=
     addr < KERNEL_MODE_MAXADDR_LIMIT.

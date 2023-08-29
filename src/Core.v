@@ -1,41 +1,30 @@
 Require Common.
-From Bits Require Import bits.
+Set Warnings "-notation-overridden,-ambiguous-paths".
+Import Common ZArith Types.
+Set Warnings "notation-overridden,ambiguous-paths".
 
-Import Common ZArith.
 Section Parameters.
-
   (**
-
 # EraVM architecture overview
-
 
 EraVM is a 256-bit register-based language machine with two stacks and dedicated memory for code, data, stack and constants.
    *)
   Definition word_bits: nat := 256.
 
-  Definition word: Set := int_mod word_bits.
+  Definition word: Type := BITS word_bits.
   (** [%word0] is a word with a zero value. *)
-  Definition word0: word := int_mod_of word_bits 0%Z.
-  Import Nat.
+  Definition word0: word := fromZ 0%Z.
+  (* begin details: Helpers *)
   Definition bytes_in_word : nat := word_bits/bits_in_byte.
   Definition z_bytes_in_word : Z := Z.of_nat bytes_in_word.
 
-(* begin details: Helpers *)
-  Definition word_to_bytes (w:u256) : list u8 :=
-    let zs := extract_digits w.(int_val _) bits_in_byte (256 / bits_in_byte) in
-    List.map u8_of zs.
+  Definition word_to_bytes (w:u256) : tuple.tuple_of 32 u8 := @bitsToBytes 32 w.
+  Definition bytes_to_word (bs: tuple.tuple_of 32 u8) : word := @bytesToBits _ bs.
 
-  Definition merge_bytes (bits resbits: nat) (ls: list (int_mod bits)) : int_mod resbits
-    :=
-    let only_zs := List.map (int_val bits) ls in
-    int_mod_of resbits
-      (concat_bytes_Z bits only_zs).
-(* end details *)
-
-
-
+  (* end details *)
 End Parameters.
-  (**
+
+(**
 ![](img/arch-overview.png)
 
 
@@ -186,8 +175,6 @@ There are three types of behaviors triggered by execution failures.
 
 
 *)
-
-
 
 Definition timestamp := nat.
 Definition tx_num := u16.

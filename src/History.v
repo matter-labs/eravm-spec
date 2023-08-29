@@ -1,34 +1,17 @@
-Require Decidability List.
-Import Decidability.
+Require Common.
 
 Section History.
-
+  Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple seq.
   (** # History
 **History** is a data structure supporting appending elements of type [%T] to it.
    *)
-  Context (T:Type) (elem_dec: Decidability.eq_dec T).
+  Context (T:eqType).
 
-  Definition history := list T.
+  Definition history := seq T.
 
   Context (l:history).
 
   (** [%history] supports checking if an element is contained in it. *)
-  Definition contains (elem:T): bool := if List.in_dec elem_dec elem l then true else false.
-
-  Inductive contains_spec (elem: T) : bool -> Prop :=
-  | cs_fresh : List.In elem l -> contains_spec elem true
-  | cs_not_fresh : (~ List.In elem l) -> contains_spec elem false.
-
-
-  Theorem contains_spec_correct :
-    forall p b, contains p = b <-> contains_spec p b.
-  Proof.
-    unfold contains.
-    split.
-    - intros H.
-      destruct (List.in_dec _ _ _); subst; constructor; assumption.
-    - inversion 1; subst;
-        destruct (List.in_dec _ _ _); solve [reflexivity|contradiction].
-  Qed.
+  Definition contains (elem:T): bool := if has (fun e => e == elem) l then true else false.
 
 End History.

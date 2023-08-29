@@ -1,6 +1,6 @@
 Require sem.SemanticCommon.
 
-Import Addressing Bool ZArith Common Flags GPR isa.CoreSet CallStack Modifiers State ZMod
+Import Addressing Bool ZArith Common Flags GPR isa.CoreSet CallStack Modifiers State
   ZBits Addressing.Coercions PrimitiveValue SemanticCommon List ListNotations.
 
 Section DivDefinition.
@@ -52,8 +52,8 @@ Reminder: flags are only set if `set_flags` modifier is set.
    *)
   | step_Div_no_overflow:
     `(forall mod_sf old_flags new_flags w_quot w_rem quot rem (x y:Z) op1 op2,
-          x = int_val _ op1 ->
-          y = int_val _ op2 ->
+          x = toZ op1 ->
+          y = toZ op2 ->
           y <> 0 ->
           quot = Z.div x y ->
           rem = Z.rem x y ->
@@ -70,8 +70,8 @@ Reminder: flags are only set if `set_flags` modifier is set.
   | step_Div_overflow:
     forall mod_sf old_flags new_flags (x y:Z) op1 op2,
       `(
-          x = int_val _ op1 ->
-          y = int_val _ op2 ->
+          x = toZ op1 ->
+          y = toZ op2 ->
           new_flags = apply_set_flags mod_sf old_flags (bflags true false false) ->
 
           step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue zero256) (IntValue zero256) mod_sf) old_flags new_flags

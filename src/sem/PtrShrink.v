@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common Core Memory isa.CoreSet State ZMod
+Import Common Core Memory isa.CoreSet State
   Pointer PrimitiveValue SemanticCommon ZArith.
 
 Section PtrShrinkDefinition.
@@ -46,7 +46,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
   | step_PtrShrink :
     forall  s result ptr_in ptr_out src_enc delta ,
 
-      let diff := resize _ mem_address_bits delta in
+      let diff := low mem_address_bits delta in
       fat_ptr_shrink diff ptr_in ptr_out ->
 
 
@@ -98,7 +98,7 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
   (** 3. Shrinking underflows. *)
   | step_PtrShrink_underflow:
     forall s1 s2 result ptr_in ptr_out src_enc delta ,
-      let diff := resize _ mem_address_bits delta in
+      let diff := low mem_address_bits delta in
       fat_ptr_shrink_OF diff ptr_in = None ->
 
       step_ptrshrink (OpPtrShrink

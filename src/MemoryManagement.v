@@ -3,7 +3,6 @@ Require CallStack Ergs Memory Pointer.
 Import CallStack Common Core Memory MemoryContext Ergs Pointer.
 
 Section MemoryForwarding.
-  Import ZMod.
   Open Scope ZMod_scope.
 
   Context {state_checkpoint: Type} (callstack:=@callstack state_checkpoint).
@@ -38,11 +37,11 @@ ABIs. *)
   Inductive growth_to_bound: page_bound -> callstack -> growth_query -> Prop :=
   | goq_grow: forall (hv:data_page_type) (cs: callstack) diff query,
       let current_bound : mem_address := heap_variant_bound cs hv in
-      query - current_bound = (diff, false) ->
+      query - current_bound = (false, diff) ->
       growth_to_bound (hv, query) cs (Some (hv, diff))
   | goq_nogrow: forall hv (cs: callstack) __ query,
       let current_bound := heap_variant_bound cs hv in
-      query - current_bound = (__, true) ->
+      query - current_bound = (true, __) ->
       growth_to_bound (hv, query) cs None
   .
 

@@ -1,5 +1,5 @@
 Require sem.SemanticCommon.
-Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
+Import Arith Core isa.CoreSet PrimitiveValue SemanticCommon spec.
 
 Section RolDefinition.
   Open Scope ZMod_scope.
@@ -35,8 +35,8 @@ are taken from the most significant bits of `in1`.
 Reminder: flags are only set if `set_flags` modifier is set. *)
   | step_Rol:
     forall mod_sf result op shift w_shift old_flags new_flags,
-      `(w_shift = resize _ word_bits (resize _ 8 shift) ->
-      result = rol _ op w_shift ->
+      `(w_shift = widen word_bits (low 8 shift) ->
+      result = rolBn op (toNat w_shift) ->
       step_rol (OpRol (mk_pv tag1 op) (mk_pv tag2 shift) (IntValue result) mod_sf) old_flags new_flags)
   .
 (**

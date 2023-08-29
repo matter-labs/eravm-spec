@@ -124,7 +124,7 @@ and memory locations.
       ```
    *)
 
-  Inductive reg_io : Set := Reg (reg:reg_name).
+  Inductive reg_io : Type := Reg (reg:reg_name).
 
   (**
 2. **Immediate 16-bit value** (in)
@@ -136,7 +136,7 @@ and memory locations.
      ```
    *)
 
-  Inductive imm_in : Set := Imm (imm: u16).
+  Inductive imm_in : Type := Imm (imm: u16).
 
   (**
 3. **Address on a code page, relative to a GPR** (in)
@@ -154,7 +154,7 @@ and memory locations.
      adjacent words are disjoint.
    *)
 
-  Inductive code_in : Set := CodeAddr (reg:reg_name) (imm:code_address).
+  Inductive code_in : Type := CodeAddr (reg:reg_name) (imm:code_address).
 
   (**
 4. **Address on a const page, relative to a GPR** (in)
@@ -169,7 +169,7 @@ and memory locations.
      add code[42], r0, r3
      ```
    *)
-  Inductive const_in: Set := ConstAddr (reg:reg_name) (imm:code_address).
+  Inductive const_in: Type := ConstAddr (reg:reg_name) (imm:code_address).
 
   (**
 5. **Address on a stack page, relative to a GPR** (in/out)
@@ -182,7 +182,7 @@ and memory locations.
      add stack=[r1+42], r0, r3
      ```
    *)
-  Inductive stack_io : Set :=
+  Inductive stack_io : Type :=
   | Absolute (reg:reg_name) (imm: stack_address)
 
   (**
@@ -232,7 +232,7 @@ and memory locations.
      ```
    *)
 
-  Inductive stack_in_only : Set :=
+  Inductive stack_in_only : Type :=
   | RelSpPop (reg:reg_name) (offset: stack_address)
   .
 
@@ -252,7 +252,7 @@ and memory locations.
      See the note about addressing relative to SP for an explanation of the
      additional `-1` appearing here.
    *)
-  Inductive stack_out_only : Set :=
+  Inductive stack_out_only : Type :=
   | RelSpPush (reg:reg_name) (offset: stack_address)
   .
 
@@ -290,17 +290,17 @@ The encoding limits the number of arguments of type [%in_any] and [%out_any]:
 It is allowed to have both [%in_any] and [%out_any] in the same instruction.
      *)
 
-    Inductive stack_in : Set :=
+    Inductive stack_in : Type :=
     | StackInOnly (arg: stack_in_only)
     | StackInAny (arg: stack_io)
     .
 
-    Inductive stack_out: Set :=
+    Inductive stack_out: Type :=
     | StackOutOnly (arg: stack_out_only)
     | StackOutAny (arg: stack_io)
     .
 
-    Inductive stack_any : Set :=
+    Inductive stack_any : Type :=
     | StackAnyIO (arg: stack_io)
     | StackAnyIn (arg: stack_in_only)
     | StackAnyOut (arg: stack_out_only)
@@ -324,7 +324,7 @@ It is allowed to have both [%in_any] and [%out_any] in the same instruction.
 
     (** The [%any] auxiliary argument type allows for all addressing modes; it
     never occurs in instructions but is used to [%resolve] argument locations. *)
-    Inductive any : Set :=
+    Inductive any : Type :=
     | AnyReg  : reg_io   -> any
     | AnyImm  : imm_in   -> any
     | AnyStack: stack_any-> any
@@ -341,7 +341,7 @@ Instructions may have no more than two input arguments.
 Usually, $\mathit{in_1}$ supports any types of arguments, except for [%RelSpPush].
 
      *)
-    Inductive in_any : Set :=
+    Inductive in_any : Type :=
     | InReg  : reg_io   -> in_any
     | InImm  : imm_in   -> in_any
     | InStack: stack_in -> in_any
@@ -363,12 +363,12 @@ Usually, $\mathit{in_1}$ supports any types of arguments, except for [%RelSpPush
 
 
     (** Usually, $\mathit{in_2}$ supports only arguments in GPRs. *)
-    Definition in_reg : Set := reg_io.
+    Definition in_reg : Type := reg_io.
 
     (** In exotic cases, an input argument may either be a register, or an immediate
 value, but not anything else. *)
 
-    Inductive in_regimm : Set :=
+    Inductive in_regimm : Type :=
     | RegImmR : reg_io -> in_regimm
     | RegImmI : imm_in -> in_regimm
     .
@@ -393,7 +393,7 @@ have multiple pages (see [%page]).
 Out arguments can not resolve to the addresses of constants or instructions,
 because [%code_page] and [%const_page] are not writable.
      *)
-    Inductive out_any : Set :=
+    Inductive out_any : Type :=
     | OutReg  : reg_io    -> out_any
     | OutStack: stack_out -> out_any
     .
@@ -406,7 +406,7 @@ because [%code_page] and [%const_page] are not writable.
       end.
     (* end details *)
 
-    Definition out_reg : Set := reg_io.
+    Definition out_reg : Type := reg_io.
   End InstructionArguments.
 
 End Addressing.

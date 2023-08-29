@@ -1,6 +1,7 @@
-Require Flags.
+Require Common Flags.
 
-Import Bool Common Flags.
+Import Common Flags.
+Import ssrbool.
 
 Section Predication.
   (** # Predication
@@ -80,10 +81,10 @@ When an instruction is skipped, its base cost is still paid. *)
       simpl in *; try solve [auto with flags| inversion 1; inversion H0].
   Qed.
 
-  Theorem predicate_activated_dec: forall ec flags, Decidability.dec (predicate_spec ec flags).
+  Theorem predicate_activated_dec: forall ec flags, decidable (predicate_spec ec flags).
   Proof.
     intros ec flags.
-    unfold Decidability.dec.
+    unfold decidable.
     destruct ec, flags as [[][][]]; solve [left;constructor| right;inversion 1 | auto with flags | right; inversion 1; subst; inversion H0].
   Defined.
 

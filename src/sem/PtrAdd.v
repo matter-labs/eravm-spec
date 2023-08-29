@@ -1,16 +1,6 @@
 Require SemanticCommon.
 
-Import
-Core
-Memory
-MemoryBase
-Pointer
-PrimitiveValue
-SemanticCommon
-State
-ZMod
-isa.CoreSet
-.
+Import Arith Core Memory MemoryBase Pointer PrimitiveValue SemanticCommon State isa.CoreSet spec.
 
 Section PtrAddDefinition.
   Open Scope ZMod_scope.
@@ -56,8 +46,8 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
     forall src_enc result s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
       arg_delta < MAX_OFFSET_FOR_ADD_SUB = true ->
-      mem_delta = resize word_bits mem_address_bits arg_delta ->
-      (new_ofs, false) = ofs + mem_delta ->
+      mem_delta = low mem_address_bits arg_delta ->
+      (false, new_ofs) = ofs + mem_delta ->
 
       topmost_128_bits_match src_enc result ->
       step_ptradd (OpPtrAdd
@@ -120,8 +110,8 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
     forall src_enc result s1 s2 ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
       arg_delta < MAX_OFFSET_FOR_ADD_SUB = true ->
-      mem_delta = resize word_bits mem_address_bits arg_delta ->
-      (new_ofs, true) = ofs + mem_delta ->
+      mem_delta = low mem_address_bits arg_delta ->
+      (true, new_ofs) = ofs + mem_delta ->
 
       step_panic FatPointerOverflow s1 s2 ->
       step_ptradd (OpPtrAdd

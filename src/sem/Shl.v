@@ -1,9 +1,10 @@
 Require sem.SemanticCommon.
-Import Core isa.CoreSet PrimitiveValue SemanticCommon ZMod.
+Import Arith Core isa.CoreSet PrimitiveValue SemanticCommon spec.
 
 Section ShlDefinition.
   Open Scope ZMod_scope.
   Generalizable Variables tag.
+  Import operations operations.BitsNotations.
   Inductive step_shl: instruction -> flags_tsmallstep :=
 
   (**
@@ -38,9 +39,9 @@ Follows the scheme described in [%binop_state_bitwise_effect_spec].
 Reminder: flags are only set if `set_flags` modifier is set. *)
   | step_Shl:
     forall mod_sf result op shift w_shift old_flags new_flags,
-      `(w_shift = resize _ word_bits (resize _ 8 shift) ->
-        result = shiftl _ op w_shift ->
-        step_shl (OpShl (mk_pv tag1 op) (mk_pv tag2 shift) (IntValue result) mod_sf) old_flags new_flags)
+      `(shift = toNat (low 8 w_shift) ->
+        result = shlBn op shift ->
+        step_shl (OpShl (mk_pv tag1 op) (mk_pv tag2 w_shift) (IntValue result) mod_sf) old_flags new_flags)
   .
 (**
 ## Affected parts of VM state

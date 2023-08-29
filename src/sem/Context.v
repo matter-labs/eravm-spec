@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory MemoryOps isa.CoreSet State ZMod
+Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Memory MemoryOps isa.CoreSet State
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParameters.
 
 Section ContextDefinitions.
@@ -50,13 +50,13 @@ See [%OpContextCaller], [%OpContextCodeAddress].
 Inductive step_context: instruction -> smallstep :=
 
 | step_ContextThis:
-  forall this_addr this_addr_truncated (s1 s2: state),
+  forall this_addr (this_addr_word:word) (s1 s2: state),
 
     this_addr = ecf_this_address (active_extframe (gs_callstack s1)) ->
-    this_addr_truncated = resize contract_address_bits word_bits this_addr ->
+    this_addr_word = widen word_bits this_addr ->
 
 
-    step_context (OpContextThis (IntValue this_addr_truncated)) s1 s2
+    step_context (OpContextThis (IntValue this_addr_word)) s1 s2
 (** # ContextCaller
 
 ## Abstract Syntax
@@ -99,11 +99,11 @@ See [%OpContextThis], [%OpContextCodeAddress].
 
  *)
 | step_ContextCaller:
-  forall sender_addr sender_addr_truncated (s1 s2:state),
+  forall sender_addr sender_addr_word (s1 s2:state),
     sender_addr = (active_extframe (gs_callstack s1)).(ecf_msg_sender) ->
-    sender_addr_truncated = resize contract_address_bits word_bits sender_addr ->
+    sender_addr_word = widen word_bits sender_addr ->
 
-    step_context (OpContextCaller (IntValue sender_addr_truncated)) s1 s2
+    step_context (OpContextCaller (IntValue sender_addr_word)) s1 s2
 (** # ContextCodeAddress
 
 ## Abstract Syntax
@@ -146,11 +146,10 @@ See [%OpContextThis], [%OpContextCaller].
 
  *)
 | step_ContextCodeAddress:
-  forall code_addr code_addr_truncated (s1 s2:state),
-
+  forall code_addr code_addr_word (s1 s2:state),
     code_addr = ecf_code_address (active_extframe (gs_callstack s1)) ->
-    code_addr_truncated = resize contract_address_bits word_bits code_addr ->
-    step_context (OpContextCodeAddress (IntValue code_addr_truncated)) s1 s2
+    code_addr_word = widen word_bits code_addr ->
+    step_context (OpContextCodeAddress (IntValue code_addr_word)) s1 s2
 
 (** # ContextErgsLeft
 
@@ -195,9 +194,9 @@ The `context` instruction family.
 
  *)
 | step_ContextErgsLeft:
-  forall ergs_left_truncated (s1 s2:state),
-    ergs_left_truncated = resize _ word_bits (ergs_remaining (gs_callstack s1)) ->
-    step_context (OpContextErgsLeft (IntValue ergs_left_truncated)) s1 s2
+  forall ergs_left_word (s1 s2:state),
+    ergs_left_word = widen word_bits (ergs_remaining (gs_callstack s1)) ->
+    step_context (OpContextErgsLeft (IntValue ergs_left_word)) s1 s2
 
 (** # ContextSP
 
@@ -242,7 +241,7 @@ The `context` instruction family.
  *)
 | step_ContextSP:
   forall sp_zero_padded (s1 s2 :state),
-    sp_zero_padded = resize _ word_bits (sp_get (gs_callstack s1)) ->
+    sp_zero_padded = widen word_bits (sp_get (gs_callstack s1)) ->
 
     step_context (OpContextSp (IntValue sp_zero_padded)) s1 s2
 (** # ContextGetContextU128
@@ -289,7 +288,7 @@ Does not interact with the context register.
  *)
 | step_ContextGetContextU128:
   forall wcontext (s1 s2: state),
-    wcontext = resize _ word_bits (gs_context_u128 s1) ->
+    wcontext = widen word_bits (gs_context_u128 s1) ->
     step_context (OpContextGetContextU128 (IntValue wcontext)) s1 s2
 (** # ContextSetContextU128
 
@@ -336,8 +335,8 @@ Does not interact with the captured context value in the active external frame.
 
  *)
 | step_ContextSetContextU128:
-  forall new_context256 any_tag new_context_u128 xs1 xs2 s1 s2,
-    new_context_u128 = resize word_bits 128 new_context256->
+  forall (new_context256 :word) any_tag (new_context_u128:u128) xs1 xs2 s1 s2,
+    new_context_u128 = low 128 new_context256->
     xs2 = xs1 <| gs_context_u128 := new_context_u128 |> ->
     step_transient_only xs1 xs2 s1 s2 ->
 
@@ -497,7 +496,7 @@ Utility in system contracts.
 | step_ContextSetErgsPerPubdata:
   forall gs new_gs any_tag new_val transient ,
 
-    let new_ergs := resize _ ergs_bits new_val in
+    let new_ergs := low ergs_bits new_val in
     new_gs = gs <| gs_global ::= (fun s => s <| gs_current_ergs_per_pubdata_byte := new_ergs |> ) |> ->
 
     step_context (OpContextSetErgsPerPubdataByte (mk_pv any_tag new_val))

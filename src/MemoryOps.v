@@ -1,7 +1,8 @@
 Require Addressing Core Common Memory List Pointer Resolution Slice.
-
-Import Addressing Core ZArith ZMod Common CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution Slice.
-
+Set Warnings "-notation-overridden,-ambiguous-paths".
+Import ssreflect eqtype.
+Set Warnings "notation-overridden,ambiguous-paths".
+Import Addressing Core ZArith Common CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution Slice.
 Section MemoryOps.
 
   (** # Data loading and storing
@@ -30,7 +31,6 @@ memory or registers ([%store]).
         reg_val = fetch_gpr regs name ->
         fetch (LocReg name) (FetchPV reg_val)
     | fetch_imm: forall imm imm',
-        imm' = resize _ word_bits imm ->
         fetch (LocImm imm) (FetchPV (IntValue imm'))
     | fetch_stackaddr:
       forall stackpage (value: primitive_value) addr,
@@ -166,31 +166,39 @@ Therefore, their effects are formalized separately.
   Inductive endianness := LittleEndian | BigEndian.
 
   Context (e:endianness) (mem:data_page).
-
-  Definition mb_load_word (addr:mem_address) :option word :=
-    match load_multicell data_page_params addr bytes_in_word mem with
-    | None => None
-    | Some val =>
-        let fend : list u8 -> list u8 := match e with
-                                        | LittleEndian => @List.rev u8
-                                        | BigEndian => id
-                                        end in
-        Some (merge_bytes bits_in_byte word_bits (fend val))
-    end
-  .
+  Definition mb_load_word (addr:mem_address) :option word.
+    refine (
+        let l := (load_multicell data_page_params addr bytes_in_word mem) in
+        match l as ll return l = ll -> _ with
+        | None => fun _ => None
+        | Some val => fun H =>
+                       let fend : seq u8 :=
+                         match e with
+                         | LittleEndian => rev val
+                         | BigEndian => val
+                         end in
+                       Some (bytes_to_word ( @tuple.Tuple _ _ fend _ ))
+        end Logic.eq_refl
+      ).
+    apply load_multicell_spec in H.
+    apply load_multicell_result_size in H.
+    subst l fend.
+    destruct e.
+    - by move: (size_rev val) H -> => -> .
+    - by move : H ->.
+  Defined.
 
   Inductive mb_load_result : mem_address -> word -> Prop :=
   | mldr_apply: forall (addr:mem_address) res,
       mb_load_word addr = Some res ->
       mb_load_result addr res.
 
-
   Definition mb_store_word (addr:mem_address) (val: word) : option data_page :=
     let ls := match e with
               | LittleEndian => word_to_bytes val
-              | BigEndian => List.rev (word_to_bytes val)
+              | BigEndian =>tuple.rev_tuple (word_to_bytes val)
               end in
-    store_multicell _ addr ls mem.
+    store_multicell _ addr (tuple.tval ls) mem.
 
   Inductive mb_store_word_result: mem_address -> word -> data_page -> Prop :=
   | sdr_apply :
@@ -204,16 +212,27 @@ Reading from [%slice] is particular in the
 following way: if the accessed word passes over bounds, the bytes below the
 bound are formally assigned zeros. See [%Slices].
    *)
-  Definition mb_load_slice_word (slc:data_slice) (addr:mem_address) :option word :=
-    match load_multicell data_page_slice_params addr bytes_in_word slc with
-    | None => None
-    | Some val =>
-        let fend : list u8 -> list u8 := match e with
-                                        | LittleEndian => @List.rev u8
-                                        | BigEndian => id
-                                        end in
-        Some (merge_bytes bits_in_byte word_bits (fend val))
-    end.
+  Definition mb_load_slice_word (slc:data_slice) (addr:mem_address) :option word.
+    refine (
+        let l := (load_multicell data_page_slice_params addr bytes_in_word slc) in
+        match l as ll return l = ll -> _ with
+        | None => fun _ => None
+        | Some val => fun H =>
+                       let fend : seq u8 :=
+                         match e with
+                         | LittleEndian => rev val
+                         | BigEndian => val
+                         end in
+                       Some (bytes_to_word ( @tuple.Tuple _ _ fend _ ))
+        end Logic.eq_refl
+      ).
+    apply load_multicell_spec in H.
+    apply load_multicell_result_size in H.
+    subst l fend.
+    destruct e.
+    - by move: (size_rev val) H -> => -> .
+    - by move : H ->.
+  Defined.
 
   Inductive mb_load_slice_result (slc:data_slice): mem_address -> word -> Prop :=
   | mlsr_apply: forall (addr:mem_address) res,

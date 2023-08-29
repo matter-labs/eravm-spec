@@ -1,7 +1,9 @@
 Require sem.SemanticCommon.
 
-Import Bool Core Modifiers Common Flags isa.CoreSet CallStack Memory MemoryOps State ZMod
+Import Bool Core Modifiers Common Flags isa.CoreSet CallStack Memory MemoryOps State
   ZArith PrimitiveValue SemanticCommon List ListNotations.
+
+Import ssreflect.eqtype ssreflect.tuple.
 
 Section MulDefinition.
   Open Scope ZMod_scope.
@@ -43,13 +45,10 @@ result_{low} := op_1 \times op_2 \mod 2^{256} \end{cases}$$
    Reminder: flags are only set if `set_flags` modifier is set.
  *)
   | step_Mul:
-    forall mod_sf old_flags new_flags high low high256 low256 (x y:Z) op1 op2,
+    forall mod_sf old_flags new_flags high low high256 low256 op1 op2,
       `(
-          let x := int_val _ op1 in
-          let y := int_val _ op2 in
-          extract_digits (x * y) word_bits 2 = [ high;  low ] ->
-          high256 = u256_of high ->
-          low256  = u256_of low ->
+          high256 = high 256 (op1*op2) ->
+          low256  = low 256 (op1*op2) ->
 
           let new_EQ := low256  == zero256 in
           let new_OF := high256 != zero256 in

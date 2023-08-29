@@ -2,16 +2,16 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon Precompiles.
 
-Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Memory MemoryOps isa.CoreSet State ZMod
-  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters.
-Import ZArith List ListNotations.
+Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Memory MemoryOps isa.CoreSet State
+  Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations MetaParameters ABI.PrecompileParameters.
 
-Section Def.
+Section PrecompileCallDefinition.
   Open Scope ZMod_scope.
+  Import ssreflect.tuple ssreflect.eqtype.
   Inductive step_precompile: instruction -> smallstep :=
   | step_PrecompileCall_unaffordable:
     forall flags pages cs regs extra_ergs __ ___ s1 s2 result ctx,
-      let cost := resize _ ergs_bits extra_ergs in
+      let cost := low ergs_bits extra_ergs in
       affordable cs cost = false ->
 
       result = zero256 ->
@@ -40,7 +40,7 @@ Section Def.
       let heap_id := active_heap_id cs in
 
 
-      let cost := resize _ ergs_bits extra_ergs in
+      let cost := low ergs_bits extra_ergs in
 
       pay cost cs new_cs ->
       result = one256 ->
@@ -81,4 +81,4 @@ Section Def.
                       |}
   .
 
-End Def.
+End PrecompileCallDefinition.

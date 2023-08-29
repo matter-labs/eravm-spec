@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common ZMod CoreSet Modifiers SemanticCommon PrimitiveValue.
+Import Common CoreSet Modifiers SemanticCommon PrimitiveValue.
 
 Section XorDefinition.
   Open Scope ZMod_scope.
@@ -56,12 +56,12 @@ Reminder: flags are only set if `set_flags` modifier is set.
   | step_Xor:
     forall mod_sf old_flags new_flags result,
       `(
-          result = bitwise_xor _ op1 op2 ->
+          result = bitwise_xor op1 op2 ->
           new_flags = apply_set_flags mod_sf
                         old_flags
                         (bitwise_flags result) ->
 
-          step_xor (OpAnd (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_sf) old_flags new_flags)
+          step_xor (OpXor (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue result) mod_sf) old_flags new_flags)
   .
 
 

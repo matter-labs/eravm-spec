@@ -1,11 +1,11 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Memory lib.ZMod.
+Require Memory.
 
-Import List Memory ZMod.
 
 Section MemoryContext.
-  Import ListNotations RecordSetNotations.
+  Import RecordSetNotations.
+  Import seq Memory Arith.
 
   Open Scope ZMod_scope.
 
@@ -36,7 +36,7 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
   Definition list_mem_ctx (ap:mem_ctx) : list page_id :=
     match ap with
     | mk_mem_ctx code_id const_id stack_id heap_id auxheap_id _ _ =>
-        [code_id;const_id;stack_id;heap_id;auxheap_id]
+        [:: code_id; const_id;stack_id;heap_id;auxheap_id]
     end.
 
   Definition page_older (id: page_id) (mps: mem_ctx) : bool :=
@@ -59,12 +59,12 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
 
   Inductive grow_heap_page: mem_address -> mem_ctx -> mem_ctx -> Prop :=
   | gp_heap: forall ap new_bound diff,
-      ap.(ctx_heap_bound) + diff = (new_bound, false) ->
+      ap.(ctx_heap_bound) + diff = (false,new_bound) ->
       grow_heap_page diff ap (ap <| ctx_heap_bound := new_bound |>).
 
   Inductive grow_auxheap_page : mem_address -> mem_ctx -> mem_ctx -> Prop :=
   | gp_auxheap: forall ap new_bound diff,
-      ap.(ctx_auxheap_bound) + diff = (new_bound, false) ->
+      ap.(ctx_auxheap_bound) + diff = (false,new_bound) ->
       grow_auxheap_page diff ap (ap <| ctx_auxheap_bound := new_bound |>).
 
   Inductive grow_heap_variant: data_page_type -> mem_address -> mem_ctx -> mem_ctx -> Prop :=
