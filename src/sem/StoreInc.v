@@ -42,7 +42,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    word in the heap variant in `inc_ptr`.
 *)
   | step_StoreInc:
-    forall hptr flags new_cs heap_variant enc_ptr value new_mem selected_page bound modified_page cs regs mem __ ___ addr hptr_mod ctx ____,
+    forall hptr flags new_cs heap_variant enc_ptr value new_mem selected_page bound modified_page cs regs mem __ ___1 addr hptr_mod ctx ___2,
 
       let selected_page_id := heap_variant_id heap_variant cs in
 
@@ -60,7 +60,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
       hp_inc hptr hptr_mod ->
 
-      step_storeinc (OpStoreInc (Some hptr, mk_pv __ enc_ptr) (mk_pv ___ value) heap_variant (hptr_mod, ____))
+      step_storeinc (OpStoreInc (Some hptr, mk_pv __ enc_ptr) (mk_pv ___1 value) heap_variant (hptr_mod, ___2))
            {|
              gs_callstack    := cs;
              gs_pages        := mem;
@@ -105,38 +105,38 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
   | step_Store_offset_too_large:
-    forall heap_variant __ ___ ____ addr s1 s2,
+    forall heap_variant __ ___1 ___2 addr s1 s2,
       `(
           addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
           step_panic HeapPtrOffsetTooLarge s1 s2 ->
-          step_storeinc (OpStoreInc (Some (mk_hptr addr), __) ___ heap_variant ____) s1 s2
+          step_storeinc (OpStoreInc (Some (mk_hptr addr), __) ___1 heap_variant ___2) s1 s2
         )
   (** 2. Trying to store a word from an address greater than
    [%MAX_OFFSET_TO_DEREF_LOW_U32]. *)
   | step_Store_expects_intvalue:
-    forall s1 s2 __ ___ ____ _____ ______,
+    forall s1 s2 __ ___1 ___2 ___3 ___4,
       `(
           step_panic ExpectedHeapPointer  s1 s2 ->
-          step_storeinc (OpStoreInc (Some __, PtrValue ___) ____ _____ ______) s1 s2
+          step_storeinc (OpStoreInc (Some __, PtrValue ___1) ___2 ___3 ___4) s1 s2
         )
   (** 3. Accessing an address requires growing the bound of the
        corresponding heap variant, but the growth is unaffordable. *)
   | step_Store_growth_unaffordable:
-    forall (s1 s2:state) cs ptr bound heap_variant __ ___ ____,
+    forall (s1 s2:state) cs ptr bound heap_variant __ ___1 ___2,
       `(
           word_upper_bound ptr bound ->
           growth_to_bound_unaffordable cs (heap_variant, bound) ->
           gs_callstack s1 = cs ->
           step_panic HeapGrowthUnaffordable s1 s2 ->
-          step_storeinc (OpStoreInc (Some ptr, __) ___ heap_variant ____) s1 s2
+          step_storeinc (OpStoreInc (Some ptr, __) ___1 heap_variant ___2) s1 s2
         )
   (** 4. Incrementing the pointer leads to overflow. *)
   | step_Store_inc_overflow:
-    forall (s1 s2:state) ptr __ ___ ____ _____,
+    forall (s1 s2:state) ptr __ ___1 ___2 ___3,
       `(
           hp_inc_OF ptr = None ->
           step_panic HeapGrowthUnaffordable s1 s2 ->
-          step_storeinc (OpStoreInc (Some ptr, __) ___ ____ _____) s1 s2
+          step_storeinc (OpStoreInc (Some ptr, __) ___1 ___2 ___3) s1 s2
         )
        .
 End StoreIncDefinition.

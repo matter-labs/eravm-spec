@@ -100,21 +100,21 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 1. First argument is not a pointer (after accounting for `swap`).
  *)
   | step_PtrPack_in1_not_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 ___1 ___2 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrpack (OpPtrPack (Some __, IntValue ___) ____ _____) s1 s2
+      step_ptrpack (OpPtrPack (Some ___1, IntValue ___2) ___3 ___4) s1 s2
   (** 2. Second argument is a pointer (after accounting for `swap`). *)
   | step_PtrPack_in2_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 ___1 ___2 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrpack (OpPtrPack (Some __, ___) (PtrValue ____) _____) s1 s2
+      step_ptrpack (OpPtrPack (Some ___1, ___2) (PtrValue ___3) ___4) s1 s2
   (** 3. Low 128 bits of the second operand are not zero (after accounting for `swap`). *)
   | step_PtrPack_notzero:
-    forall s1 s2 op2 __ ___,
+    forall s1 s2 op2 ___1 ___2,
 
       low 128 op2 <> zero128 ->
       step_panic PtrPackExpectsOp2Low128BitsZero s1 s2 ->
-      step_ptrpack (@OpPtrPack bound __ (IntValue op2) ___) s1 s2
+      step_ptrpack (@OpPtrPack bound ___1 (IntValue op2) ___2) s1 s2
   .
 
 End PtrPackDefinition.

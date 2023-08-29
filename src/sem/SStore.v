@@ -78,13 +78,13 @@ Store word in current storage by key.
 1. Not enough ergs to pay for storage write.
  *)
   | step_SStore_unaffordable:
-    forall cs gs ts1 ts2 __ ___,
+    forall cs gs ts1 ts2 ___1 ___2,
 
       (* there are currently no refunds *)
       cs = gs_callstack ts1 ->
       affordable cs (sstore_cost cs) = false ->
       ts2 = ts1 <| gs_status := Panic StorageWriteUnaffordable |> ->
-      step_sstore (OpSLoad __ ___)
+      step_sstore (OpSLoad ___1 ___2)
                   {|
                     gs_transient := ts1;
                     gs_global    := gs;

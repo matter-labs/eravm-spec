@@ -10,7 +10,7 @@ Section PrecompileCallDefinition.
   Import ssreflect.tuple ssreflect.eqtype.
   Inductive step_precompile: instruction -> smallstep :=
   | step_PrecompileCall_unaffordable:
-    forall flags pages cs regs extra_ergs __ ___ s1 s2 result ctx,
+    forall flags pages cs regs extra_ergs ___1 ___2 s1 s2 result ctx,
       let cost := low ergs_bits extra_ergs in
       affordable cs cost = false ->
 
@@ -34,9 +34,9 @@ Section PrecompileCallDefinition.
           gs_context_u128 := ctx;
           gs_status       := NoPanic;
         |} s1 s2 ->
-      step_precompile (OpPrecompileCall __ (mk_pv ___ extra_ergs) (IntValue result)) s1 s2
+      step_precompile (OpPrecompileCall ___2 (mk_pv ___1 extra_ergs) (IntValue result)) s1 s2
   | step_PrecompileCall_affordable:
-    forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx __ ___ new_xs params,
+    forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx ___1 ___2 new_xs params,
       let heap_id := active_heap_id cs in
 
 
@@ -62,7 +62,7 @@ Section PrecompileCallDefinition.
                       q_shard_id := current_shard cs;
                       q_key := params;
                     |}) gs new_gs ->
-      step_precompile (OpPrecompileCall (Some params, __) (mk_pv ___ extra_ergs) (IntValue result))
+      step_precompile (OpPrecompileCall (Some params, ___1) (mk_pv ___2 extra_ergs) (IntValue result))
                       {|
                         gs_transient := {|
                                       gs_regs         := regs;

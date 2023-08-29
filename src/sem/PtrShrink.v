@@ -87,14 +87,14 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 1. First argument is not a pointer (after accounting for `swap`).
  *)
   | step_PtrShrink_in1_not_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 ___1 ___2 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrshrink (OpPtrShrink (Some __, IntValue ___) ____ _____) s1 s2
+      step_ptrshrink (OpPtrShrink (Some ___1, IntValue ___2) ___3 ___4) s1 s2
   (** 2. Second argument is a pointer (after accounting for `swap`). *)
   | step_PtrShrink_in2_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 ___1 ___2 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrshrink (OpPtrShrink (Some __, ___) (PtrValue ____) _____) s1 s2
+      step_ptrshrink (OpPtrShrink (Some ___1, ___2) (PtrValue ___3) ___4) s1 s2
   (** 3. Shrinking underflows. *)
   | step_PtrShrink_underflow:
     forall s1 s2 result ptr_in ptr_out src_enc delta ,

@@ -36,7 +36,7 @@ on events system.
   Inductive step_tol1: instruction -> smallstep :=
 
   | step_ToL1:
-    forall cs new_cs is_first key value gs new_gs cost cost_truncated ts1 ts2 __ ___,
+    forall cs new_cs is_first key value gs new_gs cost cost_truncated ts1 ts2 __ ___1,
 
       cost = gs_current_ergs_per_pubdata_byte gs * ergs_of L1_MESSAGE_PUBDATA_BYTES ->
       cost < (fromZ (unsigned_max ergs_bits)) ->
@@ -52,7 +52,7 @@ on events system.
           ev_value := value;
         |} gs new_gs ->
       ts2 = ts1 <| gs_callstack := new_cs |> ->
-      step_tol1 (OpToL1Message (mk_pv __ key) (mk_pv ___ value) is_first)
+      step_tol1 (OpToL1Message (mk_pv __ key) (mk_pv ___1 value) is_first)
            {|
              gs_transient := ts1;
              gs_global    := gs;

@@ -586,61 +586,61 @@ instruction is masked as [%OpPanic].
 
 1. Attempting to pass an existing [%fat_ptr], but the passed value is not tagged as a pointer.
  *)
-  | farcall_fwd_existing_fatptr_notag: forall (ts1 ts2:transient_state) __ ___ ____ _____ ______ _______,
+  | farcall_fwd_existing_fatptr_notag: forall (ts1 ts2:transient_state) ___0 ___1 ___2 ___3 ___4 ___5,
 
      ts2 = ts1 <| gs_status := Panic FarCallInputIsNotPointerWhenExpected |> ->
      farcall
        ({|
-           FarCall.fwd_memory   := ForwardExistingFatPointer __;
-           ergs_passed          := ___;
-           FarCall.shard_id     := ____;
-           constructor_call     := _____;
-           to_system            := ______;
+           FarCall.fwd_memory   := ForwardExistingFatPointer ___0;
+           ergs_passed          := ___1;
+           FarCall.shard_id     := ___2;
+           constructor_call     := ___3;
+           to_system            := ___4;
          |},
-         IntValue _______) ts1 ts2
+         IntValue ___5) ts1 ts2
 (** 2. The hash for the contract code (stored in the storage of [%DEPLOYER_SYSTEM_CONTRACT_ADDRESS]) is malformed. *)
-  | farcall_malformed_decommitment_hash:  forall cs0 abi_shard is_syscall_query ts1 ts2  __ ___ ____ _____ _______,
+  | farcall_malformed_decommitment_hash:  forall cs0 abi_shard is_syscall_query ts1 ts2 ___0 ___1 ___2 ___3 ___4,
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if is_shard_provided then abi_shard else current_shard cs0 in
-      paid_code_fetch allow_masking callee_shard (gs_depot gs) (gs_contracts gs) dest cs0 (CodeFetchInvalidVerisonedHashFormat _______) ->
+      paid_code_fetch allow_masking callee_shard (gs_depot gs) (gs_contracts gs) dest cs0 (CodeFetchInvalidVerisonedHashFormat ___4) ->
 
       ts2 = ts1 <| gs_status := Panic FarCallInvalidCodeHashFormat |> ->
       farcall
         ({|
-          FarCall.fwd_memory   := ___;
-          ergs_passed          := ____;
+          FarCall.fwd_memory   := ___1;
+          ergs_passed          := ___2;
           FarCall.shard_id     := abi_shard;
-          constructor_call     := _____;
+          constructor_call     := ___3;
           to_system            := is_syscall_query;
-        |}, __)
+        |}, ___0)
        ts1 ts2
 (** 3. Not enough ergs to pay for code decommitment. *)
-  | farcall_decommitment_unaffordable:  forall cs0 abi_shard is_syscall_query ts1 ts2  __ ___ ____ _____ _______,
+  | farcall_decommitment_unaffordable:  forall cs0 abi_shard is_syscall_query ts1 ts2  ___1 ___2 ___3 ___4 ___5,
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if is_shard_provided then abi_shard else current_shard cs0 in
-      paid_code_fetch allow_masking callee_shard (gs_depot gs) (gs_contracts gs) dest cs0 (CodeFetchUnaffordable _______) ->
+      paid_code_fetch allow_masking callee_shard (gs_depot gs) (gs_contracts gs) dest cs0 (CodeFetchUnaffordable ___1) ->
       cs0 = gs_callstack ts1 ->
       ts2 = ts1 <| gs_status := Panic FarCallNotEnoughErgsToDecommit |> ->
       farcall
         ({|
-          FarCall.fwd_memory   := ___;
-          ergs_passed          := ____;
+          FarCall.fwd_memory   := ___2;
+          ergs_passed          := ___3;
           FarCall.shard_id     := abi_shard;
-          constructor_call     := _____;
+          constructor_call     := ___4;
           to_system            := is_syscall_query;
-        |}, __)
+        |}, ___5)
        ts1 ts2
 (** 4. Paid for decommitment; Returning a new fat pointer, but not enough ergs to pay for memory growth. *)
-  | farcall_fwd_new_ptr_growth_unaffordable: forall cs0 cs1 __ ___ ____ abi_shard ergs_query is_syscall_query in_span page_type bound growth_query ts1 ts2,
+  | farcall_fwd_new_ptr_growth_unaffordable: forall cs0 cs1 ___1 ___2 ___3 abi_shard ergs_query is_syscall_query in_span page_type bound growth_query ts1 ts2,
 
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if is_shard_provided then abi_shard else current_shard cs0 in
 
       paid_code_fetch allow_masking callee_shard
-        gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest cs0 (Fetched cs1 ___ ____) ->
+        gs.(gs_revertable).(gs_depot) gs.(gs_contracts) dest cs0 (Fetched cs1 ___1 ___2) ->
 
       bound_of_span in_span page_type bound ->
       growth_to_bound bound cs1 growth_query ->
@@ -655,7 +655,7 @@ instruction is masked as [%OpPanic].
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
-          |}, __)
+          |}, ___3)
        ts1 ts2
   .
 (** ## Not formalized
