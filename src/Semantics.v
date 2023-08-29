@@ -79,22 +79,25 @@ Section SmallStep.
 
 - on call stack overflow;
 - if the [%base_cost] of instruction is unaffordable;
-- if the instruction is not allowed in kernel mode, and VM is in kernel mode;
+- if the instruction is not allowed in user mode, and VM is in user mode;
 - if the instruction is not allowed in static mode, and VM is in static mode.
    *)
   Definition chose_action (s:transient_state) (i:@predicated asm_instruction) : action :=
     if stack_overflow VM_MAX_STACK_DEPTH (gs_callstack s) then
       Panic CallStackOverflow
-    else if negb (check_requires_kernel i.(ins_spec _) (in_kernel_mode (gs_callstack s))) then
-           Panic NotInKernelMode
-         else if negb (check_forbidden_static i.(ins_spec _) (active_extframe (gs_callstack s)).(ecf_is_static)) then
-                Panic ForbiddenInStaticMode
-                      else if ergs_of (base_cost i.(ins_spec _)) >
-                                ergs_remaining (gs_callstack s) then
-                             Panic NotEnoughErgsToPayBaseCost
-                           else if negb (predicate_holds i.(ins_cond _) (gs_flags s)) then
-                                  Skip
-                                else Execute.
+    else
+      if negb (check_requires_kernel i.(ins_spec _) (in_kernel_mode (gs_callstack s))) then
+        Panic NotInKernelMode
+      else
+        if negb (check_forbidden_static i.(ins_spec _) (active_extframe (gs_callstack s)).(ecf_is_static)) then
+          Panic ForbiddenInStaticMode
+        else
+          if ergs_of (base_cost i.(ins_spec _)) > ergs_remaining (gs_callstack s) then
+            Panic NotEnoughErgsToPayBaseCost
+          else
+            if negb (predicate_holds i.(ins_cond _) (gs_flags s)) then
+              Skip
+            else Execute.
 
   (** The definition [%smallsteps] gathers the references to all the small step
   predicates for various [%asm_instruction]s. *)

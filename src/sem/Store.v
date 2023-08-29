@@ -97,7 +97,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
-## Panic
+## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)

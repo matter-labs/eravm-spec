@@ -5,7 +5,7 @@ Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon VMPani
 
 Section NearPanicToDefinition.
 Inductive step_panicto: instruction -> smallstep :=
-(** # NearPanic (abnormal return, not return/panic)
+(** # NearPanic (abnormal return, not return/revert)
 
 ## Abstract Syntax
 
@@ -15,8 +15,8 @@ Inductive step_panicto: instruction -> smallstep :=
 
 `ret.panic label` aliased as `panic label`
 
-  An erroneous return from a **near** call to a specified label. Will panic all
-  changes in [%global_state] produced in the current frame, pop up current
+  An erroneous return from a **near** call to a specified label. Will revert all
+  changes in [%global_state] produced in the current frame, drop the current
   frame, give back unspent ergs, and proceed to execute exception handler.
 
   The assembler expands `panic label` to `panic r1, label`, but `r1` is
@@ -46,6 +46,6 @@ Inductive step_panicto: instruction -> smallstep :=
 
 ## Usage
 
-Return from a recoverable error, fail-safe.
+Return from an irrecoverable error, fail-fast.
  *)
 End NearPanicToDefinition.

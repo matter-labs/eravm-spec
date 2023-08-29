@@ -17,7 +17,7 @@ See [%Panics].
 
 `ret.panic` aliased as `panic`
 
-An abnormal return from a **near** call. Will pop up current callframe, burn
+An abnormal return from a **near** call. Will drop current callframe, burn
 all ergs and pass control to the current exception handler, setting OF flag.
 
 Additionally, restore storage and event queues to the state

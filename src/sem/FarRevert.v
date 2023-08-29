@@ -181,7 +181,7 @@ Use `panic` for irrecoverable errors.
 
 
 
-## Panic
+## Panics
 
 1. Attempt to forward an existing fat pointer, but the value holding [%ABI.Ret.params] is not tagged as a pointer.
 *)

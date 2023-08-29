@@ -94,7 +94,7 @@ active heap variant.
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
   [%OpLoadPointerInc] are variants of the same [%mach_instruction].
 
-## Panic
+## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)

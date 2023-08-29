@@ -191,7 +191,7 @@ Section FarRetDefinition.
 - `panic` executes the current frame's exception handler instead of returning to
   the caller, and sets overflow flag.
 
-## Panic
+## Panics
 
 1. Attempt to forward an existing fat pointer, but the value holding [%ABI.Ret.params] is not tagged as a pointer.
 *)

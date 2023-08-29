@@ -83,7 +83,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
-## Panic
+## Panics
 
 1. Argument is not a tagged pointer. *)
   | step_LoadPointerInc_not_tagged:

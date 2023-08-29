@@ -71,7 +71,7 @@ bytes.
 
 - [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
 
-## Panic
+## Panics
 
 1. Argument is not a tagged pointer. *)
   | step_LoadPointer_not_tagged:

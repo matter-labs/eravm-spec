@@ -73,7 +73,7 @@ Store word in current storage by key.
 
 - [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
 
-## Panic
+## Panics
 
 1. Not enough ergs to pay for storage write.
  *)

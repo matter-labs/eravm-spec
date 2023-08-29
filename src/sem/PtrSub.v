@@ -93,7 +93,7 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
 
 Instructions [%OpPtrSub], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
 
-## Panic
+## Panics
 
 1. First argument is not a pointer (after accounting for `swap`).
  *)

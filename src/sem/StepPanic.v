@@ -1,5 +1,8 @@
+From RecordUpdate Require Import RecordSet.
+
 Require Addressing CallStack Common GPR Flags isa.CoreSet State Steps VMPanic.
-Import Addressing CallStack Common GPR Flags isa.CoreSet State Steps VMPanic.
+Import Addressing CallStack Common GPR Flags isa.CoreSet PrimitiveValue State Steps VMPanic.
+Import RecordSetNotations.
 
 Section StepPanic.
   (** # Handling panics
@@ -17,8 +20,9 @@ EraVM handles the panic situation as follows:
 
 1. Perform a [%rollback].
 2. Drop current frame with its ergs.
-3. Set PC to the exception handler of a dropped frame.
+3. Set PC to the exception handler of the dropped frame.
 4. Clear flags, and set OF.
+5. Clears the context register.
    *)
   Inductive step_panic reason: smallstep :=
   | step_PanicLocal_nolabel:
@@ -43,7 +47,7 @@ EraVM handles the panic situation as follows:
                  {|
                    gs_transient:= {|
                                    gs_flags        := set_overflow flags_clear;
-                                   gs_regs         := regs_state_zero;
+                                   gs_regs         := regs;
                                    gs_callstack    := pc_set cf.(cf_exception_handler_location) caller_stack;
                                    gs_context_u128 := zero128;
                                    gs_status       := NoPanic;
@@ -53,24 +57,25 @@ EraVM handles the panic situation as follows:
 
                    gs_global       := gs'
                  |}
-  (**
-## Case 2: `panic` from external call
+  (** ## Case 2: `panic` from external call
 
+Performs all the same actions as a panic from internal call:
 1. Perform a [%rollback].
 2. Drop current frame and its ergs
 3. Clear flags and set OF.
 4. Clear context register.
-5. Set PC to the exception handler address of a dropped frame.
-6. All storages are reverted to the state prior to the current contract call.
-7. Put an encoded zero-pointer into `R1` and tag `R1` as a pointer.
+5. Set PC to the exception handler address of a dropped frame..
 
+In addition to that:
+6. Put an encoded zero-pointer into `R1` and tag `R1` as a pointer.
    All other registers are zeroed. Registers `R2`, `R3` and `R4` are reserved
    and may gain a special meaning in newer versions of EraVM.
    *)
   | step_PanicExt:
-    forall flags pages cf caller_stack __ regs gs gs',
+    forall flags pages cf caller_stack __ regs gs gs' new_regs,
       let cs0 := ExternalCall cf (Some caller_stack) in
       rollback (cf_saved_checkpoint cf) gs gs' ->
+      new_regs = regs_state_zero <| r1 := PtrValue zero256 |> ->
       step_panic reason
                  {|
                    gs_transient := {|
@@ -89,7 +94,7 @@ EraVM handles the panic situation as follows:
                  {|
                    gs_transient := {|
                                     gs_flags        := set_overflow flags_clear;
-                                    gs_regs         := regs_state_zero;
+                                    gs_regs         := new_regs;
                                     gs_callstack    := pc_set (active_exception_handler cs0) caller_stack;
                                     gs_context_u128 := zero128;
                                     gs_status       := NoPanic;
