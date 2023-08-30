@@ -44,6 +44,11 @@ Section Operations.
   Definition rolBn {n} (p: BITS (S n)) (k: nat): BITS (S n) := Nat.iter k rolB p.
   Definition rorBn {n} (p: BITS (S n)) (k: nat): BITS (S n) := Nat.iter k rorB p.
 
+  Definition subrange_len {skip} (from:nat) (len:nat) (w:BITS (from + len + skip))  :=
+    (high len (low (from+len) w)).
+
+  Definition subrange {skip} (from:nat) (to:nat) (w:BITS (from + (to-from) + skip))  :=
+    @subrange_len skip from (to-from) w.
 End Operations.
 Declare Scope ZMod_scope.
 Infix "+" := (uadd_of) : ZMod_scope.
@@ -54,4 +59,7 @@ Infix ">" := (gt_unsigned) : ZMod_scope.
 Infix "<=" := (le_unsigned) : ZMod_scope.
 Infix ">=" := (ge_unsigned) : ZMod_scope.
 (* Equality is already provided by [%eqType] of ssreflect.  *)
+
+Notation "w  { from , to }" := (@subrange _ from to w) (at level 10) : ZMod_scope .
+
 Bind Scope ZMod_scope with BITS.
