@@ -32,11 +32,14 @@ incremented pointer) to `out`.
 
    $$\mathit{diff} := \mathit{op}_2 \mod 2^{32}$$
 
+   It is required that $\mathit{op}_2 < \texttt{MAX\_OFFSET\_FOR\_ADD\_SUB}$,
+   otherwise VM panics.
+
 5. Advance pointer offset of $\mathit{ptr_{in}}$ by $\mathit{diff}$:
 
 $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset + diff}$$
 
-6. Store the result, tagged as a pointer and mixed with most significant 128 bits of `op1` to `out`:
+6. Store the result, tagged as a pointer, to `out`. The most significant 128 bits of result are taken from `op1`, the least significant bits hold an encoded pointer:
 
 $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
 
