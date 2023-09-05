@@ -207,8 +207,8 @@ grow heap; far calls also may induce code
      | OpPtrShrink _ _ _ _
      | OpPtrPack _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      |
-       OpStore _ _ _ _
-     | OpStoreInc _ _ _ _ _
+       OpStore _ _ _
+     | OpStoreInc _ _ _ _
        => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
 
      | OpLoad _ _ _

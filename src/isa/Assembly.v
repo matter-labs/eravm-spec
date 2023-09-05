@@ -45,7 +45,7 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
   | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
-                  
+
   | OpNearCall    (arg: in_reg) (dest: imm_in) (handler: imm_in)
   | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
   | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
@@ -69,8 +69,8 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
   | OpLoad        (ptr: in_regimm) (res: out_reg) (mem:data_page_type)
   | OpLoadInc     (ptr: in_regimm) (res: out_reg) (mem:data_page_type) (inc_ptr: out_reg)
-  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)                    (swap: mod_swap)
-  | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg) (swap: mod_swap)
+  | OpStore       (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)
+  | OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg)
 
 
   | OpLoadPointer     (ptr: in_reg)  (res: out_reg)

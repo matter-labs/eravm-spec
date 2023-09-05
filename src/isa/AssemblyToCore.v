@@ -64,9 +64,8 @@ Section AssemblyToCore.
     | Assembly.OpPtrPack in1 in2 out swap =>
         let (in1', in2') := apply_swap swap in1 in2 in
         @OpPtrPack decoded in1' in2' out
-    | Assembly.OpStore ptr val mem swap =>
-        let (ptr', val') := @apply_swap in_any swap ptr val in
-        @OpStore decoded ptr' val' mem
+    | Assembly.OpStore ptr val mem =>
+        @OpStore decoded ptr val mem
 
     | Assembly.OpNearCall in1 (Imm dest) (Imm handler) => @OpNearCall decoded in1 dest handler
     | Assembly.OpFarCall enc dest (Imm handler) is_static is_shard_provided swap =>
@@ -89,9 +88,8 @@ Section AssemblyToCore.
     | Assembly.OpPanic  => @OpPanic decoded
     | Assembly.OpLoad ptr res mem  => @OpLoad decoded  ptr res mem
     | Assembly.OpLoadInc ptr res mem inc_ptr => @OpLoadInc decoded  ptr res mem inc_ptr
-    | Assembly.OpStoreInc ptr val mem inc_ptr  swap =>
-        let (ptr', val') := @apply_swap in_any swap ptr val in
-        @OpStoreInc decoded ptr' val' mem inc_ptr
+    | Assembly.OpStoreInc ptr val mem inc_ptr =>
+        @OpStoreInc decoded ptr val mem inc_ptr
     | Assembly.OpLoadPointer ptr res  => @OpLoadPointer decoded  ptr res
     | Assembly.OpLoadPointerInc ptr res inc_ptr  => @OpLoadPointerInc decoded  ptr res inc_ptr
     | Assembly.OpContextThis out  => @OpContextThis decoded  out
