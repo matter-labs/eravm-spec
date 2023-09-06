@@ -44,13 +44,16 @@ Section Operations.
   Definition rolBn {n} (p: BITS (S n)) (k: nat): BITS (S n) := Nat.iter k rolB p.
   Definition rorBn {n} (p: BITS (S n)) (k: nat): BITS (S n) := Nat.iter k rorB p.
 
-  Definition subrange_len {skip} (from:nat) (len:nat) (w:BITS (from + len + skip))  :=
-    (high len (low (from+len) w)).
+  Definition subrange_len {skip} (from:nat) (len:nat) (w:BITS ((from + len) + skip))  :=
+    (@high len from (@low skip (ssrnat.addn from len) w)).
 
   Definition subrange {skip} (from:nat) (to:nat) (w:BITS (from + (to-from) + skip))  :=
     @subrange_len skip from (to-from) w.
+
 End Operations.
+
 Declare Scope ZMod_scope.
+
 Infix "+" := (uadd_of) : ZMod_scope.
 Infix "-" := (usub_uf) : ZMod_scope.
 Infix "*" := (umul) : ZMod_scope.
