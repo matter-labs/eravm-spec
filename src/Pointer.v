@@ -150,7 +150,7 @@ These four components are enough to unambiguously identify a **[%slice]** of a d
      *)
     Record fat_ptr :=
       mk_fat_ptr {
-          fp_page: option page_id;
+          fp_page: page_id;
           fp_ptr :> free_ptr;
         }.
 
@@ -199,18 +199,10 @@ Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDel
     Definition no_exceptions : validation_exception
       := mk_ptr_validation_exception false false.
 
-    Definition free_ptr_empty :=
-      {|
-        p_span := span_empty;
-        p_offset:= zero32;
-      |}.
-
-    Definition fat_ptr_empty :=
-      {|
-        fp_page := None;
-        fp_ptr := free_ptr_empty;
-      |}.
-
+    Inductive fat_ptr_nullable :=
+    | NullPtr
+    | NotNullPtr (ptr: fat_ptr)
+    .
 
     (** A fat pointer $(\mathit{page}, \mathit{start}, \mathit{length}, \mathit{offset})$ is **invalid** if:
 

@@ -44,17 +44,16 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
    *)
 
   | step_PtrShrink :
-    forall  s result ptr_in ptr_out src_enc delta ,
+    forall  s high128 ptr_in ptr_out delta ,
 
       let diff := low mem_address_bits delta in
       fat_ptr_shrink diff ptr_in ptr_out ->
 
 
-      topmost_128_bits_match src_enc result ->
       step_ptrshrink (OpPtrShrink
-                        (Some ptr_in, PtrValue src_enc)
+                        (Some (PtrValue (high128, NotNullPtr ptr_in)))
                         (IntValue delta)
-                        (ptr_out, PtrValue result))
+                        (Some (PtrValue (high128, NotNullPtr ptr_out))))
         s s
 (** ## Affected parts of VM state
 
@@ -87,24 +86,24 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 1. First argument is not a pointer (after accounting for `swap`).
  *)
   | step_PtrShrink_in1_not_ptr:
-    forall s1 s2 ___1 ___2 ___3 ___4,
+    forall s1 s2 ___2 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrshrink (OpPtrShrink (Some ___1, IntValue ___2) ___3 ___4) s1 s2
+      step_ptrshrink (OpPtrShrink (Some (IntValue ___2)) ___3 ___4) s1 s2
   (** 2. Second argument is a pointer (after accounting for `swap`). *)
   | step_PtrShrink_in2_ptr:
-    forall s1 s2 ___1 ___2 ___3 ___4,
+    forall s1 s2 ___1 ___3 ___4,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrshrink (OpPtrShrink (Some ___1, ___2) (PtrValue ___3) ___4) s1 s2
+      step_ptrshrink (OpPtrShrink (Some ___1) (PtrValue ___3) ___4) s1 s2
   (** 3. Shrinking underflows. *)
   | step_PtrShrink_underflow:
-    forall s1 s2 result ptr_in ptr_out src_enc delta ,
+    forall s1 s2 high128 ptr_in ptr_out delta ,
       let diff := low mem_address_bits delta in
       fat_ptr_shrink_OF diff ptr_in = None ->
 
       step_ptrshrink (OpPtrShrink
-                        (Some ptr_in, PtrValue src_enc)
+                         (Some (PtrValue (high128, NotNullPtr ptr_in)))
                         (IntValue delta)
-                        (ptr_out, PtrValue result))
+                        (Some (PtrValue (high128, NotNullPtr ptr_out))))
         s1 s2
   .
 End PtrShrinkDefinition.

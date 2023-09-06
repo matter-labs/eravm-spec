@@ -4,10 +4,6 @@ Import ssreflect ssreflect.ssrfun ssreflect.ssrbool ssreflect.eqtype ssreflect.t
 Import Core Common Coder Bool GPR Ergs Memory MemoryManagement Pointer.
 
 
-#[local]
-Definition coder := @coder word.
-
-
 (** # Application binary interface (ABI)
 
 This section details the serialization and deserialization formats for compound
@@ -21,24 +17,35 @@ https://github.com/matter-labs/zkevm_opcode_defs/blob/v1.4.1/src/definitions/abi
 
 ## Fat pointers *)
 Module FatPointer.
-  Axiom ABI  : @coder fat_ptr.
+  Axiom ABI  : @coder u128 fat_ptr_nullable.
 
-  Definition decode_fat_ptr (w:word) : option fat_ptr := ABI.(decode) w.
+  Definition decode_fat_ptr (w:u128) : option fat_ptr_nullable := ABI.(decode) w.
 
-  Definition decode_heap_ptr (w:word) : option heap_ptr :=
-    match decode_fat_ptr w with
-    | Some (mk_fat_ptr _ (mk_ptr _ offset)) =>
-        Some (mk_hptr offset)
-    | None => None
-   end.
+  Definition decode_fat_ptr_word (w:word) : option (u128 * fat_ptr_nullable) :=
+    let (high128, low128) := split2 128 128 w in
+    match decode_fat_ptr low128 with
+    | Some fpn => Some (high128, fpn)
+    | _ => None
+    end
+  .
 
-  Definition decode_span (w:word) : option span :=
-    match decode_fat_ptr w with
-    | Some (mk_fat_ptr _ (mk_ptr s _ ))=> Some s
-    | None => None
-   end.
+  Definition decode_heap_ptr (w:word) : option (u224 * heap_ptr) :=
+    let (msbs, ofs) := split2 _ 32 w in
+    Some (msbs, mk_hptr ofs).
 
-  Definition encode_fat_ptr (fp: fat_ptr) : word := ABI.(encode) fp.
+  Definition encode_heap_ptr (h:heap_ptr) : option u32 :=
+    Some (hp_addr h)
+  .
+
+  Definition encode_heap_ptr_word (high224: u224) (h:heap_ptr) : option word :=
+    match encode_heap_ptr h with
+    | Some hpenc => Some (high224 ## hpenc)
+    | _ => None
+    end
+  .
+  Definition encode_fat_ptr (fp: fat_ptr_nullable) : u128 := ABI.(encode) fp.
+  Definition encode_fat_ptr_word (high_bytes: u128) (fp: fat_ptr_nullable) : word :=
+    high_bytes ## encode_fat_ptr fp.
 
 End FatPointer.
 
@@ -51,7 +58,7 @@ Module NearCall.
         ergs_passed: u32;
       }.
 
-  Axiom ABI: @coder params.
+  Axiom ABI: @coder word params.
 
 End NearCall.
 
@@ -61,7 +68,7 @@ Module FarRet.
   Record params := mk_params {
                            forwarded_memory :> fwd_memory
                           }.
-  Axiom ABI: @coder params.
+  Axiom ABI: @coder word params.
   Axiom ABI_decode_zero: ABI.(decode) word0 = Some (mk_params (ForwardNewFatPointer Heap span_empty)).
 End FarRet.
 
@@ -78,7 +85,7 @@ Module FarCall.
         to_system: bool;
       }.
 
-  Axiom ABI: @coder params.
+  Axiom ABI: @coder word params.
 
 End FarCall.
 
@@ -95,7 +102,7 @@ Module MetaParameters.
         code_shard_id: shard_id;
       }.
 
-  Axiom ABI: @coder params.
+  Axiom ABI: @coder word params.
 
 End MetaParameters.
 
@@ -141,6 +148,6 @@ Module PrecompileParameters.
   Qed.
   Canonical params_eqMixin := EqMixin params_eqnP.
   Canonical params_eqType := Eval hnf in EqType _ params_eqMixin.
-  Axiom ABI: @coder params.
+  Axiom ABI: @coder word params.
 
 End PrecompileParameters.

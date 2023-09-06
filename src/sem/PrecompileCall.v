@@ -36,7 +36,7 @@ Section PrecompileCallDefinition.
         |} s1 s2 ->
       step_precompile (OpPrecompileCall ___2 (mk_pv ___1 extra_ergs) (IntValue result)) s1 s2
   | step_PrecompileCall_affordable:
-    forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx ___1 ___2 new_xs params,
+    forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx ___1 new_xs params,
       let heap_id := active_heap_id cs in
 
 
@@ -62,7 +62,7 @@ Section PrecompileCallDefinition.
                       q_shard_id := current_shard cs;
                       q_key := params;
                     |}) gs new_gs ->
-      step_precompile (OpPrecompileCall (Some params, ___1) (mk_pv ___2 extra_ergs) (IntValue result))
+      step_precompile (OpPrecompileCall (Some (IntValue params)) (mk_pv ___1 extra_ergs) (IntValue result))
                       {|
                         gs_transient := {|
                                       gs_regs         := regs;

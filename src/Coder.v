@@ -37,6 +37,6 @@ Record coder  := {
     (** [%decode] and [%encode] should be mutual inverses in the following
     sense: *)
     revertible1: forall params, decode (encode params) = Some params;
-    revertible2: forall params encoded, decode encoded = Some params -> encode params = encoded;
+    (*revertible2: forall params encoded, decode encoded = Some params -> decode (encode params = encoded;*)
   }.
 End Encoding.

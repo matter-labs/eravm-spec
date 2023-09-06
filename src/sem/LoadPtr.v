@@ -45,16 +45,16 @@ bytes.
 4. Store the word to `res`.
 *)
   | step_LoadPointer:
-    forall result _flags _regs mem _cs _ctx addr selected_page (in_ptr:fat_ptr) slice page_id __,
+    forall result _flags _regs mem _cs _ctx addr selected_page (in_ptr:fat_ptr) slice page_id high128,
       validate_in_bounds in_ptr = true ->
-      Some page_id = in_ptr.(fp_page) ->
+      page_id = in_ptr.(fp_page) ->
       page_has_id mem page_id (mk_page (DataPage selected_page)) ->
       slice_page selected_page in_ptr slice ->
 
       ptr_resolves_to in_ptr addr  ->
       mb_load_slice_result BigEndian slice addr result ->
 
-      step_load_ptr (OpLoadPointer (Some in_ptr, PtrValue __) (IntValue result))
+      step_load_ptr (OpLoadPointer (Some (PtrValue (high128, NotNullPtr in_ptr))) (IntValue result))
                     (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
                     (mk_transient_state _flags _regs mem _cs _ctx NoPanic)
 (** ## Affected parts of VM state
@@ -75,8 +75,8 @@ bytes.
 
 1. Argument is not a tagged pointer. *)
   | step_LoadPointer_not_tagged:
-    forall __ ___ ____ (s1 s2:state),
+    forall ___ ____ (s1 s2:state),
       step_panic ExpectedFatPointer s1 s2 ->
-      step_load_ptr (OpLoadPointer (__, IntValue ___) ____) s1 s2
+      step_load_ptr (OpLoadPointer (Some (IntValue ___)) ____) s1 s2
   .
 End LoadPtrDefinition.

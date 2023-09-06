@@ -1,7 +1,7 @@
 Require SemanticCommon.
 
 Import Common Core Memory isa.CoreSet State
-  SemanticCommon PrimitiveValue ZArith.
+  SemanticCommon PrimitiveValue ZArith ABI.FatPointer.
 
 Section PtrPackDefinition.
   Open Scope ZMod_scope.
@@ -35,10 +35,10 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
    *)
 
   | step_PtrPack :
-    forall (op1 op2:word) (s:state) result __,
+    forall op1_high128 ptr (op2:word) (s:state) result,
       low 128 op2 = zero128 ->
-      result = (@high 128 128 op2) ## (@low 128 128 op1) ->
-      step_ptrpack (@OpPtrPack bound (Some __, PtrValue op1) (IntValue op2) (IntValue result)) s s
+      result = (@high 128 128 op2) ## encode_fat_ptr ptr ->
+      step_ptrpack (@OpPtrPack bound (Some (PtrValue (op1_high128, ptr))) (IntValue op2) (IntValue result)) s s
 (** ## Affected parts of VM state
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
 - Current stack memory page, if `out` resolves to it.
@@ -100,14 +100,14 @@ Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 1. First argument is not a pointer (after accounting for `swap`).
  *)
   | step_PtrPack_in1_not_ptr:
-    forall s1 s2 ___1 ___2 ___3 ___4,
+    forall s1 s2 ___1 ___2 ___3,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrpack (OpPtrPack (Some ___1, IntValue ___2) ___3 ___4) s1 s2
+      step_ptrpack (OpPtrPack (Some (IntValue ___1)) ___2 ___3) s1 s2
   (** 2. Second argument is a pointer (after accounting for `swap`). *)
   | step_PtrPack_in2_ptr:
-    forall s1 s2 ___1 ___2 ___3 ___4,
+    forall s1 s2 ___1 ___2 ___3,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrpack (OpPtrPack (Some ___1, ___2) (PtrValue ___3) ___4) s1 s2
+      step_ptrpack (OpPtrPack (Some ___1) (PtrValue ___2) ___3) s1 s2
   (** 3. Low 128 bits of the second operand are not zero (after accounting for `swap`). *)
   | step_PtrPack_notzero:
     forall s1 s2 op2 ___1 ___2,

@@ -326,7 +326,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
     let is_ctor_bit := Z.shiftl is_ctor 0 in
     let bits := Z.lor is_system_bit is_ctor_bit in
     IntValue (fromZ bits) in
-  let enc_ptr := FatPointer.ABI.(encode) ptr in
+  let enc_ptr := encode_fat_ptr_word zero128 ptr in
   if is_system then
     regs
       <| r1 := PtrValue enc_ptr |>
@@ -434,9 +434,9 @@ Section FarCallDefinitions.
   Import Pointer.
   Context (type:farcall_type) (is_static_call is_shard_provided:bool) (dest:contract_address) (handler: code_address) (gs:global_state).
 
-  Inductive farcall : FarCall.params * @primitive_value word -> tsmallstep :=
+  Inductive farcall : @primitive_value FarCall.params -> tsmallstep :=
 
-  | farcall_fwd_existing_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack new_stack  reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx (in_ptr narrowed_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query __,
+  | farcall_fwd_existing_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack new_stack  reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx (in_ptr narrowed_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query,
 
       let caller_extframe := active_extframe cs0 in
       let mem_ctx0 := ecf_mem_ctx caller_extframe in
@@ -469,14 +469,13 @@ Section FarCallDefinitions.
                          |} (Some new_caller_stack) ->
 
       farcall
-        ({|
+        (PtrValue {|
           FarCall.fwd_memory           := ForwardExistingFatPointer in_ptr;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
-        |},
-        PtrValue __)
+        |})
         {|
           gs_flags        := flags;
           gs_regs         := old_regs;
@@ -487,14 +486,14 @@ Section FarCallDefinitions.
         |}
         {|
           gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false narrowed_ptr;
+          gs_regs         := regs_effect old_regs is_system false (NotNullPtr narrowed_ptr);
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
           gs_status       := NoPanic;
         |}
 
-  | farcall_fwd_new_ptr: forall flags old_regs old_pages cs0 cs1 cs2 new_caller_stack new_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx abi_shard ergs_query ergs_actual is_syscall_query out_ptr __ in_span page_type,
+  | farcall_fwd_new_ptr: forall flags old_regs old_pages cs0 cs1 cs2 new_caller_stack new_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx abi_shard ergs_query ergs_actual is_syscall_query out_ptr in_span page_type,
 
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
@@ -527,13 +526,13 @@ Section FarCallDefinitions.
                          |} (Some new_caller_stack) ->
 
       farcall
-        ({|
+        (IntValue {|
           FarCall.fwd_memory   := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
-(*!*)   |}, __)
+(*!*)   |})
         {|
           gs_flags        := flags;
           gs_regs         := old_regs;
@@ -544,7 +543,7 @@ Section FarCallDefinitions.
         |}
         {|
           gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false out_ptr;
+          gs_regs         := regs_effect old_regs is_system false (NotNullPtr out_ptr);
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
@@ -586,20 +585,19 @@ instruction is masked as [%OpPanic].
 
 1. Attempting to pass an existing [%fat_ptr], but the passed value is not tagged as a pointer.
  *)
-  | farcall_fwd_existing_fatptr_notag: forall (ts1 ts2:transient_state) ___0 ___1 ___2 ___3 ___4 ___5,
+  | farcall_fwd_existing_fatptr_notag: forall (ts1 ts2:transient_state) ___0 ___1 ___2 ___3 ___4,
 
      ts2 = ts1 <| gs_status := Panic FarCallInputIsNotPointerWhenExpected |> ->
      farcall
-       ({|
+       (IntValue {|
            FarCall.fwd_memory   := ForwardExistingFatPointer ___0;
            ergs_passed          := ___1;
            FarCall.shard_id     := ___2;
            constructor_call     := ___3;
            to_system            := ___4;
-         |},
-         IntValue ___5) ts1 ts2
+         |}) ts1 ts2
 (** 2. The hash for the contract code (stored in the storage of [%DEPLOYER_SYSTEM_CONTRACT_ADDRESS]) is malformed. *)
-  | farcall_malformed_decommitment_hash:  forall cs0 abi_shard is_syscall_query ts1 ts2 ___0 ___1 ___2 ___3 ___4,
+  | farcall_malformed_decommitment_hash:  forall cs0 abi_shard is_syscall_query ts1 ts2 ___1 ___2 ___3 ___4 _tag,
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if is_shard_provided then abi_shard else current_shard cs0 in
@@ -607,16 +605,16 @@ instruction is masked as [%OpPanic].
 
       ts2 = ts1 <| gs_status := Panic FarCallInvalidCodeHashFormat |> ->
       farcall
-        ({|
+        (mk_pv _tag {|
           FarCall.fwd_memory   := ___1;
           ergs_passed          := ___2;
           FarCall.shard_id     := abi_shard;
           constructor_call     := ___3;
           to_system            := is_syscall_query;
-        |}, ___0)
+        |})
        ts1 ts2
 (** 3. Not enough ergs to pay for code decommitment. *)
-  | farcall_decommitment_unaffordable:  forall cs0 abi_shard is_syscall_query ts1 ts2  ___1 ___2 ___3 ___4 ___5,
+  | farcall_decommitment_unaffordable:  forall cs0 abi_shard is_syscall_query ts1 ts2  ___1 ___2 ___3 ___4 _tag,
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
       let callee_shard := if is_shard_provided then abi_shard else current_shard cs0 in
@@ -624,16 +622,16 @@ instruction is masked as [%OpPanic].
       cs0 = gs_callstack ts1 ->
       ts2 = ts1 <| gs_status := Panic FarCallNotEnoughErgsToDecommit |> ->
       farcall
-        ({|
+        (mk_pv _tag {|
           FarCall.fwd_memory   := ___2;
           ergs_passed          := ___3;
           FarCall.shard_id     := abi_shard;
           constructor_call     := ___4;
           to_system            := is_syscall_query;
-        |}, ___5)
+        |})
        ts1 ts2
 (** 4. Paid for decommitment; Returning a new fat pointer, but not enough ergs to pay for memory growth. *)
-  | farcall_fwd_new_ptr_growth_unaffordable: forall cs0 cs1 ___1 ___2 ___3 abi_shard ergs_query is_syscall_query in_span page_type bound growth_query ts1 ts2,
+  | farcall_fwd_new_ptr_growth_unaffordable: forall cs0 cs1 ___1 ___2 abi_shard ergs_query is_syscall_query in_span page_type bound growth_query ts1 ts2,
 
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
@@ -649,13 +647,13 @@ instruction is masked as [%OpPanic].
       cs0 = gs_callstack ts1 ->
       ts2 = ts1 <| gs_status := Panic FarCallNotEnoughErgsToGrowMemory |> ->
       farcall
-        ({|
+        (IntValue {|
           FarCall.fwd_memory   := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
           FarCall.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
-          |}, ___3)
+          |})
        ts1 ts2
   .
 (** ## Not formalized
@@ -665,25 +663,25 @@ End FarCallDefinitions.
 
 Inductive step_farcall : instruction -> smallstep :=
 
-| step_farcall_normal: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
+| step_farcall_normal: forall handler pv_abi (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
     let dest_addr := low contract_address_bits dest in
     let handler_code_addr := low code_address_bits handler in
-    farcall Normal call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
+    farcall Normal call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) pv_abi ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpFarCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
-| step_farcall_mimic: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
+    step_farcall (OpFarCall (Some pv_abi) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
+| step_farcall_mimic: forall handler pv_abi (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
     let dest_addr := low contract_address_bits dest in
     let handler_code_addr := low code_address_bits handler in
-    farcall Mimic call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
+    farcall Mimic call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) pv_abi ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpMimicCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
-| step_farcall_delegate: forall handler abi abi_enc (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
+    step_farcall (OpMimicCall (Some pv_abi) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
+| step_farcall_delegate: forall handler pv_abi (dest:word) call_shard call_as_static s1 s2 ts1 ts2 (__:bool),
 
     let dest_addr := low contract_address_bits dest in
     let handler_code_addr := low code_address_bits handler in
-    farcall Delegate call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) (abi,abi_enc) ts1 ts2  ->
+    farcall Delegate call_as_static call_shard dest_addr handler_code_addr s1.(gs_global) pv_abi ts1 ts2  ->
     step_transient_only ts1 ts2 s1 s2 ->
-    step_farcall (OpDelegateCall (Some abi, abi_enc) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
+    step_farcall (OpDelegateCall (Some pv_abi) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 .

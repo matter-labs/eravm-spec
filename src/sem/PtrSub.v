@@ -57,17 +57,16 @@ $$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$
    *)
   Inductive step_ptrsub : instruction -> smallstep :=
   | step_PtrSub:
-    forall src_enc result s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
+    forall high128 s ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
       arg_delta <= MAX_OFFSET_FOR_ADD_SUB = true->
       mem_delta = low mem_address_bits arg_delta ->
       (false,new_ofs) = ofs - mem_delta ->
 
-      topmost_128_bits_match src_enc result ->
       step_ptrsub (OpPtrSub
-              (Some (mk_fat_ptr pid (mk_ptr span ofs)), PtrValue src_enc)
+              (Some (PtrValue (high128, NotNullPtr (mk_fat_ptr pid (mk_ptr span ofs)))))
               (IntValue arg_delta)
-              (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
+              (Some (PtrValue (high128, NotNullPtr (mk_fat_ptr pid (mk_ptr span new_ofs))))))
         s s
 (** ## Affected parts of VM state
 
@@ -101,26 +100,26 @@ Instructions [%OpPtrSub], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 1. First argument is not a pointer (after accounting for `swap`).
  *)
   | step_PtrSub_in1_not_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 ___ ____ _____,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrsub (OpPtrSub (Some __, IntValue ___) ____ _____) s1 s2
+      step_ptrsub (OpPtrSub (Some (IntValue ___)) ____ _____) s1 s2
   (** 2. Second argument is a pointer (after accounting for `swap`). *)
   | step_PtrSub_in2_ptr:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2 __ ____ _____,
       step_panic ExpectedFatPointer s1 s2 ->
-      step_ptrsub (OpPtrSub (Some __, ___) (PtrValue ____) _____) s1 s2
+      step_ptrsub (OpPtrSub __ (PtrValue ____) _____) s1 s2
 
   (** 3. Second argument is larger than [%MAX_OFFSET_FOR_SUB_SUB] (after
   accounting for `swap`). *)
   | step_PtrSub_diff_too_large:
-    forall s1 s2 (arg_delta:word) (mem_delta: mem_address) __ ___ ____,
+    forall s1 s2 (arg_delta:word) (mem_delta: mem_address) ___ ____,
 
       arg_delta >= MAX_OFFSET_FOR_ADD_SUB = true ->
       step_panic FatPointerDeltaTooLarge s1 s2 ->
-      step_ptrsub (OpPtrSub (Some __, PtrValue ___) (IntValue arg_delta) ____) s1 s2
+      step_ptrsub (OpPtrSub (Some (PtrValue ___)) (IntValue arg_delta) ____) s1 s2
   (** 4. Subtraction underflows. *)
   | step_PtrSub_underflow:
-    forall src_enc result s1 s2 ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
+    forall high128 s1 s2 ofs new_ofs pid (arg_delta:word) (mem_delta: mem_address) span,
 
       arg_delta < MAX_OFFSET_FOR_ADD_SUB = true ->
       mem_delta = low mem_address_bits arg_delta ->
@@ -128,9 +127,10 @@ Instructions [%OpPtrSub], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are shari
 
       step_panic FatPointerOverflow s1 s2 ->
       step_ptrsub (OpPtrSub
-              (Some (mk_fat_ptr pid (mk_ptr span ofs)), PtrValue src_enc)
-              (IntValue arg_delta)
-              (mk_fat_ptr pid (mk_ptr span new_ofs), PtrValue result))
+                     (Some (PtrValue (high128, NotNullPtr (mk_fat_ptr pid (mk_ptr span ofs)))))
+                     (IntValue arg_delta)
+                     (Some (PtrValue (high128, NotNullPtr (mk_fat_ptr pid (mk_ptr span new_ofs))))))
+
         s1 s2
   .
 End PtrSubDefinition.

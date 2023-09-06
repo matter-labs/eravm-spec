@@ -42,7 +42,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    word in the heap variant in `inc_ptr`.
 *)
   | step_LoadInc:
-    forall heap_variant result new_regs selected_page ptr_inc bound new_cs addr src_tag __ ___ ctx,
+    forall heap_variant result new_regs selected_page high224 ptr_inc bound new_cs addr ctx,
       `(
       let hptr := mk_hptr addr in
 
@@ -56,7 +56,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
       hp_inc hptr ptr_inc ->
 
-      step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant (ptr_inc, mk_pv src_tag ___))
+      step_load_inc (OpLoadInc (Some (IntValue (high224, hptr))) (IntValue result) heap_variant (Some (IntValue (high224, ptr_inc))))
         (mk_transient_state flags regs mem cs0 ctx NoPanic)
         (mk_transient_state flags new_regs mem new_cs ctx NoPanic)
         )
@@ -84,37 +84,37 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
   | step_Load_offset_too_large:
-    forall heap_variant __ ___ ____ addr s1 s2,
+    forall heap_variant ___ ____ addr s1 s2 high224,
       `(
           addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
           step_panic HeapPtrOffsetTooLarge s1 s2 ->
-          step_load_inc (OpLoadInc (Some (mk_hptr addr), __) ___ heap_variant ____) s1 s2
+          step_load_inc (OpLoadInc (Some (IntValue (high224, mk_hptr addr))) ___ heap_variant ____) s1 s2
         )
   (** 2. Passed [%fat_ptr] instead of [%heap_ptr]. *)
   | step_Load_expects_intvalue:
-    forall s1 s2 __ ___ ____ _____ ______,
+    forall s1 s2 ___ ____ _____ ______,
       `(
           step_panic ExpectedHeapPointer s1 s2 ->
-          step_load_inc (OpLoadInc (Some __, PtrValue ___) ____ _____ ______) s1 s2
+          step_load_inc (OpLoadInc (Some (PtrValue ___)) ____ _____ ______) s1 s2
         )
   (** 3. Accessing an address requires growing the bound of the
        corresponding heap variant, but the growth is unaffordable. *)
   | step_Load_growth_unaffordable:
-    forall (s1 s2:state) cs ptr bound heap_variant __ ___ ____,
+    forall (s1 s2:state) cs ptr bound heap_variant ___ ____ high224,
       `(
           word_upper_bound ptr bound ->
           growth_to_bound_unaffordable cs (heap_variant, bound) ->
           gs_callstack s1 = cs ->
           step_panic HeapGrowthUnaffordable s1 s2 ->
-          step_load_inc (OpLoadInc (Some ptr, __) ___ heap_variant ____) s1 s2
+          step_load_inc (OpLoadInc (Some (IntValue (high224, ptr))) ___ heap_variant ____) s1 s2
         )
   (** 4. Incremented pointer overflows. *)
   | step_LoadInc_inc_overflow:
-    forall (s1 s2:state) heap_variant result src_tag hptr __ ___ ,
+    forall (s1 s2:state) heap_variant result hptr ___ high224,
       `(
           hp_inc_OF hptr = None ->
           step_panic HeapPtrIncOverflow s1 s2 ->
-          step_load_inc (OpLoadInc (Some hptr, mk_pv src_tag __) (IntValue result) heap_variant ___) s1 s2
+          step_load_inc (OpLoadInc (Some (IntValue (high224, hptr))) (IntValue result) heap_variant ___) s1 s2
         )
   .
 

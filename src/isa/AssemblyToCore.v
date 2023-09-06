@@ -88,8 +88,7 @@ Section AssemblyToCore.
     | Assembly.OpPanic  => @OpPanic decoded
     | Assembly.OpLoad ptr res mem  => @OpLoad decoded  ptr res mem
     | Assembly.OpLoadInc ptr res mem inc_ptr => @OpLoadInc decoded  ptr res mem inc_ptr
-    | Assembly.OpStoreInc ptr val mem inc_ptr =>
-        @OpStoreInc decoded ptr val mem inc_ptr
+    | Assembly.OpStoreInc ptr val mem inc_ptr => @OpStoreInc decoded ptr val mem inc_ptr
     | Assembly.OpLoadPointer ptr res  => @OpLoadPointer decoded  ptr res
     | Assembly.OpLoadPointerInc ptr res inc_ptr  => @OpLoadPointerInc decoded  ptr res inc_ptr
     | Assembly.OpContextThis out  => @OpContextThis decoded  out

@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import ABI.NearCall Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet Memory State SemanticCommon.
+Import ABI.NearCall Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet Memory PrimitiveValue State SemanticCommon.
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
 
 Section NearCallDefinition.
@@ -97,7 +97,7 @@ Step-by-step explanation:
   | step_NearCall_pass_some_ergs:
     forall (expt_handler call_addr: code_address)
       (passed_ergs callee_ergs caller_ergs: ergs)
-      (new_caller:callstack) (new_frame:callstack_common) __flags __enc (cs:callstack) regs ctx pages gs,
+      (new_caller:callstack) (new_frame:callstack_common) __flags (cs:callstack) regs ctx pages gs,
 
       (callee_ergs, caller_ergs) = split_ergs_callee_caller passed_ergs (ergs_remaining cs) ->
 
@@ -105,7 +105,7 @@ Step-by-step explanation:
       new_frame = mk_cf expt_handler (sp_get cs) call_addr callee_ergs (gs_revertable gs) ->
 
       step_nearcall
-        (OpNearCall (Some (mk_params passed_ergs), __enc) call_addr expt_handler)
+        (OpNearCall (Some (IntValue (mk_params passed_ergs))) call_addr expt_handler)
         {|
           gs_transient := {|
                            gs_flags        := __flags;

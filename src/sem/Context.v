@@ -388,7 +388,7 @@ Record params := {
 
  *)
 | step_ContextMeta:
-  forall params encoded cs shards
+  forall params cs shards
     (s1 s2: state),
     cs = gs_callstack s1 ->
     shards = (active_extframe cs).(ecf_shards) ->
@@ -400,7 +400,7 @@ Record params := {
                caller_shard_id := shard_caller shards;
                code_shard_id := shard_code shards;
              |} ->
-    step_context (OpContextMeta (params,encoded)) s1 s2
+    step_context (OpContextMeta (Some (IntValue params))) s1 s2
 (** # ContextIncrementTxNumber
 
 - Kernel only.

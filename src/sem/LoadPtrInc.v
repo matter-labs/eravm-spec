@@ -55,10 +55,10 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 *)
   Inductive step_load_ptr_inc : instruction -> tsmallstep :=
   | step_LoadPointerInc:
-    forall result addr selected_page (in_ptr:fat_ptr) out_ptr slice page_id s __ ___,
+    forall result addr selected_page (in_ptr:fat_ptr) out_ptr slice page_id s high128,
 
       validate_in_bounds in_ptr = true ->
-      Some page_id  = in_ptr.(fp_page) ->
+      page_id  = in_ptr.(fp_page) ->
 
       page_has_id s.(gs_pages) page_id (mk_page (DataPage selected_page)) ->
       slice_page selected_page in_ptr slice ->
@@ -68,7 +68,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
       fat_ptr_inc in_ptr out_ptr ->
 
-      step_load_ptr_inc (OpLoadPointerInc (Some in_ptr, PtrValue __)(IntValue result) (out_ptr, PtrValue ___)) s s
+      step_load_ptr_inc (OpLoadPointerInc (Some (PtrValue (high128, NotNullPtr in_ptr))) (IntValue result) (Some (PtrValue (high128, NotNullPtr out_ptr)))) s s
   (** ## Affected parts of VM state
 
 - execution stack: PC, as by any instruction;
@@ -87,14 +87,14 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
 
 1. Argument is not a tagged pointer. *)
   | step_LoadPointerInc_not_tagged:
-    forall __ ___ ____ _____ (s1 s2:state),
+    forall ___ ____ _____ (s1 s2:state),
       step_panic ExpectedFatPointer s1 s2 ->
-      step_load_ptr_inc (OpLoadPointerInc (__, IntValue ___) ____ _____) s1 s2
+      step_load_ptr_inc (OpLoadPointerInc (Some (IntValue ___)) ____ _____) s1 s2
 (** 2. Incremented pointer overflows. *)
   | step_LoadPointerInc_inc_overflow:
-    forall in_ptr ___ ____ _____ (s1 s2:state),
+    forall in_ptr high128 ____ _____ (s1 s2:state),
       fat_ptr_inc_OF in_ptr = None ->
       step_panic FatPtrIncOverflow s1 s2 ->
-      step_load_ptr_inc (OpLoadPointerInc (Some in_ptr, ___) ____ _____) s1 s2
+      step_load_ptr_inc (OpLoadPointerInc (Some (PtrValue (high128, NotNullPtr in_ptr))) ____ _____) s1 s2
 .
 End LoadPtrIncDefinition.

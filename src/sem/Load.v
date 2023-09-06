@@ -38,7 +38,7 @@ active heap variant.
    in the heap variant, store result to `res`.
 *)
   | step_Load:
-    forall new_cs heap_variant ctx result __ mem selected_page bound addr,
+    forall new_cs heap_variant ctx result mem selected_page bound addr high224,
       `(
       addr <= MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
 
@@ -48,7 +48,7 @@ active heap variant.
       word_upper_bound (mk_hptr addr) bound ->
       bound_grow_pay (heap_variant, bound) cs0 new_cs ->
 
-      step_load (OpLoad (Some (mk_hptr addr), __) (IntValue result) heap_variant)
+      step_load (OpLoad (Some (IntValue (high224, mk_hptr addr))) (IntValue result) heap_variant)
          {|
            gs_callstack    := cs0;
 
@@ -99,29 +99,29 @@ active heap variant.
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)
   | step_Load_offset_too_large:
-    forall heap_variant __ ___ addr s1 s2,
+    forall heap_variant ___ addr s1 s2 high224,
       `(
           addr > MAX_OFFSET_TO_DEREF_LOW_U32 = true ->
           step_panic HeapPtrOffsetTooLarge s1 s2 ->
-          step_load (OpLoad (Some (mk_hptr addr), __) ___ heap_variant) s1 s2
+          step_load (OpLoad (Some (IntValue (high224, mk_hptr addr))) ___ heap_variant) s1 s2
         )
   (** 2. Passed [%fat_ptr] instead of [%heap_ptr]. *)
   | step_Load_expects_intvalue:
-    forall s1 s2 __ ___ ____ _____,
+    forall s1 s2  ___ ____ _____,
       `(
           step_panic ExpectedHeapPointer s1 s2 ->
-          step_load (OpLoad (Some __, PtrValue ___) ____ _____) s1 s2
+          step_load (OpLoad (Some (PtrValue ___)) ____ _____) s1 s2
         )
   (** 3. Accessing an address requires growing the bound of the
        corresponding heap variant, but the growth is unaffordable. *)
   | step_Load_growth_unaffordable:
-    forall (s1 s2:state) cs ptr bound heap_variant __ ___,
+    forall (s1 s2:state) cs ptr bound heap_variant ___ high224,
       `(
           word_upper_bound ptr bound ->
           growth_to_bound_unaffordable cs (heap_variant, bound) ->
           gs_callstack s1 = cs ->
           step_panic HeapGrowthUnaffordable s1 s2 ->
-          step_load (OpLoad (Some ptr, __) ___ heap_variant) s1 s2
+          step_load (OpLoad (Some (IntValue (high224, ptr ))) ___ heap_variant) s1 s2
         )
   .
 End LoadDefinition.

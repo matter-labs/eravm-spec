@@ -24,7 +24,8 @@ Import
     MemoryOps
     Pointer
     PrimitiveValue
-    State.
+    State
+    Types.
 
 Section OperandBinding.
 
@@ -45,16 +46,16 @@ decoded for small step relations, e.g. [%step_ptradd] for [%OpPtrAdd].
   let pv := @primitive_value word in
   {|
     src_pv := pv;
-    src_fat_ptr := option fat_ptr * pv ;
-    src_heap_ptr := option heap_ptr * pv;
-    src_farcall_params := option ABI.FarCall.params * pv;
-    src_nearcall_params := option ABI.NearCall.params * pv;
-    src_ret_params := option ABI.FarRet.params * pv;
-    src_precompile_params := option ABI.PrecompileParameters.params * pv;
+    src_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable));
+    src_heap_ptr := option (@primitive_value (u224 * heap_ptr));
+    src_farcall_params := option (@primitive_value ABI.FarCall.params);
+    src_nearcall_params := option (@primitive_value ABI.NearCall.params);
+    src_ret_params := option (@primitive_value ABI.FarRet.params);
+    src_precompile_params := option (@primitive_value ABI.PrecompileParameters.params);
     dest_pv := pv;
-    dest_heap_ptr := heap_ptr * pv;
-    dest_fat_ptr := fat_ptr * pv;
-    dest_meta_params := ABI.MetaParameters.params * pv;
+    dest_heap_ptr := option (@primitive_value (u224 * heap_ptr) );
+    dest_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable) );
+    dest_meta_params := option (@primitive_value (ABI.MetaParameters.params ));
   |}
   .
 
@@ -82,65 +83,66 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
       bind_dest (mk_bind_st cs regs mem) (mk_bind_st cs' regs' mem') op val.
 
   (** To bind [%src_fat_ptr] or any other compound value encoded in a binary form,  bind both the encoded and decoded value. *)
-  Inductive bind_fat_ptr: binding_state -> binding_state -> in_any -> option fat_ptr * primitive_value -> Prop :=
-  | bind_fat_ptr_apply : forall op v s s' decoded,
+  Inductive bind_fat_ptr: binding_state -> binding_state -> in_any -> option (@primitive_value (u128 * fat_ptr_nullable)) -> Prop :=
+  | bind_fat_ptr_apply : forall op v s s' decoded high128,
       bind_src s s' op v ->
-      decoded = decode_fat_ptr v.(value) ->
-      bind_fat_ptr s s' op (decoded, v).
+      Some (high128, decoded) = decode_fat_ptr_word v.(value) ->
+      bind_fat_ptr s s' op (Some (PtrValue (high128, decoded)))
+  .
 
-  Inductive bind_heap_ptr: binding_state -> binding_state -> in_any -> option heap_ptr * primitive_value -> Prop :=
+  Inductive bind_heap_ptr: binding_state -> binding_state -> in_any -> option (@primitive_value (u224 * heap_ptr)) -> Prop :=
   | bind_heap_ptr_apply : forall op v s s' decoded,
       bind_src s s' op v ->
-      decoded = decode_heap_ptr v.(value) ->
-      bind_heap_ptr s s' op (decoded, v).
+      Some decoded = decode_heap_ptr v.(value) ->
+      bind_heap_ptr s s' op (Some (IntValue decoded)).
 
-  Inductive bind_farcall_params: binding_state -> binding_state -> in_any -> option ABI.FarCall.params * primitive_value -> Prop :=
-  | bind_farcall_params_apply : forall op v s s' decoded,
+  Inductive bind_farcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.FarCall.params) -> Prop :=
+  | bind_farcall_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      decoded = ABI.FarCall.ABI.(decode) v.(value) ->
-      bind_farcall_params s s' op (decoded, v).
+      Some decoded = ABI.FarCall.ABI.(decode) v.(value) ->
+      bind_farcall_params s s' op (Some (mk_pv tag (decoded)))
+  .
 
-  Inductive bind_nearcall_params: binding_state -> binding_state -> in_any -> option ABI.NearCall.params * primitive_value -> Prop :=
-  | bind_nearcall_params_apply : forall op v s s' decoded,
+  Inductive bind_nearcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.NearCall.params) -> Prop :=
+  | bind_nearcall_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      decoded = ABI.NearCall.ABI.(decode) v.(value) ->
-      bind_nearcall_params s s' op (decoded, v).
+      Some decoded = ABI.NearCall.ABI.(decode) v.(value) ->
+      bind_nearcall_params s s' op (Some (mk_pv tag decoded)).
 
-  Inductive bind_farret_params: binding_state -> binding_state -> in_any -> option ABI.FarRet.params * primitive_value -> Prop :=
-  | bind_farret_params_apply : forall op v s s' decoded,
+  Inductive bind_farret_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.FarRet.params) -> Prop :=
+  | bind_farret_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      decoded = ABI.FarRet.ABI.(decode) v.(value) ->
-      bind_farret_params s s' op (decoded, v).
+      Some decoded = ABI.FarRet.ABI.(decode) v.(value) ->
+      bind_farret_params s s' op (Some (mk_pv tag decoded)).
 
-  Inductive bind_precompile_params: binding_state -> binding_state -> in_any -> option ABI.PrecompileParameters.params * primitive_value -> Prop :=
-  | bind_precompile_params_apply : forall op v s s' decoded,
+  Inductive bind_precompile_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.PrecompileParameters.params) -> Prop :=
+  | bind_precompile_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      decoded = ABI.PrecompileParameters.ABI.(decode) v.(value) ->
-      bind_precompile_params s s' op (decoded, v).
+      Some decoded = ABI.PrecompileParameters.ABI.(decode) v.(value) ->
+      bind_precompile_params s s' op (Some (mk_pv tag decoded)).
 
-  (** Implementation note: Using "decode" in bindings is a weaker version of "encode".
- Instead of postulating that `encoded` is the precise result of encoding the
- pointer, we postulate that it will be decoded to the required pointer value. It
- means, that if decoder ignores a part of the value, we can still bind it with
- some relation. This is used e.g. in [%OpPtrAdd] that has to preserve 128 most significant bits. *)
-  Inductive bind_dest_fat_ptr: binding_state -> binding_state -> out_any -> fat_ptr * primitive_value -> Prop :=
-  | bind_dest_fat_ptr_apply: forall s s' op encoded ptr,
+  Inductive bind_dest_fat_ptr: binding_state -> binding_state -> out_any ->
+                               option (@primitive_value (u128 * fat_ptr_nullable) ) -> Prop :=
+  | bind_dest_fat_ptr_apply: forall s s' op encoded ptr (high128:u128),
       bind_dest s s' op (PtrValue encoded) ->
-      decode_fat_ptr encoded = Some ptr ->
-      bind_dest_fat_ptr s s' op (ptr, PtrValue encoded).
+      encode_fat_ptr_word high128 ptr = encoded ->
+      bind_dest_fat_ptr s s' op (Some (PtrValue (high128, ptr)))
+  .
 
-  Inductive bind_dest_heap_ptr: binding_state -> binding_state -> out_any -> heap_ptr * primitive_value -> Prop :=
-  | bind_dest_heap_ptr_apply: forall s s' op encoded ptr,
-      bind_dest s s' op (PtrValue encoded) ->
-      decode_heap_ptr encoded = Some ptr ->
-      bind_dest_heap_ptr s s' op (ptr, PtrValue encoded).
-
-  Inductive bind_dest_meta_params: binding_state -> binding_state -> out_any ->
-                                   ABI.MetaParameters.params * primitive_value -> Prop :=
-  | bind_dest_meta_params_apply: forall s s' op encoded meta_params,
+  Inductive bind_dest_heap_ptr: binding_state -> binding_state -> out_any -> option (@primitive_value (u224 * heap_ptr) ) -> Prop :=
+  | bind_dest_heap_ptr_apply: forall s s' op (encoded:word) high224 hptr,
       bind_dest s s' op (IntValue encoded) ->
-      ABI.MetaParameters.ABI.(decode) encoded = Some meta_params ->
-      bind_dest_meta_params s s' op (meta_params, IntValue encoded).
+      encode_heap_ptr_word high224 hptr = Some encoded ->
+      bind_dest_heap_ptr s s' op (Some (IntValue (high224, hptr)))
+  .
+
+
+  Inductive bind_dest_meta_params: binding_state -> binding_state -> out_any -> option (@primitive_value (ABI.MetaParameters.params)) -> Prop :=
+  | bind_dest_meta_params_apply: forall s s' op encoded params,
+      bind_dest s s' op (IntValue encoded) ->
+      ABI.MetaParameters.ABI.(encode) params = encoded ->
+      bind_dest_meta_params s s' op (Some (IntValue params))
+  .
 
   Definition bind_relation :=
     {|

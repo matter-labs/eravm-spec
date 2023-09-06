@@ -106,14 +106,14 @@ Section FarRetDefinition.
 6. Clear context register.
 *)
 | step_RetExt_heapvar:
-  forall pages cf caller_stack cs1 new_caller new_regs enc  ___1 ___2 ___3 out_ptr heap_type hspan params s1 s2 status,
+  forall pages cf caller_stack cs1 new_caller new_regs ___1 ___2 ___3 out_ptr heap_type hspan params s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     paid_forward_new_fat_ptr heap_type hspan cs0 (out_ptr, cs1) ->
     ergs_return_caller_and_drop cs1 new_caller ->
     params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
     new_regs = (reserve regs_state_zero)
-                             <| r1 := PtrValue (encode_fat_ptr out_ptr) |> ->
+                             <| r1 := PtrValue (encode_fat_ptr_word zero128 (NotNullPtr out_ptr)) |> ->
     step_transient_only {|
                           gs_flags        := ___1 ;
                           gs_callstack    := cs0;
@@ -134,10 +134,10 @@ Section FarRetDefinition.
                           gs_pages        := pages;
                           gs_status       := status;
                            |} s1 s2 ->
-    step_farret (OpFarRet (Some params, enc)) s1 s2
+    step_farret (OpFarRet (Some (IntValue params))) s1 s2
 
   | step_RetExt_ForwardFatPointer:
-  forall pages cf caller_stack cs1 new_caller new_regs ___1 ___2 ___3 ___4 in_ptr out_ptr page params s1 s2 status,
+  forall pages cf caller_stack cs1 new_caller new_regs ___1 ___2 ___3 in_ptr out_ptr page params s1 s2 status,
     let cs0 := ExternalCall cf (Some caller_stack) in
 
     in_ptr.(fp_page) = Some page ->
@@ -151,7 +151,7 @@ Section FarRetDefinition.
     ergs_return_caller_and_drop cs1 new_caller ->
     params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
     new_regs = (reserve regs_state_zero)
-                             <| r1 := PtrValue (encode_fat_ptr out_ptr) |> ->
+                             <| r1 := PtrValue (encode_fat_ptr_word zero128 (NotNullPtr out_ptr)) |> ->
     step_transient_only {|
                           gs_flags        := ___1 ;
                           gs_callstack    := cs0;
@@ -171,7 +171,7 @@ Section FarRetDefinition.
                           gs_pages        := pages;
                           gs_status       := status;
                           |} s1 s2 ->
-    step_farret (OpFarRet (Some params, PtrValue ___4)) s1 s2
+    step_farret (OpFarRet (Some (PtrValue params))) s1 s2
 (** ## Affected parts of VM state
 
 - Flags are cleared.
@@ -204,7 +204,7 @@ Section FarRetDefinition.
     step_panic
       RetABIExistingFatPointerWithoutTag
       s1 s2 ->
-    step_farret (OpFarRet (Some params, IntValue ___2)) s1 s2
+    step_farret (OpFarRet (Some (IntValue ___2))) s1 s2
 
 (** 2. Attempt to return a pointer created before the current callframe.
 It is forbidden to pass a pointer to a contract in a far call and return it back.
@@ -218,7 +218,7 @@ In other words, this is a situation where:
 
 *)
   | step_RetExt_ForwardFatPointer_returning_older_pointer:
-  forall cf caller_stack ___1 in_ptr page params (s1 s2:state) ,
+  forall cf caller_stack in_ptr page params (s1 s2:state) _tag,
     let cs0 := ExternalCall cf (Some caller_stack) in
     gs_callstack s1 = cs0 ->
 
@@ -229,10 +229,10 @@ In other words, this is a situation where:
     step_panic
       RetABIReturnsPointerCreatedByCaller
       s1 s2 ->
-    step_farret (OpFarRet (Some params, ___1)) s1 s2
+    step_farret (OpFarRet (Some (mk_pv _tag params))) s1 s2
 (** 3. Attempt to return a malformed pointer. *)
   | step_RetExt_ForwardFatPointer_returning_malformed_pointer:
-  forall cf caller_stack ___1 (in_ptr: fat_ptr) params (s1 s2:state) ,
+  forall cf caller_stack _tag (in_ptr: fat_ptr) params (s1 s2:state) ,
     let cs0 := ExternalCall cf (Some caller_stack) in
     gs_callstack s1 = cs0 ->
 
@@ -242,10 +242,10 @@ In other words, this is a situation where:
     step_panic
       FatPointerMalformed
       s1 s2 ->
-    step_farret (OpFarRet (Some params, ___1)) s1 s2
+    step_farret (OpFarRet (Some (mk_pv _tag params))) s1 s2
 (** 4. Attempt to return a new pointer but unable to pay for memory growth. *)
 | step_RetExt_heapvar_growth_unaffordable:
-  forall cf caller_stack __ heap_type hspan params (s1 s2:state),
+  forall cf caller_stack _tag heap_type hspan params (s1 s2:state),
     let cs0 := ExternalCall cf (Some caller_stack) in
     gs_callstack s1 = cs0 ->
     params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
@@ -253,7 +253,7 @@ In other words, this is a situation where:
     step_panic
       FatPointerCreationUnaffordable
       s1 s2 ->
-    step_farret (OpFarRet (Some params, __)) s1 s2
+    step_farret (OpFarRet (Some (mk_pv _tag params))) s1 s2
   .
 
 End FarRetDefinition.
