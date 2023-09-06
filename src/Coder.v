@@ -1,3 +1,6 @@
+Require Common.
+Import ssreflect ssrfun.
+
 Section Encoding.
 
 (** # Encoding
@@ -8,35 +11,60 @@ deserialization.
 - Serialization encodes an instance of type [%T] into a word of type [%word].
 - Deserialization tries to decode an instance of type [%T] from a word of type
   [%word].
- *)
+   *)
 
-Context {word T:Type}.
+  Context {U T:Type}.
 
-(** The type [%decoder] defines an embedding of a subset of words of type
+  (** The type [%decoder] defines an embedding of a subset of words of type
 [%word] to a type [%T]. Decoding may fail if the input word is malformed. *)
-Definition decoder := word -> option T.
+  Definition decoder := U -> option T.
 
-(** Definition [%encoder] defines an embedding of type [%T] to a set of possible
+  (** Definition [%encoder] defines an embedding of type [%T] to a set of possible
 [%word] values.
+   *)
+  Definition encoder := T -> option U.
 
- Encoding always succeeds. *)
-Definition encoder := T -> word.
+  Definition revertible (decode:decoder) (encode:encoder):= forall obj encoded, encode obj = Some encoded -> decode encoded = Some obj.
 
-(** The record [%coder] connects a specific decoder with the matching encoder,
+  (** The record [%coder] connects a specific decoder with the matching encoder,
 and proofs of their properties.
 
-- [%revertible1] formalizes the following: if we encode an element [%t] of type
-  [%T] to a word, and then decode this word, the result will be [%t] again.
-- [%revertible2] formalizes the following: if we successfully decoded an element
-  [%t] of type [%T] from a word [%w], and then encode [%t] again, the encoding
-  will match [%w] again. *)
-Record coder  := {
-    decode: decoder;
-    encode:  encoder;
+- [%revertible decode encode] formalizes the following: if we encode an element [%t] of type
+   *)
+  Record coder  := {
+      decode: decoder;
+      encode:  encoder;
 
-    (** [%decode] and [%encode] should be mutual inverses in the following
+      (** [%decode] and [%encode] should be mutual inverses in the following
     sense: *)
-    revertible1: forall params, decode (encode params) = Some params;
-    (*revertible2: forall params encoded, decode encoded = Some params -> decode (encode params = encoded;*)
-  }.
+      _: revertible decode encode;
+    }.
 End Encoding.
+
+Section Properties.
+
+  Context {A B C: Type}.
+
+  Section PropertyComposition.
+    Context (encode1: @encoder B A) (decode1:@decoder B A) (encode2: @encoder C B) (decode2: @decoder C B).
+
+    Theorem revertible1_compose:
+      revertible decode1 encode1 ->
+      revertible decode2 encode2 ->
+      let encode3 : A -> option C := pcomp encode2 encode1 in
+      let decode3 : C -> option A := pcomp decode1 decode2 in
+      revertible decode3 encode3.
+    Proof.
+      unfold revertible, pcomp, obind, oapp.
+      move => H1 H2 params encoded.
+      case_eq (encode1 params);
+        by [move => ? ? ?; erewrite H2; eauto| done].
+    Qed.
+
+  End PropertyComposition.
+
+  Definition coder_compose (c2: @coder C B) (c1: @coder B A) : @coder C A.
+    refine (Build_coder  (pcomp (decode c1) (decode c2)) (pcomp (encode c2) (encode c1)) _).
+    by destruct c1, c2; eapply revertible1_compose; eauto.
+  Defined.
+End Properties.
