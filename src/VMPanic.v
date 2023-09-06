@@ -45,6 +45,8 @@ The type [%reason] describes all situations where EraVM panics.
   | PtrPackExpectsOp2Low128BitsZero
   (** - Instruction expects a tagged [%fat_ptr], e.g. [%step_PtrAdd_in1_not_ptr]. *)
   | ExpectedFatPointer
+  (** - Instruction expects a non-tagged primitive value, e.g. [%step_PtrAdd_in2_ptr]. *)
+  | ExpectedInteger
   (** - Executing [%OpPanic] or [%OpNearPanicTo]. *)
   | TriggeredExplicitly
   (** - Attempt to dereference a pointer past [%MAX_OFFSET_TO_DEREF_LOW_U32]. *)
