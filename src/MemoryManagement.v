@@ -18,7 +18,7 @@ Far returns and far calls are able to:
 They chose the action based on an instance of [%fwd_memory] passed through
 ABIs. *)
   Inductive fwd_memory :=
-    ForwardExistingFatPointer (p:fat_ptr)
+    ForwardExistingFatPointer (p:fat_ptr_nullable)
   | ForwardNewFatPointer (heap_var: data_page_type) (s:span).
 
   (**

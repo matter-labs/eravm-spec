@@ -1,7 +1,7 @@
 Require SemanticCommon.
 
 Import Common Core Memory isa.CoreSet State
-  SemanticCommon PrimitiveValue ZArith ABI.FatPointer.
+  SemanticCommon PrimitiveValue ZArith FatPointerABI.
 
 Section PtrPackDefinition.
   Open Scope ZMod_scope.
@@ -35,9 +35,10 @@ $$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
    *)
 
   | step_PtrPack :
-    forall op1_high128 ptr (op2:word) (s:state) result,
+    forall op1_high128 ptr (op2:word) (s:state) encoded result,
       low 128 op2 = zero128 ->
-      result = (@high 128 128 op2) ## encode_fat_ptr ptr ->
+      Some encoded = encode_fat_ptr ptr ->
+      result = (@high 128 128 op2) ## encoded ->
       step_ptrpack (@OpPtrPack bound (Some (PtrValue (op1_high128, ptr))) (IntValue op2) (IntValue result)) s s
 (** ## Affected parts of VM state
 - execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.

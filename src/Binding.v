@@ -13,7 +13,7 @@ Require
     State.
 Import
   ABI
-    ABI.FatPointer
+    FatPointerABI
     Addressing
     Addressing.Coercions
     CallStack
@@ -48,14 +48,14 @@ decoded for small step relations, e.g. [%step_ptradd] for [%OpPtrAdd].
     src_pv := pv;
     src_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable));
     src_heap_ptr := option (@primitive_value (u224 * heap_ptr));
-    src_farcall_params := option (@primitive_value ABI.FarCall.params);
-    src_nearcall_params := option (@primitive_value ABI.NearCall.params);
-    src_ret_params := option (@primitive_value ABI.FarRet.params);
-    src_precompile_params := option (@primitive_value ABI.PrecompileParameters.params);
+    src_farcall_params := option (@primitive_value FarCallABI.params);
+    src_nearcall_params := option (@primitive_value (u224 * NearCallABI.params));
+    src_ret_params := option (@primitive_value FarRetABI.params);
+    src_precompile_params := option (@primitive_value PrecompileParametersABI.params);
     dest_pv := pv;
     dest_heap_ptr := option (@primitive_value (u224 * heap_ptr) );
     dest_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable) );
-    dest_meta_params := option (@primitive_value (ABI.MetaParameters.params ));
+    dest_meta_params := option (@primitive_value (MetaParametersABI.params ));
   |}
   .
 
@@ -96,36 +96,36 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
       Some decoded = decode_heap_ptr v.(value) ->
       bind_heap_ptr s s' op (Some (IntValue decoded)).
 
-  Inductive bind_farcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.FarCall.params) -> Prop :=
+  Inductive bind_farcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value FarCallABI.params) -> Prop :=
   | bind_farcall_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      Some decoded = ABI.FarCall.ABI.(decode) v.(value) ->
+      Some decoded = FarCallABI.coder.(decode) v.(value) ->
       bind_farcall_params s s' op (Some (mk_pv tag (decoded)))
   .
 
-  Inductive bind_nearcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.NearCall.params) -> Prop :=
+  Inductive bind_nearcall_params: binding_state -> binding_state -> in_any -> option (@primitive_value (u224* NearCallABI.params)) -> Prop :=
   | bind_nearcall_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      Some decoded = ABI.NearCall.ABI.(decode) v.(value) ->
+      Some decoded = NearCallABI.decode_word v.(value) ->
       bind_nearcall_params s s' op (Some (mk_pv tag decoded)).
 
-  Inductive bind_farret_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.FarRet.params) -> Prop :=
+  Inductive bind_farret_params: binding_state -> binding_state -> in_any -> option (@primitive_value FarRetABI.params) -> Prop :=
   | bind_farret_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      Some decoded = ABI.FarRet.ABI.(decode) v.(value) ->
+      Some decoded = FarRetABI.coder.(decode) v.(value) ->
       bind_farret_params s s' op (Some (mk_pv tag decoded)).
 
-  Inductive bind_precompile_params: binding_state -> binding_state -> in_any -> option (@primitive_value ABI.PrecompileParameters.params) -> Prop :=
+  Inductive bind_precompile_params: binding_state -> binding_state -> in_any -> option (@primitive_value PrecompileParametersABI.params) -> Prop :=
   | bind_precompile_params_apply : forall op v s s' decoded tag,
       bind_src s s' op v ->
-      Some decoded = ABI.PrecompileParameters.ABI.(decode) v.(value) ->
+      Some decoded = PrecompileParametersABI.ABI.(decode) v.(value) ->
       bind_precompile_params s s' op (Some (mk_pv tag decoded)).
 
   Inductive bind_dest_fat_ptr: binding_state -> binding_state -> out_any ->
                                option (@primitive_value (u128 * fat_ptr_nullable) ) -> Prop :=
   | bind_dest_fat_ptr_apply: forall s s' op encoded ptr (high128:u128),
       bind_dest s s' op (PtrValue encoded) ->
-      encode_fat_ptr_word high128 ptr = encoded ->
+      encode_fat_ptr_word high128 ptr = Some encoded ->
       bind_dest_fat_ptr s s' op (Some (PtrValue (high128, ptr)))
   .
 
@@ -137,10 +137,10 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
   .
 
 
-  Inductive bind_dest_meta_params: binding_state -> binding_state -> out_any -> option (@primitive_value (ABI.MetaParameters.params)) -> Prop :=
+  Inductive bind_dest_meta_params: binding_state -> binding_state -> out_any -> option (@primitive_value (MetaParametersABI.params)) -> Prop :=
   | bind_dest_meta_params_apply: forall s s' op encoded params,
       bind_dest s s' op (IntValue encoded) ->
-      ABI.MetaParameters.ABI.(encode) params = encoded ->
+      MetaParametersABI.coder.(encode) params = Some encoded ->
       bind_dest_meta_params s s' op (Some (IntValue params))
   .
 
@@ -178,9 +178,9 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
     fun bs s1 =>
       match bs with
       | mk_bind_st cs regs gmem => s1
-                                    <| gs_regs      := regs |>
-                                                         <| gs_pages     := gmem |>
-                                                                              <| gs_callstack := cs   |>
+                                   <| gs_regs      := regs |>
+                                   <| gs_pages     := gmem |>
+                                   <| gs_callstack := cs   |>
       end.
 
   #[local]

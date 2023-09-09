@@ -11,7 +11,7 @@ Import
 
 Import
   Addressing
-    ABI ABI.FarCall ABI.FatPointer
+    ABI FarCallABI FatPointerABI
     Decommitter
     Common
     Core
@@ -122,7 +122,7 @@ The initial bounds for the new heap and auxheap pages are set to [%NEW_FRAME_MEM
  *)
 Inductive alloc_pages_extframe:  pages * mem_ctx -> code_page -> const_page -> pages * mem_ctx -> Prop :=
 | ape_alloc: forall code const (mm:pages) ctx code_id const_id stack_id heap_id heap_aux_id,
-    code_id = length mm ->
+    code_id = List.length mm ->
     (const_id = code_id + 1)%nat ->
     (stack_id = code_id + 2)%nat ->
     (heap_id = code_id + 3)%nat ->
@@ -326,28 +326,32 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
     let is_ctor_bit := Z.shiftl is_ctor 0 in
     let bits := Z.lor is_system_bit is_ctor_bit in
     IntValue (fromZ bits) in
-  let enc_ptr := encode_fat_ptr_word zero128 ptr in
-  if is_system then
-    regs
-      <| r1 := PtrValue enc_ptr |>
-      <| r2 := far_call_r2      |>
-(* In system calls, preserve values in r3-r13 but clear ptr tags *)
-      <| r3 ::= clear_pointer_tag |>
-      <| r4 ::= clear_pointer_tag |>
-      <| r5 ::= clear_pointer_tag |>
-      <| r6 ::= clear_pointer_tag |>
-      <| r7 ::= clear_pointer_tag |>
-      <| r8 ::= clear_pointer_tag |>
-      <| r9 ::= clear_pointer_tag |>
-      <| r10 ::= clear_pointer_tag |>
-      <| r11 ::= clear_pointer_tag |>
-      <| r12 ::= clear_pointer_tag |>
-      <| r13 ::= clear_pointer_tag |>
-      (* zero the rest *)
-      <| r14 := IntValue word0 |>
-      <| r15 := IntValue word0 |>
-  else
-    regs_state_zero <| r1 := PtrValue enc_ptr |>.
+  match encode_fat_ptr_word zero128 ptr with
+    | Some enc_ptr => Some
+        (if is_system then
+          regs
+            <| r1 := PtrValue enc_ptr |>
+            <| r2 := far_call_r2      |>
+      (* In system calls, preserve values in r3-r13 but clear ptr tags *)
+            <| r3 ::= clear_pointer_tag |>
+            <| r4 ::= clear_pointer_tag |>
+            <| r5 ::= clear_pointer_tag |>
+            <| r6 ::= clear_pointer_tag |>
+            <| r7 ::= clear_pointer_tag |>
+            <| r8 ::= clear_pointer_tag |>
+            <| r9 ::= clear_pointer_tag |>
+            <| r10 ::= clear_pointer_tag |>
+            <| r11 ::= clear_pointer_tag |>
+            <| r12 ::= clear_pointer_tag |>
+            <| r13 ::= clear_pointer_tag |>
+            (* zero the rest *)
+            <| r14 := IntValue word0 |>
+            <| r15 := IntValue word0 |>
+        else
+          regs_state_zero <| r1 := PtrValue enc_ptr |>
+        )
+    | _ => None
+  end.
 (**
 10. Form a new execution stack frame:
 
@@ -434,9 +438,9 @@ Section FarCallDefinitions.
   Import Pointer.
   Context (type:farcall_type) (is_static_call is_shard_provided:bool) (dest:contract_address) (handler: code_address) (gs:global_state).
 
-  Inductive farcall : @primitive_value FarCall.params -> tsmallstep :=
+  Inductive farcall : @primitive_value FarCallABI.params -> tsmallstep :=
 
-  | farcall_fwd_existing_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack new_stack  reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx (in_ptr narrowed_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query,
+  | farcall_fwd_existing_fatptr: forall flags old_regs old_pages cs0 cs1 new_caller_stack new_stack  reg_context_u128 new_regs new_pages new_code_page new_const_page new_mem_ctx (in_ptr narrowed_ptr: fat_ptr) abi_shard ergs_query ergs_actual is_syscall_query,
 
       let caller_extframe := active_extframe cs0 in
       let mem_ctx0 := ecf_mem_ctx caller_extframe in
@@ -467,14 +471,14 @@ Section FarCallDefinitions.
                                           cf_saved_checkpoint := gs.(gs_revertable);
                                         |};
                          |} (Some new_caller_stack) ->
-
+      Some new_regs = regs_effect old_regs is_system false (NotNullPtr narrowed_ptr) ->
       farcall
         (PtrValue {|
-          FarCall.fwd_memory           := ForwardExistingFatPointer in_ptr;
-          ergs_passed          := ergs_query;
-          FarCall.shard_id     := abi_shard;
-          constructor_call     := false;
-          to_system            := is_syscall_query;
+FarCallABI.fwd_memory           := ForwardExistingFatPointer (NotNullPtr in_ptr);
+           ergs_passed          := ergs_query;
+FarCallABI.shard_id     := abi_shard;
+           constructor_call     := false;
+           to_system            := is_syscall_query;
         |})
         {|
           gs_flags        := flags;
@@ -486,14 +490,14 @@ Section FarCallDefinitions.
         |}
         {|
           gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false (NotNullPtr narrowed_ptr);
+          gs_regs         := new_regs;
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
           gs_status       := NoPanic;
         |}
 
-  | farcall_fwd_new_ptr: forall flags old_regs old_pages cs0 cs1 cs2 new_caller_stack new_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx abi_shard ergs_query ergs_actual is_syscall_query out_ptr in_span page_type,
+  | farcall_fwd_new_ptr: forall flags old_regs old_pages cs0 cs1 cs2 new_regs new_caller_stack new_stack reg_context_u128 new_pages new_code_page new_const_page new_mem_ctx abi_shard ergs_query ergs_actual is_syscall_query out_ptr in_span page_type,
 
       let is_system := addr_is_kernel dest && is_syscall_query in
       let allow_masking := negb is_system in
@@ -524,12 +528,12 @@ Section FarCallDefinitions.
                                           cf_saved_checkpoint := gs.(gs_revertable);
                                         |};
                          |} (Some new_caller_stack) ->
-
+      Some new_regs = regs_effect old_regs is_system false (NotNullPtr out_ptr) ->
       farcall
         (IntValue {|
-          FarCall.fwd_memory   := ForwardNewFatPointer page_type in_span;
+FarCallABI.fwd_memory   := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
-          FarCall.shard_id     := abi_shard;
+FarCallABI.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
 (*!*)   |})
@@ -543,7 +547,7 @@ Section FarCallDefinitions.
         |}
         {|
           gs_flags        := flags_clear;
-          gs_regs         := regs_effect old_regs is_system false (NotNullPtr out_ptr);
+          gs_regs         := new_regs;
           gs_pages        := new_pages;
           gs_callstack    := new_stack;
           gs_context_u128 := zero128;
@@ -590,9 +594,9 @@ instruction is masked as [%OpPanic].
      ts2 = ts1 <| gs_status := Panic FarCallInputIsNotPointerWhenExpected |> ->
      farcall
        (IntValue {|
-           FarCall.fwd_memory   := ForwardExistingFatPointer ___0;
+           FarCallABI.fwd_memory   := ForwardExistingFatPointer ___0;
            ergs_passed          := ___1;
-           FarCall.shard_id     := ___2;
+           FarCallABI.shard_id     := ___2;
            constructor_call     := ___3;
            to_system            := ___4;
          |}) ts1 ts2
@@ -606,9 +610,9 @@ instruction is masked as [%OpPanic].
       ts2 = ts1 <| gs_status := Panic FarCallInvalidCodeHashFormat |> ->
       farcall
         (mk_pv _tag {|
-          FarCall.fwd_memory   := ___1;
+          FarCallABI.fwd_memory   := ___1;
           ergs_passed          := ___2;
-          FarCall.shard_id     := abi_shard;
+          FarCallABI.shard_id     := abi_shard;
           constructor_call     := ___3;
           to_system            := is_syscall_query;
         |})
@@ -623,9 +627,9 @@ instruction is masked as [%OpPanic].
       ts2 = ts1 <| gs_status := Panic FarCallNotEnoughErgsToDecommit |> ->
       farcall
         (mk_pv _tag {|
-          FarCall.fwd_memory   := ___2;
+          FarCallABI.fwd_memory   := ___2;
           ergs_passed          := ___3;
-          FarCall.shard_id     := abi_shard;
+          FarCallABI.shard_id     := abi_shard;
           constructor_call     := ___4;
           to_system            := is_syscall_query;
         |})
@@ -648,9 +652,9 @@ instruction is masked as [%OpPanic].
       ts2 = ts1 <| gs_status := Panic FarCallNotEnoughErgsToGrowMemory |> ->
       farcall
         (IntValue {|
-          FarCall.fwd_memory   := ForwardNewFatPointer page_type in_span;
+          FarCallABI.fwd_memory   := ForwardNewFatPointer page_type in_span;
           ergs_passed          := ergs_query;
-          FarCall.shard_id     := abi_shard;
+          FarCallABI.shard_id     := abi_shard;
           constructor_call     := false;
           to_system            := is_syscall_query;
           |})

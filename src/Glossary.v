@@ -11,7 +11,7 @@
   For example, this denotes a binary number obtained by taking bits from 128-th
   to 255-th, both inclusive, of the value $\mathit{op}$:
 
-  $$\mathit{op}\{255\dots128\}$$
+  $$\mathit{op}\{255, 128\}$$
 
 - Concatenation of sequences of binary numbers is denoted with $||$
 

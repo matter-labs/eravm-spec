@@ -17,7 +17,7 @@ State.
 
 Import
 ABI
-ABI.FatPointer
+FatPointerABI
 Bool
 CallStack
 Coder
@@ -64,11 +64,11 @@ near calls.
 
 1. Let $E$ be the address of the [%active_exception_handler].
 2. Perform a [%rollback].
-3. Proceed with the same steps as [%OpFarRet] (see [%step_farret]).
+3. Proceed with the same steps as [%OpFarRetABI] (see [%step_farret]).
 3. Set PC to $E$.
    *)
   | step_RevertExt_heapvar:
-    forall gs gs' pages cf caller_stack cs1 cs2 new_caller new_regs params out_ptr heap_type hspan ___2 ___3 ___4 _tag,
+    forall gs gs' pages cf caller_stack cs1 cs2 new_caller new_regs params out_ptr heap_type hspan ___2 ___3 ___4 _tag ptr_enc,
       let cs0 := ExternalCall cf (Some caller_stack) in
 
       params = ForwardNewFatPointer heap_type hspan ->
@@ -79,9 +79,10 @@ near calls.
       new_caller = pc_set (active_exception_handler cs0) cs2 ->
 
       rollback cf.(cf_saved_checkpoint) gs gs' ->
-      new_regs = reserve (regs_state_zero <| r1 := PtrValue (encode_fat_ptr_word zero128 (NotNullPtr out_ptr)) |> )->
+      Some ptr_enc = encode_fat_ptr_word zero128 (NotNullPtr out_ptr) ->
+      new_regs = reserve (regs_state_zero <| r1 := PtrValue ptr_enc |> )->
 
-      step_farrevert (OpFarRevert (Some (mk_pv _tag (FarRet.mk_params params))))
+      step_farrevert (OpFarRevert (Some (mk_pv _tag (FarRetABI.mk_params params))))
                      {|
                        gs_transient := {|
                                         gs_flags        := ___2 ;
@@ -107,12 +108,12 @@ near calls.
                        gs_global       := gs';
                      |}
   | step_RevertExt_ForwardFatPointer:
-    forall pages cf caller_stack cs1 cs2 new_caller new_regs ___2 ___3 ___4 in_ptr out_ptr page params gs gs',
+    forall pages cf caller_stack cs1 cs2 new_caller new_regs ___2 ___3 ___4 in_ptr out_ptr page params gs gs' ptr_enc,
       let cs0 := ExternalCall cf (Some caller_stack) in
 
       (* Panic if not a pointer *)
 
-      params = ForwardExistingFatPointer in_ptr ->
+      params = ForwardExistingFatPointer (NotNullPtr in_ptr) ->
       in_ptr.(fp_page) = Some page ->
 
       MemoryContext.page_older page (get_mem_ctx cs0) = false ->
@@ -124,9 +125,10 @@ near calls.
       ergs_return_caller_and_drop cs1 cs2 ->
 
       new_caller = pc_set (active_exception_handler cs0) cs2 ->
-      new_regs = (reserve regs_state_zero) <| r1 := PtrValue (encode_fat_ptr_word zero128 (NotNullPtr out_ptr)) |> ->
+      Some ptr_enc = encode_fat_ptr_word zero128 (NotNullPtr out_ptr) ->
+      new_regs = (reserve regs_state_zero) <| r1 := PtrValue ptr_enc |> ->
       rollback cf.(cf_saved_checkpoint) gs gs' ->
-      step_farrevert (OpFarRevert (Some (PtrValue (FarRet.mk_params params))))
+      step_farrevert (OpFarRevert (Some (PtrValue (FarRetABI.mk_params params))))
                      {|
                        gs_transient := {|
                                         gs_flags        := ___2;
@@ -190,7 +192,7 @@ Use `panic` for irrecoverable errors.
   forall cf caller_stack __ params (s1 s2:state),
     let cs0 := ExternalCall cf (Some caller_stack) in
     gs_callstack s1 = cs0 ->
-    params = FarRet.mk_params (ForwardExistingFatPointer __) ->
+    params = FarRetABI.mk_params (ForwardExistingFatPointer __) ->
     step_panic
       RetABIExistingFatPointerWithoutTag
       s1 s2 ->
@@ -215,7 +217,7 @@ In other words, this is a situation where:
     in_ptr.(fp_page) = Some page ->
 
     page_older page (get_mem_ctx cs0) = true ->
-    params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
+    params = FarRetABI.mk_params (ForwardExistingFatPointer (NotNullPtr in_ptr)) ->
     step_panic
       RetABIReturnsPointerCreatedByCaller
       s1 s2 ->
@@ -228,7 +230,7 @@ In other words, this is a situation where:
 
     validate in_ptr <> no_exceptions ->
 
-    params = FarRet.mk_params (ForwardExistingFatPointer in_ptr) ->
+    params = FarRetABI.mk_params (ForwardExistingFatPointer (NotNullPtr in_ptr)) ->
     step_panic
       FatPointerMalformed
       s1 s2 ->
@@ -238,7 +240,7 @@ In other words, this is a situation where:
   forall cf caller_stack heap_type hspan params (s1 s2:state),
     let cs0 := ExternalCall cf (Some caller_stack) in
     gs_callstack s1 = cs0 ->
-    params = FarRet.mk_params (ForwardNewFatPointer heap_type hspan) ->
+    params = FarRetABI.mk_params (ForwardNewFatPointer heap_type hspan) ->
     growth_to_span_unaffordable cs0 heap_type hspan ->
     step_panic
       FatPointerCreationUnaffordable

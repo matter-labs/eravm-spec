@@ -46,7 +46,7 @@ modulo $2^{28 \times 8}$.
                                extra_marker: marker;
                                partial_hash: BITS (28*bits_in_byte)%nat
                              }.
-  Axiom hash_coder: @coder word versioned_hash.
+  Axiom hash_coder: @Coder.coder word versioned_hash.
 
   (** EraVM accepts [%DEFAULT_AA_VHASH] as a parameter. See also [%Parameters]. *)
   Parameter DEFAULT_AA_VHASH: versioned_hash.

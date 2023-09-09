@@ -15,8 +15,7 @@ Definition instruction_invalid : predicated Assembly.asm_instruction := invalid 
 Definition decommitter := decommitter instruction_invalid.
 Definition code_page := code_page instruction_invalid.
 Definition memory := @memory code_page const_page data_page stack_page.
-Import PrecompileParameters.
-Definition query := @query [ eqType of contract_address] [eqType of PrecompileParameters.params].
+Definition query := @query [ eqType of contract_address] [eqType of PrecompileParametersABI.params].
 Definition event := @event [ eqType of contract_address].
 Definition page_has_id := @page_has_id code_page const_page data_page stack_page.
 

@@ -31,7 +31,7 @@ and proofs of their properties.
 
 - [%revertible decode encode] formalizes the following: if we encode an element [%t] of type
    *)
-  Record coder  := {
+  Record coder  := mk_coder {
       decode: decoder;
       encode:  encoder;
 
@@ -64,7 +64,7 @@ Section Properties.
   End PropertyComposition.
 
   Definition coder_compose (c2: @coder C B) (c1: @coder B A) : @coder C A.
-    refine (Build_coder  (pcomp (decode c1) (decode c2)) (pcomp (encode c2) (encode c1)) _).
+    refine (mk_coder  (pcomp (decode c1) (decode c2)) (pcomp (encode c2) (encode c1)) _).
     by destruct c1, c2; eapply revertible1_compose; eauto.
   Defined.
 End Properties.
