@@ -13,14 +13,12 @@ Section AndDefinition.
 
 ## Abstract Syntax
 
-[%OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
+[%OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)   (flags:mod_set_flags)]
 
 ## Syntax
 
 - `and in1, in2, out`
-- `and.s in1, in2, out`, to set `swap` modifier.
 - `and! in1, in2, out`, to set `set flags` modifier.
-- `and.s! in1, in2, out`, to set both `swap` and `set flags` modifiers.
 
 ## Summary
 

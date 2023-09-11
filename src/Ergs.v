@@ -175,10 +175,10 @@ grow heap; far calls also may induce code
      | OpInvalid => INVALID_OPCODE_ERGS
      | OpNoOp | OpSpAdd _ _ | OpSpSub _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpAnd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpOr _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpXor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpAdd _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpAnd _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpOr _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpXor _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpAdd _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpSub _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
 
      | OpShl _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
@@ -186,12 +186,12 @@ grow heap; far calls also may induce code
      | OpRol _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpRor _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
 
-     | OpMul _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpMul _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpDiv _ _ _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpNearCall _ _ _ => AVERAGE_OPCODE_ERGS + CALL_LIKE_ERGS_COST
-     | OpFarCall _ _ _ _ _ _
-     | OpDelegateCall _ _ _ _ _ _
-     | OpMimicCall _ _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
+     | OpFarCall _ _ _ _ _
+     | OpDelegateCall _ _ _ _ _
+     | OpMimicCall _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
                              + RAM_PERMUTATION_COST_IN_ERGS
                              + STORAGE_READ_IO_PRICE
                              + CALL_LIKE_ERGS_COST
@@ -232,7 +232,7 @@ grow heap; far calls also may induce code
                  + RAM_PERMUTATION_COST_IN_ERGS
                  + LOG_DEMUXER_COST_IN_ERGS
                  + STORAGE_SORTER_COST_IN_ERGS
-     | OpSStore _ _ _ =>
+     | OpSStore _ _ =>
                 Z.max MIN_STORAGE_WRITE_COST (
                     STORAGE_WRITE_IO_PRICE
                     + 2 * VM_CYCLE_COST_IN_ERGS
@@ -251,7 +251,7 @@ grow heap; far calls also may induce code
                      + RAM_PERMUTATION_COST_IN_ERGS
                      + 2 * LOG_DEMUXER_COST_IN_ERGS
                      + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
-     | OpPrecompileCall _ _ _ _ =>
+     | OpPrecompileCall _ _ _ =>
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
      end)%Z.
 

@@ -15,7 +15,7 @@ Section SStoreDefinition.
 
 ## Abstract Syntax
 
-[%OpSStore (in1: in_reg) (in2: in_reg) (swap:mod_swap)]
+[%OpSStore (in1: in_reg) (in2: in_reg)]
 
 ## Syntax
 

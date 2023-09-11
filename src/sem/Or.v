@@ -13,14 +13,12 @@ Section OrDefinition.
 
 ## Abstract Syntax
 
-[%OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
+[%OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)   (flags:mod_set_flags)]
 
 ## Syntax
 
 - `or in1, in2, out`
-- `or.s in1, in2, out`, to set `swap` modifier.
 - `or! in1, in2, out`, to set `set_flags` modifier.
-- `or.s! in1, in2, out`, to set both `swap` and `set_flags` modifiers.
 
 ## Summary
 

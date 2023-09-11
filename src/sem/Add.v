@@ -13,14 +13,12 @@ Section AddDefinition.
 
 ## Abstract Syntax
 
-[%OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
+[%OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (flags:mod_set_flags)]
 
 ## Syntax
 
 - `add in1, in2, out`
-- `add.s in1, in2, out`, to set `swap` modifier.
 - `add! in1, in2, out`, to set `set flags` modifier.
-- `add.s! in1, in2, out`, to set both `swap` and `set flags` modifiers.
 
 ## Summary
 

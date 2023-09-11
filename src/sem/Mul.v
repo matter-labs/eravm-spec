@@ -16,14 +16,12 @@ Section MulDefinition.
 
 ## Abstract Syntax
 
-[%OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)]
+[%OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg)  (flags:mod_set_flags)]
 
 ## Syntax
 
 - `mul in1, in2, out1, out2`
-- `mul.s in1, in2, out1, out2`, to set `swap` modifier.
 - `mul! in1, in2, out1, out2`, to set `set flags` modifier.
-- `mul.s! in1, in2, out1, out2`, to set both `swap` and `set flags` modifiers.
 
 ## Summary
 

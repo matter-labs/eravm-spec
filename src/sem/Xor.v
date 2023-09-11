@@ -14,14 +14,12 @@ Section XorDefinition.
 
 ## Abstract Syntax
 
-  [%OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)]
+  [%OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)  (flags:mod_set_flags)]
 
 ## Syntax
 
 - `or in1, in2, out`
-- `or.s in1, in2, out`, to set `swap` modifier.
 - `or! in1, in2, out`, to set `set flags` modifier.
-- `or.s! in1, in2, out`, to set both `swap` and `set flags` modifiers.
 
 ## Summary
 

@@ -19,18 +19,14 @@ Section AssemblyToCore.
     | Assembly.OpSpAdd in1 (Imm ofs) => @OpSpAdd decoded in1 ofs
     | Assembly.OpSpSub in1 (Imm ofs) => @OpSpSub decoded in1 ofs
     | Assembly.OpJump dest => @OpJump decoded dest
-    | Assembly.OpAnd in1 in2 out1 swap flags =>
-        let (in1', in2') := apply_swap swap in1 in2 in
-        @OpAnd decoded in1' in2' out1 flags
-    | Assembly.OpOr in1 in2 out1 swap flags =>
-        let (in1', in2') := apply_swap swap in1 in2 in
-        @OpOr decoded in1' in2' out1 flags
-    | Assembly.OpXor in1 in2 out1 swap flags =>
-        let (in1', in2') := apply_swap swap in1 in2 in
-        @OpXor decoded in1' in2' out1 flags
-    | Assembly.OpAdd in1 in2 out1 swap flags =>
-        let (in1', in2') := apply_swap swap in1 in2 in
-        @OpAdd decoded in1' in2' out1 flags
+    | Assembly.OpAnd in1 in2 out1 flags =>
+        @OpAnd decoded in1 in2 out1 flags
+    | Assembly.OpOr in1 in2 out1 flags =>
+        @OpOr decoded in1 in2 out1 flags
+    | Assembly.OpXor in1 in2 out1 flags =>
+        @OpXor decoded in1 in2 out1 flags
+    | Assembly.OpAdd in1 in2 out1 flags =>
+        @OpAdd decoded in1 in2 out1 flags
     | Assembly.OpSub in1 in2 out1 swap flags =>
         let (in1', in2') := apply_swap swap in1 in2 in
         @OpSub decoded in1' in2' out1 flags
@@ -46,9 +42,8 @@ Section AssemblyToCore.
     | Assembly.OpRor in1 in2 out1 swap flags =>
         let (in1', in2') := apply_swap swap in1 in2 in
         @OpRor decoded in1' in2' out1 flags
-    | Assembly.OpMul in1 in2 out1 out2 swap flags =>
-        let (in1', in2') := apply_swap swap in1 in2 in
-        @OpMul decoded in1' in2' out1 out2 flags
+    | Assembly.OpMul in1 in2 out1 out2 flags =>
+        @OpMul decoded in1 in2 out1 out2 flags
     | Assembly.OpDiv in1 in2 out1 out2 swap flags =>
         let (in1', in2') := apply_swap swap in1 in2 in
         @OpDiv decoded in1' in2' out1 out2 flags
@@ -68,15 +63,12 @@ Section AssemblyToCore.
         @OpStore decoded ptr val mem
 
     | Assembly.OpNearCall in1 (Imm dest) (Imm handler) => @OpNearCall decoded in1 dest handler
-    | Assembly.OpFarCall enc dest (Imm handler) is_static is_shard_provided swap =>
-        let (enc', dest') := @apply_swap in_any swap enc dest in
-        @OpFarCall decoded enc' dest' handler is_static is_shard_provided
-    | Assembly.OpMimicCall enc dest (Imm handler) is_static is_shard_provided swap =>
-        let (enc',dest') := @apply_swap in_any swap enc dest in
-        @OpMimicCall decoded enc' dest' handler is_static is_shard_provided
-    | Assembly.OpDelegateCall enc dest (Imm handler) is_static is_shard_provided swap =>
-        let (enc', dest') := @apply_swap in_any swap enc dest in
-        @OpDelegateCall decoded enc' dest' handler is_static is_shard_provided
+    | Assembly.OpFarCall enc dest (Imm handler) is_static is_shard_provided =>
+        @OpFarCall decoded enc dest handler is_static is_shard_provided
+    | Assembly.OpMimicCall enc dest (Imm handler) is_static is_shard_provided =>
+        @OpMimicCall decoded enc dest handler is_static is_shard_provided
+    | Assembly.OpDelegateCall enc dest (Imm handler) is_static is_shard_provided =>
+        @OpDelegateCall decoded enc dest handler is_static is_shard_provided
     | Assembly.OpNearRet => OpNearRet
     | Assembly.OpNearRetTo (Imm dest) => OpNearRetTo dest
 
@@ -102,16 +94,14 @@ Section AssemblyToCore.
     | Assembly.OpContextSetErgsPerPubdataByte in1  => @OpContextSetErgsPerPubdataByte decoded  in1
     | Assembly.OpContextIncrementTxNumber  => @OpContextIncrementTxNumber decoded
     | Assembly.OpSLoad in1 out  => @OpSLoad decoded  in1 out
-    | Assembly.OpSStore in1 in2 swap =>
-        let (in1', in2') := @apply_swap in_any swap in1 in2 in
-        @OpSStore decoded in1' in2'
+    | Assembly.OpSStore in1 in2 =>
+        @OpSStore decoded in1 in2
     | Assembly.OpToL1Message in1 in2 is_first =>
         @OpToL1Message decoded  in1 in2 is_first
     | Assembly.OpEvent in1 in2 is_first =>
         @OpEvent decoded  in1 in2 is_first
-    | Assembly.OpPrecompileCall in1 in2 out swap  =>
-        let (in1', in2') := @apply_swap in_any swap in1 in2 in
-        @OpPrecompileCall decoded  in1' in2' out
+    | Assembly.OpPrecompileCall in1 in2 out =>
+        @OpPrecompileCall decoded  in1 in2 out
     end.
 
 End AssemblyToCore.

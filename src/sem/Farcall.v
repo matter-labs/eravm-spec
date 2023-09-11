@@ -209,7 +209,7 @@ A system call is a far call that satisfies the following conditions:
 
 ## Abstract and concrete syntax
 
-- [%OpFarCall] `abi_params address handler is_static swap `
+- [%OpFarCall] `abi_params address handler is_static `
    + `farcall        abi_reg, dest_addr`
    + `farcall        abi_reg, dest_addr, handler `
    + `farcall.static abi_reg, dest_addr`
@@ -217,9 +217,8 @@ A system call is a far call that satisfies the following conditions:
    + `farcall.shard  abi_reg, dest_addr`
    + `farcall.shard  abi_reg, dest_addr, handler`
 
-   These variants also support the `.s` swap modifier.
 
-- [%OpDelegateCall] abi_params address handler is_static swap `
+- [%OpDelegateCall] abi_params address handler is_static`
    + `delegatecall        abi_reg, dest_addr`
    + `delegatecall        abi_reg, dest_addr, handler`
    + `delegatecall.static abi_reg, dest_addr`
@@ -227,9 +226,8 @@ A system call is a far call that satisfies the following conditions:
    + `delegatecall.shard  abi_reg, dest_addr`
    + `delegatecall.shard  abi_reg, dest_addr, handler`
 
-   These variants also support the `.s` swap modifier.
 
-- [%OpMimicCall] `abi_params address handler is_static swap`
+- [%OpMimicCall] `abi_params address handler is_static`
    + `mimic        abi_reg, dest_addr`
    + `mimic        abi_reg, dest_addr, handler`
    + `mimic.static abi_reg, dest_addr`
@@ -237,7 +235,6 @@ A system call is a far call that satisfies the following conditions:
    + `mimic.shard  abi_reg, dest_addr`
    + `mimic.shard  abi_reg, dest_addr, handler`
 
-   These variants also support the `.s` swap modifier.
 
 - **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.
   Calls from a static calls are automatically marked static.

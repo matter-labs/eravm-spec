@@ -32,10 +32,10 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
   | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with out_1 in address mode [%Addressing.RelSpPush]*)
   | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with in_1  in address mode [%Addressing.RelSpPop] *)
   | OpJump        (dest: in_reg)
-  | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
-  | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
-  | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
-  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
+  | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
+  | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
+  | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
+  | OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpSub         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap) (flags:mod_set_flags)
 
   | OpShl         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap)  (flags:mod_set_flags)
@@ -43,13 +43,13 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
   | OpRol         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap)  (flags:mod_set_flags)
   | OpRor         (in1: in_any) (in2: in_reg)  (out1: out_any)  (swap:mod_swap)  (flags:mod_set_flags)
 
-  | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
+  | OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg)                 (flags:mod_set_flags)
   | OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)
 
   | OpNearCall    (arg: in_reg) (dest: imm_in) (handler: imm_in)
-  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
-  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
-  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool) (swap: mod_swap)
+  | OpFarCall     (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
+  | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
+  | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
 
   | OpNearRet
   | OpNearRetTo   (dest: imm_in)
@@ -90,9 +90,9 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
 
   | OpSLoad          (in1: in_reg)                  (out: out_reg)
-  | OpSStore         (in1: in_reg) (in2: in_reg)                   (swap:mod_swap)
+  | OpSStore         (in1: in_reg) (in2: in_reg)
 
-  | OpPrecompileCall (in1: in_reg) (in2: in_reg)    (out: out_reg) (swap:mod_swap)
+  | OpPrecompileCall (in1: in_reg) (in2: in_reg)    (out: out_reg)
 
   | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool)
   | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
