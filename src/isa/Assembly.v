@@ -94,8 +94,8 @@ The function [%base_cost] defines the basic costs of each instruction in **ergs*
 
   | OpPrecompileCall (in1: in_reg) (in2: in_reg)    (out: out_reg) (swap:mod_swap)
 
-  | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool) (swap:mod_swap)
-  | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool) (swap:mod_swap)
+  | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool)
+  | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
   .
 
 End AssemblyInstructionSet.

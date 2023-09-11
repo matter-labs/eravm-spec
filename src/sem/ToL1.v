@@ -27,10 +27,9 @@ on events system.
 
 ## Semantic
 
-- apply `swap` modifier.
-- Fetch key and value from `key` and `value`.
-- If `is_first` is `true`, mark the event as the first in a chain of events.
-- Emit L1 message event.
+1. Fetch key and value from `key` and `value`.
+2. If `is_first` is `true`, mark the event as the first in a chain of events.
+3. Emit L1 message event.
 
    *)
   Inductive step_tol1: instruction -> smallstep :=

@@ -105,12 +105,10 @@ Section AssemblyToCore.
     | Assembly.OpSStore in1 in2 swap =>
         let (in1', in2') := @apply_swap in_any swap in1 in2 in
         @OpSStore decoded in1' in2'
-    | Assembly.OpToL1Message in1 in2 is_first swap =>
-        let (in1', in2') := @apply_swap in_any swap in1 in2 in
-        @OpToL1Message decoded  in1' in2' is_first
-    | Assembly.OpEvent in1 in2 is_first swap =>
-        let (in1', in2') := @apply_swap in_any swap in1 in2 in
-        @OpEvent decoded  in1' in2' is_first
+    | Assembly.OpToL1Message in1 in2 is_first =>
+        @OpToL1Message decoded  in1 in2 is_first
+    | Assembly.OpEvent in1 in2 is_first =>
+        @OpEvent decoded  in1 in2 is_first
     | Assembly.OpPrecompileCall in1 in2 out swap  =>
         let (in1', in2') := @apply_swap in_any swap in1 in2 in
         @OpPrecompileCall decoded  in1' in2' out

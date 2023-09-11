@@ -25,8 +25,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 
 ## Semantic
 
-1. Apply `swap` modifier.
-2. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
+1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
 

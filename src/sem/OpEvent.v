@@ -24,10 +24,9 @@ events system.
 
 ## Semantic
 
-- Apply `swap` modifier.
-- Fetch key and value from `in1` and `in2`.
-- If `is_first` is `true`, mark the event as the first in a chain of events.
-- Emit event.
+1. Fetch key and value from `in1` and `in2`.
+2. If `is_first` is `true`, mark the event as the first in a chain of events.
+3. Emit event.
 
    *)
   | step_Event:
