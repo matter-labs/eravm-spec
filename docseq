@@ -86,6 +86,13 @@ doc/EraVM.sem.PrecompileCall.html
 
 doc/EraVM.Steps.html
 doc/EraVM.ABI.html
+doc/EraVM.ABI.FatPointerABI.html
+doc/EraVM.ABI.ForwardPageTypesABI.html
+doc/EraVM.ABI.FarRetABI.html
+doc/EraVM.ABI.FarCallABI.html
+doc/EraVM.ABI.MetaParametersABI.html
+doc/EraVM.ABI.NearCallABI.html
+doc/EraVM.ABI.PrecompileParametersABI.html
 doc/EraVM.Precompiles.html
 doc/EraVM.Arith.html
 doc/index.html
