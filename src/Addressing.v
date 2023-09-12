@@ -203,8 +203,6 @@ and memory locations.
      add stack[r1+42], r0, r3
      ```
 
-     See the note about addressing relative to SP for an explanation of the
-     additional `-1` appearing here.
    *)
   | RelSP    (reg:reg_name) (offset: stack_address)
   .
@@ -222,8 +220,6 @@ and memory locations.
      add stack-=[r1+42], r0, r3
      ```
 
-     See the note about addressing relative to SP for an explanation of the
-     additional `-1` appearing here.
 
      Note, that the following form is forbidden:
 
@@ -249,8 +245,6 @@ and memory locations.
      add r3, r0, stack+=[r1+42]
      ```
 
-     See the note about addressing relative to SP for an explanation of the
-     additional `-1` appearing here.
    *)
   Inductive stack_out_only : Type :=
   | RelSpPush (reg:reg_name) (offset: stack_address)

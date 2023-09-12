@@ -147,7 +147,7 @@ Section Resolve.
 - [%RelSpPush] : **Writing** relative to SP with a general purpose register and
   an immediate displacement, **and SP increment**, is resolved to **the current
   value of SP**. Additionally, SP is assigned a new value
-  $\mathit{sp}-(\mathit{reg}+\mathit{imm})$. The new SP value will then be used
+  $\mathit{sp}+(\mathit{reg}+\mathit{imm})$. The new SP value will then be used
   for the resolution of other operands.
 
   In other words, it is equivalent to a sequence of two actions:
