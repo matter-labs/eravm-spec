@@ -17,8 +17,8 @@ Section ToL1Definition.
 
 ## Syntax
 
-- `log.event in1, in2` aliased as `event in1, in2`
-- `log.event.first in1, in2` aliased as `event.i in1, in2`
+- `log.to_l1 in1, in2` aliased as `event in1, in2`
+- `log.to_l1 event.first in1, in2` aliased as `event.i in1, in2`
 
 ## Summary
 

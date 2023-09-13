@@ -8,6 +8,24 @@ Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Memory 
 Section PrecompileCallDefinition.
   Open Scope ZMod_scope.
   Import ssreflect.tuple ssreflect.eqtype.
+  (** # PrecompileCall
+
+## Abstract Syntax
+
+[%OpPrecompileCall (in1: in_reg) (in2: in_reg) (dst:out_reg)]
+
+## Syntax
+
+- `log.precompile in1, in2, out1`
+
+## Summary
+
+A precompile call is a call to an extension of a virtual machine. The extension operates differently depending on the currently executing contract's address.
+Only system contracts may have precompiles.
+
+While in a system contract, perform a precompile call and spend an explicitly provided number of ergs.
+
+   *)
   Inductive step_precompile: instruction -> smallstep :=
   | step_PrecompileCall_unaffordable:
     forall flags pages cs regs extra_ergs ___1 ___2 s1 s2 result ctx,

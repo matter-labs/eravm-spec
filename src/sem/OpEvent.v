@@ -10,7 +10,7 @@ Section EventDefinition.
 
 ## Abstract Syntax
 
-[%OpEvent (in1: in_reg) (in2: in_reg) (is_first: bool) (swap:mod_swap)]
+[%OpEvent (in1: in_reg) (in2: in_reg) (is_first: bool)]
 
 ## Syntax
 
