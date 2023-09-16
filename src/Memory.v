@@ -405,6 +405,18 @@ A **const page** contains $2^{16}$ non tagged [%word]s.
 They are not writable.
 
 Implementation may put constants and code on the same pages.
+In this case, the bytes on the same virtual page can be addressed in two ways:
+
+- For instructions [%OpJump] and [%OpNearCall], the code addressing will be
+  used: consecutive addresses correspond to 8-bytes instructions.
+- For instructions like [%OpAdd] with [%CodeAddr] addressing mode, the const
+  data addressing will be used: consecutive addresses correspond to 32-bytes
+  words.
+
+For example, [%OpJump 0], [%OpJump 1], [%OpJump 2], [%OpJump 3] will refer to
+the first four instructions on the page; their binary representations, put
+together, can be fetched by addressing the const page's 0-th word e.g.
+[%OpAdd (CodeAddr R0 zero_16 ) (Reg R0) (Reg R1)].
    *)
   Definition const_address_bits := 16.
 
