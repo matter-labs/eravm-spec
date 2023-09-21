@@ -43,6 +43,27 @@ evaluates to [%IntValue 0], that is, an untagged integer 0.
   Definition reserved := reg_zero.
   Definition regs_state_zero := let z := reg_zero in
                                 mk_regs z z z z z z z z z z z z z z z.
+
+  Definition reg_idx (name: reg_name) : nat :=
+    match name with
+    | R0 => 0
+    | R1 => 1
+    | R2 => 2
+    | R3 => 3
+    | R4 => 4
+    | R5 => 5
+    | R6 => 6
+    | R7 => 7
+    | R8 => 8
+    | R9 => 9
+    | R10 => 10
+    | R11 => 11
+    | R12 => 12
+    | R13 => 13
+    | R14 => 14
+    | R15 => 15
+    end
+  .
   (* end hide *)
 
   (** Function [%fetch_gpr] loads a value from register. *)
