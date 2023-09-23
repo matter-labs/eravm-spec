@@ -4,10 +4,10 @@
 The spec introduces the following layers of abstraction for the instruction set,
 from lowest level to the highest level:
 
-1. Binary encoding (not formalized).
+1. Binary encoding (as [BITS 64] type instances).
    Binary encoded instructions, each instruction is 64-bit wide.
 
-   The exact type for such instructions is [%int_mod 64].
+   The exact type for such instructions is [%BITS 64].
 
 2. Low-level machine instructions (not formalized).
    - Fixed format with two input, two output operands, two immediate values

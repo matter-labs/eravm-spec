@@ -269,12 +269,13 @@ A system call is a far call that satisfies the following conditions:
      ```
      Inductive marker := CODE_AT_REST | YET_CONSTRUCTED | INVALID.
 
-     Record versioned_hash := {
-        code_length_in_words: u16;
-        extra_marker: marker;
-        partial_hash: int_mod (28*8)%nat
-     }.
+     Record versioned_hash := mk_vhash {
+                               code_length_in_words: u16;
+                               extra_marker: marker;
+                               partial_hash: BITS (28*bits_in_byte)%nat
+                             }.
      ```
+
    - for non-system calls, if there is no code stored for a provided hash value,
      mask it into [%VersionedHash.DEFAULT_AA_VHASH] and execute
      [%VersionedHash.DEFAULT_AA_CODE].
