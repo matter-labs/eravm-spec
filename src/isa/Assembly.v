@@ -3,8 +3,7 @@ Require Addressing Common Memory Predication isa.Modifiers.
 Import Addressing Common Memory Predication Modifiers.
 
 Section AssemblyInstructionSet.
-  (**
-# EraVM assembly instruction set
+  (** # EraVM assembly instruction set
 
 This section describes an instruction set [%asm_instruction] which is a target for
 compiler.
@@ -13,8 +12,9 @@ The type [%asm_instruction] defines instruction format with the precise types of
 their operands, and all their supported modifiers.
 This set is a slice in the middle of the abstractions hierarchy:
 
-- The next lower level is machine instructions. The assembly encodes [%asm_instruction]
-  to the lower-level machine instructions which are then mapped to their binary encodings.
+- The next lower level is machine instructions. The assembly encodes
+  [%asm_instruction] to the lower-level machine instructions which are then
+  mapped to their binary encodings.
 - The next higher level are **core instructions** described in section
   [CoreInstructionSet]. These instructions have are simplified formats, impose
   less constraints on the operand sources and destinations, and do not support
@@ -22,8 +22,10 @@ This set is a slice in the middle of the abstractions hierarchy:
 
 For all practical purposes, the reader of the specification should start at this
 level, unless their interest is in lower-level encoding details.
+The encoding layout is formalized by [%mach_instruction] type, which is then
+serialized to binary by [%encode_mach_instruction].
 
-The function [%base_cost] defines the basic costs of each instruction in **ergs**.
+The function [%base_cost] defines the basic costs of each instruction in **[%ergs]**.
    *)
 
   Inductive asm_instruction: Type :=
