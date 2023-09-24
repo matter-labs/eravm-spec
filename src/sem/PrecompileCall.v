@@ -20,39 +20,23 @@ Section PrecompileCallDefinition.
 
 ## Summary
 
-A precompile call is a call to an extension of a virtual machine. The extension operates differently depending on the currently executing contract's address.
+A precompile call is a call to an extension of a virtual machine. The extension
+operates differently depending on the currently executing contract's address.
 Only system contracts may have precompiles.
 
-While in a system contract, perform a precompile call and spend an explicitly provided number of ergs.
+## Semantic
 
+Attempt to pay the extra cost:
+
+   $$\mathit{cost_{extra}} = \mathit{in}_2 \mod 2^{32}$$
+
+- If the cost is affordable:
+  + pay $\mathit{cost_{extra}}$
+  + execute the precompile logic associated to the currently executing contract.
+    This will emit a special event.
+  + set ${out}_1$ to one.
    *)
   Inductive step_precompile: instruction -> smallstep :=
-  | step_PrecompileCall_unaffordable:
-    forall flags pages cs regs extra_ergs ___1 ___2 s1 s2 result ctx,
-      let cost := low ergs_bits extra_ergs in
-      affordable cs cost = false ->
-
-      result = zero256 ->
-      step_transient_only
-        {|
-          gs_callstack    := cs;
-
-          gs_regs         := regs;
-          gs_flags        := flags;
-          gs_pages        := pages;
-          gs_context_u128 := ctx;
-          gs_status       := NoPanic;
-        |}
-        {|
-          gs_callstack    := ergs_reset cs;
-
-          gs_regs         := regs;
-          gs_flags        := flags;
-          gs_pages        := pages;
-          gs_context_u128 := ctx;
-          gs_status       := NoPanic;
-        |} s1 s2 ->
-      step_precompile (OpPrecompileCall ___2 (mk_pv ___1 extra_ergs) (IntValue result)) s1 s2
   | step_PrecompileCall_affordable:
     forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx ___1 new_xs params,
       let heap_id := active_heap_id cs in
@@ -94,9 +78,38 @@ While in a system contract, perform a precompile call and spend an explicitly pr
 
                       |}
                       {|
-                        gs_transient       := new_xs;
+                        gs_transient    := new_xs;
                         gs_global       := new_gs;
                       |}
-  .
+  (** - If the cost is unaffordable, do not pay anything beyound [%base_cost] of
+this instruciton. Set ${out}_1$ to zero.
+   *)
+  | step_PrecompileCall_unaffordable:
+    forall flags pages cs regs extra_ergs ___1 ___2 s1 s2 result ctx,
+      let cost := low ergs_bits extra_ergs in
+      affordable cs cost = false ->
+
+      result = zero256 ->
+      step_transient_only
+        {|
+          gs_callstack    := cs;
+
+          gs_regs         := regs;
+          gs_flags        := flags;
+          gs_pages        := pages;
+          gs_context_u128 := ctx;
+          gs_status       := NoPanic;
+        |}
+        {|
+          gs_callstack    := ergs_reset cs;
+
+          gs_regs         := regs;
+          gs_flags        := flags;
+          gs_pages        := pages;
+          gs_context_u128 := ctx;
+          gs_status       := NoPanic;
+        |} s1 s2 ->
+      step_precompile (OpPrecompileCall ___2 (mk_pv ___1 extra_ergs) (IntValue result)) s1 s2
+.
 
 End PrecompileCallDefinition.
