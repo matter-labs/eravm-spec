@@ -135,97 +135,121 @@ Definition set_dst0 (dst0: out_any) : mach_instruction -> mach_instruction :=
         ins <| op_dst0 := Some reg |> <| op_imm1 := Some ofs|>
     end
 .
-Definition asm_to_mach (ins: predicated asm_instruction) : option mach_instruction :=
-  match ins with
-  | Ins ins pred =>
-      let mk src0 src1 dst0 dst1 imm0 imm1 := mk_ins (opcode_of ins) pred src0 src1 dst0 dst1 imm0 imm1 in
-      let template : mach_instruction := mk None None None None None None  in
-      match ins with
-      | Assembly.OpInvalid
-      | Assembly.OpNoOp
-      | Assembly.OpPanic
-      | Assembly.OpContextIncrementTxNumber
-        => Some template
-      | Assembly.OpContextSetContextU128 (Reg src0)
-      | Assembly.OpContextSetErgsPerPubdataByte (Reg src0) => Some (template <| op_src0 := Some src0 |> )
-      | Assembly.OpSpAdd (Reg reg) (Imm ofs)
-      | Assembly.OpSpSub (Reg reg) (Imm ofs) => Some (template <| op_src0 := Some reg |> <| op_imm0 := Some ofs |> )
-      | Assembly.OpJump dest => Some (set_src0 dest template)
-      | Assembly.OpAdd src0 (Reg src1) dst0 _
-      | Assembly.OpOr src0 (Reg src1) dst0 _
-      | Assembly.OpXor src0 (Reg src1) dst0 _
-      | Assembly.OpAnd src0 (Reg src1) dst0 _
-      | Assembly.OpSub src0 (Reg src1) dst0 _ _
-      | Assembly.OpShl src0 (Reg src1) dst0 _ _
-      | Assembly.OpShr src0 (Reg src1) dst0 _ _
-      | Assembly.OpRol src0 (Reg src1) dst0 _ _
-      | Assembly.OpRor src0 (Reg src1) dst0 _ _
-      | Assembly.OpPtrAdd src0 (Reg src1) dst0 _
-      | Assembly.OpPtrSub src0 (Reg src1) dst0 _
-      | Assembly.OpPtrShrink src0 (Reg src1) dst0 _
-      | Assembly.OpPtrPack src0 (Reg src1) dst0 _
-        => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>)))
-      | Assembly.OpMul src0 (Reg src1) dst0 (Reg dst1) _
-      | Assembly.OpDiv src0 (Reg src1) dst0 (Reg dst1) _ _
-        => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>
-                                                                       <| op_dst1 := Some dst1 |>)))
 
-      | Assembly.OpNearCall (Reg arg) (Imm dest) (Imm handler) =>
-          Some ({|
-                op_code := opcode_of ins;
-                op_predicate := pred;
-                op_src0 := Some arg;
-                op_src1 := None;
-                op_dst0 := None;
-                op_dst1 := None;
-                op_imm0 := Some dest;
-                op_imm1 := Some handler;
-              |})
-      | Assembly.OpNearRet
-      | Assembly.OpNearRevert => Some template
-      | Assembly.OpNearRetTo (Imm dest)
-      | Assembly.OpNearPanicTo (Imm dest)
-      | Assembly.OpNearRevertTo (Imm dest) => Some (template <| op_imm0 := Some dest |>)
-      | Assembly.OpFarRet (Reg args)
-      | Assembly.OpFarRevert (Reg args) => Some (template <| op_src0 := Some args |>)
+Section AsmToMachConversion.
 
-      | Assembly.OpSStore (Reg src0) (Reg src1)
-      | Assembly.OpEvent (Reg src0) (Reg src1) _
-      | Assembly.OpToL1Message (Reg src0) (Reg src1) _  =>
-          Some (template <| op_src0 := Some src0 |> <| op_src1 := Some src1 |>)
-      | Assembly.OpSLoad (Reg src0) (Reg dst0) =>
-          Some (template <| op_src0 := Some src0 |> <| op_dst0:= Some dst0|>)
+  Import ssrfun.
 
-      | Assembly.OpContextThis (Reg dst0)
-      | Assembly.OpContextCaller (Reg dst0)
-      | Assembly.OpContextCodeAddress (Reg dst0)
-      | Assembly.OpContextMeta (Reg dst0)
-      | Assembly.OpContextErgsLeft (Reg dst0)
-      | Assembly.OpContextSp (Reg dst0)
-      | Assembly.OpContextGetContextU128 (Reg dst0) =>
-          Some (template <| op_dst0:= Some dst0|>)
+  Definition asm_to_mach_opt (ins: predicated asm_instruction) : option (@mach_instruction (option GPR.reg_name) (option u16) ):=
+    match ins with
+    | Ins ins pred =>
+        let mk src0 src1 dst0 dst1 imm0 imm1 := mk_ins (opcode_of ins) pred src0 src1 dst0 dst1 imm0 imm1 in
+        let template : mach_instruction := mk None None None None None None  in
+        match ins with
+        | Assembly.OpInvalid
+        | Assembly.OpNoOp
+        | Assembly.OpPanic
+        | Assembly.OpContextIncrementTxNumber
+          => Some template
+        | Assembly.OpContextSetContextU128 (Reg src0)
+        | Assembly.OpContextSetErgsPerPubdataByte (Reg src0) => Some (template <| op_src0 := Some src0 |> )
+        | Assembly.OpSpAdd (Reg reg) (Imm ofs)
+        | Assembly.OpSpSub (Reg reg) (Imm ofs) => Some (template <| op_src0 := Some reg |> <| op_imm0 := Some ofs |> )
+        | Assembly.OpJump dest => Some (set_src0 dest template)
+        | Assembly.OpAdd src0 (Reg src1) dst0 _
+        | Assembly.OpOr src0 (Reg src1) dst0 _
+        | Assembly.OpXor src0 (Reg src1) dst0 _
+        | Assembly.OpAnd src0 (Reg src1) dst0 _
+        | Assembly.OpSub src0 (Reg src1) dst0 _ _
+        | Assembly.OpShl src0 (Reg src1) dst0 _ _
+        | Assembly.OpShr src0 (Reg src1) dst0 _ _
+        | Assembly.OpRol src0 (Reg src1) dst0 _ _
+        | Assembly.OpRor src0 (Reg src1) dst0 _ _
+        | Assembly.OpPtrAdd src0 (Reg src1) dst0 _
+        | Assembly.OpPtrSub src0 (Reg src1) dst0 _
+        | Assembly.OpPtrShrink src0 (Reg src1) dst0 _
+        | Assembly.OpPtrPack src0 (Reg src1) dst0 _
+          => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>)))
+        | Assembly.OpMul src0 (Reg src1) dst0 (Reg dst1) _
+        | Assembly.OpDiv src0 (Reg src1) dst0 (Reg dst1) _ _
+          => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>
+                                                                         <| op_dst1 := Some dst1 |>)))
 
-      | Assembly.OpPrecompileCall (Reg src0) (Reg src1) (Reg dst0) =>
-          Some (template <| op_dst0:= Some dst0|>)
+        | Assembly.OpNearCall (Reg arg) (Imm dest) (Imm handler) =>
+            Some ({|
+                  op_code := opcode_of ins;
+                  op_predicate := pred;
+                  op_src0 := Some arg;
+                  op_src1 := None;
+                  op_dst0 := None;
+                  op_dst1 := None;
+                  op_imm0 := Some dest;
+                  op_imm1 := Some handler;
+                |})
+        | Assembly.OpNearRet
+        | Assembly.OpNearRevert => Some template
+        | Assembly.OpNearRetTo (Imm dest)
+        | Assembly.OpNearPanicTo (Imm dest)
+        | Assembly.OpNearRevertTo (Imm dest) => Some (template <| op_imm0 := Some dest |>)
+        | Assembly.OpFarRet (Reg args)
+        | Assembly.OpFarRevert (Reg args) => Some (template <| op_src0 := Some args |>)
 
-      | Assembly.OpFarCall (Reg params) (Reg dest) (Imm handler) _ _
-      | Assembly.OpMimicCall (Reg params) (Reg dest) (Imm handler) _ _
-      | Assembly.OpDelegateCall (Reg params) (Reg dest) (Imm handler) _ _ =>
-          Some (template
-                  <| op_src0 := Some params |>
-                  <| op_src1 := Some dest |>
-                  <| op_imm0 := Some handler |> )
+        | Assembly.OpSStore (Reg src0) (Reg src1)
+        | Assembly.OpEvent (Reg src0) (Reg src1) _
+        | Assembly.OpToL1Message (Reg src0) (Reg src1) _  =>
+            Some (template <| op_src0 := Some src0 |> <| op_src1 := Some src1 |>)
+        | Assembly.OpSLoad (Reg src0) (Reg dst0) =>
+            Some (template <| op_src0 := Some src0 |> <| op_dst0:= Some dst0|>)
 
-      | Assembly.OpLoad ptr (Reg res) _
-      | Assembly.OpStore ptr (Reg res) _ =>
-          Some (set_src0_special ptr (template <| op_dst0 := Some res|> ))
-      | Assembly.OpLoadPointer (Reg name) (Reg res) =>
-          Some (template <| op_src0 := Some name |> <| op_dst0 := Some res|> )
-      | Assembly.OpLoadInc ptr (Reg res) _ (Reg inc_ptr)
-      | Assembly.OpStoreInc ptr (Reg res) _ (Reg inc_ptr) =>
-          Some (set_src0_special ptr (template <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>))
+        | Assembly.OpContextThis (Reg dst0)
+        | Assembly.OpContextCaller (Reg dst0)
+        | Assembly.OpContextCodeAddress (Reg dst0)
+        | Assembly.OpContextMeta (Reg dst0)
+        | Assembly.OpContextErgsLeft (Reg dst0)
+        | Assembly.OpContextSp (Reg dst0)
+        | Assembly.OpContextGetContextU128 (Reg dst0) =>
+            Some (template <| op_dst0:= Some dst0|>)
 
-      | Assembly.OpLoadPointerInc (Reg ptr) (Reg res) (Reg inc_ptr) =>
-          Some (template <| op_src0 := Some ptr |> <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>)
-      end
-  end.
+        | Assembly.OpPrecompileCall (Reg src0) (Reg src1) (Reg dst0) =>
+            Some (template <| op_dst0:= Some dst0|>)
+
+        | Assembly.OpFarCall (Reg params) (Reg dest) (Imm handler) _ _
+        | Assembly.OpMimicCall (Reg params) (Reg dest) (Imm handler) _ _
+        | Assembly.OpDelegateCall (Reg params) (Reg dest) (Imm handler) _ _ =>
+            Some (template
+                    <| op_src0 := Some params |>
+                                    <| op_src1 := Some dest |>
+                                                    <| op_imm0 := Some handler |> )
+
+        | Assembly.OpLoad ptr (Reg res) _
+        | Assembly.OpStore ptr (Reg res) _ =>
+            Some (set_src0_special ptr (template <| op_dst0 := Some res|> ))
+        | Assembly.OpLoadPointer (Reg name) (Reg res) =>
+            Some (template <| op_src0 := Some name |> <| op_dst0 := Some res|> )
+        | Assembly.OpLoadInc ptr (Reg res) _ (Reg inc_ptr)
+        | Assembly.OpStoreInc ptr (Reg res) _ (Reg inc_ptr) =>
+            Some (set_src0_special ptr (template <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>))
+
+        | Assembly.OpLoadPointerInc (Reg ptr) (Reg res) (Reg inc_ptr) =>
+            Some (template <| op_src0 := Some ptr |> <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>)
+        end
+    end.
+
+  Definition mach_flatten (i:@mach_instruction (option GPR.reg_name) (option u16)) : @mach_instruction GPR.reg_name u16 :=
+    let or_r0 := Option.default GPR.R0 in
+    let or_zero := Option.default zero16 in
+    match i with
+    | mk_ins op_code op_predicate op_src0 op_src1 op_dst0 op_dst1 op_imm0 op_imm1 =>
+        mk_ins op_code op_predicate
+          (or_r0 op_src0)
+          (or_r0 op_src1)
+          (or_r0 op_dst0)
+          (or_r0 op_dst1)
+          (or_zero op_imm0)
+          (or_zero op_imm1)
+    end.
+
+  Definition asm_to_mach (asm_ins: predicated asm_instruction) : option mach_instruction :=
+   option_map mach_flatten (asm_to_mach_opt asm_ins).
+
+End AsmToMachConversion.
