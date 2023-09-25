@@ -31,7 +31,7 @@ See Usage.
 3. Ensure that the lower 128 bits of $\mathit{op}_2$ are zero. Otherwise panic.
 4. Store the result, tagged as a pointer, to `out`:
 
-$$result := \mathit{op_1}\{255\dots128\} || \mathit{op_2}\{128\dots 0\}$$
+$$result := \mathit{op_1}\{255\dots128\} \#\# \mathit{op_2}\{128\dots 0\}$$
    *)
 
   | step_PtrPack :

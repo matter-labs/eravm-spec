@@ -5,18 +5,18 @@
 
   $$\mathit{[start, limit) := \{n | start \leq n \lt limit\}}$$
 
-  In other words, start is included, and limit is excluded.
+  In other words, start of the range is included, and limit is excluded.
 
-- Accessing subranges of a binary representation of a number is denoted with $\{\}$.
-  For example, this denotes a binary number obtained by taking bits from 128-th
-  to 255-th, both inclusive, of the value $\mathit{op}$:
+- Accessing subranges of a binary representation of a number is denoted with $\{low, high\}$.
+  For example, this denotes a binary number obtained by taking bits from 128-th inclusive to
+  to 256-th exclusive of the value $\mathit{op}$:
 
-  $$\mathit{op}\{255, 128\}$$
+  $$\mathit{op}\{128, 256\}$$
 
-- Concatenation of sequences of binary numbers is denoted with $||$
+- Concatenation of sequences of binary numbers is denoted with $\#\#$
 
-  For example, this denotes concatenating bit representations of the numbers $a$ and $b$:
-  $$a || b$$
+  For example, the following denotes concatenating bit representations of the numbers $a$ and $b$:
+  $$a \#\# b$$
 *)
 
 (**

@@ -40,7 +40,7 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{length := length - diff}$$
 
 6. Store the result, tagged as a pointer, to `out`:
 
-$$result := \mathit{op_1}\{255\dots128\} || \texttt{encode}(\mathit{ptr_{out}})$$
+$$result := \mathit{op_1}\{255\dots128\} \#\# \texttt{encode}(\mathit{ptr_{out}})$$
    *)
 
   | step_PtrShrink :
