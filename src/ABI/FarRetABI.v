@@ -4,6 +4,7 @@ Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt FatPointerABI ForwardPageTypesABI.
 
 
+  (** This record describes all the parameters that far returns can use. *)
 Section FarRetABI.
   Record params :=
   mk_params {
@@ -11,6 +12,7 @@ Section FarRetABI.
     }.
 
 
+(** This record describes the layout of 256-bit word that encodes these parameters. *)
 Record params_layout :=
   mk_params_layout {
       (* reserved 3 bytes *)

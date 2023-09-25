@@ -4,6 +4,7 @@ Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt FatPointerABI ForwardPageTypesABI.
 
 Section FarCallABI.
+  (** This record describes all the parameters that [%FarCalls] can use. *)
 Record params :=
   mk_params {
       fwd_memory: fwd_memory;
@@ -13,7 +14,7 @@ Record params :=
       to_system: bool;
     }.
 
-
+(** This record describes the layout of 256-bit word that encodes these parameters. *)
 Record params_layout :=
   mk_params_layout {
       raw_to_system_bool: u8;

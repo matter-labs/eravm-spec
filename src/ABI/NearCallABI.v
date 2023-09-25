@@ -4,9 +4,12 @@ Import ssreflect.
 Import Types Core Coder Ergs Memory.
 
 Section NearCallABI.
+
+  (** Near call may only accept one parameter: the amount of ergs allocated to
+  it.*)
 Record params: Type :=
   mk_params {
-      ergs_passed: u32;
+      ergs_passed: u32; (* in low 32 bits *)
     }.
 
 Definition encode : params -> option u32 := fun p => Some p.(ergs_passed).

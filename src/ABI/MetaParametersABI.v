@@ -4,6 +4,8 @@ Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt.
 
 Section MetaParametersABI.
+
+  (** Meta parameters are returned by [%OpContextMeta]. This record shows the data that is contained in it. *)
 Record params :=
   mk_params {
       ergs_per_pubdata_byte: ergs;
@@ -13,7 +15,8 @@ Record params :=
       caller_shard_id: shard_id;
       code_shard_id: shard_id;
     }.
-
+(** This record describes the exact memory layout in a 256-bit word, which holds
+parameters. *)
 Record params_layout :=
   mk_params_layout {
       (* reserved: u8 *)
