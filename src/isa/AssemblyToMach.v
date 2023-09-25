@@ -6,6 +6,13 @@ Import RecordSetNotations.
 Import Assembly Addressing Common GeneratedMachISA Modifiers Memory Predication.
 Import Addressing.Coercions.
 
+(** # Encoding of [%asm_instruction] to the universal instruction layout
+
+In the lowest level, all instructions are encoded to a uniform 64-bit format;
+its fields are described by [%mach_instruction].
+
+This file details the encoding of [%asm_instruction] to [%mach_instruction].
+ *)
 Definition src_mode_of (op:in_any) :=
   match op with
   | InReg x => SrcReg
@@ -104,6 +111,7 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpToL1Message _ _ is_first => OpLogToL1 is_first
   end.
 
+#[local]
 Definition set_src0 (src0: in_any) : mach_instruction -> mach_instruction :=
   fun ins =>
     match src0 with
@@ -117,6 +125,7 @@ Definition set_src0 (src0: in_any) : mach_instruction -> mach_instruction :=
     end
 .
 
+#[local]
 Definition set_src0_special (src0: in_regimm) : mach_instruction -> mach_instruction :=
   fun ins =>
     match src0 with
@@ -125,6 +134,7 @@ Definition set_src0_special (src0: in_regimm) : mach_instruction -> mach_instruc
     end
 .
 
+#[local]
 Definition set_dst0 (dst0: out_any) : mach_instruction -> mach_instruction :=
   fun ins =>
     match dst0 with
@@ -140,6 +150,12 @@ Section AsmToMachConversion.
 
   Import ssrfun.
 
+  (** The encoding of [%asm_instruction] to [%mach_instruction] happens in two
+  stages:
+
+1. Put the information in the fields of [%mach_instruction] but keep ignored fields uninitialized (equal to [%None]).
+2. Flatten [%mach_instruction], erasing difference between meaningful and ignored fields. Fields that were equal to [%None] are assigned default values: zero for immediates, [%R0] for registers.
+   *)
   Definition asm_to_mach_opt (ins: predicated asm_instruction) : option (@mach_instruction (option GPR.reg_name) (option u16) ):=
     match ins with
     | Ins ins pred =>
