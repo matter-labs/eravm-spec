@@ -22,7 +22,9 @@ they are made of the following parts:
 - 2 reserved bits
 - [%predicate] (3 bits)
 - [%reg_name]s (4 x 4 bits)
-- immediate [%u16] values (2 x 16 bits)
+- immediate [%u16] values (2 x 16 bits, big endian)
+
+The precise format is formalized by [%encode_mach_instruction].
 
 Their encoding is independent and happens as follows:
 
@@ -109,5 +111,53 @@ Definition encode_reg_opt (name:option reg_name) : BITS 4 :=
   end
 .
 
-(** 4. Immediate 16-bit values are encoded as-is. *)
+(** 4. Immediate 16-bit values are encoded as-is.
+
+For example, the instruction `sub r0, r1, r2` will be encoded as
+`000000000210004B`, which, in binary form, is:
+
+```
+0000000000000000 0010 0001 0000 000 00 00001001011
+```
+
+Let's break it down:
+
+```
+| 0000000000000000 -> imm1
+| 0000000000000000 -> imm0
+| 0000 -> Dst1: R0 (4 bits, ignored)
+| 0010 -> Dst0: R2 (4 bits)
+| 0001 -> Src1: R1 (4 bits)
+| 0000 -> Src0: R0 (4 bits)
+| 000 -> Predicate: IfAlways (3 bits)
+| 00 -> Reserved (2 bits)
+|  00001001011 -> Opcode (11 bits)
+```
+
+
+Another example: `sub stack=[r1+15], r2, stack+=[r3+63]` is encoded as:
+`003f000f0321007d`, which, in binary form, is:
+
+```
+0000 0000 0011 1111 0000 0000 0000 1111 0000 0011 0010 0001 0000 0000 0111 1101
+```
+
+
+Let's break it down:
+
+```
+| 0000 0000 0011 1111  -> imm1: 63
+| 0000 0000 0000 1111 -> imm0: 15
+| 0000 -> dst1: R0 (4 bits, ignored)
+| 0011 -> dst0: R3 (4 bits)
+| 0010 -> src1: R2 (4 bits)
+| 0001 ->  src0: R1 (4 bits)
+| 000 -> Predicate: IfAlways (3 bits)
+| 00 -> Reserved (2 bits)
+| 000 0111 1101 -> Opcode (11 bits)
+```
+
+Be careful with the big-endian byte order in multibyte numbers.
+
+*)
 End EncodingTools.
