@@ -27,17 +27,16 @@ Check (equals: "0000000A02100079" = (Show.to_string (encode_asm (Ins _ (OpSub (A
 (* Require Import Extraction. *)
 
 (* Require Import ExtrOcamlBasic. *)
-(*  Require Import ExtrOcamlString. *)
+(* Require Import ExtrOcamlString. *)
 (* Extract Inlined Constant Datatypes.fst => "fst". *)
 (* Extract Inlined Constant Datatypes.snd => "snd". *)
 
 (* Extraction Blacklist List String Int. *)
 
-(* Separate Extraction encode_asm. *)
-(* (*Recursive Extraction encode_asm. *) *)
 (* Recursive Extraction encode_asm. *)
-(* Extraction insadd1. *)
 
-(* Definition s := Show.to_string (encode_asm insadd1). *)
 
-(* Recursive Extraction s. *)
+(* Definition ins_encode (i:predicated asm_instruction) : string := *)
+(*   Show.to_string (encode_asm i). *)
+
+(* Recursive Extraction sub ins_encode. *)

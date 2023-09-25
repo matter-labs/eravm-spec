@@ -3,7 +3,9 @@ Require Coder Memory lib.BitsExt.
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Core Common Coder Memory lib.BitsExt.
 
-Record params :=
+Section PrecompileParametersABI.
+
+  Record params :=
   mk_params
     {
       input_memory_offset: mem_address;
@@ -49,5 +51,5 @@ Canonical params_eqType := Eval hnf in EqType _ params_eqMixin.
 (* end details *)
 
 
-
 Axiom ABI: @coder word params.
+End PrecompileParametersABI.

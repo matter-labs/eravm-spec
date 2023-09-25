@@ -47,7 +47,7 @@ Contract code is global and shared between shards.
 
 ## Transient memory
 
-Transient memory consists of [%page]s holding data or code.
+Transient memory consists of **pages** ([%page_type]) holding data or code.
 Each page holds $2^{32}$ bytes; all bytes are initialized to zero at genesis.
 
 New pages are allocated implicitly when the contract execution starts; calling
@@ -231,7 +231,7 @@ heaps, and constants.
 When the execution of a contract starts, new pages are allocated for:
 
 - contract code: [%code_page], fetched by decommitter; see [%Decommitter] and
-  [%FarCall]);
+  [%FarCallDefinitions]);
 - data stack: [%stack_page];
 - heap: [%data_page];
 - aux_heap: [%data_page];
@@ -272,8 +272,7 @@ and code pages. **)
     (** The set of identifiers has a complete linear order, ordering the pages
     by the time of creation. The ability to distinguish older pages from newer
     is necessary to prevent returning fat pointers to pages from older frames.
-    See e.g. [%step_retext]. *)
-
+    See e.g. [% step_RetExt_ForwardFatPointer]. *)
     Section Order.
       Definition page_ordering := Nat.leb.
       Definition page_eq x y := page_ordering x y && page_ordering y x.
@@ -437,8 +436,7 @@ They are not writable.
 On genesis, code pages are filled as follows:
 
 - The contract code is places starting from the address 0.
-- The rest is filled with a value guaranteed to decode as invalid instruction
-  [%invalid_ins].
+- The rest is filled with a value guaranteed to decode as [%invalid] instruction.
 
 Const pages can coincide with code pages. *)
 

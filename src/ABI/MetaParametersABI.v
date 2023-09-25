@@ -3,6 +3,7 @@ Require Coder Ergs MemoryManagement Pointer lib.BitsExt.
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt.
 
+Section MetaParametersABI.
 Record params :=
   mk_params {
       ergs_per_pubdata_byte: ergs;
@@ -134,3 +135,4 @@ Qed.
 End LayoutCoder.
 
 Definition coder := coder_compose binary_coder layout_coder.
+End MetaParametersABI.

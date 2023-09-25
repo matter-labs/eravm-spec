@@ -185,7 +185,7 @@ Use `panic` for irrecoverable errors.
 
 ## Panics
 
-1. Attempt to forward an existing fat pointer, but the value holding [%ABI.Ret.params] is not tagged as a pointer.
+1. Attempt to forward an existing fat pointer, but the value holding [%RetABI] is not tagged as a pointer.
 *)
 
   | step_RevertExt_ForwardFatPointer_requires_ptrtag:

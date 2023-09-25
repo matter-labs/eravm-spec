@@ -1,6 +1,6 @@
 Require Coder Memory.
 
-Section Def.
+Section VersionedHash.
   Import ZArith ssrbool eqtype ssreflect ssrfun ssrbool ssreflect.eqtype ssreflect.tuple zmodp.
   Import Memory Coder Common.
 
@@ -81,4 +81,4 @@ modulo $2^{28 \times 8}$.
   Canonical vh_eqType := Eval hnf in EqType _ vh_eqMixin.
 
   (* end details *)
-End Def.
+End VersionedHash.

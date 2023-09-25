@@ -38,3 +38,6 @@ CoqMakefile.conf
 *.vo
 *.vos
 *.css
+Makefile
+*.pdf
+doc

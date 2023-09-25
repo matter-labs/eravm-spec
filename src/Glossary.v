@@ -1,3 +1,4 @@
+Section Glossary.
 (** # Notations
 
 - Definitional equality is denoted with $A:=B$. Its meaning is: $A$ can be substituted with $B$.
@@ -26,7 +27,6 @@
 - **ABI** --  application binary interface. See [%ABI].
 - **Active external frame** --  the closest external frame to the top of call stack. For example, in a callstack [%(InternalCall _ (InternalCall _ (ExternalCall _ (InternalCall _ ...))))] the active external frame will be the third frame in stack. See [%active_extframe].
 - **Auxheap** --  one of two heap variants (heap and auxheap), mostly used by system contracts. Executing one of far call instructions creates a new external frame and allocates pages for code, constants, data stack, heap and aux heap.
-- **Batch** -- ??
 - **Burning ergs** --  setting ergs to zero in topmost call stack frame, external or internal. See [%Ergs].
 - **Callstack** --  a stack of context information. Executing one of near call instructions pushes a frame of type [%InternalCall] to the callstack, executing one of far call instructions pushes a frame of type [%ExternalCall]. See [%CallStack].
 - **Checkpoint** -- see [%state_checkpoint]. Not to confuse with EraVM snapshot.
@@ -64,11 +64,10 @@
 - **Memory forwarding** -- a mechanism of sharing a read-only fragment ofmemory between contracts. The memory fragment is created from [%span] and described by [%fat_ptr]. This fragment can be narrowed or shrunk as a result of far call or executing [%OpPtrShrink].
 - **Machine instruction** -- a low-level machine instruction with a fixed format. The high-level [%instruction_predicated] is encoded to machine instructions.
 - **Memory growth** -- a process, where an access to a heap variant beyond its bound leads to increasing the bound and payment.
-- **Message** --  TODO
 - **Narrowing a fat pointer** -- subtract a given number from its length and add it to its start; it is guaranteed to not overflow. See [%fat_ptr_narrow]. Used when passing a fat pointer to a far call, or returning it from a contract.
 - **Near call** -- calling a function that belongs to the same contract.
 - **Operand** --  data or the address that is operated upon by the instruction. It represents the input or output values used by the instruction to perform a specific operation or computation. See [%InstructionArguments].
-- **Page** -- see [%page].
+- **Page** -- see [%page_type].
 - **Pointer value** -- a [%primitive_value] with a set pointer tag. May contain a fat pointer. See [%PtrValue].
 - **Precompile call** -- an invokation of [%OpPrecompileCall]. Precompiles are
 extensions of EraVM bound to one of the system contracts. When this contract
@@ -83,33 +82,34 @@ algorithm specific to this contract. See [%Precompiles].
 - **System contracts** -- contracts with addresses from 0 to [%KERNEL_MODE_MAXADDR_LIMIT]. They are executed in [%KernelMode].
 - **Topmost callstack frame** -- the last frame pushed to call stack.
 - **Word** -- 256-bit unsigned untagged integer value.
-- **address resolution** -- a matching between instruction operands and locations using the supported address modes. See [%resolve].
-- **base cost** -- the fixed cost of executing instruction, in ergs. Some instructions imply additional costs, e.g. far calls may require paying for code decommitment.
-- **bootloader** -- a system contract written in YUL in charge of block construction.
-- **cell** -- alias to "word". Often used to distinguish between values themselves and the memory locations holding them.
-- **depot** -- all storages in all shards. See [%depot].
-- **ergs** -- resource spent on actions such as executing instructions. See [%Ergs].
-- **instruction predicate** -- see [%Predication].
-- **flag** -- see [%flag_state].
-- **fully qualified address** -- see [%fqa_key].
-- **instruction** -- low-level command or operation that is executed by a virtual machine to perform a specific task. Instructions supported by EraVm are described by the type [%instruction_predicated].
-- **kernel mode** -- a mode of execution for system contracts opening access to full instruction set, containing instructions potentially harmful to the global state e.g. [%OpContextIncrementTxNumber]. See [%KernelMode].
-- **key** -- a 256-bit address of a cell in storage.
-- **location** -- see [%loc].
-- **panic** -- irrecoverable error. Handled by formally executing [%OpPanic].
-- **revert** -- execution of [%OpRevert], usually as a consequence of recoverable error.
-- **malformed transaction** -- a transaction rejected by the bootloader. Handling it is the responsibility of the server that controls EraVM.
-- **predicate** -- see [%Predication].
-- **predication** -- see [%Predication].
-- **program counter** -- the [%code_address] of the next instruction to be executed. See [%cf_pc].
-- **rollback** -- restoration of the [%gs_revertable] portion of [%state] as a result of revert or panic. The state is saved at every near or far call. See also [%state_checkpoint].
-- **shard** -- a collection of [%storage]s. See [%shard].
-- **snapshot** -- a copy of the full state of EraVM. Server makes a snapshot of VM state every time a transaction is successfully completed. When the bootloader encounters a malformed transaction, it fails, and the server restarts EraVM from the most recent snapshot, skipping this transaction.
-- **server** -- a program that launches EraVM and controls it. Feeds the transactions to the bootloader, provides decommitter and other external modules, restarts EraVM from the latest snapshot in case of malformed transactions.
-- **stack pointer** -- the [%stack_address] where the next element will be pushed. It is the address of the (top of the stack + 1).
-- **static mode** -- see [%StaticMode].
-- **storage** -- see [%storage].
-- **total cost** -- a sum of [%base_cost] of an instruction and all its additional costs.
-- **versioned hash** -- a key used to retrieve the contract code from decommitter. See [%versioned_hash] and [%Decommitter].
+- **Address resolution** -- a matching between instruction operands and locations using the supported address modes. See [%resolve].
+- **Base cost** -- the fixed cost of executing instruction, in ergs. Some instructions imply additional costs, e.g. far calls may require paying for code decommitment.
+- **Bootloader** -- a system contract written in YUL in charge of block construction.
+- **Cell** -- alias to "word". Often used to distinguish between values themselves and the memory locations holding them.
+- **Depot** -- all storages in all shards. See [%depot].
+- **Ergs** -- resource spent on actions such as executing instructions. See [%Ergs].
+- **Instruction predicate** -- see [%Predication].
+- **Flag** -- see [%flag_state].
+- **Fully qualified address** -- see [%fqa_key].
+- **Instruction** -- low-level command or operation that is executed by a virtual machine to perform a specific task. Instructions supported by EraVm are described by the type [%instruction_predicated].
+- **Kernel mode** -- a mode of execution for system contracts opening access to full instruction set, containing instructions potentially harmful to the global state e.g. [%OpContextIncrementTxNumber]. See [%KernelMode].
+- **Key** -- a 256-bit address of a cell in storage.
+- **Location** -- see [%loc].
+- **Panic** -- irrecoverable error. Handled by formally executing [%OpPanic].
+- **Revert** -- execution of [%OpRevert], usually as a consequence of recoverable error.
+- **Malformed transaction** -- a transaction rejected by the bootloader. Handling it is the responsibility of the server that controls EraVM.
+- **Predicate** -- see [%Predication].
+- **Predication** -- see [%Predication].
+- **Program counter** -- the [%code_address] of the next instruction to be executed. See [%cf_pc].
+- **Rollback** -- restoration of the [%gs_revertable] portion of [%state] as a result of revert or panic. The state is saved at every near or far call. See also [%state_checkpoint].
+- **Shard** -- a collection of [%storage]s. See [%shard].
+- **Snapshot** -- a copy of the full state of EraVM. Server makes a snapshot of VM state every time a transaction is successfully completed. When the bootloader encounters a malformed transaction, it fails, and the server restarts EraVM from the most recent snapshot, skipping this transaction.
+- **Server** -- a program that launches EraVM and controls it. Feeds the transactions to the bootloader, provides decommitter and other external modules, restarts EraVM from the latest snapshot in case of malformed transactions.
+- **Stack pointer** -- the [%stack_address] where the next element will be pushed. It is the address of the (top of the stack + 1).
+- **Static mode** -- see [%StaticMode].
+- **Storage** -- see [%storage].
+- **Total cost** -- a sum of [%base_cost] of an instruction and all its additional costs.
+- **Versioned hash** -- a key used to retrieve the contract code from decommitter. See [%versioned_hash] and [%Decommitter].
 - **VM** -- the same as EraVM, the abstract virtual machine that this document specifies.
  *)
+End Glossary.

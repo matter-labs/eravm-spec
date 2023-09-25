@@ -24,6 +24,7 @@ EraVM is a 256-bit register-based language machine with two stacks and dedicated
   (* end details *)
 End Parameters.
 
+Section ArchOverview.
 (**
 ![](img/arch-overview.png)
 
@@ -175,6 +176,6 @@ There are three types of behaviors triggered by execution failures.
 
 
 *)
-
+End ArchOverview.
 Definition timestamp := nat.
 Definition tx_num := u16.

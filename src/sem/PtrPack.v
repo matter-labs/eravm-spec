@@ -55,7 +55,7 @@ $$result := \mathit{op_1}\{255\dots128\} \#\# \mathit{op_2}\{128\dots 0\}$$
   This is used by for memory forwarding to far calls when we need to forward an existing fat pointer.
 
   To pass a fat pointer `P` to far call, it is necessary to encode an instance of
-  [%ABI.FarCall.params] with [%fwd_memory := ForwardFatPointer P] into a
+  [%FarCallABI] with [%fwd_memory := ForwardFatPointer P] into a
   [%PtrValue].
 
   ```
@@ -71,18 +71,18 @@ $$result := \mathit{op_1}\{255\dots128\} \#\# \mathit{op_2}\{128\dots 0\}$$
       }.
   ```
 
-  The compound type [%ABI.FarCall.params] is serialized to a [%word] in such a
+  The compound type of [%FarCallABI] is serialized to a [%word] in such a
   way that the pointer takes up the lower 128 bits of memory.
   This matches the layout of any fat pointer: serialized pointers occupy the
   lower 128 bit of a word.
 
-  Therefore, encoding an instance of [%ABI.FarCall.params] can be done as follows:
+  Therefore, encoding an instance of [%FarCallABI] can be done as follows:
 
   - take an existing [%PtrValue P]
   - form a value `A` encoding [%ergs_passed], [%shard_id] and other fields of
-    [%ABI.FarCall.params] in A{128...255}.
+    [%FarCallABI] in A{128...255}.
   - invoke [%OpPtrPack P A B]. Now `B` stores an encoded instance of
-    [%ABI.FarCall.params] and can be passed to one of far call instructions.
+    [%FarCallABI] and can be passed to one of far call instructions.
 
 ## Similar instructions
 

@@ -3,6 +3,7 @@ Require Coder Ergs Memory.
 Import ssreflect.
 Import Types Core Coder Ergs Memory.
 
+Section NearCallABI.
 Record params: Type :=
   mk_params {
       ergs_passed: u32;
@@ -22,3 +23,4 @@ refine (mk_coder decode encode _).
 unfold revertible, encode, decode.
 by move => []; inversion 1.
 Defined.
+End NearCallABI.

@@ -67,7 +67,7 @@ Inductive loc : Type :=
 more complicated and requires putting in registers specially formed pointers
 [%heap_ptr]. *)
 
-Section Resolve.
+Section Resolution.
   Import Addressing.Coercions.
 
   Open Scope ZMod_scope.
@@ -226,4 +226,4 @@ In the current state of EraVM, only SP modifications are allowed, therefore the 
       sp_map_spec (fun _ => new_sp) cs cs' ->
       resolve_apply arg (cs', loc).
 
-End Resolve.
+End Resolution.

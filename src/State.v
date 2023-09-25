@@ -6,7 +6,7 @@ Import RecordSetNotations.
 
 Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory Decommitter Predication VMPanic PrimitiveValue.
 
-Section Definitions.
+Section StateDefinitions.
 
 Definition exception_handler := code_address.
 
@@ -33,19 +33,19 @@ Definition page_has_id := @page_has_id code_page const_page data_page stack_page
 EraVM employs a [%state] that comprises the following components:
 
 1. The [%global_state] contains:
-- current price of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
-- transaction number in the current block [%gs_tx_number_in_block]
-- decommitter [%gs_contracts]
-- a revertable part [%state_checkpoint]. It houses the **depot** state, embodying
-   all contracts storages across all shards, as well as two queues for events
-   and L1 messages.
+  - current price of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
+  - transaction number in the current block [%gs_tx_number_in_block]
+  - decommitter [%gs_contracts]
+  - a revertable part [%state_checkpoint]. It houses the **depot** state, embodying
+    all contracts storages across all shards, as well as two queues for events
+    and L1 messages.
 
-   Launching a contract (far call) or a function (near call) defines a
-   checkpoint.
-   If a contract or a function reverts or panics, the state rolls back
-   to the latest snapshot (see [%rollback]).
+    Launching a contract (far call) or a function (near call) defines a
+    checkpoint.
+    If a contract or a function reverts or panics, the state rolls back
+    to the latest snapshot (see [%rollback]).
 
-   The rollback may be implemented in any efficient way conforming to this behavior.
+    The rollback may be implemented in any efficient way conforming to this behavior.
 *)
 Record state_checkpoint := {
     gs_depot: depot;
@@ -66,11 +66,11 @@ Inductive rollback checkpoint: global_state -> global_state -> Prop :=
   rollback checkpoint (mk_gstate e tx ccs _cp) (mk_gstate e tx ccs checkpoint).
 
 (** 2. The [%transient_state] contains:
-  - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
-  - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0]. See [%Registers].
-  - all memory [%gs_pages] allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
-  - [%gs_callstack], where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and the remaining ergs allocated for the current function's run are parts of a stack frame. See [%CallStack].
-  - 128-bit register [%gs_context_u128]. Its usage is detailed below.
+    - flags [%gs_flags]: boolean values representing some characteristics of the computation results. See [%Flags].
+    - general purpose registers [%gs_regs]: 15 mutable tagged words (primitive values) [%r1]--[%r15], and a reserved read-only zero valued [%r0]. See [%Registers].
+    - all memory [%gs_pages] allocated by VM, including code pages, data stack pages, data pages for heap variants etc. See [%memory].
+    - [%gs_callstack], where each currently running contract and function has a stack frame. Note, that program counter, data stack pointer, and the remaining ergs allocated for the current function's run are parts of a stack frame. See [%Callstack].
+    - 128-bit register [%gs_context_u128]. Its usage is detailed below.
  *)
 (* begin details: helpers *)
 Definition callstack := @callstack state_checkpoint.
@@ -192,7 +192,7 @@ Inductive global_state_increment_tx tx_mod: global_state -> global_state -> Prop
     gs_revertable := rev;
   |}.
 
-End Definitions.
+End StateDefinitions.
 
 Definition heap_variant_page_id (page_type: data_page_type)
   : callstack -> page_id :=

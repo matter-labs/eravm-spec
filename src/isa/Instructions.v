@@ -1,3 +1,4 @@
+Section InstructionSets.
 (** # EraVM instruction sets
 
 *Note* If you are interested in the instruction set exposed to the assembly
@@ -77,3 +78,4 @@ from lowest level to the highest level:
      [%bind_farret_params] describes how [%OpFarRet]'s ABI parameters are
      deserialized.
 *)
+End InstructionSets.

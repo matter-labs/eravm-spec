@@ -3,6 +3,7 @@ Require Common Predication isa.Modifiers isa.GeneratedMachISA.
 Import ZBits ZArith.
 Import Common GPR GeneratedMachISA Modifiers Predication.
 
+Section EncodingTools.
 (** # Encoding parts of instructions
 
 The encoding of [%asm_instruction] is described in two stages:
@@ -108,4 +109,5 @@ Definition encode_reg_opt (name:option reg_name) : BITS 4 :=
   end
 .
 
-(** 4. Immediate values are encoded as is. *)
+(** 4. Immediate 16-bit values are encoded as-is. *)
+End EncodingTools.

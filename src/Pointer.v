@@ -5,7 +5,7 @@ Require Memory.
 Import Arith Core Common MemoryBase Memory RecordSetNotations PMap_ext BinInt zmodp.
 Import ssreflect.tuple ssreflect.eqtype.
 
-Section Definitions.
+Section PointerDefinitions.
   Context (bytes_in_word := u32_of z_bytes_in_word).
 
   Open Scope ZMod_scope.
@@ -38,8 +38,8 @@ to [%s_start + s_length] exclusive. It is not bound to a specific page. *)
 
 Passing a span in [%ForwardNewHeapPointer] as an argument to far calls or far
 returns creates a **fat pointer**.
-The required encoding is described by [%ABI.FarRet.ABI] or [%ABI.FarCall.ABI].
-See [%FarCall] and [%FarRet].
+The required encoding is described by [%FarRetABI] or [%FarCallABI].
+See [%FarCallDefinitions] and [%FarRet].
 
 See also: [%Slices].
 
@@ -98,7 +98,7 @@ Heap pointers are used by the following instructions:
 - [%OpLoad]/[%OpLoadInc]
 - [%OpStore]/[%OpStoreInc]
 
-The layout of a heap pointer in a 256-bit word is described by [%ABI.FatPointer.decode_heap_ptr].
+The layout of a heap pointer in a 256-bit word is described by [%decode_heap_ptr].
 
 ## Relation to fat pointers
 
@@ -290,4 +290,4 @@ Shrinking may result in a pointer with $\mathit{offset}>\mathit{length}$, but su
     Definition fat_ptr_inc_OF := fat_ptr_opt_map ptr_inc_OF.
   End FatPointer.
 
-End Definitions.
+End PointerDefinitions.

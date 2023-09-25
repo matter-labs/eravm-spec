@@ -3,6 +3,7 @@ Require Coder Ergs MemoryManagement Pointer lib.BitsExt ABI.FatPointerABI ABI.Fo
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt FatPointerABI ForwardPageTypesABI.
 
+Section FarCallABI.
 Record params :=
   mk_params {
       fwd_memory: fwd_memory;
@@ -177,3 +178,4 @@ fun params =>
 End LayoutCoder.
 
 Definition coder := coder_compose coder_binary coder_layout.
+End FarCallABI.

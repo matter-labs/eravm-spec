@@ -361,7 +361,7 @@ Fetches
 
 ## Semantic
 
-- Stores the encoded value of [%ABI.MetaParameters.params] in `out`. They follow the structure:
+- Stores the encoded value of [%MetaParametersABI] in `out`. They follow the structure:
 
 ```
 Record params := {

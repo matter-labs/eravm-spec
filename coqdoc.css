@@ -63,8 +63,9 @@ div:empty{ display: none;}
 #main .doc {
     margin: 0;
     text-align: left;
-    background-color: rgba(0,0,0,0.08);
-    max-width: 40em;
+    background-color: #d3d3d3; //rgba(0,0,0,0.08);
+    padding: 1em;
+    max-width: 50em;
 }
 
 .inlinecode, .code, #main pre {
@@ -196,4 +197,8 @@ ul.doclist {
     display: inline;
 }
 
-
+ul,li {
+    /*margin:20pt;*/
+   margin-left: 0.5em;
+   padding-left:0.5em;
+}

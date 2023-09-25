@@ -39,7 +39,7 @@ caller calls the callee.
 
 Step-by-step explanation:
 
-1. Read the value of `abi_reg` and decode the following structure [%ABI.NearCall.params] from it.
+1. Read the value of `abi_reg` and decode the following structure from [%NearCallABI] from it.
    The `ergs_passed` field indicates the amount of ergs we intend to pass, but
    the actual amount of ergs passed gets decided at runtime (see step 2).
 

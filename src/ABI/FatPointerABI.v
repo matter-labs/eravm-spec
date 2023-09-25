@@ -3,6 +3,7 @@ Require Coder Pointer lib.BitsExt.
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
 Import Core Common Coder Pointer lib.BitsExt.
 
+Section FatPointerABI.
 (** Record [%fat_ptr_layout] displays the memory layout of a 128-bit fat pointer.*)
 Record fat_ptr_layout := mk_fat_ptr_layout {
                               length: u32;
@@ -11,7 +12,6 @@ Record fat_ptr_layout := mk_fat_ptr_layout {
                               offset: u32;
                             }.
 Definition null_fat_ptr_layout := mk_fat_ptr_layout zero32 zero32 zero32 zero32.
-
 Section LayoutCoder.
   (** Functions [%encode_layout] and [%decode_layout] formalize the encoding of
   a [%fat_ptr_nullable] to [%fat_ptr_layout]. *)
@@ -163,3 +163,4 @@ Section ComposedCoder.
     | _ => None
     end.
 End ComposedCoder.
+End FatPointerABI.
