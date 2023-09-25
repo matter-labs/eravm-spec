@@ -27,6 +27,7 @@ Require Import
   sem.NearRetTo
   sem.NearRevert
   sem.NearRevertTo
+  sem.Nop
   sem.OpEvent
   sem.Or
   sem.Panic
@@ -103,6 +104,7 @@ Section SmallStep.
   predicates for various [%asm_instruction]s. *)
   Definition smallsteps : list (@instruction bound -> smallstep) :=
   [
+                                        step_nop            ;
   fun i => step_transient (tstep_flags     step_add          i);
   fun i => step_transient (tstep_flags     step_sub          i);
   fun i => step_transient (tstep_flags     step_and          i);
