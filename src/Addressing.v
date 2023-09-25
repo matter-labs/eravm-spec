@@ -213,7 +213,7 @@ and memory locations.
    - A generalized version of `pop` operation.
    - Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$. See [%rslv_stack_rel].
    - Additionally, after the resolution, SP is modified: `SP -= (reg + imm)`.
-   - *Concrete syntax example*. Use `SP-1-(r1+42)`-th [%word] on the stack page as a
+   - *Concrete syntax example*. Use `SP-(r1+42)`-th [%word] on the stack page as a
       source:
 
      ```
@@ -238,13 +238,12 @@ and memory locations.
    - A generalized version of `push` operation.
    - Resolved to $\mathit{(SP + (reg + imm))\mod 2^{16}}$.
    - Additionally, after the resolution, SP is modified: `SP += (reg + imm)`.
-   - *Concrete syntax example*. Use `SP-1+(r1+42)`-th [%word] on the stack page as a
+   - *Concrete syntax example*. Use `SP+(r1+42)`-th [%word] on the stack page as a
       destination:
 
      ```
      add r3, r0, stack+=[r1+42]
      ```
-
    *)
   Inductive stack_out_only : Type :=
   | RelSpPush (reg:reg_name) (offset: stack_address)
