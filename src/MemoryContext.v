@@ -55,7 +55,17 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
   (** If an instruction addresses a heap variant outside of its bounds, the
   bound of this heap variant is adjusted to include the used address. Predicates
   [%grow_heap_page], [%grow_auxheap_page], [%grow_heap_variant] are relating
-  memory contexts where a heap variant is grown. *)
+  memory contexts where a heap variant is grown.
+
+**WARNING: KNOWN DIVERGENCE**
+
+- In the current implementation, if heap/auxheap was grown inside a near call, the
+parent’s heap/auxheap bound may be restored after `ret` as if no growth
+happened.
+
+- Expected behavior: if heap/auxheap was grown inside a near call, the parent’s
+heap/auxheap bound is correctly updated after `ret`
+   *)
 
   Inductive grow_heap_page: mem_address -> mem_ctx -> mem_ctx -> Prop :=
   | gp_heap: forall ap new_bound diff,

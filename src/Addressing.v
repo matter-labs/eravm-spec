@@ -244,6 +244,13 @@ and memory locations.
      ```
      add r3, r0, stack+=[r1+42]
      ```
+
+   **WARNING: KNOWN DIVERGENCE** current implementation diverges from the described spec:
+
+     - Implementation: the write happens to the new SP address
+     - Specification: the write happens to the old SP address
+
+     The implementation will be adjusted to conform to the spec in later versions.
    *)
   Inductive stack_out_only : Type :=
   | RelSpPush (reg:reg_name) (offset: stack_address)
