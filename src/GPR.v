@@ -4,7 +4,7 @@ Require Core List PrimitiveValue.
 Import Core PrimitiveValue .
 
 Section Registers.
-
+  Import RecordSetNotations.
   Context (pv := @primitive_value word).
 
   (** # GPR (General Purpose Registers)
@@ -88,85 +88,28 @@ evaluates to [%IntValue 0], that is, an untagged integer 0.
     end.
 
 (* begin details: helpers *)
-  (** Predicate [%store_gpr] stores value to a general purpose register. It is not defined for [%R0] *)
-  Inductive store_gpr : regs_state -> reg_name -> pv -> regs_state -> Prop :=
-  | fr_store1 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R1 pv
-        (mk_regs pv r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store2 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R2 pv
-        (mk_regs r1 pv r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store3 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R3 pv
-        (mk_regs r1 r2 pv r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store4 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R4 pv
-        (mk_regs r1 r2 r3 pv r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store5 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R5 pv
-        (mk_regs r1 r2 r3 r4 pv r6 r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store6 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R6 pv
-        (mk_regs r1 r2 r3 r4 r5 pv r7 r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store7 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R7 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 pv r8 r9 r10 r11 r12 r13 r14 r15)
-  | fr_store8 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R8 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 pv r9 r10 r11 r12 r13 r14 r15)
-  | fr_store9 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R9 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 pv r10 r11 r12 r13 r14 r15)
-  | fr_store10 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R10 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 pv r11 r12 r13 r14 r15)
-  | fr_store11 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R11 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 pv r12 r13 r14 r15)
-  | fr_store12 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R12 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 pv r13 r14 r15)
-  | fr_store13 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R13 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 pv r14 r15)
-  | fr_store14 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R14 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 pv r15)
-  | fr_store15 :
-    forall r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 pv,
-      store_gpr
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15) R15 pv
-        (mk_regs r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 pv)
-  .
+
   #[export] Instance etaGPRs : Settable _ := settable! mk_regs < r1; r2; r3; r4; r5; r6; r7; r8; r9; r10; r11; r12; r13; r14; r15 >.
+  (** Predicate [%store_gpr] stores value to a general purpose register. Storing to [%R0] is ignored. *)
+  Definition store_gpr (rs: regs_state) (name: reg_name) (pv: primitive_value) : regs_state :=
+    match name with
+    | R0 => rs
+    | R1 => rs <| r1 := pv|>
+    | R2 => rs <| r2 := pv|>
+    | R3 => rs <| r3 := pv|>
+    | R4 => rs <| r4 := pv|>
+    | R5 => rs <| r5 := pv|>
+    | R6 => rs <| r6 := pv|>
+    | R7 => rs <| r7 := pv|>
+    | R8 => rs <| r8 := pv|>
+    | R9 => rs <| r9 := pv|>
+    | R10 =>rs <| r10 := pv|>
+    | R11 =>rs <| r11 := pv|>
+    | R12 =>rs <| r12 := pv|>
+    | R13 =>rs <| r13 := pv|>
+    | R14 =>rs <| r14 := pv|>
+    | R15 =>rs <| r15 := pv|>
+    end.
 
   Definition reg_map f (rs:regs_state) : regs_state :=
     match rs with

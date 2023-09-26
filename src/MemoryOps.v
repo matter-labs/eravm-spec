@@ -57,7 +57,7 @@ memory or registers ([%store]).
     Inductive store_loc: primitive_value -> loc -> (regs_state * memory) -> Prop :=
     | store_lreg:
       forall new_regs reg_name value mem,
-        store_gpr regs reg_name value new_regs ->
+        store_gpr regs reg_name value = new_regs ->
         store_loc value (LocReg reg_name) (new_regs, mem)
     | store_lstackaddr:
       forall new_mem stackpage addr value pid new_stackpage,
@@ -109,7 +109,7 @@ memory or registers ([%store]).
     potential effects on the state, which makes it easier and more precise. *)
     Inductive store_reg: out_reg -> primitive_value -> regs_state -> Prop :=
     | sr_apply: forall (arg:out_reg) loc new_regs  pv,
-        store_gpr regs loc pv new_regs ->
+        store_gpr regs loc pv = new_regs ->
         store_reg arg pv new_regs.
 
     Definition store_int a w rs m cs := store a (IntValue w) (rs, m, cs).
