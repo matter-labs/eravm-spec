@@ -23,3 +23,5 @@ python3 collate.py `cat docseq` > "doc/$NAME.html"
 # Prince is capable of collating multiple files together, but it is much faster to use a script `collate.py`. Additionally, `collate.py` cuts out some unwanted parts
 echo "Generating PDF doc/$NAME.pdf"
 "$PRINCE" --raster-dpi=300 -j "doc/$NAME.html" -o "doc/$NAME.pdf"
+
+cd doc && add-margin spec.pdf && mv spec_uncropped.pdf spec-`date +"%d-%m-%Y"`.pdf && mv spec.pdf spec-w-margin-`date +"%d-%m-%Y"`.pdf
