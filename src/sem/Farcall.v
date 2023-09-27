@@ -303,20 +303,20 @@ A system call is a far call that satisfies the following conditions:
 8. Clear flags.
 9. Modify GPRs depending on the call being system or not (formalized by [%regs_effect]):
 
-  - Effect of a non-system call:
-    + All registers are cleared.
-    + Register `R1` is assigned a fat pointer to forward data to the far call.
-      See [%paid_forward].
+   - Effect of a non-system call:
+     + All registers are cleared.
+     + Register `R1` is assigned a fat pointer to forward data to the far call.
+       See [%paid_forward].
 
-  - Effect of a system call:
-    + Register `R1` is assigned a fat pointer to forward data to the far call.
-      See [%paid_forward].
-    + Register `R2` is assigned a bit-value:
-      - bit 1 indicates "this is a system call"
-      - bit 0 indicates "this is a constructor call"
-    + Registers `r3`, `r4`, ..., `r15` are reserved; their pointer tags are
-      cleared, but their values are unchanged.
-    + Registers `r14` and `r15` are cleared.
+   - Effect of a system call:
+     + Register `R1` is assigned a fat pointer to forward data to the far call.
+       See [%paid_forward].
+     + Register `R2` is assigned a bit-value:
+       - bit 1 indicates "this is a system call"
+       - bit 0 indicates "this is a constructor call"
+     + Registers `r3`, `r4`, ..., `r15` are reserved; their pointer tags are
+       cleared, but their values are unchanged.
+     + Registers `r14` and `r15` are cleared.
  *)
 Definition regs_effect regs (is_system is_ctor:bool) ptr :=
   let far_call_r2 :=
@@ -353,34 +353,29 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
 (**
 10. Form a new execution stack frame:
 
-   - the call is static if the current call is static, or if `.is_static` modifier is applied to instruction;
-   - set exception handler to `handler` address provided in the instruction;
-   - it is a checkpoint that saves all storage states;
-   - start PC at 0;
-   - start SP at [%INITIAL_SP_ON_FAR_CALL];
- *)
+    - the call is static if the current call is static, or if `.is_static` modifier is applied to instruction;
+    - set exception handler to `handler` address provided in the instruction;
+    - it is a checkpoint that saves all storage states;
+    - start PC at 0;
+    - start SP at [%INITIAL_SP_ON_FAR_CALL];
+    - `this_address`,`msg_sender` and `context` fields are affected by the [%farcall_type] as follows:
+       + Normal far call sets:
+         * `this_address` <- destination address;
+         * `msg_sender` <- caller address;
+         * `context` <- value of context register [%gs_context_u128].
 
+       + Delegate call sets:
+         * `this_address` <- [%this_address] of the current frame;
+         * `msg_sender` <- [%msg_sender] of the current frame;
+         * `context` <- [%context_u128] of the current frame.
+
+       + Mimic call sets:
+         * `this_address` <- destination address;
+         * `msg_sender` <- value of `r3`;
+         * `context` <- value of context register [%gs_context_u128].
+ *)
 Definition CALL_IMPLICIT_PARAMETER_REG := R15.
 Inductive farcall_type : Set := Normal | Mimic | Delegate.
-
-(**
-
-   - `this_address`,`msg_sender` and `context` fields are affected by the [%farcall_type] as follows:
-      + Normal far call sets:
-        * `this_address` <- destination address;
-        * `msg_sender` <- caller address;
-        * `context` <- value of context register [%gs_context_u128].
-
-      + Delegate call sets:
-        * `this_address` <- [%this_address] of the current frame;
-        * `msg_sender` <- [%msg_sender] of the current frame;
-        * `context` <- [%context_u128] of the current frame.
-
-      + Mimic call sets:
-        * `this_address` <- destination address;
-        * `msg_sender` <- value of `r3`;
-        * `context` <- value of context register [%gs_context_u128].
- *)
 Definition select_this_address type (caller dest: contract_address) :=
   match type with
   | Normal => dest

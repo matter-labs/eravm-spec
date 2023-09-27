@@ -112,7 +112,7 @@ The typical usage of the context value is as follows:
 Note that setting the context register [%gs_context_u128] is forbidden in [%StaticMode]. See [%forbidden_static].
 
 Context is used to simulate `msg.value`, a Solidity construction standing for the amount of wei sent in a transaction.
-A system contract `MsgValueSimulator` is respondible for ensuring that whenever this context value is set to $C$, there is indeed $C$ wei transfered to the callee.
+The system contract `MsgValueSimulator` is responsible for ensuring that whenever this context value is set to $C$, there are indeed $C$ wei transferred to the callee.
  *)
 
 (* begin hide *)
