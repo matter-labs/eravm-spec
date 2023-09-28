@@ -1,52 +1,94 @@
-# Specification for zkEVM
+# zkSync Era: Formal Specification of EraVM instruction set
 
-This is an effort to formalize zkEVM in Coq.
+[![Logo](eraLogo.svg)](https://zksync.io/)
 
-## What is Coq?
+zkSync Era is a layer 2 rollup that uses zero-knowledge proofs to scale Ethereum without compromising on security
+or decentralization. As it's EVM-compatible (with Solidity/Vyper), 99% of Ethereum projects can redeploy without
+needing to refactor or re-audit any code. zkSync Era also uses an LLVM-based compiler that will eventually enable
+developers to write smart contracts in popular languages such as C++ and Rust.
 
-Coq is a proof assistant incorporating the functional programming language with the same name.
-This language has a rich type system capable of encoding statements of logic (this is called Curry-Howard isomorphism).
-Such a language can be used to:
+This repository contains the formal specification for EraVM instruction set written in Coq, along with some artifacts generated from it.
 
-- encode logical statements
-- encode their proofs and automatically verify their correctness
-- encode arbitrary finite computations (`while (true) {}` is forbidden, the language is therefore not Turing-complete).
+## License
 
-Additionally, Coq as a proof assistant can:
+This library is distributed under the terms of either
 
-- facilitate the proof construction through a limited proof search
-- modularize descriptions of computation and proof in different ways
-- extract the computations from Coq to Ocaml. Therefore one way of verifying programs is writing them in Coq, proving their properties, letting Coq verify these proofs, and automatically extracting a compilable Ocaml code.
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
-
-Coq as a functional language is rich in functionality and you can extend it in a variety of ways.
-We use one such extension providing a [nicer syntax to set fields of records](https://github.com/tchajed/coq-record-ui pdate)
-
-However, the core language stays small, and everything else builds on top of it.
-Therefore language extensions do not compromise the robustness of the proof checking.
-
-Coq is written in Ocaml and enjoys integration with its ecosystem.
+at your option.
 
 
-As `int` is a type of an object corresponding to any integer number, `int->int` is a type of an object corresponding to any function from `int` to `int`, `forall i, exists k, k = i + 1` is a type of any *proof* of the fact, encoded in the type.
+## Official Links
+
+- [Website](https://zksync.io/)
+- [GitHub](https://github.com/matter-labs)
+- [Twitter](https://twitter.com/zksync)
+- [Twitter for Devs](https://twitter.com/zkSyncDevs)
+- [Discord](https://join.zksync.dev/)
+
+## Disclaimer
+
+zkSync Era has been through extensive testing and audits, and although it is live, it is still in alpha state and
+will undergo further audits and bug bounty programs. We would love to hear our community's thoughts and suggestions
+about it!
+It's important to note that forking it now could potentially lead to missing important
+security updates, critical features, and performance improvements.
 
 
-#  How to build
 
-## Set up the environment
-1. install [Opam](https://opam.ocaml.org/) (your packet manager probably has it).
-2. install Coq using `opam pin add coq 8.17.0`. This will install Coq version 8.17.0 instead of the latest available version; if a newer version of Coq appears, it will be skipped.
-3. install https://github.com/tchajed/coq-record-update
-4. to generate docs:
-    - install Pandoc
-    - install Python 3.6+
-    - install `pypandoc` by executing `python3 -m pip install pypandoc`
+# Setting up development environment
 
-## Build
+1. Install `make`.
+2. Install Coq and required libraries:
 
-We consider the root directory of the project the repository root, holding the folder `src` and the file `_CoqProject`.
-Navigate there and execute:
+  - `coq-ext-lib`
+  - `coq-mathcomp-ssreflect`
+  - `coq-record-update`
 
-1. `coq_makefile -f _CoqProject -o CoqMakefile` will create a file `CoqMakefile` for `make`. This should be done once.
-2. To build specs and proofs: `make -f CoqMakefile -j<number of threads> all`
-3. To generate docs: `./build-docs.sh`. Recreates `doc` directory on each invokation.
+   We recommend [Opam](https://opam.ocaml.org/) (your packet manager probably has `opam` package).
+
+   The following will pin the packages to specific versions that we are using at
+   the time of development, preventing them from automatically updating via
+   `opam upgrade`.
+
+   ```
+   opam pin add coq 8.17.0
+   opam pin add coq-ext-lib 0.11.8
+   opam pin add coq-mathcomp-ssreflect 1.17.0
+   opam pin add coq-record-update 0.3.2
+   ```
+
+3. We consider the root directory of the project as the repository root.
+   Execute this command in the project root:
+
+   ```
+   coq_makefile -f _CoqProject -o CoqMakefile
+   ```
+
+   This will create a file `CoqMakefile` for `make`.
+
+# Build spec and proofs
+
+
+```
+make -f CoqMakefile -j<number of threads> all
+```
+
+
+# Generating docs
+
+Generating docs is cumbersome to setup ATM because we use a custom script and a
+custom version of `coqdoc` to fully support Markdown in documentation blocks.
+
+1. Prepare the environment once
+   - install Pandoc
+   - install Python 3.6+
+   - install `pypandoc` by executing `python3 -m pip install pypandoc`
+   - clone and build `https://github.com/sayon/coq`
+   - setup the variables in `build-docs.sh`
+     + `COQDOC` -- point it to `coqdoc` that you have built from `https://github.com/sayon/coq`
+       The executable should be located in `_build/install/default/bin/coqdoc` after successful build.
+     + `COQLIB`. Put there the path to the directory with subdirectories `theories` and `user-contrib`. Usually `~/.opam/<ocaml-switch-name>/lib/coq/`.
+
+2. Generate docs with `./build-docs.sh`

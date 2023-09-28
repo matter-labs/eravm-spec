@@ -1,27 +1,33 @@
 PYTHON=python3
+
 # requires a custom version of CoqDoc from https://github.com/sayon/coq
-COQDOC=/Users/sayon/repos/coq/_build/install/default/bin/coqdoc
-COQLIB=/Users/sayon/.opam/ocaml-variants/lib/coq/
-# Prince is a tool to transform html->pdf.
-# wkhtmltopdf unfortunately does not work well with mathjax/katex
-# "print to pdf" does not retain internal links
-PRINCE=~/distr/usr/local/bin/prince
+
+COQDOC=~/repos/coq/_build/install/default/bin/coqdoc
+COQLIB=~/.opam/ocaml-variants/lib/coq/
+PROJECT_ROOT=`pwd`
+ALL_SRC_FILES=$(find src -name '*.v')
+COQDOC_ARGS="-g -toc --parse-comments --interpolate -utf8  -html -coqlib "$COQLIB" -R src EraVM -d doc $ALL_SRC_FILES"
+
+# It would be better to use `make` to generate documents faster.
 rm -rf doc/*
 mkdir -p doc
-echo "Using coqdoc at $COQDOC"
-$COQDOC -g -toc --parse-comments --interpolate -utf8  -html -coqlib $COQLIB -R src EraVM -d doc `find src -name '*.v'` && echo "Docs are generated in the 'doc' directory"
+echo "Using coqdoc at $COQDOC. This should be a custom coqdoc from the fork https://github.com/sayon/coq"
+
+# Custom CoqDoc differs in two ways:
+# - ignores all markdown in documentation
+# - uses a different syntax for inline Coq blocks: instead of [coq code], it is [%coq code].
+#   This prevents conflict with Markdown syntax for links and images.
+"$COQDOC" $COQDOC_ARGS && echo "Docs are generated in the 'doc' directory"
 cp -fr img coqdoc.css doc
+
+# The script 'process-docs' passes each individual coqdoc block in HTML file
+# through pandoc to convert its Markdown to HTML.
 for f in `find doc -name '*.html'`
 do
-    $PYTHON process-docs.py file "$f" "$f"
+    "$PYTHON" "$PROJECT_ROOT/scripts/process-docs.py" file "$f" "$f"
 done
 
+# `collate` forms a single huge HTML file from everything available in the spec.
+# It gets the ordered list of source files from the file `docseq`
 NAME=spec
-python3 collate.py `cat docseq` > "doc/$NAME.html"
-#wkhtmltopdf --enable-local-file-access --no-stop-slow-scripts --enable-javascript --javascript-delay 60000  "$NAME.html" "$NAME.pdf"
-
-# Prince is capable of collating multiple files together, but it is much faster to use a script `collate.py`. Additionally, `collate.py` cuts out some unwanted parts
-echo "Generating PDF doc/$NAME.pdf"
-"$PRINCE" --raster-dpi=300 -j "doc/$NAME.html" -o "doc/$NAME.pdf"
-
-cd doc && add-margin spec.pdf && mv spec_uncropped.pdf spec-`date +"%d-%m-%Y"`.pdf && mv spec.pdf spec-w-margin-`date +"%d-%m-%Y"`.pdf
+python3 "$PROJECT_ROOT/scripts/collate.py" `cat docseq` > "doc/$NAME.html"
