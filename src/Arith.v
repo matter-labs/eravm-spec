@@ -12,6 +12,7 @@ Section Operations.
   Record udiv_result {n} := mk_divrem { div: BITS n; rem: BITS n }.
 
   Definition uadd_of {n: nat} (a: BITS n) (b:BITS n) : bool * BITS n := adcB false a b.
+  Definition uadd_wrap {n: nat} (a: BITS n) (b:BITS n) : BITS n := snd (uadd_of a b).
   Definition uinc_of {n: nat} (a: BITS n) : bool * BITS n := uadd_of a (fromZ 1).
   Definition uinc_by_32_of {n: nat} (a: BITS n) : bool * BITS n := uadd_of a (fromZ 32).
 
