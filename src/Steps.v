@@ -49,7 +49,7 @@ smallstep relations where only callstack is changing. *)
 Inductive step_transient_callstack (S: callstack -> callstack -> Prop) : transient_state -> transient_state -> Prop :=
 | scs_apply:
   forall flags regs pages ctx cs1 cs2 xs1 xs2 status,
-    S cs1 cs1 ->
+    S cs1 cs2 ->
     xs1 = {|
             gs_callstack    := cs1;
 
@@ -74,6 +74,6 @@ Inductive step_transient_callstack (S: callstack -> callstack -> Prop) : transie
 
 Inductive step_callstack (S: callstack -> callstack -> Prop) : smallstep :=
 | sc_apply: forall xs1 xs2 s1 s2,
-    step_transient_callstack S xs1 xs1 ->
+    step_transient_callstack S xs1 xs2 ->
     step_transient_only xs1 xs2 s1 s2 ->
     step_callstack S s1 s2.
