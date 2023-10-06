@@ -431,4 +431,5 @@ Module Coercions.
   Coercion StackOutOnly: stack_out_only >-> stack_out.
   Coercion in_regimm_incl: in_regimm >-> in_any.
   Coercion StackInAny : stack_io >-> stack_in.
+  Coercion Reg : reg_name >-> reg_io.
 End Coercions.
