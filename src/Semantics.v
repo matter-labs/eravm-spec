@@ -66,10 +66,8 @@ Section SmallStep.
 
   Inductive update_pc_regular : callstack -> callstack -> Prop :=
   | fp_update:
-    forall pc' ef,
-      let pc := pc_get ef in
-      uinc_of pc = (false, pc') ->
-      let ef' := pc_set pc' ef in
+    forall ef ef',
+      ef' = pc_map (fun x => uadd_wrap x # 1) ef ->
       update_pc_regular ef ef'.
 
   (** Every instruction is either executed, skipped, or triggers panic
@@ -185,7 +183,6 @@ Section SmallStep.
   .
 
   Generalizable No Variables.
-
 
   Definition fetch_predicated_instruction (s: transient_state) ins :=
     @fetch_instr _ instruction_invalid _ (gs_regs s) (gs_callstack s) (gs_pages s)
