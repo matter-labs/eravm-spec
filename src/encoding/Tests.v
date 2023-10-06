@@ -15,7 +15,6 @@ Import Addressing.Coercions.
 *)
 Import Assembly.
 Notation equals := eq_refl.
-Coercion Reg : GPR.reg_name >-> reg_io.
 Open Scope string.
 Definition sub in1 in2 out1 := (Ins _ (OpSub in1 in2 out1 NoSwap PreserveFlags) IfAlways).
 Check (equals: "000000000210004B" = Show.to_string (encode_asm (Ins _ (OpSub R0 R1 R2 NoSwap SetFlags) IfAlways))).
