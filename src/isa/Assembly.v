@@ -33,7 +33,7 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpNoOp
   | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with out_1 in address mode [%Addressing.RelSpPush]*)
   | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with in_1  in address mode [%Addressing.RelSpPop] *)
-  | OpJump        (dest: in_reg)
+  | OpJump        (dest: in_any)
   | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
