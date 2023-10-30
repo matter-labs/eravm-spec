@@ -37,8 +37,8 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
 
   Flags are computed as follows:
   - `LT_OF` is cleared;
-  - `EQ` is set if the quotient is not zero;
-  - `GT` is set if the reminder is not zero.
+  - `EQ` is set if the quotient is zero;
+  - `GT` is set if the reminder is zero.
 
 - If `in2` $= 0$:
    $$\begin{cases}out_1 := 0 \\ out_{2} := 0 \end{cases}$$
