@@ -16,7 +16,7 @@ This set is a slice in the middle of the abstractions hierarchy:
   [%asm_instruction] to the lower-level machine instructions which are then
   mapped to their binary encodings.
 - The next higher level are **core instructions** described in section
-  [CoreInstructionSet]. These instructions have are simplified formats, impose
+  [%CoreInstructionSet]. These instructions have are simplified formats, impose
   less constraints on the operand sources and destinations, and do not support
   the [%mod_swap] modifier.
 
