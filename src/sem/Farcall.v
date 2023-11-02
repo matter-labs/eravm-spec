@@ -346,7 +346,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
             <| r14 := IntValue word0 |>
             <| r15 := IntValue word0 |>
         else
-          regs_state_zero <| r1 := PtrValue enc_ptr |>
+          regs_state_zero <| r1 := PtrValue enc_ptr |> <| r2 := far_call_r2 |>
         )
     | _ => None
   end.
