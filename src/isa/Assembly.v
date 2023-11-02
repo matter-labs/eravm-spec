@@ -16,7 +16,7 @@ This set is a slice in the middle of the abstractions hierarchy:
   [%asm_instruction] to the lower-level machine instructions which are then
   mapped to their binary encodings.
 - The next higher level are **core instructions** described in section
-  [CoreInstructionSet]. These instructions have are simplified formats, impose
+  [%CoreInstructionSet]. These instructions have are simplified formats, impose
   less constraints on the operand sources and destinations, and do not support
   the [%mod_swap] modifier.
 
@@ -33,7 +33,7 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpNoOp
   | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with out_1 in address mode [%Addressing.RelSpPush]*)
   | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with in_1  in address mode [%Addressing.RelSpPop] *)
-  | OpJump        (dest: in_reg)
+  | OpJump        (dest: in_any)
   | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
