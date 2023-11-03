@@ -63,7 +63,7 @@ Definition encode_dst_mode (sm:dst_mode) : Z :=
   | DstReg => 0
   | DstSpRelativePush => 1
   | DstSpRelative => 2
-  | DstSpAbsolute => 3
+  | DstStackAbsolute => 3
   end
 .
 
