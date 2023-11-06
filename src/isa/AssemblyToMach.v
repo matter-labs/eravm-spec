@@ -3,7 +3,7 @@ Require GeneratedMachISA.
 Require Addressing isa.Modifiers isa.Assembly Predication.
 Import ssreflect.
 Import RecordSetNotations.
-Import Assembly Addressing Common GeneratedMachISA Modifiers Memory Predication.
+Import Assembly Addressing Common GeneratedMachISA Modifiers TransientMemory Pointer Predication.
 Import Addressing.Coercions.
 
 (** # Encoding of [%asm_instruction] to the universal instruction layout

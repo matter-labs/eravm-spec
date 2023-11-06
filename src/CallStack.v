@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Ergs Memory MemoryContext.
+Require Common Ergs memory.Depot TransientMemory MemoryContext.
 
-Import Common Ergs MemoryContext Memory List ListNotations.
+Import Common Ergs memory.Depot TransientMemory MemoryContext List ListNotations.
 
 Section Callstack.
 

@@ -1,7 +1,7 @@
-Require Coder Ergs Memory.
+Require Coder Ergs TransientMemory.
 
 Import ssreflect.
-Import Types Core Coder Ergs Memory.
+Import Types Core Coder Ergs TransientMemory.
 
 Section NearCallABI.
 

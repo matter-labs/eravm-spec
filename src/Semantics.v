@@ -2,8 +2,8 @@ From RecordUpdate Require Import RecordSet.
 Require VMPanic StaticMode isa.AssemblyToCore sem.SemanticCommon.
 
 (* begin hide *)
-Import Arith ZArith Common GPR Predication Ergs CallStack Memory MemoryOps Assembly CoreSet State
-  RecordSetNotations SemanticCommon KernelMode StaticMode VMPanic Binding Steps.
+Import Arith ZArith Common GPR Predication Ergs CallStack MemoryOps Assembly CoreSet State
+  RecordSetNotations SemanticCommon KernelMode StaticMode TransientMemory VMPanic Binding Steps.
 Import List ListNotations AssemblyToCore.Coercions.
 Require Import
   sem.Add

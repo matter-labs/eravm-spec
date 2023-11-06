@@ -1,11 +1,11 @@
 From RecordUpdate Require Import RecordSet.
 Require Core List PrimitiveValue.
 
-Import Core PrimitiveValue .
+Import Core PrimitiveValue.
 
 Section Registers.
   Import RecordSetNotations.
-  Context (pv := @primitive_value word).
+  Context (pv := @primitive_value Core.word).
 
   (** # GPR (General Purpose Registers)
 
@@ -39,7 +39,7 @@ evaluates to [%IntValue 0], that is, an untagged integer 0.
                           }.
 
   (* begin hide *)
-  Definition reg_zero := IntValue word0.
+  Definition reg_zero := pv0.
   Definition reserved := reg_zero.
   Definition regs_state_zero := let z := reg_zero in
                                 mk_regs z z z z z z z z z z z z z z z.

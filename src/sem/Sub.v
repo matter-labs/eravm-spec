@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Bool Common Flags CoreSet Memory Modifiers State
+Import Bool Common Flags CoreSet TransientMemory Modifiers State
   PrimitiveValue SemanticCommon.
 Import ssreflect.tuple ssreflect.eqtype.
 

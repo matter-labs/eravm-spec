@@ -1,6 +1,6 @@
-Require Addressing Common Memory Predication isa.Modifiers.
+Require Addressing Common memory.Depot TransientMemory Pointer Predication isa.Modifiers.
 
-Import Addressing Common Memory Predication Modifiers.
+Import Addressing Common memory.Depot TransientMemory Pointer Predication Modifiers.
 
 Section AssemblyInstructionSet.
   (** # EraVM assembly instruction set

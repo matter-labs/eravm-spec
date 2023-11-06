@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Memory.
+Require memory.Pages memory.PageTypes.
 
-Import Arith Core Common MemoryBase Memory RecordSetNotations PMap_ext BinInt zmodp.
+Import Arith Core Common MemoryBase PageTypes Pages RecordSetNotations BinInt zmodp.
 Import ssreflect.tuple ssreflect.eqtype.
 
 Section PointerDefinitions.

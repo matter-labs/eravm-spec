@@ -43,16 +43,15 @@ decoded for small step relations, e.g. [%step_ptradd] for [%OpPtrAdd].
    *)
   #[global]
     Canonical Structure bound: descr :=
-  let pv := @primitive_value word in
   {|
-    src_pv := pv;
+    src_pv := @primitive_value Core.word;
     src_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable));
     src_heap_ptr := option (@primitive_value (u224 * heap_ptr));
     src_farcall_params := option (@primitive_value FarCallABI.params);
     src_nearcall_params := option (@primitive_value (u224 * NearCallABI.params));
     src_ret_params := option (@primitive_value FarRetABI.params);
     src_precompile_params := option (@primitive_value PrecompileParametersABI.params);
-    dest_pv := pv;
+    dest_pv := @primitive_value Core.word;
     dest_heap_ptr := option (@primitive_value (u224 * heap_ptr) );
     dest_fat_ptr := option (@primitive_value (u128 * fat_ptr_nullable) );
     dest_meta_params := option (@primitive_value (MetaParametersABI.params ));

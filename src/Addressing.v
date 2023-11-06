@@ -1,6 +1,6 @@
-Require Common Memory GPR.
+Require Common TransientMemory GPR.
 
-Import Common Memory GPR.
+Import Common TransientMemory GPR.
 
 Section Addressing.
   (** # Addressing modes

@@ -1,6 +1,21 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Addressing Binding Common Flags CallStack Memory MemoryContext State MemoryOps ABI KernelMode Steps VMPanic sem.StepPanic.
+Require
+ABI
+Addressing
+Binding
+CallStack
+Common
+Flags
+KernelMode
+MemoryContext
+MemoryOps
+State
+Steps
+TransientMemory
+VMPanic
+sem.StepPanic
+.
 
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
 
@@ -18,14 +33,15 @@ Import
     List
     ListNotations
     KernelMode
-    Memory
     MemoryContext
+    memory.Depot
     MemoryBase
     MemoryOps
     Pointer
     PrimitiveValue
     RecordSetNotations
     State
+    TransientMemory
     ZArith
     ZBits.
 Export Steps Binding VMPanic StepPanic.

@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Arith Addressing CallStack Core isa.CoreSet Memory Resolution State SemanticCommon PrimitiveValue spec.
+Import Arith Addressing CallStack Core isa.CoreSet TransientMemory Resolution State SemanticCommon PrimitiveValue spec.
 
 Section SpAddDefinition.
 

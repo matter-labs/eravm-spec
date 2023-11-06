@@ -1,9 +1,9 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Pointer.
+Require Pointer TransientMemory lib.PMap_ext.
 
 Section Slices.
-Import Bool Core Common MemoryBase Memory RecordSetNotations Pointer PMap_ext.
+Import Bool Core Common MemoryBase RecordSetNotations Pointer TransientMemory PMap_ext.
 Open Scope ZMod_scope.
 (** # Slice
 

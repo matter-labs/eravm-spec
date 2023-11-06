@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import NearCallABI Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet Memory PrimitiveValue State SemanticCommon.
+Import NearCallABI Addressing Common Core Flags CallStack GPR Ergs isa.CoreSet TransientMemory PrimitiveValue State SemanticCommon.
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
 
 Section NearCallDefinition.

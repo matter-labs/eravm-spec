@@ -3,8 +3,8 @@ From mathcomp Require Import ssreflect eqtype.
 From Bits Require Import bits spec tuple spec.properties.
 Require SemanticCommon Semantics sem.Jump.
 
-Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State
-  PrimitiveValue SemanticCommon Semantics RecordSetNotations.
+Import Addressing Bool Core Common Predication GPR CallStack MemoryOps isa.CoreSet State
+  PrimitiveValue SemanticCommon Semantics RecordSetNotations TransientMemory.
 Import Addressing.Coercions.
 Import ssreflect.tuple.
 

@@ -1,6 +1,6 @@
-Require Memory ABI State.
+Require memory.Depot ABI State.
 
-Import ABI Memory State.
+Import ABI memory.Depot State.
 
 Section Precompiles.
   (** # Precompiles

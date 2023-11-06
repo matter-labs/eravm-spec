@@ -1,6 +1,19 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Common Decommitter Ergs CallStack Memory isa.CoreSet State MemoryOps MemoryManagement ABI Pointer SemanticCommon.
+Require
+ABI
+CallStack
+Common
+Decommitter
+Ergs
+MemoryManagement
+MemoryOps
+Pointer
+SemanticCommon
+State
+TransientMemory
+isa.CoreSet
+.
 
 Import
   BinIntDef.Z
@@ -10,28 +23,32 @@ Import
     ZArith.
 
 Import
-  Addressing
-    ABI FarCallABI FatPointerABI
-    Decommitter
+    ABI
+      FarCallABI
+      FatPointerABI
+    CallStack
+    Coder
     Common
     Core
-    isa.CoreSet
-    Coder
+    Decommitter
+    Ergs
     Flags
     GPR
-    Ergs
-    CallStack
     KernelMode
-    Memory
+    memory.Depot
     MemoryBase
-    MemoryOps
     MemoryContext
     MemoryManagement
+    MemoryOps
     PrimitiveValue
     RecordSetNotations
-    VersionedHash
     SemanticCommon
-    State.
+    TransientMemory
+    State
+    VersionedHash
+    isa.CoreSet
+  Addressing
+.
 
 Import Addressing.Coercions.
 

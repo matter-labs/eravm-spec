@@ -1,7 +1,9 @@
 Require Core Addressing CallStack .
 
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
-Import Addressing Core Common ZArith CallStack GPR Memory PrimitiveValue.
+Import Addressing Core Common ZArith CallStack GPR PrimitiveValue Pointer TransientMemory.
+
+Section AllResolution.
 
 Section AddressingUtils.
   Import MemoryBase.
@@ -227,3 +229,4 @@ In the current state of EraVM, only SP modifications are allowed, therefore the 
       resolve_apply arg (cs', loc).
 
 End Resolution.
+End AllResolution.

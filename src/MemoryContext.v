@@ -1,11 +1,13 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Memory.
+Require memory.Pages memory.PageTypes.
+
+Import memory.Pages memory.PageTypes.
 
 
 Section MemoryContext.
   Import RecordSetNotations.
-  Import seq Memory Arith.
+  Import seq Arith.
 
   Open Scope ZMod_scope.
 
@@ -40,7 +42,7 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
     end.
 
   Definition page_older (id: page_id) (mps: mem_ctx) : bool :=
-    List.forallb (Memory.page_older id) (list_mem_ctx mps).
+    List.forallb (page_older id) (list_mem_ctx mps).
 
   (** Function [%is_active_page] returns [%true] if memory page [%id] belongs to
   the context [%c]. *)
