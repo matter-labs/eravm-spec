@@ -67,12 +67,59 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
                               bs_mem: State.memory;
                             }.
 
+  Inductive bind_any_src: binding_state -> binding_state -> in_any -> @primitive_value word -> Prop :=
+  | bind_any_src_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:@primitive_value word),
+      load _ regs cs mem op (cs', v) ->
+      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op v.
+
+  Section PointerErasure.
+
+    Definition span_erase (s:span) : span :=
+      match s with
+      | mk_span start len => mk_span # 0 len
+      end
+    .
+
+    Definition free_ptr_erase (fp: free_ptr) : free_ptr :=
+      match fp with
+      | mk_ptr s ofs => mk_ptr (span_erase s) ofs
+      end
+    .
+
+    Definition fat_ptr_erase (fp:fat_ptr) : fat_ptr:=
+    match fp with
+    | mk_fat_ptr page ptr => mk_fat_ptr 0%nat (free_ptr_erase ptr)
+    end
+    .
+
+    Definition fat_ptr_nullable_erase (fp:fat_ptr_nullable) : fat_ptr_nullable :=
+      match fp with
+      | NullPtr => NullPtr
+      | NotNullPtr fp => NotNullPtr (fat_ptr_erase fp)
+      end.
+
+  End PointerErasure.
+
   (** To bind a [%src_pv] type of instruction operand, load its
   value and apply the effects of [%RelSpPop] addressing mode. *)
+
   Inductive bind_src: binding_state -> binding_state -> in_any -> @primitive_value word -> Prop :=
-  | bind_src_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:@primitive_value word),
-      load _ regs cs mem op (cs', v) ->
-      bind_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op v.
+  | bind_src_int_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:word),
+      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v) ->
+      bind_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v)
+
+  | bind_src_ptr_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v v':word)
+                          (decoded decoded_erased: fat_ptr_nullable)
+                          (encoded_erased high128: u128),
+      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (PtrValue v) ->
+
+      Some (high128, decoded) = decode_fat_ptr_word v ->
+      decoded_erased = fat_ptr_nullable_erase decoded ->
+      Some encoded_erased = encode_fat_ptr decoded ->
+      v' = high128 ## encoded_erased ->
+
+      bind_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v')
+  .
 
   (** To bind a [%dest_pv] type of instruction operand, store its
   value and apply the effects of [%RelSpPush] addressing mode. *)
