@@ -53,11 +53,6 @@ Section Params.
 End Params.
 
 
-Definition in_kernel_mode (ef:callstack) : bool :=
-  let ef := active_extframe ef in
-  addr_is_kernel ef.(ecf_this_address).
-
-
 Section Depot.
   Definition is_rollup (xstack: callstack) : bool := zero8 == current_shard xstack.
   Definition net_pubdata cs : Z := if is_rollup cs then INITIAL_STORAGE_WRITE_PUBDATA_BYTES else 0%Z.
