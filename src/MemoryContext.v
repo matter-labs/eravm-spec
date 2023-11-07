@@ -59,14 +59,11 @@ It is stored in [%ecf_mem_ctx] field of [%ExternalCall] frame.
   [%grow_heap_page], [%grow_auxheap_page], [%grow_heap_variant] are relating
   memory contexts where a heap variant is grown.
 
-**WARNING: KNOWN DIVERGENCE**
+**WARNING: KNOWN DIVERGENCE (in versions prior to v1.4.1)**
 
-- In the current implementation, if heap/auxheap was grown inside a near call, the
+In earlier implementations, if heap/auxheap was grown inside a near call, the
 parent’s heap/auxheap bound may be restored after `ret` as if no growth
-happened.
-
-- Expected behavior: if heap/auxheap was grown inside a near call, the parent’s
-heap/auxheap bound is correctly updated after `ret`
+happened. Since v 1.4.1 the implementation conforms to the spec.
    *)
 
   Inductive grow_heap_page: mem_address -> mem_ctx -> mem_ctx -> Prop :=
