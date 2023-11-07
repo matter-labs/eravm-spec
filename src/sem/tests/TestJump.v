@@ -54,14 +54,11 @@ Section JumpTests.
           by constructor 1.
         }
         {
-          instantiate (1:= ergs_set #4 topframe).
 
           econstructor.
           simpl.
           subst topframe.
           subst new_topframe.
-          instantiate (1:=pges).
-          instantiate (1:=regs).
 
           econstructor; last by constructor.
           econstructor; [|reflexivity|reflexivity].
@@ -194,6 +191,7 @@ Section JumpTests.
           let topframe1 := InternalCall (mk_cf eh sp #6 #0 cp) tail in
           let ts0 := mk_transient_state flags regs pges topframe0 ctx st in
           let ts1 := mk_transient_state flags regs pges topframe1 ctx st in
+          in_kernel_mode topframe0 = true ->
           execute_action Execute
             (AssemblyToCore.to_core ins)
             (mk_state ts0 gs)
@@ -201,16 +199,17 @@ Section JumpTests.
         )
   .
   Proof.
-    move=> tail ins encoded_ptr regs0 eh sp cp flags pges ctx st gs H r1_value regs topframe0 topframe1 ts0 ts1.
+    move=> tail ins encoded_ptr regs0 eh sp cp flags pges ctx st gs H r1_value regs topframe0 topframe1 ts0 ts1 Hkernel.
     apply ea_execute with (cs0:=topframe0) (cs1 := update_pc_regular topframe0) (cs2 := ergs_set #0 (update_pc_regular topframe0) )
                           (instr_bound := OpJump (IntValue r1_value))
                           (xs0 := ts0) (xs1 := mk_transient_state flags regs pges (ergs_set #0 (update_pc_regular topframe0) ) ctx st )
                           (new_s := mk_state ts1 gs); [done|constructor | constructor; by apply /eqP /andP| | ].
     { (* bind_operands *)
       inversion H. subst encoded_ptr.
-      constructor;simpl.
-      constructor;simpl.
-      econstructor 2 with (high128 := #0) ;simpl.
+      econstructor.
+
+      constructor; simpl.
+      econstructor 2 with (high128:=#0).
       {
         repeat constructor.
         econstructor; repeat constructor.
@@ -241,7 +240,7 @@ Section JumpTests.
         by apply jump_correct_aux2_2.
       }
     }
-    (* Qed. *)
+  (* Qed. *)
   (* FIXME: Qed hangs here; the reason is probably that the
       kernel expands the dependently typed terms with huge proofs under the hood
       in order to check them. This bug may fix itself with a future version of

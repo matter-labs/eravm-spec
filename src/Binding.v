@@ -9,6 +9,7 @@ Require
     GPR
     isa.CoreSet
     Pointer
+    PointerErasure
     PrimitiveValue
     State.
 Import
@@ -23,6 +24,7 @@ Import
     isa.CoreSet
     MemoryOps
     Pointer
+    PointerErasure
     PrimitiveValue
     State
     Types.
@@ -59,74 +61,51 @@ decoded for small step relations, e.g. [%step_ptradd] for [%OpPtrAdd].
   .
 
   (**
-Knowing the call stack, memory pages and registers are enough to bind any value appearing in [%CoreInstructionSet].
+Knowing the call stack, memory pages and registers are enough to bind any value appearing in [%CoreInstructionSet]; additionally, kernel mode affects it: pointer erasure only happens in user mode.
    *)
   Record binding_state := mk_bind_st {
+                              bs_is_kernel_mode: bool;
                               bs_cs: State.callstack;
                               bs_regs: regs_state;
                               bs_mem: State.memory;
                             }.
 
   Inductive bind_any_src: binding_state -> binding_state -> in_any -> @primitive_value word -> Prop :=
-  | bind_any_src_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:@primitive_value word),
+  | bind_any_src_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:@primitive_value word) (is_k: bool),
       load _ regs cs mem op (cs', v) ->
-      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op v.
-
-  Section PointerErasure.
-
-    Definition span_erase (s:span) : span :=
-      match s with
-      | mk_span start len => mk_span # 0 len
-      end
-    .
-
-    Definition free_ptr_erase (fp: free_ptr) : free_ptr :=
-      match fp with
-      | mk_ptr s ofs => mk_ptr (span_erase s) ofs
-      end
-    .
-
-    Definition fat_ptr_erase (fp:fat_ptr) : fat_ptr:=
-    match fp with
-    | mk_fat_ptr page ptr => mk_fat_ptr 0%nat (free_ptr_erase ptr)
-    end
-    .
-
-    Definition fat_ptr_nullable_erase (fp:fat_ptr_nullable) : fat_ptr_nullable :=
-      match fp with
-      | NullPtr => NullPtr
-      | NotNullPtr fp => NotNullPtr (fat_ptr_erase fp)
-      end.
-
-  End PointerErasure.
+      bind_any_src (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs mem) op v.
 
   (** To bind a [%src_pv] type of instruction operand, load its
-  value and apply the effects of [%RelSpPop] addressing mode. *)
+  value and apply the effects of [%RelSpPop] addressing mode.
+  Additionally, if the instruction expects an integer, but gets a pointer with a
+  tag, the pointer erasure happens (since v.1.4.1).
+   *)
 
   Inductive bind_src: binding_state -> binding_state -> in_any -> @primitive_value word -> Prop :=
-  | bind_src_int_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:word),
-      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v) ->
-      bind_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v)
+  | bind_src_int_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v:word) (is_k: bool),
+      bind_any_src (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs mem) op (IntValue v) ->
+      bind_src (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs mem) op (IntValue v)
 
   | bind_src_ptr_apply: forall regs (mem:State.memory) (cs cs':State.callstack) (op:in_any) (v v':word)
                           (decoded decoded_erased: fat_ptr_nullable)
-                          (encoded_erased high128: u128),
-      bind_any_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (PtrValue v) ->
+                          (encoded_erased high128: u128)
+                          (is_k: bool),
+      bind_any_src (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs mem) op (PtrValue v) ->
 
       Some (high128, decoded) = decode_fat_ptr_word v ->
-      decoded_erased = fat_ptr_nullable_erase decoded ->
+      decoded_erased = fat_ptr_nullable_erase is_k decoded ->
       Some encoded_erased = encode_fat_ptr decoded ->
       v' = high128 ## encoded_erased ->
 
-      bind_src (mk_bind_st cs regs mem) (mk_bind_st cs' regs mem) op (IntValue v')
+      bind_src (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs mem) op (IntValue v')
   .
 
   (** To bind a [%dest_pv] type of instruction operand, store its
   value and apply the effects of [%RelSpPush] addressing mode. *)
   Inductive bind_dest: binding_state -> binding_state -> out_any -> primitive_value  -> Prop :=
-  | bind_dest_apply: forall regs mem cs regs' mem' cs' op val,
+  | bind_dest_apply: forall regs mem cs regs' mem' cs' op val is_k,
       store _ regs cs mem op val (regs', mem', cs') ->
-      bind_dest (mk_bind_st cs regs mem) (mk_bind_st cs' regs' mem') op val.
+      bind_dest (mk_bind_st is_k cs regs mem) (mk_bind_st is_k cs' regs' mem') op val.
 
   (** To bind [%src_fat_ptr] or any other compound value encoded in a binary form,  bind both the encoded and decoded value. *)
   Inductive bind_fat_ptr: binding_state -> binding_state -> in_any -> option (@primitive_value (u128 * fat_ptr_nullable)) -> Prop :=
@@ -205,25 +184,30 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
       mf_dest_meta_params := bind_dest_meta_params;
     |}.
 
+
   #[local]
-  Definition get_binding_state (s: state) : binding_state :=
+  Definition get_binding_state_ts (s: transient_state) : binding_state :=
     {|
+      bs_is_kernel_mode := in_kernel_mode (gs_callstack s);
       bs_regs := gs_regs s;
       bs_mem  := gs_pages s;
       bs_cs   := gs_callstack s;
     |}.
 
+  #[local]
+  Definition get_binding_state (s: state) : binding_state := get_binding_state_ts s.
+
   Inductive relate_transient_states (P: binding_state -> binding_state -> Prop): transient_state -> transient_state -> Prop :=
   | rts_apply:
-    forall r1 r2 m1 m2 c1 c2 ctx flags status,
-      P (mk_bind_st c1 r1 m1 ) (mk_bind_st c1 r1 m1) ->
-      relate_transient_states P (mk_transient_state flags r1 m1 c1 ctx status) (mk_transient_state flags r2 m2 c2 ctx status).
+    forall ts1 ts2,
+      P (get_binding_state_ts ts1) (get_binding_state_ts ts2)->
+      relate_transient_states P ts1 ts2.
 
   #[local]
   Definition merge_binding_transient_state: binding_state -> transient_state -> transient_state :=
     fun bs s1 =>
       match bs with
-      | mk_bind_st cs regs gmem => s1
+      | mk_bind_st _ cs regs gmem => s1
                                    <| gs_regs      := regs |>
                                    <| gs_pages     := gmem |>
                                    <| gs_callstack := cs   |>
@@ -233,7 +217,7 @@ Knowing the call stack, memory pages and registers are enough to bind any value 
   Definition merge_binding_state : state -> binding_state -> state :=
     fun s1 bs =>
       match bs with
-      | mk_bind_st cs regs gmem => s1 <| gs_transient ::= merge_binding_transient_state bs |>
+      | mk_bind_st _ cs regs gmem => s1 <| gs_transient ::= merge_binding_transient_state bs |>
       end.
 
   #[local]

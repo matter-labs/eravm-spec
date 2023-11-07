@@ -15,6 +15,8 @@ doc/EraVM.Pointer.html
 doc/EraVM.Slice.html
 doc/EraVM.CallStack.html
 doc/EraVM.MemoryContext.html
+doc/EraVM.PointerErasure.html
+doc/EraVM.Binding.html
 
 doc/EraVM.History.html
 doc/EraVM.Event.html
