@@ -2,8 +2,8 @@ From RecordUpdate Require Import RecordSet.
 Require VMPanic StaticMode isa.AssemblyToCore sem.SemanticCommon.
 
 (* begin hide *)
-Import Arith ZArith Common GPR Predication Ergs CallStack Memory MemoryOps Assembly CoreSet State
-  RecordSetNotations SemanticCommon KernelMode StaticMode VMPanic Binding Steps.
+Import Arith ZArith Common GPR Predication Ergs CallStack MemoryOps Assembly CoreSet State
+  RecordSetNotations SemanticCommon KernelMode StaticMode TransientMemory VMPanic Binding Steps.
 Import List ListNotations AssemblyToCore.Coercions.
 Require Import
   sem.Add
@@ -64,11 +64,8 @@ Section SmallStep.
 
   Context (ins := @instruction bound).
 
-  Inductive update_pc_regular : callstack -> callstack -> Prop :=
-  | fp_update:
-    forall ef ef',
-      ef' = pc_map (fun x => uadd_wrap x # 1) ef ->
-      update_pc_regular ef ef'.
+  Definition update_pc_regular : callstack -> callstack :=
+    pc_map (fun x => uadd_wrap x # 1).
 
   (** Every instruction is either executed, skipped, or triggers panic
   instantly. Panic can also be triggered later during the execution. *)
@@ -160,7 +157,7 @@ Section SmallStep.
     `(forall instr gs instr_bound new_s xs0 xs1,
           cs0 = gs_callstack xs0 ->
 
-          update_pc_regular cs0 cs1 ->
+          cs1 = update_pc_regular cs0 ->
           pay (ergs_of (base_cost instr)) cs1 cs2 ->
           bind_operands (xs0 <| gs_callstack := cs2 |>) xs1 instr instr_bound ->
           let s1 := mk_state xs1 gs in
@@ -171,7 +168,7 @@ Section SmallStep.
     `(forall instr gs xs0 xs1,
           cs0 = gs_callstack xs0 ->
 
-          update_pc_regular cs0 cs1 ->
+          cs1 = update_pc_regular cs0 ->
           pay (ergs_of (base_cost instr)) cs1 cs2 ->
           let new_s := mk_state xs1 gs in
           execute_action Skip instr (mk_state xs0 gs) new_s

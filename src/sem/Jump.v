@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Addressing Bool Core Common Predication GPR CallStack Memory MemoryOps isa.CoreSet State
+Import Addressing Bool Core Common Predication GPR CallStack TransientMemory MemoryOps isa.CoreSet State
   PrimitiveValue SemanticCommon RecordSetNotations.
 
 Section JumpDefinition.

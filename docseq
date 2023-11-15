@@ -7,11 +7,16 @@ doc/EraVM.State.html
 doc/EraVM.GPR.html
 doc/EraVM.Flags.html
 doc/EraVM.Predication.html
-doc/EraVM.Memory.html
+doc/EraVM.TransientMemory.html
+doc/EraVM.memory.Depot.html
+doc/EraVM.memory.Pages.html
+doc/EraVM.memory.PageTypes.html
 doc/EraVM.Pointer.html
 doc/EraVM.Slice.html
 doc/EraVM.CallStack.html
 doc/EraVM.MemoryContext.html
+doc/EraVM.PointerErasure.html
+doc/EraVM.Binding.html
 
 doc/EraVM.History.html
 doc/EraVM.Event.html

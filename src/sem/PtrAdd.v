@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Arith Core Memory MemoryBase Pointer PrimitiveValue SemanticCommon State isa.CoreSet spec.
+Import Arith Core TransientMemory MemoryBase Pointer PrimitiveValue SemanticCommon State isa.CoreSet spec.
 
 Section PtrAddDefinition.
   Open Scope ZMod_scope.

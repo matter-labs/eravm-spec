@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon.
+Import Common Flags CallStack GPR TransientMemory isa.CoreSet State SemanticCommon.
 
 Section NearRevert.
   Generalizable Variables regs pages __.

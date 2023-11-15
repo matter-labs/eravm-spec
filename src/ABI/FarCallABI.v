@@ -1,7 +1,7 @@
-Require Coder Ergs MemoryManagement Pointer lib.BitsExt ABI.FatPointerABI ABI.ForwardPageTypesABI.
+Require Coder Ergs memory.Depot MemoryManagement Pointer lib.BitsExt ABI.FatPointerABI ABI.ForwardPageTypesABI.
 
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
-Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt FatPointerABI ForwardPageTypesABI.
+Import Arith Core Common Coder Ergs memory.Depot MemoryManagement Pointer TransientMemory lib.BitsExt FatPointerABI ForwardPageTypesABI.
 
 Section FarCallABI.
   (** This record describes all the parameters that [%FarCalls] can use. *)

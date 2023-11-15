@@ -1,3 +1,5 @@
+Require Types.
+
 Section PrimitiveValue.
 (**
 # Primitive values
@@ -31,3 +33,5 @@ End PrimitiveValue.
 is set, and **integer value** otherwise. *)
 Notation IntValue := (mk_pv false).
 Notation PtrValue := (mk_pv true).
+
+Definition pv0 := IntValue Types.zero256.

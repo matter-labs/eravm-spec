@@ -1,6 +1,21 @@
 From RecordUpdate Require Import RecordSet.
 
-Require Addressing Binding Common Flags CallStack Memory MemoryContext State MemoryOps ABI KernelMode Steps VMPanic sem.StepPanic.
+Require
+ABI
+Addressing
+Binding
+CallStack
+Common
+Flags
+KernelMode
+MemoryContext
+MemoryOps
+State
+Steps
+TransientMemory
+VMPanic
+sem.StepPanic
+.
 
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple.
 
@@ -18,14 +33,15 @@ Import
     List
     ListNotations
     KernelMode
-    Memory
     MemoryContext
+    memory.Depot
     MemoryBase
     MemoryOps
     Pointer
     PrimitiveValue
     RecordSetNotations
     State
+    TransientMemory
     ZArith
     ZBits.
 Export Steps Binding VMPanic StepPanic.
@@ -35,11 +51,6 @@ Section Params.
   Definition MAX_OFFSET_TO_DEREF_LOW_U32: u32 := fromZ (2^32 - 33)%Z.
   Definition MAX_OFFSET_FOR_ADD_SUB: u256 := fromZ (2^32)%Z.
 End Params.
-
-
-Definition in_kernel_mode (ef:callstack) : bool :=
-  let ef := active_extframe ef in
-  addr_is_kernel ef.(ecf_this_address).
 
 
 Section Depot.

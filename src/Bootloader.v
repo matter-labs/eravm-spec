@@ -1,5 +1,5 @@
-Require Memory.
-Import Memory.
+Require memory.Depot.
+Import memory.Depot.
 
 Section Bootloader.
   Import ZArith spec.

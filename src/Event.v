@@ -1,6 +1,6 @@
 From mathcomp Require ssreflect ssrfun ssrbool eqtype tuple zmodp.
-Require Core Memory.
-Import Core Memory.
+Require Core memory.Depot TransientMemory.
+Import Core memory.Depot TransientMemory.
 
 Section Events.
   Import ssreflect ssreflect.tuple ssreflect.eqtype ssrbool.

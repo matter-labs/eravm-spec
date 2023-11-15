@@ -1,7 +1,7 @@
-Require Coder Ergs MemoryManagement Pointer lib.BitsExt.
+Require Coder Ergs memory.Depot MemoryManagement Pointer TransientMemory lib.BitsExt.
 
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
-Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt.
+Import Arith Core Common Coder Ergs memory.Depot TransientMemory MemoryManagement Pointer lib.BitsExt.
 
 Section MetaParametersABI.
 

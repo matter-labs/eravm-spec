@@ -1,6 +1,6 @@
 Require sem.SemanticCommon.
 
-Import Bool Core Modifiers Common Flags isa.CoreSet CallStack Memory MemoryOps State
+Import Bool Core Modifiers Common Flags isa.CoreSet CallStack TransientMemory MemoryOps State
   ZArith PrimitiveValue SemanticCommon List ListNotations.
 
 Import ssreflect.eqtype ssreflect.tuple.

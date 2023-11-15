@@ -1,7 +1,7 @@
-Require Coder Ergs Pointer GPR MemoryManagement lib.BitsExt.
+Require Coder Ergs Pointer GPR MemoryManagement TransientMemory lib.BitsExt.
 
 Import ssreflect ssreflect.ssrfun ssreflect.ssrbool ssreflect.eqtype ssreflect.tuple zmodp.
-Import Core Common Coder Bool GPR Ergs Memory MemoryManagement Pointer.
+Import Core Common Coder Bool GPR Ergs MemoryManagement TransientMemory Pointer.
 
 
 (** # Application binary interface (ABI)

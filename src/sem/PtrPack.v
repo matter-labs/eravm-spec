@@ -1,6 +1,6 @@
 Require SemanticCommon.
 
-Import Common Core Memory isa.CoreSet State
+Import Common Core TransientMemory isa.CoreSet State
   SemanticCommon PrimitiveValue ZArith FatPointerABI.
 
 Section PtrPackDefinition.

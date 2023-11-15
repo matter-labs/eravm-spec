@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon.
 
-Import Common Core Predication Ergs isa.CoreSet CallStack Event Memory MemoryOps State
+Import Common Core Predication Ergs isa.CoreSet CallStack Event memory.Depot TransientMemory MemoryOps State
   PrimitiveValue SemanticCommon ZArith RecordSetNotations.
 
 Section SStoreDefinition.
