@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon Precompiles.
 
-Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Memory MemoryOps isa.CoreSet State
+Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event TransientMemory MemoryOps isa.CoreSet State
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations PrecompileParametersABI.
 
 Section PrecompileCallDefinition.

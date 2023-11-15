@@ -1,5 +1,5 @@
 Require SemanticCommon MemoryManagement.
-Import Core Common Memory MemoryOps MemoryManagement  isa.CoreSet State
+Import Core Common TransientMemory MemoryOps MemoryManagement  isa.CoreSet State
   SemanticCommon Pointer PrimitiveValue.
 
 Section StoreDefinition.
@@ -83,7 +83,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
   + heap bounds, if heap variant has to be grown.
 
 - GPRs, because `out` only resolves to a register.
-- Memory page
+- TransientMemory page
 
 ## Usage
 

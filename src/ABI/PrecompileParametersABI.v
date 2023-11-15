@@ -1,7 +1,7 @@
-Require Coder Memory lib.BitsExt.
+Require Coder TransientMemory lib.BitsExt.
 
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
-Import Core Common Coder Memory lib.BitsExt.
+Import Core Common Coder TransientMemory lib.BitsExt.
 
 Section PrecompileParametersABI.
 

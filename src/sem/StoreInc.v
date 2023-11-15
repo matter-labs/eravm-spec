@@ -1,5 +1,5 @@
 Require SemanticCommon MemoryManagement.
-Import Core Common Memory MemoryOps MemoryManagement isa.CoreSet State
+Import Core Common TransientMemory MemoryOps MemoryManagement isa.CoreSet State
   SemanticCommon Pointer PrimitiveValue.
 
 

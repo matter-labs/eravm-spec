@@ -1,8 +1,8 @@
 From RecordUpdate Require Import RecordSet.
 Import RecordSetNotations.
-Require Common Ergs Memory MemoryContext.
+Require Common Ergs KernelMode memory.Depot TransientMemory MemoryContext.
 
-Import Common Ergs MemoryContext Memory List ListNotations.
+Import Common Ergs KernelMode memory.Depot TransientMemory MemoryContext List ListNotations.
 
 Section Callstack.
 
@@ -455,4 +455,10 @@ Executing any instruction $I$ changes the topmost frame:
     End ActivePages.
 
   End ActiveMemory.
+
+
+  Definition in_kernel_mode (ef:callstack) : bool :=
+    let ef := active_extframe ef in
+    addr_is_kernel ef.(ecf_this_address).
+
 End Callstack.

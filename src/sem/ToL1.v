@@ -2,7 +2,7 @@ From RecordUpdate Require Import RecordSet.
 
 Require SemanticCommon.
 
-Import Arith Common Ergs CallStack Event Memory isa.CoreSet State
+Import Arith Common Ergs CallStack Event TransientMemory isa.CoreSet State
   PrimitiveValue SemanticCommon RecordSetNotations.
 Import ssreflect.tuple ssreflect.eqtype.
 

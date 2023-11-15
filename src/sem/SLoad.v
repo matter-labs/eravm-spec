@@ -1,5 +1,5 @@
 Require SemanticCommon.
-Import  isa.CoreSet Memory PrimitiveValue SemanticCommon State.
+Import  isa.CoreSet TransientMemory memory.Depot PrimitiveValue SemanticCommon State.
 
 Section SLoadDefinition.
   Generalizable Variable __.

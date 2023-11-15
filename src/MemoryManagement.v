@@ -1,6 +1,6 @@
-Require CallStack Ergs Memory Pointer.
+Require CallStack Ergs TransientMemory Pointer.
 
-Import CallStack Common Core Memory MemoryContext Ergs Pointer.
+Import CallStack Common Core TransientMemory MemoryContext Ergs Pointer.
 
 Section MemoryForwarding.
   Open Scope ZMod_scope.

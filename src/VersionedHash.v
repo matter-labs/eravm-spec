@@ -1,8 +1,8 @@
-Require Coder Memory.
+Require Coder PrimitiveValue TransientMemory.
 
 Section VersionedHash.
   Import ZArith ssrbool eqtype ssreflect ssrfun ssrbool ssreflect.eqtype ssreflect.tuple zmodp.
-  Import Memory Coder Common.
+  Import Coder Common TransientMemory.
 
   Context {word: Type}.
   Context {ins_type: Type} (invalid_ins: ins_type).

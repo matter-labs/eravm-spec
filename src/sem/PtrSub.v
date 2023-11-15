@@ -3,7 +3,7 @@ Require SemanticCommon.
 Import
   Arith
 Core
-Memory
+TransientMemory
 MemoryBase
 Pointer
 PrimitiveValue

@@ -1,5 +1,5 @@
-Require Common isa.Assembly Memory.
-Import Common Assembly Memory ZArith.
+Require Common isa.Assembly TransientMemory.
+Import Common Assembly TransientMemory ZArith.
 
 Section Ergs.
 Open Scope Z_scope.

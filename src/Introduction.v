@@ -1,4 +1,4 @@
-(** This is the specification of the instruction set of EraVM 1.4.0, a language
+(** This is the specification of the instruction set of EraVM 1.4.1, a language
 virtual machine for zkSync Era. It describes the virtual machine's architecture,
 instruction syntax and semantics, and some elements of system protocol.
 

@@ -1,8 +1,8 @@
-Require Addressing Core Common Memory List Pointer Resolution Slice.
+Require Addressing Core Common List Pointer TransientMemory Resolution Slice.
 Set Warnings "-notation-overridden,-ambiguous-paths".
 Import ssreflect eqtype.
 Set Warnings "notation-overridden,ambiguous-paths".
-Import Addressing Core ZArith Common CallStack GPR MemoryBase Memory PrimitiveValue Pointer Resolution Slice.
+Import Addressing Core ZArith Common CallStack GPR MemoryBase PrimitiveValue Pointer Resolution Slice TransientMemory.
 Section MemoryOps.
 
   (** # Data loading and storing
@@ -14,17 +14,17 @@ memory or registers ([%store]).
 
   Context {instruction: Type} (instruction_invalid:instruction)
     {state_checkpoint: Type}
-    (primitive_value := @primitive_value word)
     (callstack:= @callstack state_checkpoint)
   .
 
   Section FetchStore.
-    Let memory :=  @memory (@code_page instruction instruction_invalid) const_page data_page stack_page.
+    Context (memory :=  @memory (@code_page instruction instruction_invalid) const_page data_page stack_page)
+    .
     Context (regs: regs_state) (cs: callstack) (mem: memory) .
 
     Inductive fetch_result : Type :=
     | FetchIns (ins: instruction)
-    | FetchPV (pv: primitive_value) .
+    | FetchPV (pv: @primitive_value word).
 
     Inductive fetch: loc -> fetch_result -> Prop :=
     | fetch_reg: forall name reg_val,
@@ -75,12 +75,6 @@ memory or registers ([%store]).
         fetch loc (FetchPV res) ->
         load arg (new_cs, res).
 
-    (** A version of [%load] that does not care about the pointer tags. *)
-    Inductive load_any: in_any -> callstack * word -> Prop :=
-    | lda_apply : forall (arg:in_any) loc res new_cs __,
-        resolve_apply regs cs arg (new_cs, loc) ->
-        fetch loc (FetchPV (mk_pv __ res)) ->
-        load_any arg (new_cs, res).
 
     (** A special version of [%load] for registers because it has less
     potential effects on the state, which makes it easier and more precise. *)
@@ -88,11 +82,6 @@ memory or registers ([%store]).
     | ldr_apply : forall  loc res,
         fetch_gpr regs loc = res ->
         load_reg (Reg loc) res.
-
-    Inductive load_reg_any: in_reg -> word -> Prop :=
-    | ldra_apply : forall  loc res __,
-        fetch_gpr regs loc = (mk_pv __ res) ->
-        load_reg_any (Reg loc) res.
 
     Definition load_int a cs w := load a (cs, IntValue w).
     Definition load_reg_int a w := load_reg a (IntValue w).

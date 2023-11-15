@@ -1,6 +1,6 @@
-Require Common ABI lib.Decidability History MemoryOps VersionedHash.
+Require Common ABI lib.Decidability History memory.Depot MemoryOps VersionedHash.
 
-Import Coder Core History VersionedHash Common Decidability Ergs Memory MemoryBase ZArith ABI bits.
+Import Coder Core History VersionedHash Common Decidability Ergs MemoryBase memory.Depot TransientMemory ZArith ABI bits.
 
 
 Section Decommitter.
@@ -26,7 +26,7 @@ Note: storage with the same contract address may differ between shards.
 
   Definition DEPLOYER_SYSTEM_CONTRACT_ADDRESS : contract_address := fromZ ((2^15) + 2).
 
-  Definition code_hash_location (for_contract: contract_address) (sid:Memory.shard_id): fqa_key :=
+  Definition code_hash_location (for_contract: contract_address) (sid:Depot.shard_id): fqa_key :=
     mk_fqa_key (mk_fqa_storage sid DEPLOYER_SYSTEM_CONTRACT_ADDRESS) (widen word_bits for_contract).
 
   Context {ins_type: Type} (invalid_ins: ins_type) (code_page := code_page invalid_ins)
@@ -67,7 +67,7 @@ Decommitting warm code is free. *)
     is_first_access cm vhash = false ->
     decommitment_cost cm vhash code_length_in_words zero32.
 
-  Inductive code_fetch_hash (d:depot) (cs: code_storage) (sid: Memory.shard_id) (contract_addr: contract_address) :
+  Inductive code_fetch_hash (d:depot) (cs: code_storage) (sid: Depot.shard_id) (contract_addr: contract_address) :
     option (versioned_hash * code_length) -> Prop :=
   |cfh_found: forall hash_enc code_length_in_words extra_marker partial_hash,
       storage_read d (code_hash_location contract_addr sid) hash_enc ->
@@ -92,9 +92,9 @@ VM does not mask the code for system contracts; see [%sem.FarCall.step].
 
 [%DEFAULT_AA_CODE] is the decommitter's answer to the query [%DEFAULT_AA_VHASH]. *)
 
-  Parameter DEFAULT_AA_CODE: (Memory.code_page invalid_ins * const_page).
+  Parameter DEFAULT_AA_CODE: (code_page* const_page).
 
-  Inductive code_fetch  (d:depot) (cs: code_storage) (sid: Memory.shard_id) (contract_addr: contract_address) :
+  Inductive code_fetch  (d:depot) (cs: code_storage) (sid: Depot.shard_id) (contract_addr: contract_address) :
     bool -> (versioned_hash * (code_page * const_page) * code_length) -> Prop :=
   | cfnm_no_masking: forall vhash (code_storage:code_storage) code_length_in_words pages0 masking,
       code_fetch_hash d cs sid contract_addr (Some (vhash, code_length_in_words)) ->

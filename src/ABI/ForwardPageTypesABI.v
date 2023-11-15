@@ -1,7 +1,7 @@
-Require Coder Ergs MemoryManagement Pointer lib.BitsExt ABI.FatPointerABI.
+Require Coder Ergs MemoryManagement Pointer TransientMemory lib.BitsExt ABI.FatPointerABI.
 
 Import ssreflect ssreflect.ssrfun ssreflect.eqtype ssreflect.tuple.
-Import Arith Core Common Coder Ergs Memory MemoryManagement Pointer lib.BitsExt FatPointerABI.
+Import Arith Core Common Coder Ergs MemoryManagement Pointer TransientMemory lib.BitsExt FatPointerABI.
 
 Module FarCallForwardPageType.
   Definition UseHeap : u8 := # 0.

@@ -1,10 +1,10 @@
 From RecordUpdate Require Import RecordSet.
-Require ABI Core Decommitter GPR Ergs Event Memory History CallStack VMPanic.
+Require ABI Core Decommitter GPR Ergs Event History CallStack TransientMemory VMPanic.
 
 Import ssreflect ssrfun ssrbool eqtype ssreflect.tuple zmodp.
 Import RecordSetNotations.
 
-Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase Memory Decommitter Predication VMPanic PrimitiveValue.
+Import Core Flags ZArith ABI Common GPR Ergs Event CallStack History MemoryBase memory.Depot Decommitter Predication PrimitiveValue TransientMemory VMPanic.
 
 Section StateDefinitions.
 

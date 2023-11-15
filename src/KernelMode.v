@@ -1,6 +1,6 @@
-Require isa.CoreSet.
+Require isa.CoreSet memory.Depot.
 
-Import CoreSet Memory.
+Import CoreSet TransientMemory memory.Depot.
 
 Section KernelMode.
   Import ZArith Arith spec.

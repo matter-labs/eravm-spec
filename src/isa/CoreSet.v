@@ -1,5 +1,5 @@
-Require Addressing isa.Modifiers Predication.
-Import Addressing Modifiers Memory Predication.
+Require Addressing isa.Modifiers Pointer Predication TransientMemory.
+Import Addressing Modifiers TransientMemory Pointer Predication.
 
 Section CoreInstructionSet.
   (** # Core instruction set

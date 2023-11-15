@@ -1,7 +1,7 @@
 From RecordUpdate Require Import RecordSet.
 Require SemanticCommon StepPanic.
 
-Import Common Flags CallStack GPR Memory isa.CoreSet State SemanticCommon VMPanic RecordSetNotations StepPanic isa.CoreSet.
+Import Common Flags CallStack GPR TransientMemory isa.CoreSet State SemanticCommon VMPanic RecordSetNotations StepPanic isa.CoreSet.
 
 Section NearPanicToDefinition.
 Inductive step_panicto: instruction -> smallstep :=

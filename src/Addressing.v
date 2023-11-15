@@ -1,6 +1,6 @@
-Require Common Memory GPR.
+Require Common TransientMemory GPR.
 
-Import Common Memory GPR.
+Import Common TransientMemory GPR.
 
 Section Addressing.
   (** # Addressing modes
@@ -245,12 +245,13 @@ and memory locations.
      add r3, r0, stack+=[r1+42]
      ```
 
-   **WARNING: KNOWN DIVERGENCE** current implementation diverges from the described spec:
+   **WARNING: KNOWN DIVERGENCE (in versions prior to v1.4.1)** implementation
+     of earlier versions diverged from the described spec:
 
      - Implementation: the write happens to the new SP address
      - Specification: the write happens to the old SP address
 
-     The implementation will be adjusted to conform to the spec in later versions.
+     Since v 1.4.1 the implementation conforms to the spec.
    *)
   Inductive stack_out_only : Type :=
   | RelSpPush (reg:reg_name) (offset: stack_address)
