@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.memory.Pages</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.memory.Pages</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="library">MemoryBase</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="module">MemoryBase</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Pages" class="idref" href="#Pages"><span class="id" title="section">Pages</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="main-memory-transient">Main memory (transient)</h1>
+<h2 id="memory-structure">Memory structure</h2>
+<p>Contract execution routinely uses <strong>main memory</strong> to
+hold instructions, stack, heaps, and constants.</p>
+<p>When the execution of a contract starts, new pages are allocated
+for:</p>
+<ul>
+<li>contract code: <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#code_page"><span
+class="id" title="definition">code_page</span></a></span>, fetched by
+decommitter; see <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#FarCallDefinitions"><span
+class="id" title="section">FarCallDefinitions</span></a></span>);</li>
+<li>data stack: <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>;</li>
+<li>heap: <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span>;</li>
+<li>aux_heap: <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span>;</li>
+<li>constants: <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span
+class="id" title="definition">const_page</span></a></span>,
+implementation may chose to allocate code and constants on the same
+page.</li>
+</ul>
+<p>Therefore, the types of pages are: data pages, stack pages, constant
+data pages, and code pages.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="code_page:1" class="idref" href="#code_page:1"><span class="id" title="binder">code_page</span></a> <a id="const_page:2" class="idref" href="#const_page:2"><span class="id" title="binder">const_page</span></a> <a id="data_page:3" class="idref" href="#data_page:3"><span class="id" title="binder">data_page</span></a> <a id="stack_page:4" class="idref" href="#stack_page:4"><span class="id" title="binder">stack_page</span></a>: <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="page_type" class="idref" href="#page_type"><span class="id" title="inductive">page_type</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="DataPage" class="idref" href="#DataPage"><span class="id" title="constructor">DataPage</span></a> : <a class="idref" href="EraVM.memory.Pages.html#Pages.data_page"><span class="id" title="variable">data_page</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_type:5"><span class="id" title="inductive">page_type</span></a><br/>
+&nbsp;&nbsp;| <a id="StackPage" class="idref" href="#StackPage"><span class="id" title="constructor">StackPage</span></a> : <a class="idref" href="EraVM.memory.Pages.html#Pages.stack_page"><span class="id" title="variable">stack_page</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_type:5"><span class="id" title="inductive">page_type</span></a><br/>
+&nbsp;&nbsp;| <a id="ConstPage" class="idref" href="#ConstPage"><span class="id" title="constructor">ConstPage</span></a> : <a class="idref" href="EraVM.memory.Pages.html#Pages.const_page"><span class="id" title="variable">const_page</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_type:5"><span class="id" title="inductive">page_type</span></a><br/>
+&nbsp;&nbsp;| <a id="CodePage" class="idref" href="#CodePage"><span class="id" title="constructor">CodePage</span></a> : <a class="idref" href="EraVM.memory.Pages.html#Pages.code_page"><span class="id" title="variable">code_page</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_type:5"><span class="id" title="inductive">page_type</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="page" class="idref" href="#page"><span class="id" title="record">page</span></a> := <span class="id" title="var">mk_page</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="type" class="idref" href="#type"><span class="id" title="projection">type</span></a>:> <a class="idref" href="EraVM.memory.Pages.html#page_type"><span class="id" title="inductive">page_type</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+</div>
+
+<div class="doc"><p><strong>Memory</strong> is a collection of pages <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#memory"><span
+class="id" title="definition">memory</span></a></span>, each page is
+attributed a unique identifier <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Pages.html#page_id"><span
+class="id" title="definition">page_id</span></a></span>. Pages persist
+for as long as they can be read by some code; in presence of <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#PointerDefinitions.FatPointer"><span
+class="id" title="section">FatPointer</span></a></span> the page
+lifetime may exceed the lifetime of the frame that created it.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_id" class="idref" href="#page_id"><span class="id" title="definition">page_id</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="pages" class="idref" href="#pages"><span class="id" title="definition">pages</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="memory" class="idref" href="#memory"><span class="id" title="record">memory</span></a> := <span class="id" title="var">mk_pages</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="mem_pages" class="idref" href="#mem_pages"><span class="id" title="projection">mem_pages</span></a>:> <a class="idref" href="EraVM.memory.Pages.html#pages"><span class="id" title="definition">pages</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="page_has_id" class="idref" href="#page_has_id"><span class="id" title="inductive">page_has_id</span></a> : <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="mpid_select" class="idref" href="#mpid_select"><span class="id" title="constructor">mpid_select</span></a> : <span class="id" title="keyword">∀</span> <a id="mm:13" class="idref" href="#mm:13"><span class="id" title="binder">mm</span></a> <a id="id:14" class="idref" href="#id:14"><span class="id" title="binder">id</span></a> <a id="page:15" class="idref" href="#page:15"><span class="id" title="binder">page</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#In"><span class="id" title="definition">List.In</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#id:14"><span class="id" title="variable">id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.memory.Pages.html#page:15"><span class="id" title="variable">page</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="EraVM.memory.Pages.html#mm:13"><span class="id" title="variable">mm</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_has_id:11"><span class="id" title="inductive">page_has_id</span></a> (<a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> <a class="idref" href="EraVM.memory.Pages.html#mm:13"><span class="id" title="variable">mm</span></a>) <a class="idref" href="EraVM.memory.Pages.html#id:14"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#page:15"><span class="id" title="variable">page</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The set of identifiers has a complete linear order, ordering the
+pages by the time of creation. The ability to distinguish older pages
+from newer is necessary to prevent returning fat pointers to pages from
+older frames. See e.g. <span class="inlinecode"></span> <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#step_RetExt_ForwardFatPointer"><span
+class="id"
+title="constructor">step_RetExt_ForwardFatPointer</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="Pages.Order" class="idref" href="#Pages.Order"><span class="id" title="section">Order</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_ordering" class="idref" href="#page_ordering"><span class="id" title="definition">page_ordering</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Nat.html#leb"><span class="id" title="definition">Nat.leb</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_eq" class="idref" href="#page_eq"><span class="id" title="definition">page_eq</span></a> <a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a> <a id="y:17" class="idref" href="#y:17"><span class="id" title="binder">y</span></a> := <a class="idref" href="EraVM.memory.Pages.html#page_ordering"><span class="id" title="definition">page_ordering</span></a> <a class="idref" href="EraVM.memory.Pages.html#x:16"><span class="id" title="variable">x</span></a> <a class="idref" href="EraVM.memory.Pages.html#y:17"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_ordering"><span class="id" title="definition">page_ordering</span></a> <a class="idref" href="EraVM.memory.Pages.html#y:17"><span class="id" title="variable">y</span></a> <a class="idref" href="EraVM.memory.Pages.html#x:16"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_neq" class="idref" href="#page_neq"><span class="id" title="definition">page_neq</span></a> <a id="x:18" class="idref" href="#x:18"><span class="id" title="binder">x</span></a> <a id="y:19" class="idref" href="#y:19"><span class="id" title="binder">y</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (<a class="idref" href="EraVM.memory.Pages.html#page_eq"><span class="id" title="definition">page_eq</span></a> <a class="idref" href="EraVM.memory.Pages.html#x:18"><span class="id" title="variable">x</span></a> <a class="idref" href="EraVM.memory.Pages.html#y:19"><span class="id" title="variable">y</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_older" class="idref" href="#page_older"><span class="id" title="definition">page_older</span></a> (<a id="id1:20" class="idref" href="#id1:20"><span class="id" title="binder">id1</span></a> <a id="id2:21" class="idref" href="#id2:21"><span class="id" title="binder">id2</span></a>: <a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_ordering"><span class="id" title="definition">page_ordering</span></a> <a class="idref" href="EraVM.memory.Pages.html#id1:20"><span class="id" title="variable">id1</span></a> <a class="idref" href="EraVM.memory.Pages.html#id2:21"><span class="id" title="variable">id2</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.memory.Pages.html#Pages.Order"><span class="id" title="section">Order</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Predicate <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Pages.html#page_replace"><span
+class="id" title="inductive">page_replace</span></a></span> describes a
+relation between two memories <span class="inlinecode"><span class="id"
+title="var">m1</span></span> and <span class="inlinecode"><span
+class="id" title="var">m2</span></span>, where <span
+class="inlinecode"><span class="id" title="var">m2</span></span> is a
+copy of <span class="inlinecode"><span class="id"
+title="var">m1</span></span> but a page with it <span
+class="inlinecode"><span class="id" title="var">id</span></span> is
+replaced by another page <span class="inlinecode"><span class="id"
+title="var">p</span></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="page_replace_list" class="idref" href="#page_replace_list"><span class="id" title="inductive">page_replace_list</span></a> (<a id="id:22" class="idref" href="#id:22"><span class="id" title="binder">id</span></a>:<a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a>) (<a id="p:23" class="idref" href="#p:23"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a>): <a class="idref" href="EraVM.memory.Pages.html#pages"><span class="id" title="definition">pages</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#pages"><span class="id" title="definition">pages</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="mm_replace_base" class="idref" href="#mm_replace_base"><span class="id" title="constructor">mm_replace_base</span></a>: <span class="id" title="keyword">∀</span> <a id="oldpage:26" class="idref" href="#oldpage:26"><span class="id" title="binder">oldpage</span></a> <a id="newpage:27" class="idref" href="#newpage:27"><span class="id" title="binder">newpage</span></a> <a id="tail:28" class="idref" href="#tail:28"><span class="id" title="binder">tail</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_replace_list:24"><span class="id" title="inductive">page_replace_list</span></a> <a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:23"><span class="id" title="variable">p</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.memory.Pages.html#oldpage:26"><span class="id" title="variable">oldpage</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.memory.Pages.html#tail:28"><span class="id" title="variable">tail</span></a>) (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.memory.Pages.html#newpage:27"><span class="id" title="variable">newpage</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.memory.Pages.html#tail:28"><span class="id" title="variable">tail</span></a>)<br/>
+&nbsp;&nbsp;| <a id="mm_replace_ind" class="idref" href="#mm_replace_ind"><span class="id" title="constructor">mm_replace_ind</span></a>: <span class="id" title="keyword">∀</span> <a id="oldpage:29" class="idref" href="#oldpage:29"><span class="id" title="binder">oldpage</span></a> <a id="not_id:30" class="idref" href="#not_id:30"><span class="id" title="binder">not_id</span></a> <a id="tail:31" class="idref" href="#tail:31"><span class="id" title="binder">tail</span></a> <a id="tail':32" class="idref" href="#tail':32"><span class="id" title="binder">tail'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_replace_list:24"><span class="id" title="inductive">page_replace_list</span></a> <a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:23"><span class="id" title="variable">p</span></a> <a class="idref" href="EraVM.memory.Pages.html#tail:31"><span class="id" title="variable">tail</span></a> <a class="idref" href="EraVM.memory.Pages.html#tail':32"><span class="id" title="variable">tail'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'<>'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="EraVM.memory.Pages.html#not_id:30"><span class="id" title="variable">not_id</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_replace_list:24"><span class="id" title="inductive">page_replace_list</span></a> <a class="idref" href="EraVM.memory.Pages.html#id:22"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:23"><span class="id" title="variable">p</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#not_id:30"><span class="id" title="variable">not_id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.memory.Pages.html#oldpage:29"><span class="id" title="variable">oldpage</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.memory.Pages.html#tail:31"><span class="id" title="variable">tail</span></a>) (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#not_id:30"><span class="id" title="variable">not_id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.memory.Pages.html#oldpage:29"><span class="id" title="variable">oldpage</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.memory.Pages.html#tail':32"><span class="id" title="variable">tail'</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="page_replace" class="idref" href="#page_replace"><span class="id" title="inductive">page_replace</span></a> (<a id="id:33" class="idref" href="#id:33"><span class="id" title="binder">id</span></a>:<a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a>) (<a id="p:34" class="idref" href="#p:34"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a>): <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="prl_apply" class="idref" href="#prl_apply"><span class="id" title="constructor">prl_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="ls:37" class="idref" href="#ls:37"><span class="id" title="binder">ls</span></a> <a id="ls':38" class="idref" href="#ls':38"><span class="id" title="binder">ls'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_replace_list"><span class="id" title="inductive">page_replace_list</span></a> <a class="idref" href="EraVM.memory.Pages.html#id:33"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:34"><span class="id" title="variable">p</span></a> <a class="idref" href="EraVM.memory.Pages.html#ls:37"><span class="id" title="variable">ls</span></a> <a class="idref" href="EraVM.memory.Pages.html#ls':38"><span class="id" title="variable">ls'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Pages.html#page_replace:35"><span class="id" title="inductive">page_replace</span></a> <a class="idref" href="EraVM.memory.Pages.html#id:33"><span class="id" title="variable">id</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:34"><span class="id" title="variable">p</span></a> (<a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> <a class="idref" href="EraVM.memory.Pages.html#ls:37"><span class="id" title="variable">ls</span></a>) (<a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> <a class="idref" href="EraVM.memory.Pages.html#ls':38"><span class="id" title="variable">ls'</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Function <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Pages.html#page_alloc"><span
+class="id" title="definition">page_alloc</span></a></span> creates a new
+page in memory.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_alloc" class="idref" href="#page_alloc"><span class="id" title="definition">page_alloc</span></a> (<a id="p:39" class="idref" href="#p:39"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a>) (<a id="m:40" class="idref" href="#m:40"><span class="id" title="binder">m</span></a>: <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a>) : <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="new_id:41" class="idref" href="#new_id:41"><span class="id" title="binder">new_id</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#length"><span class="id" title="definition">length</span></a> (<a class="idref" href="EraVM.memory.Pages.html#mem_pages"><span class="id" title="projection">mem_pages</span></a> <a class="idref" href="EraVM.memory.Pages.html#m:40"><span class="id" title="variable">m</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.memory.Pages.html#m:40"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> <a class="idref" href="EraVM.memory.Pages.html#mem_pages"><span class="id" title="projection">mem_pages</span></a> ⇒ <a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.memory.Pages.html#new_id:41"><span class="id" title="variable">new_id</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.memory.Pages.html#p:39"><span class="id" title="variable">p</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <span class="id" title="var">mem_pages</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.memory.Pages.html#Pages"><span class="id" title="section">Pages</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

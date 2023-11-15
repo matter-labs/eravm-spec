@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.encoding.EncodingUtils</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.encoding.EncodingUtils</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="library">Predication</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#"><span class="id" title="library">isa.Modifiers</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#"><span class="id" title="library">isa.GeneratedMachISA</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.Integer.Abstract.ZBits.html#"><span class="id" title="module">ZBits</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#"><span class="id" title="module">GeneratedMachISA</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#"><span class="id" title="module">Modifiers</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="EncodingTools" class="idref" href="#EncodingTools"><span class="id" title="section">EncodingTools</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="encoding-parts-of-instructions">Encoding parts of
+instructions</h1>
+<p>The encoding of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> is
+described in two stages:</p>
+<ol type="1">
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToMach.html#asm_to_mach"><span
+class="id" title="definition">asm_to_mach</span></a></span> describes
+how fields <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> are
+mapped to the EraVM machine instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span>; this
+describes the instruction layout.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.encoding.Encoder.html#encode_mach_instruction"><span
+class="id" title="definition">encode_mach_instruction</span></a></span>
+describes the binary encoding of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span>.</li>
+</ol>
+<p>EraVM instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span> are 64 bits
+wide. Starting from the least significant bit, they are made of the
+following parts:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
+class="id" title="inductive">mach_opcode</span></a></span> (11
+bits)</li>
+<li>2 reserved bits</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#predicate"><span
+class="id" title="inductive">predicate</span></a></span> (3 bits)</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#reg_name"><span
+class="id" title="inductive">reg_name</span></a></span>s (4 x 4
+bits)</li>
+<li>immediate <span
+class="inlinecode"><a class="idref" href="EraVM.Types.html#u16"><span
+class="id" title="definition">u16</span></a></span> values (2 x 16 bits,
+big endian)</li>
+</ul>
+<p>The precise format is formalized by <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.Encoder.html#encode_mach_instruction"><span
+class="id"
+title="definition">encode_mach_instruction</span></a></span>.</p>
+<p>Their encoding is independent and happens as follows:</p>
+<ol type="1">
+<li>The <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
+class="id" title="inductive">mach_opcode</span></a></span> packs
+together the information about</li>
+</ol>
+<ul>
+<li>the instruction meaning, e.g. is it addition, or call, or something
+else;</li>
+<li>its source and destination addressing modes. For example, in the
+encoding of <code>add r1, r0, r3</code> the meaning of the register
+<span class="inlinecode"><a class="idref" href="EraVM.GPR.html#R1"><span
+class="id" title="constructor">R1</span></a></span> in the field <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_src0"><span
+class="id" title="projection">op_src0</span></a></span> is “use the
+value from register r1 as the first operand”. But in the encoding of
+<code>add stack=[r1], r0, r3</code> the meaning of the register <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#R1"><span
+class="id" title="constructor">R1</span></a></span> in the field <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_src0"><span
+class="id" title="projection">op_src0</span></a></span> is “use the
+value on the stack page by address R1 as the first operand”. This
+difference is reflected in the <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
+class="id" title="inductive">mach_opcode</span></a></span> field: the
+addressing modes are encoded by <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_src_mode"><span
+class="id" title="definition">encode_src_mode</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_src_special_mode"><span
+class="id" title="definition">encode_src_special_mode</span></a></span>
+(for selected instructions)/<span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_dst_mode"><span
+class="id" title="definition">encode_dst_mode</span></a></span>) and
+mixed in <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
+class="id" title="inductive">mach_opcode</span></a></span> by <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.GeneratedEncodeOpcode.html#encode_opcode"><span
+class="id" title="definition">encode_opcode</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_src_mode" class="idref" href="#encode_src_mode"><span class="id" title="definition">encode_src_mode</span></a> (<a id="sm:1" class="idref" href="#sm:1"><span class="id" title="binder">sm</span></a>:<a class="idref" href="EraVM.isa.GeneratedMachISA.html#src_mode"><span class="id" title="inductive">src_mode</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#sm:1"><span class="id" title="variable">sm</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcReg"><span class="id" title="constructor">SrcReg</span></a> ⇒ 0<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpRelativePop"><span class="id" title="constructor">SrcSpRelativePop</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpRelative"><span class="id" title="constructor">SrcSpRelative</span></a> ⇒ 2<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcStackAbsolute"><span class="id" title="constructor">SrcStackAbsolute</span></a> ⇒ 3<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcImm"><span class="id" title="constructor">SrcImm</span></a> ⇒ 4<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcCodeAddr"><span class="id" title="constructor">SrcCodeAddr</span></a> ⇒ 5<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_src_special_mode" class="idref" href="#encode_src_special_mode"><span class="id" title="definition">encode_src_special_mode</span></a> (<a id="sm:3" class="idref" href="#sm:3"><span class="id" title="binder">sm</span></a>:<a class="idref" href="EraVM.isa.GeneratedMachISA.html#src_special_mode"><span class="id" title="inductive">src_special_mode</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#sm:3"><span class="id" title="variable">sm</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpecialReg"><span class="id" title="constructor">SrcSpecialReg</span></a> ⇒ 0<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpecialImm"><span class="id" title="constructor">SrcSpecialImm</span></a> ⇒ 10<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_dst_mode" class="idref" href="#encode_dst_mode"><span class="id" title="definition">encode_dst_mode</span></a> (<a id="sm:5" class="idref" href="#sm:5"><span class="id" title="binder">sm</span></a>:<a class="idref" href="EraVM.isa.GeneratedMachISA.html#dst_mode"><span class="id" title="inductive">dst_mode</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#sm:5"><span class="id" title="variable">sm</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#DstReg"><span class="id" title="constructor">DstReg</span></a> ⇒ 0<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#DstSpRelativePush"><span class="id" title="constructor">DstSpRelativePush</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#DstSpRelative"><span class="id" title="constructor">DstSpRelative</span></a> ⇒ 2<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#DstStackAbsolute"><span class="id" title="constructor">DstStackAbsolute</span></a> ⇒ 3<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The definitions <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_set_flags"><span
+class="id" title="definition">encode_set_flags</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_swap"><span
+class="id" title="definition">encode_swap</span></a></span> are encoding
+the <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="id" title="inductive">mod_set_flags</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a></span> modifier values
+as one-bit numbers.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_set_flags" class="idref" href="#encode_set_flags"><span class="id" title="definition">encode_set_flags</span></a> (<a id="m:7" class="idref" href="#m:7"><span class="id" title="binder">m</span></a>: <a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span class="id" title="inductive">mod_set_flags</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#m:7"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Modifiers.html#SetFlags"><span class="id" title="constructor">SetFlags</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Modifiers.html#PreserveFlags"><span class="id" title="constructor">PreserveFlags</span></a> ⇒ 0<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_swap" class="idref" href="#encode_swap"><span class="id" title="definition">encode_swap</span></a>(<a id="m:9" class="idref" href="#m:9"><span class="id" title="binder">m</span></a>: <a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span class="id" title="inductive">mod_swap</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#m:9"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Modifiers.html#Swap"><span class="id" title="constructor">Swap</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Modifiers.html#NoSwap"><span class="id" title="constructor">NoSwap</span></a> =>0<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="2" type="1">
+<li>[encode_predicate] maps eight different predicates to their
+encodings as 3-bit binary numbers.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_predicate" class="idref" href="#encode_predicate"><span class="id" title="definition">encode_predicate</span></a> (<a id="p:11" class="idref" href="#p:11"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.Predication.html#predicate"><span class="id" title="inductive">predicate</span></a>) : <span class="id" title="definition">BITS</span> 3 :=<br/>
+&nbsp;&nbsp;<span class="id" title="notation">#</span> <span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#p:11"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfAlways"><span class="id" title="constructor">IfAlways</span></a> ⇒ 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfGT"><span class="id" title="constructor">IfGT</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfLT"><span class="id" title="constructor">IfLT</span></a> ⇒ 2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfEQ"><span class="id" title="constructor">IfEQ</span></a> ⇒ 3<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfGE"><span class="id" title="constructor">IfGE</span></a> ⇒ 4<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfLE"><span class="id" title="constructor">IfLE</span></a> ⇒ 5<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfNotEQ"><span class="id" title="constructor">IfNotEQ</span></a> ⇒ 6<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Predication.html#IfGTOrLT"><span class="id" title="constructor">IfGTOrLT</span></a> ⇒ 7<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="3" type="1">
+<li>Registers are encoded by their indices as 4-bit numbers,
+e.g. register <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#R3"><span
+class="id" title="constructor">R3</span></a></span> is encoded as <span
+class="math inline">3 = 0011_2</span>. The meaning of two source and two
+destination registers depends on the instruction and/or addressing
+modes.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_reg" class="idref" href="#encode_reg"><span class="id" title="definition">encode_reg</span></a> (<a id="name:13" class="idref" href="#name:13"><span class="id" title="binder">name</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) : <span class="id" title="definition">BITS</span> 4 :=<br/>
+&nbsp;&nbsp;<span class="id" title="notation">#</span> <span class="id" title="notation">(</span><a class="idref" href="EraVM.GPR.html#reg_idx"><span class="id" title="definition">reg_idx</span></a> <a class="idref" href="EraVM.encoding.EncodingUtils.html#name:13"><span class="id" title="variable">name</span></a><span class="id" title="notation">)</span><br/>
+.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_reg_opt" class="idref" href="#encode_reg_opt"><span class="id" title="definition">encode_reg_opt</span></a> (<a id="name:14" class="idref" href="#name:14"><span class="id" title="binder">name</span></a>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) : <span class="id" title="definition">BITS</span> 4 :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#name:14"><span class="id" title="variable">name</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">name</span> ⇒ <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_reg"><span class="id" title="definition">encode_reg</span></a> <a class="idref" href="EraVM.encoding.EncodingUtils.html#name:14"><span class="id" title="variable">name</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <span class="id" title="notation">#</span> 0<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="4" type="1">
+<li>Immediate 16-bit values are encoded as-is.</li>
+</ol>
+<p>For example, the instruction <code>sub r0, r1, r2</code> will be
+encoded as <code>000000000210004B</code>, which, in binary form, is:</p>
+<pre><code>0000000000000000 0010 0001 0000 000 00 00001001011</code></pre>
+<p>Let’s break it down:</p>
+<pre><code>| 0000000000000000 -&gt; imm1
+| 0000000000000000 -&gt; imm0
+| 0000 -&gt; Dst1: R0 (4 bits, ignored)
+| 0010 -&gt; Dst0: R2 (4 bits)
+| 0001 -&gt; Src1: R1 (4 bits)
+| 0000 -&gt; Src0: R0 (4 bits)
+| 000 -&gt; Predicate: IfAlways (3 bits)
+| 00 -&gt; Reserved (2 bits)
+|  00001001011 -&gt; Opcode (11 bits)</code></pre>
+<p>Another example: <code>sub stack=[r1+15], r2, stack+=[r3+63]</code>
+is encoded as: <code>003f000f0321007d</code>, which, in binary form,
+is:</p>
+<pre><code>0000 0000 0011 1111 0000 0000 0000 1111 0000 0011 0010 0001 0000 0000 0111 1101</code></pre>
+<p>Let’s break it down:</p>
+<pre><code>| 0000 0000 0011 1111  -&gt; imm1: 63
+| 0000 0000 0000 1111 -&gt; imm0: 15
+| 0000 -&gt; dst1: R0 (4 bits, ignored)
+| 0011 -&gt; dst0: R3 (4 bits)
+| 0010 -&gt; src1: R2 (4 bits)
+| 0001 -&gt;  src0: R1 (4 bits)
+| 000 -&gt; Predicate: IfAlways (3 bits)
+| 00 -&gt; Reserved (2 bits)
+| 000 0111 1101 -&gt; Opcode (11 bits)</code></pre>
+<p>Be careful with the big-endian byte order in multibyte numbers.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#EncodingTools"><span class="id" title="section">EncodingTools</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.Jump</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.Jump</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#"><span class="id" title="module">Bool</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.MemoryOps.html#"><span class="id" title="module">MemoryOps</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <span class="id" title="module">RecordSetNotations</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="JumpDefinition" class="idref" href="#JumpDefinition"><span class="id" title="section">JumpDefinition</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_jump_aux" class="idref" href="#step_jump_aux"><span class="id" title="inductive">step_jump_aux</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+</div>
+
+<div class="doc"><h1 id="jump">Jump</h1>
+<p>Unconditional jump (becomes conditional through predication).</p>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span class="inlinecode"></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">dest</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<ul>
+<li><code>jump destination</code></li>
+</ul>
+<p>Note: Argument <code>destination</code> uses the full addressing mode
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span>, therefore can be
+immediate 16-bit value, register, a register value with an offset, and
+so on.</p>
+<h2 id="semantic">Semantic</h2>
+<ul>
+<li><p>Fetch a new address from operand
+<code>destination</code>.</p></li>
+<li><p>Assign to current PC the fetched value truncated to <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#code_address_bits"><span
+class="id" title="definition">code_address_bits</span></a></span>
+bits.</p></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+| <a id="step_jump_apply" class="idref" href="#step_jump_apply"><span class="id" title="constructor">step_jump_apply</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="dest_val:3" class="idref" href="#dest_val:3"><span class="id" title="binder">dest_val</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>) (<a id="cs:4" class="idref" href="#cs:4"><span class="id" title="binder">cs</span></a> <a id="new_cs:5" class="idref" href="#new_cs:5"><span class="id" title="binder">new_cs</span></a>: <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a>) <a id="__:6" class="idref" href="#__:6"><span class="id" title="binder">__</span></a>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="dest_addr:7" class="idref" href="#dest_addr:7"><span class="id" title="binder">dest_addr</span></a> := <span class="id" title="definition">low</span> <a class="idref" href="EraVM.memory.PageTypes.html#code_address_bits"><span class="id" title="definition">code_address_bits</span></a> <a class="idref" href="EraVM.sem.Jump.html#dest_val:3"><span class="id" title="variable">dest_val</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Jump.html#new_cs:5"><span class="id" title="variable">new_cs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.CallStack.html#pc_set"><span class="id" title="definition">pc_set</span></a> <a class="idref" href="EraVM.sem.Jump.html#dest_addr:7"><span class="id" title="variable">dest_addr</span></a> <a class="idref" href="EraVM.sem.Jump.html#cs:4"><span class="id" title="variable">cs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Jump.html#step_jump_aux:1"><span class="id" title="inductive">step_jump_aux</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpJump"><span class="id" title="constructor">OpJump</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.Jump.html#__:6"><span class="id" title="variable">__</span></a> <a class="idref" href="EraVM.sem.Jump.html#dest_val:3"><span class="id" title="variable">dest_val</span></a>)) <a class="idref" href="EraVM.sem.Jump.html#cs:4"><span class="id" title="variable">cs</span></a> <a class="idref" href="EraVM.sem.Jump.html#new_cs:5"><span class="id" title="variable">new_cs</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li>execution stack: PC is overwritten with a new value.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li><p>Unconditional jumps</p></li>
+<li><p>In EraVM, all instructions are predicated (see <span
+class="inlinecode"><span class="id"
+title="var">Predication.cond</span></span>), therefore in conjunction
+with a required condition type <span class="inlinecode"><span class="id"
+title="var">jump</span></span> implements a conditional jump
+instruction.</p></li>
+<li><p>Currently, the compiler may emit jumps rather than <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRet"><span
+class="id" title="constructor">OpNearRet</span></a></span> and similar
+instructions when possible. It is cheaper, and most functions do not
+require to install a non-default <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_exception_handler_location"><span
+class="id"
+title="projection">cf_exception_handler_location</span></a></span>, nor
+passing less than all available ergs.</p></li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<ul>
+<li>Calls: see <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_jump" class="idref" href="#step_jump"><span class="id" title="inductive">step_jump</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+| <a id="step_Jump" class="idref" href="#step_Jump"><span class="id" title="constructor">step_Jump</span></a>: <span class="id" title="keyword">∀</span> <a id="ins:10" class="idref" href="#ins:10"><span class="id" title="binder">ins</span></a> (<a id="s1:11" class="idref" href="#s1:11"><span class="id" title="binder">s1</span></a> <a id="s2:12" class="idref" href="#s2:12"><span class="id" title="binder">s2</span></a>:<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_callstack"><span class="id" title="inductive">step_callstack</span></a> (<a class="idref" href="EraVM.sem.Jump.html#step_jump_aux"><span class="id" title="inductive">step_jump_aux</span></a> <a class="idref" href="EraVM.sem.Jump.html#ins:10"><span class="id" title="variable">ins</span></a>) <a class="idref" href="EraVM.sem.Jump.html#s1:11"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.Jump.html#s2:12"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Jump.html#step_jump:8"><span class="id" title="inductive">step_jump</span></a> <a class="idref" href="EraVM.sem.Jump.html#ins:10"><span class="id" title="variable">ins</span></a> <a class="idref" href="EraVM.sem.Jump.html#s1:11"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.Jump.html#s2:12"><span class="id" title="variable">s2</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.Jump.html#JumpDefinition"><span class="id" title="section">JumpDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

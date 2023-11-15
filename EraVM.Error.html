@@ -1,0 +1,264 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Error</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Error</h1>
+
+<div class="code">
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;Error&nbsp;reporting&nbsp;and&nbsp;the&nbsp;error&nbsp;monad.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;String.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;BinPos&nbsp;List.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Import&nbsp;ListNotations.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Close&nbsp;Scope&nbsp;string_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Set&nbsp;Implicit&nbsp;Arguments.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;*&nbsp;Representation&nbsp;of&nbsp;error&nbsp;messages.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;Compile-time&nbsp;errors&nbsp;produce&nbsp;an&nbsp;error&nbsp;message,&nbsp;represented&nbsp;in&nbsp;Coq&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;as&nbsp;a&nbsp;list&nbsp;of&nbsp;either&nbsp;substrings&nbsp;or&nbsp;positive&nbsp;numbers&nbsp;encoding&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;a&nbsp;source-level&nbsp;identifier&nbsp;(see&nbsp;module&nbsp;AST).&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Inductive&nbsp;errcode:&nbsp;Type&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;MSG:&nbsp;string&nbsp;->&nbsp;errcode&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;CTX:&nbsp;positive&nbsp;->&nbsp;errcode&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;a&nbsp;top-level&nbsp;identifier&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;POS:&nbsp;positive&nbsp;->&nbsp;errcode.&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;a&nbsp;positive&nbsp;integer,&nbsp;e.g.&nbsp;a&nbsp;PC&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;errmsg:&nbsp;Type&nbsp;:=&nbsp;list&nbsp;errcode.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;msg&nbsp;(s:&nbsp;string)&nbsp;:&nbsp;errmsg&nbsp;:=&nbsp;MSG&nbsp;s&nbsp;::&nbsp;nil.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;*&nbsp;The&nbsp;error&nbsp;monad&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;Compilation&nbsp;functions&nbsp;that&nbsp;can&nbsp;fail&nbsp;have&nbsp;return&nbsp;type&nbsp;[res&nbsp;A].&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;The&nbsp;return&nbsp;value&nbsp;is&nbsp;either&nbsp;[OK&nbsp;res]&nbsp;to&nbsp;indicate&nbsp;success,&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;or&nbsp;[Error&nbsp;msg]&nbsp;to&nbsp;indicate&nbsp;failure.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Inductive&nbsp;res&nbsp;(A:&nbsp;Type)&nbsp;:&nbsp;Type&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;|&nbsp;OK:&nbsp;A&nbsp;->&nbsp;res&nbsp;A&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;|&nbsp;Error:&nbsp;errmsg&nbsp;->&nbsp;res&nbsp;A.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Arguments&nbsp;Error&nbsp;[A].&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;To&nbsp;automate&nbsp;the&nbsp;propagation&nbsp;of&nbsp;errors,&nbsp;we&nbsp;use&nbsp;a&nbsp;monadic&nbsp;style&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;with&nbsp;the&nbsp;following&nbsp;[bind]&nbsp;operation.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;bind&nbsp;(A&nbsp;B:&nbsp;Type)&nbsp;(f:&nbsp;res&nbsp;A)&nbsp;(g:&nbsp;A&nbsp;->&nbsp;res&nbsp;B)&nbsp;:&nbsp;res&nbsp;B&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;f&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;OK&nbsp;x&nbsp;=>&nbsp;g&nbsp;x&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;Error&nbsp;msg&nbsp;=>&nbsp;Error&nbsp;msg&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;bind2&nbsp;(A&nbsp;B&nbsp;C:&nbsp;Type)&nbsp;(f:&nbsp;res&nbsp;(A&nbsp;*&nbsp;B))&nbsp;(g:&nbsp;A&nbsp;->&nbsp;B&nbsp;->&nbsp;res&nbsp;C)&nbsp;:&nbsp;res&nbsp;C&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;f&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;OK&nbsp;(x,&nbsp;y)&nbsp;=>&nbsp;g&nbsp;x&nbsp;y&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;Error&nbsp;msg&nbsp;=>&nbsp;Error&nbsp;msg&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;The&nbsp;[do]&nbsp;notation,&nbsp;inspired&nbsp;by&nbsp;Haskell's,&nbsp;keeps&nbsp;the&nbsp;code&nbsp;readable.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Declare&nbsp;Scope&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Notation&nbsp;"'do'&nbsp;X&nbsp;<-&nbsp;A&nbsp;;&nbsp;B"&nbsp;:=&nbsp;(bind&nbsp;A&nbsp;(fun&nbsp;X&nbsp;=>&nbsp;B))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;(at&nbsp;level&nbsp;200,&nbsp;X&nbsp;ident,&nbsp;A&nbsp;at&nbsp;level&nbsp;100,&nbsp;B&nbsp;at&nbsp;level&nbsp;200)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;:&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Notation&nbsp;"'do'&nbsp;(&nbsp;X&nbsp;,&nbsp;Y&nbsp;)&nbsp;<-&nbsp;A&nbsp;;&nbsp;B"&nbsp;:=&nbsp;(bind2&nbsp;A&nbsp;(fun&nbsp;X&nbsp;Y&nbsp;=>&nbsp;B))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;(at&nbsp;level&nbsp;200,&nbsp;X&nbsp;ident,&nbsp;Y&nbsp;ident,&nbsp;A&nbsp;at&nbsp;level&nbsp;100,&nbsp;B&nbsp;at&nbsp;level&nbsp;200)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;:&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Remark&nbsp;bind_inversion:&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;forall&nbsp;(A&nbsp;B:&nbsp;Type)&nbsp;(f:&nbsp;res&nbsp;A)&nbsp;(g:&nbsp;A&nbsp;->&nbsp;res&nbsp;B)&nbsp;(y:&nbsp;B),&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;bind&nbsp;f&nbsp;g&nbsp;=&nbsp;OK&nbsp;y&nbsp;->&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;exists&nbsp;x,&nbsp;f&nbsp;=&nbsp;OK&nbsp;x&nbsp;/\&nbsp;g&nbsp;x&nbsp;=&nbsp;OK&nbsp;y.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Proof.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;intros&nbsp;until&nbsp;y.&nbsp;destruct&nbsp;f;&nbsp;simpl;&nbsp;intros.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;exists&nbsp;a;&nbsp;auto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;discriminate.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Qed.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Remark&nbsp;bind2_inversion:&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;forall&nbsp;(A&nbsp;B&nbsp;C:&nbsp;Type)&nbsp;(f:&nbsp;res&nbsp;(A*B))&nbsp;(g:&nbsp;A&nbsp;->&nbsp;B&nbsp;->&nbsp;res&nbsp;C)&nbsp;(z:&nbsp;C),&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;bind2&nbsp;f&nbsp;g&nbsp;=&nbsp;OK&nbsp;z&nbsp;->&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;exists&nbsp;x,&nbsp;exists&nbsp;y,&nbsp;f&nbsp;=&nbsp;OK&nbsp;(x,&nbsp;y)&nbsp;/\&nbsp;g&nbsp;x&nbsp;y&nbsp;=&nbsp;OK&nbsp;z.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Proof.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;intros&nbsp;until&nbsp;z.&nbsp;destruct&nbsp;f;&nbsp;simpl.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;destruct&nbsp;p;&nbsp;simpl;&nbsp;intros.&nbsp;exists&nbsp;a;&nbsp;exists&nbsp;b;&nbsp;auto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;intros;&nbsp;discriminate.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Qed.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;Assertions&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;assertion_failed&nbsp;{A:&nbsp;Type}&nbsp;:&nbsp;res&nbsp;A&nbsp;:=&nbsp;Error(msg&nbsp;"Assertion&nbsp;failed").&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Print&nbsp;Scopes.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Notation&nbsp;"'assertion'&nbsp;A&nbsp;;&nbsp;B"&nbsp;:=&nbsp;(if&nbsp;A&nbsp;then&nbsp;B&nbsp;else&nbsp;assertion_failed)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;(at&nbsp;level&nbsp;200,&nbsp;A&nbsp;at&nbsp;level&nbsp;100,&nbsp;B&nbsp;at&nbsp;level&nbsp;200)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;:&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;This&nbsp;is&nbsp;the&nbsp;familiar&nbsp;monadic&nbsp;map&nbsp;iterator.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Local&nbsp;Open&nbsp;Scope&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Fixpoint&nbsp;mmap&nbsp;(A&nbsp;B:&nbsp;Type)&nbsp;(f:&nbsp;A&nbsp;->&nbsp;res&nbsp;B)&nbsp;(l:&nbsp;list&nbsp;A)&nbsp;{struct&nbsp;l}&nbsp;:&nbsp;res&nbsp;(list&nbsp;B)&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;l&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;nil&nbsp;=>&nbsp;OK&nbsp;nil&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;hd&nbsp;::&nbsp;tl&nbsp;=>&nbsp;do&nbsp;hd'&nbsp;<-&nbsp;f&nbsp;hd;&nbsp;do&nbsp;tl'&nbsp;<-&nbsp;mmap&nbsp;f&nbsp;tl;&nbsp;OK&nbsp;(hd'&nbsp;::&nbsp;tl')&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;Remark&nbsp;mmap_inversion:&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;forall&nbsp;(A&nbsp;B:&nbsp;Type)&nbsp;(f:&nbsp;A&nbsp;->&nbsp;res&nbsp;B)&nbsp;(l:&nbsp;list&nbsp;A)&nbsp;(l':&nbsp;list&nbsp;B),&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;mmap&nbsp;f&nbsp;l&nbsp;=&nbsp;OK&nbsp;l'&nbsp;->&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;list_forall2&nbsp;(fun&nbsp;x&nbsp;y&nbsp;=>&nbsp;f&nbsp;x&nbsp;=&nbsp;OK&nbsp;y)&nbsp;l&nbsp;l'.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;Proof.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;induction&nbsp;l;&nbsp;simpl;&nbsp;intros.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;inversion_clear&nbsp;H.&nbsp;constructor.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;destruct&nbsp;(bind_inversion&nbsp;_&nbsp;_&nbsp;H)&nbsp;as&nbsp;[hd'&nbsp;[P&nbsp;Q]].&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;destruct&nbsp;(bind_inversion&nbsp;_&nbsp;_&nbsp;Q)&nbsp;as&nbsp;[tl'&nbsp;[R&nbsp;S]].&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;inversion_clear&nbsp;S.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;constructor.&nbsp;auto.&nbsp;auto.&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;Qed.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;*&nbsp;Reasoning&nbsp;over&nbsp;monadic&nbsp;computations&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(**&nbsp;The&nbsp;[monadInv&nbsp;H]&nbsp;tactic&nbsp;below&nbsp;simplifies&nbsp;hypotheses&nbsp;of&nbsp;the&nbsp;form&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<<&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;H:&nbsp;(do&nbsp;x&nbsp;<-&nbsp;a;&nbsp;b)&nbsp;=&nbsp;OK&nbsp;res&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;>>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By&nbsp;definition&nbsp;of&nbsp;the&nbsp;bind&nbsp;operation,&nbsp;both&nbsp;computations&nbsp;[a]&nbsp;and&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[b]&nbsp;must&nbsp;succeed&nbsp;for&nbsp;their&nbsp;composition&nbsp;to&nbsp;succeed.&nbsp;&nbsp;The&nbsp;tactic&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;therefore&nbsp;generates&nbsp;the&nbsp;following&nbsp;hypotheses:&nbsp;*)</span><br/>
+<br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x:&nbsp;...&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;H1:&nbsp;a&nbsp;=&nbsp;OK&nbsp;x&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;H2:&nbsp;b&nbsp;x&nbsp;=&nbsp;OK&nbsp;res&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Ltac&nbsp;monadInv1&nbsp;H&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;type&nbsp;of&nbsp;H&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(OK&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H;&nbsp;clear&nbsp;H;&nbsp;try&nbsp;subst&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(Error&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;discriminate&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(bind&nbsp;?F&nbsp;?G&nbsp;=&nbsp;OK&nbsp;?X)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;x&nbsp;:=&nbsp;fresh&nbsp;"x"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;EQ1&nbsp;:=&nbsp;fresh&nbsp;"EQ"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;EQ2&nbsp;:=&nbsp;fresh&nbsp;"EQ"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(bind_inversion&nbsp;F&nbsp;G&nbsp;H)&nbsp;as&nbsp;[x&nbsp;[EQ1&nbsp;EQ2]];&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(monadInv1&nbsp;EQ2))))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(bind2&nbsp;?F&nbsp;?G&nbsp;=&nbsp;OK&nbsp;?X)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;x1&nbsp;:=&nbsp;fresh&nbsp;"x"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;x2&nbsp;:=&nbsp;fresh&nbsp;"x"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;EQ1&nbsp;:=&nbsp;fresh&nbsp;"EQ"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;EQ2&nbsp;:=&nbsp;fresh&nbsp;"EQ"&nbsp;in&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(bind2_inversion&nbsp;F&nbsp;G&nbsp;H)&nbsp;as&nbsp;[x1&nbsp;[x2&nbsp;[EQ1&nbsp;EQ2]]];&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(monadInv1&nbsp;EQ2)))))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(match&nbsp;?X&nbsp;with&nbsp;left&nbsp;_&nbsp;=>&nbsp;_&nbsp;|&nbsp;right&nbsp;_&nbsp;=>&nbsp;assertion_failed&nbsp;end&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;X;&nbsp;[try&nbsp;(monadInv1&nbsp;H)&nbsp;|&nbsp;discriminate]&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(match&nbsp;(negb&nbsp;?X)&nbsp;with&nbsp;true&nbsp;=>&nbsp;_&nbsp;|&nbsp;false&nbsp;=>&nbsp;assertion_failed&nbsp;end&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;X&nbsp;as&nbsp;[]&nbsp;eqn:?;&nbsp;simpl&nbsp;negb&nbsp;in&nbsp;H;&nbsp;[discriminate&nbsp;|&nbsp;try&nbsp;(monadInv1&nbsp;H)]&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(match&nbsp;?X&nbsp;with&nbsp;true&nbsp;=>&nbsp;_&nbsp;|&nbsp;false&nbsp;=>&nbsp;assertion_failed&nbsp;end&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;X&nbsp;as&nbsp;[]&nbsp;eqn:?;&nbsp;[try&nbsp;(monadInv1&nbsp;H)&nbsp;|&nbsp;discriminate]&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;|&nbsp;(mmap&nbsp;?F&nbsp;?L&nbsp;=&nbsp;OK&nbsp;?M)&nbsp;=>&nbsp;generalize&nbsp;(mmap_inversion&nbsp;F&nbsp;L&nbsp;H);&nbsp;intro&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Ltac&nbsp;monadInv&nbsp;H&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;monadInv1&nbsp;H&nbsp;||&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;type&nbsp;of&nbsp;H&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(?F&nbsp;_&nbsp;=&nbsp;OK&nbsp;_)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((progress&nbsp;simpl&nbsp;in&nbsp;H)&nbsp;||&nbsp;unfold&nbsp;F&nbsp;in&nbsp;H);&nbsp;monadInv1&nbsp;H&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

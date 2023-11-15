@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.MemoryBaseTest</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.MemoryBaseTest</h1>
+
+<div class="code">
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;Coq.Program.Equality.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Require&nbsp;MemoryBase.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Import&nbsp;MemoryBase&nbsp;ZMod&nbsp;ZArith&nbsp;List&nbsp;ListNotations.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;data_page_params&nbsp;:=&nbsp;{|&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addressable_block&nbsp;:=&nbsp;Common.u8;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;address_bits&nbsp;:=&nbsp;24;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default_value&nbsp;:=&nbsp;Common.zero8;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writable&nbsp;:=&nbsp;true&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Definition&nbsp;m&nbsp;:=&nbsp;let&nbsp;m0&nbsp;:=&nbsp;empty&nbsp;data_page_params&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;a0&nbsp;:=&nbsp;int_mod_of&nbsp;24&nbsp;3%Z&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;(a1,_)&nbsp;:=&nbsp;uinc_overflow&nbsp;_&nbsp;a0&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;(a2,_)&nbsp;:=&nbsp;uinc_overflow&nbsp;_&nbsp;a1&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;v0&nbsp;:=&nbsp;int_mod_of&nbsp;8&nbsp;1%Z&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;(v1,_)&nbsp;:=&nbsp;uinc_overflow&nbsp;_&nbsp;v0&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;(v2,_)&nbsp;:=&nbsp;uinc_overflow&nbsp;_&nbsp;v1&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;store&nbsp;data_page_params&nbsp;v0&nbsp;a0&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;store&nbsp;data_page_params&nbsp;v1&nbsp;a1&nbsp;(&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;store&nbsp;data_page_params&nbsp;v2&nbsp;a2&nbsp;m0)).&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Program&nbsp;Definition&nbsp;mtestcase&nbsp;:&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;option_map&nbsp;(List.map&nbsp;(fun&nbsp;i&nbsp;=>&nbsp;int_val&nbsp;8&nbsp;i))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(load_multicell&nbsp;data_page_params&nbsp;(int_mod_of&nbsp;24&nbsp;3%Z)&nbsp;3&nbsp;m)&nbsp;=&nbsp;Some&nbsp;[&nbsp;1%Z;&nbsp;2%Z;&nbsp;3%Z].&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;reflexivity.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Qed.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;Compute&nbsp;option_map&nbsp;(merge_bytes&nbsp;8&nbsp;(8*3))&nbsp;(load_multicell&nbsp;data_page_params&nbsp;(mk_int_mod_truncated&nbsp;24&nbsp;3%Z)&nbsp;3&nbsp;m).&nbsp;*)</span>&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

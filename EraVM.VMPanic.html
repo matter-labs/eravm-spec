@@ -1,0 +1,413 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.VMPanic</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.VMPanic</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="library">isa.CoreSet</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Panics" class="idref" href="#Panics"><span class="id" title="section">Panics</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="panic">Panic</h1>
+<p><strong>Panic</strong> refers to a situation of irrecoverable error.
+It can occur for one of the following reasons:</p>
+<ul>
+<li>There are not enough ergs to execute an action.</li>
+<li>Executing an instruction requiring kernel mode in user mode.</li>
+<li>Executing an instruction mutating global state in static mode.</li>
+<li>Violation of one of VM inner invariants.</li>
+<li>Overflow of callstack.</li>
+<li>Attempt to execute an invalid instruction.</li>
+<li>Providing an integer value (with the tag cleared) instead of a
+pointer value (with the tag set) to an instruction that expects a tagged
+fat pointer value, e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrAdd"><span
+class="id" title="constructor">OpPtrAdd</span></a></span>.</li>
+</ul>
+<h2 id="complete-list-of-panic-reasons">Complete list of panic
+reasons</h2>
+<p>The type <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#reason"><span
+class="id" title="inductive">reason</span></a></span> describes all
+situations where EraVM panics.</p>
+<p><strong>Note</strong> this is an exhaustive list! If there is a panic
+situation which does not match to any condition described by <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#reason"><span
+class="id" title="inductive">reason</span></a></span>, please, report it
+to Igor <code>iz@matterlabs.dev</code>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="reason" class="idref" href="#reason"><span class="id" title="inductive">reason</span></a> :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#step_RetExt_ForwardFatPointer_requires_ptrtag"><span
+class="id"
+title="constructor">step_RetExt_ForwardFatPointer_requires_ptrtag</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="RetABIExistingFatPointerWithoutTag" class="idref" href="#RetABIExistingFatPointerWithoutTag"><span class="id" title="constructor">RetABIExistingFatPointerWithoutTag</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#step_RetExt_ForwardFatPointer_returning_older_pointer"><span
+class="id"
+title="constructor">step_RetExt_ForwardFatPointer_returning_older_pointer</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="RetABIReturnsPointerCreatedByCaller" class="idref" href="#RetABIReturnsPointerCreatedByCaller"><span class="id" title="constructor">RetABIReturnsPointerCreatedByCaller</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Malformed <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> is such that <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#validate"><span
+class="id" title="definition">validate</span></a></span> returns <span
+class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span
+class="id" title="constructor">false</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FatPointerMalformed" class="idref" href="#FatPointerMalformed"><span class="id" title="constructor">FatPointerMalformed</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrAdd.html#step_PtrAdd_overflow"><span
+class="id" title="constructor">step_PtrAdd_overflow</span></a></span>
+and <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrSub.html#step_PtrSub_underflow"><span
+class="id"
+title="constructor">step_PtrSub_underflow</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FatPointerOverflow" class="idref" href="#FatPointerOverflow"><span class="id" title="constructor">FatPointerOverflow</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrAdd.html#step_PtrAdd_diff_too_large"><span
+class="id"
+title="constructor">step_PtrAdd_diff_too_large</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrSub.html#step_PtrSub_diff_too_large"><span
+class="id"
+title="constructor">step_PtrSub_diff_too_large</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FatPointerDeltaTooLarge" class="idref" href="#FatPointerDeltaTooLarge"><span class="id" title="constructor">FatPointerDeltaTooLarge</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#step_RetExt_heapvar_growth_unaffordable"><span
+class="id"
+title="constructor">step_RetExt_heapvar_growth_unaffordable</span></a></span></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FatPointerCreationUnaffordable" class="idref" href="#FatPointerCreationUnaffordable"><span class="id" title="constructor">FatPointerCreationUnaffordable</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#chose_action"><span
+class="id" title="definition">chose_action</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="NotInKernelMode" class="idref" href="#NotInKernelMode"><span class="id" title="constructor">NotInKernelMode</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#chose_action"><span
+class="id" title="definition">chose_action</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="ForbiddenInStaticMode" class="idref" href="#ForbiddenInStaticMode"><span class="id" title="constructor">ForbiddenInStaticMode</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#chose_action"><span
+class="id" title="definition">chose_action</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="CallStackOverflow" class="idref" href="#CallStackOverflow"><span class="id" title="constructor">CallStackOverflow</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrPack.html#step_PtrPack_notzero"><span
+class="id"
+title="constructor">step_PtrPack_notzero</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="PtrPackExpectsOp2Low128BitsZero" class="idref" href="#PtrPackExpectsOp2Low128BitsZero"><span class="id" title="constructor">PtrPackExpectsOp2Low128BitsZero</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Instruction expects a tagged <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>, e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrAdd.html#step_PtrAdd_in1_not_ptr"><span
+class="id"
+title="constructor">step_PtrAdd_in1_not_ptr</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="ExpectedFatPointer" class="idref" href="#ExpectedFatPointer"><span class="id" title="constructor">ExpectedFatPointer</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Instruction expects a non-tagged primitive value, e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.sem.PtrAdd.html#step_PtrAdd_in2_ptr"><span
+class="id"
+title="constructor">step_PtrAdd_in2_ptr</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="ExpectedInteger" class="idref" href="#ExpectedInteger"><span class="id" title="constructor">ExpectedInteger</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span> or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="TriggeredExplicitly" class="idref" href="#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Attempt to dereference a pointer past <span
+class="inlinecode"><a class="idref" href="EraVM.sem.SemanticCommon.html#MAX_OFFSET_TO_DEREF_LOW_U32"><span
+class="id"
+title="definition">MAX_OFFSET_TO_DEREF_LOW_U32</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="HeapPtrOffsetTooLarge" class="idref" href="#HeapPtrOffsetTooLarge"><span class="id" title="constructor">HeapPtrOffsetTooLarge</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Not enough ergs to pay for growing heap beyound the current
+bound.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="HeapGrowthUnaffordable" class="idref" href="#HeapGrowthUnaffordable"><span class="id" title="constructor">HeapGrowthUnaffordable</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Incrementing a heap pointer by executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span> or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span> results in
+overflow.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="HeapPtrIncOverflow" class="idref" href="#HeapPtrIncOverflow"><span class="id" title="constructor">HeapPtrIncOverflow</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Incrementing a fat pointer by executing <span
+class="inlinecode"><span class="id"
+title="var">OpLoadPtrInc</span></span> results in overflow.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FatPtrIncOverflow" class="idref" href="#FatPtrIncOverflow"><span class="id" title="constructor">FatPtrIncOverflow</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Instructions e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span> expect a heap
+pointer with a <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> tag reset, not a
+fat pointer with a set tag.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="ExpectedHeapPointer" class="idref" href="#ExpectedHeapPointer"><span class="id" title="constructor">ExpectedHeapPointer</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Not enough ergs to pay <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#base_cost"><span
+class="id" title="definition">base_cost</span></a></span> of
+instruction. Reminder: the cost is paid even if instruction is skipped
+by predication.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="NotEnoughErgsToPayBaseCost" class="idref" href="#NotEnoughErgsToPayBaseCost"><span class="id" title="constructor">NotEnoughErgsToPayBaseCost</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Far call expects to return an existing <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> but the provided
+value is not tagged as pointer.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FarCallInputIsNotPointerWhenExpected" class="idref" href="#FarCallInputIsNotPointerWhenExpected"><span class="id" title="constructor">FarCallInputIsNotPointerWhenExpected</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Far call expects the storage of <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#DEPLOYER_SYSTEM_CONTRACT_ADDRESS"><span
+class="id"
+title="definition">DEPLOYER_SYSTEM_CONTRACT_ADDRESS</span></a></span> to
+hold a valid <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span> for the
+callee contract, but the hash for the callee contract is malformed.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FarCallInvalidCodeHashFormat" class="idref" href="#FarCallInvalidCodeHashFormat"><span class="id" title="constructor">FarCallInvalidCodeHashFormat</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>In a far call, not enough ergs to pay for code decommitment.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FarCallNotEnoughErgsToDecommit" class="idref" href="#FarCallNotEnoughErgsToDecommit"><span class="id" title="constructor">FarCallNotEnoughErgsToDecommit</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>In a far call, attempt to return a new <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> but it requires
+growing heap and there are not enough ergs to pay for this growth.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FarCallNotEnoughErgsToGrowMemory" class="idref" href="#FarCallNotEnoughErgsToGrowMemory"><span class="id" title="constructor">FarCallNotEnoughErgsToGrowMemory</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Trying to far call a contract whose code is not yet deployed.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="FarCallCallInNowConstructedSystemContract" class="idref" href="#FarCallCallInNowConstructedSystemContract"><span class="id" title="constructor">FarCallCallInNowConstructedSystemContract</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Attempt to write to a storage by executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> but not enough
+ergs to pay the associated cost. See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.SStore.html#step_SStore_unaffordable"><span
+class="id"
+title="constructor">step_SStore_unaffordable</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="StorageWriteUnaffordable" class="idref" href="#StorageWriteUnaffordable"><span class="id" title="constructor">StorageWriteUnaffordable</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="status" class="idref" href="#status"><span class="id" title="inductive">status</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="NoPanic" class="idref" href="#NoPanic"><span class="id" title="constructor">NoPanic</span></a><br/>
+&nbsp;&nbsp;| <a id="Panic" class="idref" href="#Panic"><span class="id" title="constructor">Panic</span></a> : <a class="idref" href="EraVM.VMPanic.html#reason"><span class="id" title="inductive">reason</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.VMPanic.html#status:3"><span class="id" title="inductive">status</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.VMPanic.html#Panics"><span class="id" title="section">Panics</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

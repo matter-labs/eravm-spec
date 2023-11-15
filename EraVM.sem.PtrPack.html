@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.PtrPack</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.PtrPack</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="EraVM.ABI.FatPointerABI.html#"><span class="id" title="module">FatPointerABI</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="PtrPackDefinition" class="idref" href="#PtrPackDefinition"><span class="id" title="section">PtrPackDefinition</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_ptrpack" class="idref" href="#step_ptrpack"><span class="id" title="inductive">step_ptrpack</span></a> : <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="ptrpack">PtrPack</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrPack"><span
+class="id" title="constructor">OpPtrPack</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">in2</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">swap</span>:<a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<ul>
+<li><code>ptr.pack in1, in2, ou1</code></li>
+<li><code>ptr.pack.s in1, in2, ou1</code></li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>Concatenates the lower 128 bit of <code>in1</code> and the higher 128
+bits of <code>in2</code>, writes result to <code>out</code>.
+<code>in1</code> should hold a <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>.</p>
+<p>See Usage.</p>
+<h2 id="semantic">Semantic</h2>
+<ol type="1">
+<li>Fetch input operands, swap them if <code>swap</code> modifier is
+set. Now operands are <span class="math inline">\mathit{op_1}</span> and
+<span class="math inline">\mathit{op_2}</span>.</li>
+<li>Ensure the <span class="math inline">\mathit{op_1}</span> is tagged
+as a pointer, and <span class="math inline">\mathit{op_2}</span> is not
+tagged as a pointer. Otherwise panic.</li>
+<li>Ensure that the lower 128 bits of <span
+class="math inline">\mathit{op}_2</span> are zero. Otherwise panic.</li>
+<li>Store the result, tagged as a pointer, to <code>out</code>:</li>
+</ol>
+<p><span class="math display">result := \mathit{op_1}\{255\dots128\}
+\#\# \mathit{op_2}\{128\dots 0\}</span></p>
+</div>
+<div class="code">
+<br/>
+<br/>
+&nbsp;&nbsp;| <a id="step_PtrPack" class="idref" href="#step_PtrPack"><span class="id" title="constructor">step_PtrPack</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="op1_high128:3" class="idref" href="#op1_high128:3"><span class="id" title="binder">op1_high128</span></a> <a id="ptr:4" class="idref" href="#ptr:4"><span class="id" title="binder">ptr</span></a> (<a id="op2:5" class="idref" href="#op2:5"><span class="id" title="binder">op2</span></a>:<a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>) (<a id="s:6" class="idref" href="#s:6"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>) <a id="encoded:7" class="idref" href="#encoded:7"><span class="id" title="binder">encoded</span></a> <a id="result:8" class="idref" href="#result:8"><span class="id" title="binder">result</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">low</span> 128 <a class="idref" href="EraVM.sem.PtrPack.html#op2:5"><span class="id" title="variable">op2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Types.html#zero128"><span class="id" title="definition">zero128</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#encoded:7"><span class="id" title="variable">encoded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.ABI.FatPointerABI.html#encode_fat_ptr"><span class="id" title="definition">encode_fat_ptr</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#ptr:4"><span class="id" title="variable">ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.PtrPack.html#result:8"><span class="id" title="variable">result</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">(</span>@<span class="id" title="definition">high</span> 128 128 <a class="idref" href="EraVM.sem.PtrPack.html#op2:5"><span class="id" title="variable">op2</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.sem.PtrPack.html#encoded:7"><span class="id" title="variable">encoded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.PtrPack.html#step_ptrpack:1"><span class="id" title="inductive">step_ptrpack</span></a> (@<a class="idref" href="EraVM.isa.CoreSet.html#OpPtrPack"><span class="id" title="constructor">OpPtrPack</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.PtrPack.html#op1_high128:3"><span class="id" title="variable">op1_high128</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#ptr:4"><span class="id" title="variable">ptr</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#op2:5"><span class="id" title="variable">op2</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#result:8"><span class="id" title="variable">result</span></a>)) <a class="idref" href="EraVM.sem.PtrPack.html#s:6"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s:6"><span class="id" title="variable">s</span></a><br/>
+</div>
+
+<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li><p>execution stack: PC, as by any instruction; SP, if
+<code>in1</code> uses <code>RelPop</code> addressing mode, or if
+<code>out</code> uses <code>RelPush</code> addressing mode.</p></li>
+<li><p>Current stack memory page, if <code>out</code> resolves to
+it.</p></li>
+<li><p>GPRs, if <code>out</code> resolves to a register.</p></li>
+<li><p>Flags are unaffected</p></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li><p>fat pointer in <span class="math inline">in_1</span> spans across
+bits <span class="math inline">in_1{0\dots127}</span>, and the bits
+<span class="math inline">in_1{128\dots255}</span> are therefore
+available to put other data. This is used by for memory forwarding to
+far calls when we need to forward an existing fat pointer.</p>
+<p>To pass a fat pointer <code>P</code> to far call, it is necessary to
+encode an instance of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span> with <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span
+class="id" title="inductive">fwd_memory</span></a></span> <span
+class="inlinecode">:=</span> <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#FarCallForwardPageType.ForwardFatPointer"><span
+class="id" title="definition">ForwardFatPointer</span></a></span> <span
+class="inlinecode"><span class="id" title="var">P</span></span> into a
+<span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span
+class="id" title="abbreviation">PtrValue</span></a></span>.</p>
+<pre><code>Module ABI.FarCall.
+
+Record params :=
+  mk_params {
+      fwd_memory: fwd_memory;
+      ergs_passed: ergs;
+      shard_id: shard_id;
+      constructor_call: bool;
+      to_system: bool;
+    }.</code></pre>
+<p>The compound type of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span> is serialized to
+a <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> in such a way that
+the pointer takes up the lower 128 bits of memory. This matches the
+layout of any fat pointer: serialized pointers occupy the lower 128 bit
+of a word.</p>
+<p>Therefore, encoding an instance of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span> can be done as
+follows:</p>
+<ul>
+<li>take an existing <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span
+class="id" title="abbreviation">PtrValue</span></a></span> <span
+class="inlinecode"><span class="id" title="var">P</span></span></li>
+<li>form a value <code>A</code> encoding <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#ergs_passed"><span
+class="id" title="projection">ergs_passed</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#shard_id"><span
+class="id" title="projection">shard_id</span></a></span> and other
+fields of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span> in
+A{128…255}.</li>
+<li>invoke <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrPack"><span
+class="id" title="constructor">OpPtrPack</span></a></span> <span
+class="inlinecode"><span class="id" title="var">P</span></span> <span
+class="inlinecode"><span class="id" title="var">A</span></span> <span
+class="inlinecode"><span class="id" title="var">B</span></span>. Now
+<code>B</code> stores an encoded instance of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span> and can be
+passed to one of far call instructions.</li>
+</ul></li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<ul>
+<li>Takes part in a group of pointer manipulating instructions:
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrAdd"><span
+class="id" title="constructor">OpPtrAdd</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrSub"><span
+class="id" title="constructor">OpPtrSub</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrShrink"><span
+class="id" title="constructor">OpPtrShrink</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrPack"><span
+class="id" title="constructor">OpPtrPack</span></a></span></li>
+</ul></li>
+</ul>
+<h2 id="encoding">Encoding</h2>
+<p>Instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrAdd"><span
+class="id" title="constructor">OpPtrAdd</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrSub"><span
+class="id" title="constructor">OpPtrSub</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrPack"><span
+class="id" title="constructor">OpPtrPack</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrShrink"><span
+class="id" title="constructor">OpPtrShrink</span></a></span> are sharing
+an opcode.</p>
+<h2 id="panics">Panics</h2>
+<ol type="1">
+<li>First argument is not a pointer (after accounting for
+<code>swap</code>).</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_PtrPack_in1_not_ptr" class="idref" href="#step_PtrPack_in1_not_ptr"><span class="id" title="constructor">step_PtrPack_in1_not_ptr</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s1:9" class="idref" href="#s1:9"><span class="id" title="binder">s1</span></a> <a id="s2:10" class="idref" href="#s2:10"><span class="id" title="binder">s2</span></a> <a id="___1:11" class="idref" href="#___1:11"><span class="id" title="binder">___1</span></a> <a id="___2:12" class="idref" href="#___2:12"><span class="id" title="binder">___2</span></a> <a id="___3:13" class="idref" href="#___3:13"><span class="id" title="binder">___3</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#ExpectedFatPointer"><span class="id" title="constructor">ExpectedFatPointer</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s1:9"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:10"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.PtrPack.html#step_ptrpack:1"><span class="id" title="inductive">step_ptrpack</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpPtrPack"><span class="id" title="constructor">OpPtrPack</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#___1:11"><span class="id" title="variable">___1</span></a>)) <a class="idref" href="EraVM.sem.PtrPack.html#___2:12"><span class="id" title="variable">___2</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#___3:13"><span class="id" title="variable">___3</span></a>) <a class="idref" href="EraVM.sem.PtrPack.html#s1:9"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:10"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ol start="2" type="1">
+<li>Second argument is a pointer (after accounting for
+<code>swap</code>).</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_PtrPack_in2_ptr" class="idref" href="#step_PtrPack_in2_ptr"><span class="id" title="constructor">step_PtrPack_in2_ptr</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s1:14" class="idref" href="#s1:14"><span class="id" title="binder">s1</span></a> <a id="s2:15" class="idref" href="#s2:15"><span class="id" title="binder">s2</span></a> <a id="___1:16" class="idref" href="#___1:16"><span class="id" title="binder">___1</span></a> <a id="___2:17" class="idref" href="#___2:17"><span class="id" title="binder">___2</span></a> <a id="___3:18" class="idref" href="#___3:18"><span class="id" title="binder">___3</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#ExpectedFatPointer"><span class="id" title="constructor">ExpectedFatPointer</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s1:14"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:15"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.PtrPack.html#step_ptrpack:1"><span class="id" title="inductive">step_ptrpack</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpPtrPack"><span class="id" title="constructor">OpPtrPack</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#___1:16"><span class="id" title="variable">___1</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#___2:17"><span class="id" title="variable">___2</span></a>) <a class="idref" href="EraVM.sem.PtrPack.html#___3:18"><span class="id" title="variable">___3</span></a>) <a class="idref" href="EraVM.sem.PtrPack.html#s1:14"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:15"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ol start="3" type="1">
+<li>Low 128 bits of the second operand are not zero (after accounting
+for <code>swap</code>).</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_PtrPack_notzero" class="idref" href="#step_PtrPack_notzero"><span class="id" title="constructor">step_PtrPack_notzero</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s1:19" class="idref" href="#s1:19"><span class="id" title="binder">s1</span></a> <a id="s2:20" class="idref" href="#s2:20"><span class="id" title="binder">s2</span></a> <a id="op2:21" class="idref" href="#op2:21"><span class="id" title="binder">op2</span></a> <a id="___1:22" class="idref" href="#___1:22"><span class="id" title="binder">___1</span></a> <a id="___2:23" class="idref" href="#___2:23"><span class="id" title="binder">___2</span></a>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">low</span> 128 <a class="idref" href="EraVM.sem.PtrPack.html#op2:21"><span class="id" title="variable">op2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'<>'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="EraVM.Types.html#zero128"><span class="id" title="definition">zero128</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#PtrPackExpectsOp2Low128BitsZero"><span class="id" title="constructor">PtrPackExpectsOp2Low128BitsZero</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s1:19"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:20"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.PtrPack.html#step_ptrpack:1"><span class="id" title="inductive">step_ptrpack</span></a> (@<a class="idref" href="EraVM.isa.CoreSet.html#OpPtrPack"><span class="id" title="constructor">OpPtrPack</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#___1:22"><span class="id" title="variable">___1</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#op2:21"><span class="id" title="variable">op2</span></a>) <a class="idref" href="EraVM.sem.PtrPack.html#___2:23"><span class="id" title="variable">___2</span></a>) <a class="idref" href="EraVM.sem.PtrPack.html#s1:19"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.PtrPack.html#s2:20"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.PtrPack.html#PtrPackDefinition"><span class="id" title="section">PtrPackDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

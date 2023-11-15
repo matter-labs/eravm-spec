@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.PrimitiveValue</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.PrimitiveValue</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Types.html#"><span class="id" title="library">Types</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="PrimitiveValue" class="idref" href="#PrimitiveValue"><span class="id" title="section">PrimitiveValue</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="primitive-values">Primitive values</h1>
+<p><strong>Primitive value</strong> is a tagged word. The tag <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> is a boolean.</p>
+<ul>
+<li>If <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> is set, it is
+guaranteed that the lowest 128-bits of the word contain a serialized
+<span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>. Such values can be
+used as operands in instructions that require pointer arguments, for
+example, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrAdd"><span
+class="id" title="constructor">OpPtrAdd</span></a></span>. The other
+half (128 most significant bits) may hold meaningful data, e.g. when
+forming a value according to FarCall ABI using <span
+class="inlinecode"><span class="id"
+title="var">Assembly.OpPtrPack</span></span> instruction.</li>
+<li>If <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> is cleared, there
+are no guarantees to its value. It may contain an integer, a
+representation of a <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#heap_ptr"><span
+class="id" title="record">heap_ptr</span></a></span>, a representation
+of a <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span"><span
+class="id" title="record">span</span></a></span> of addresses, etc.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Context</span> {<a id="word:1" class="idref" href="#word:1"><span class="id" title="binder">word</span></a>:<span class="id" title="keyword">Type</span>}.<br/>
+<span class="id" title="keyword">Inductive</span> <a id="primitive_value" class="idref" href="#primitive_value"><span class="id" title="record">primitive_value</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_pv</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="is_ptr" class="idref" href="#is_ptr"><span class="id" title="projection">is_ptr</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="value" class="idref" href="#value"><span class="id" title="projection">value</span></a>: <a class="idref" href="EraVM.PrimitiveValue.html#PrimitiveValue.word"><span class="id" title="variable">word</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Only <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#Registers"><span
+class="id" title="section">Registers</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>s hold
+primitive values; other types of memory, including storage and heap
+pages, contain non-tagged data.</p>
+<p>Function <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#clear_pointer_tag"><span
+class="id" title="definition">clear_pointer_tag</span></a></span> clears
+the pointer tag of a primitive value.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="clear_pointer_tag" class="idref" href="#clear_pointer_tag"><span class="id" title="definition">clear_pointer_tag</span></a> (<a id="pv:5" class="idref" href="#pv:5"><span class="id" title="binder">pv</span></a>:<a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span class="id" title="record">primitive_value</span></a>): <a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span class="id" title="record">primitive_value</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.PrimitiveValue.html#pv:5"><span class="id" title="variable">pv</span></a> <span class="id" title="keyword">with</span> | <a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <span class="id" title="var">_</span> <a class="idref" href="EraVM.PrimitiveValue.html#value"><span class="id" title="projection">value</span></a> ⇒ <a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="var">value</span> <span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.PrimitiveValue.html#PrimitiveValue"><span class="id" title="section">PrimitiveValue</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>For brevity, a primitive value is called <strong>a pointer
+value</strong> if its tag is set, and <strong>integer value</strong>
+otherwise.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="IntValue" class="idref" href="#IntValue"><span class="id" title="abbreviation">IntValue</span></a> := (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="PtrValue" class="idref" href="#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> := (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="pv0" class="idref" href="#pv0"><span class="id" title="definition">pv0</span></a> := <a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.Types.html#zero256"><span class="id" title="definition">Types.zero256</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

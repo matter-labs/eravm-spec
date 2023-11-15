@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.isa.Instructions</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.isa.Instructions</h1>
+
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="InstructionSets" class="idref" href="#InstructionSets"><span class="id" title="section">InstructionSets</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="eravm-instruction-sets">EraVM instruction sets</h1>
+<p><em>Note</em> If you are interested in the instruction set exposed to
+the assembly programmer, skim this section quickly and then proceed to
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#AssemblyInstructionSet"><span
+class="id" title="section">AssemblyInstructionSet</span></a></span>,
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#CoreInstructionSet"><span
+class="id" title="section">CoreInstructionSet</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToCore.html#to_core"><span
+class="id" title="definition">to_core</span></a></span>.</p>
+<p>The spec introduces the following layers of abstraction for the
+instruction set, from lowest level to the highest level:</p>
+<ol type="1">
+<li><p>Binary encoding (as [BITS 64] type instances). Binary encoded
+instructions, each instruction is 64-bit wide.</p>
+<p>The exact type for such instructions is <span
+class="inlinecode"><span class="id"
+title="definition">BITS</span></span> <span
+class="inlinecode">64</span>.</p>
+<p>The definition <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.Encoder.html#encode_mach_instruction"><span
+class="id" title="definition">encode_mach_instruction</span></a></span>
+formalizes the encoding algorithm. It depends on <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_predicate"><span
+class="id" title="definition">encode_predicate</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.encoding.GeneratedEncodeOpcode.html#encode_opcode"><span
+class="id" title="definition">encode_opcode</span></a></span>.</p>
+<p>The encoding is an injection, because most instructions ignore the
+values of some instruction fields such as <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_dst1"><span
+class="id" title="projection">op_dst1</span></a></span>.</p></li>
+<li><p>Low-level machine instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span>.</p>
+<ul>
+<li>Fixed format with two input operands, two output operands, two
+immediate values.</li>
+<li>Restricted sources/destinations (e.g. second input can only be
+fetched from registers), instructions may ignore some instruction
+fields.</li>
+</ul></li>
+<li><p>Assembly instructions (see section <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#AssemblyInstructionSet"><span
+class="id"
+title="section">AssemblyInstructionSet</span></a></span>).</p>
+<p>An assembly instruction is an instance of <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#predicated"><span
+class="id" title="record">predicated</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span>. The type
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> defines
+instruction format with the exact operand types and all their supported
+modifiers.</p>
+<p>The instruction semantic is defined for these instructions; see <span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#step"><span
+class="id" title="inductive">step</span></a></span> in section <span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#SmallStep"><span
+class="id" title="section">SmallStep</span></a></span>.</p>
+<p>The following abstraction levels simplify the definition of
+instruction semantic but are invisible for assembly programmer.</p></li>
+</ol>
+<hr />
+<ol start="4" type="1">
+<li><p>Core instructions (see the type <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> in section
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#CoreInstructionSet"><span
+class="id" title="section">CoreInstructionSet</span></a></span>). The
+exact type for such instructions is <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#predicated"><span
+class="id" title="record">predicated</span></a></span> <span
+class="inlinecode">(<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span
+class="id" title="definition">decoded</span></a>)</span>.</p>
+<p>A simplified instruction set where the <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a></span> modifier is
+applied and there are no restrictions on the operand sources or
+destinations, such as “the second input operand may only be fetched from
+register”. Because of fewer restrictions, the definitions are more
+uniform. The translation from <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> to <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> is
+implemented in section <span
+class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToCore.html#AssemblyToCore"><span
+class="id" title="section">AssemblyToCore</span></a></span>.</p>
+<p>Additionally, the type <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> describes the
+meaningful operand types for instructions after decoding, e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span> loads an
+operand from a register, but then deserializes it into a compound value.
+The types of such compound values are explicitly provided by <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#bound"><span
+class="id" title="definition">bound</span></a></span> definition.</p>
+<p>The type <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> describes a
+schema of core instructions; this schema can be specialized to
+describe:</p>
+<ul>
+<li>fetched and decoded instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span
+class="id" title="definition">decoded</span></a></span>;</li>
+<li>an instruction where input and output operands are bound to the
+memory locations <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#bound"><span
+class="id" title="definition">bound</span></a></span>. This abstracts
+loading and storing operands, and their serialization/deserialization in
+case of ABI encoded instruction parameters.</li>
+</ul>
+<p>Adding a layer of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#bound"><span
+class="id" title="definition">bound</span></a></span> allows describing
+instruction semantics as if instructions were accepting structural
+values directly, omitting fetching values, binary encoding and
+decoding.</p>
+<ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Add.html#step_add"><span
+class="id" title="inductive">step_add</span></a></span> for an example
+of how instruction-specific semantic is defined omitting loading and
+storing details.</li>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Context.html#step_ContextMeta"><span
+class="id" title="constructor">step_ContextMeta</span></a></span> for an
+example of how instruction-specific semantic is defined omitting not
+only loading and storing, but also serialization/deserialization
+details.</li>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#OperandBinding"><span
+class="id" title="section">OperandBinding</span></a></span> for the
+details of binding, e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#bind_farret_params"><span
+class="id" title="inductive">bind_farret_params</span></a></span>
+describes how <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span>’s ABI
+parameters are deserialized.</li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.isa.Instructions.html#InstructionSets"><span class="id" title="section">InstructionSets</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

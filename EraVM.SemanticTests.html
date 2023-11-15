@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.SemanticTests</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.SemanticTests</h1>
+
+<div class="code">
+<span class="comment">(*From&nbsp;RecordUpdate&nbsp;Require&nbsp;Import&nbsp;RecordSet.<br/>
+Require&nbsp;SemanticAlt.<br/>
+<br/>
+Import&nbsp;List&nbsp;ListNotations&nbsp;ZArith.<br/>
+Import&nbsp;ZMod&nbsp;Common&nbsp;MemoryBase&nbsp;Memory&nbsp;MemoryOps&nbsp;Instruction&nbsp;State&nbsp;Semantics.<br/>
+Import&nbsp;RecordSetNotations.<br/>
+<br/>
+Definition&nbsp;regs_zero&nbsp;:=&nbsp;let&nbsp;z&nbsp;:=&nbsp;IntValue&nbsp;zero256&nbsp;in&nbsp;mk_regs&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z.<br/>
+<br/>
+Definition&nbsp;regs_init_five_tens&nbsp;:=<br/>
+let&nbsp;z&nbsp;:=&nbsp;IntValue&nbsp;zero256&nbsp;in<br/>
+let&nbsp;ten&nbsp;:=&nbsp;IntValue&nbsp;(int_mod_of&nbsp;256&nbsp;10%Z)&nbsp;in<br/>
+mk_regs&nbsp;ten&nbsp;ten&nbsp;ten&nbsp;ten&nbsp;ten&nbsp;&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z&nbsp;z.<br/>
+<br/>
+<br/>
+Fixpoint&nbsp;add_all_insns&nbsp;(insns:&nbsp;list&nbsp;instruction_predicated)&nbsp;(startaddr:&nbsp;code_address)<br/>
+&nbsp;&nbsp;(m:&nbsp;code_page)&nbsp;:=<br/>
+&nbsp;&nbsp;match&nbsp;insns&nbsp;with<br/>
+&nbsp;&nbsp;|&nbsp;ins&nbsp;::&nbsp;tail&nbsp;=>&nbsp;let&nbsp;m'&nbsp;:=&nbsp;store&nbsp;(code_page_params&nbsp;instruction_predicated&nbsp;instruction_invalid)&nbsp;ins&nbsp;startaddr&nbsp;m&nbsp;in<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;(addr',&nbsp;_)&nbsp;:=&nbsp;uinc_overflow&nbsp;_&nbsp;startaddr&nbsp;in<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_all_insns&nbsp;tail&nbsp;addr'&nbsp;m'<br/>
+&nbsp;&nbsp;|&nbsp;[]&nbsp;=>&nbsp;m<br/>
+&nbsp;&nbsp;end.<br/>
+<br/>
+Definition&nbsp;mk_program_page&nbsp;(insns:&nbsp;list&nbsp;instruction_predicated)&nbsp;:=<br/>
+&nbsp;&nbsp;CodePage&nbsp;_&nbsp;_&nbsp;(add_all_insns&nbsp;insns&nbsp;zero16&nbsp;(empty&nbsp;_&nbsp;)).<br/>
+<br/>
+Notation&nbsp;no_mods&nbsp;:=&nbsp;(mk_cmod&nbsp;NoSwap&nbsp;PreserveFlags).<br/>
+Import&nbsp;Arg&nbsp;Arg.Coercions.<br/>
+<br/>
+Definition&nbsp;mem_ctx0&nbsp;:=&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ctx_code_page_id&nbsp;:=&nbsp;0;&nbsp;ctx_const_page_id&nbsp;:=&nbsp;0;&nbsp;ctx_stack_page_id&nbsp;:=&nbsp;0;&nbsp;ctx_heap_page_id&nbsp;:=&nbsp;0;&nbsp;ctx_heap_aux_page_id&nbsp;:=&nbsp;0;&nbsp;ctx_heap_bound&nbsp;:=&nbsp;zero32;&nbsp;ctx_aux_heap_bound&nbsp;:=&nbsp;zero32<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+<br/>
+<br/>
+Definition&nbsp;mod_sp_cf&nbsp;f&nbsp;cf&nbsp;:=<br/>
+match&nbsp;cf&nbsp;with<br/>
+&nbsp;|&nbsp;mk_cf&nbsp;cf_exception_handler_location&nbsp;cf_sp&nbsp;cf_pc&nbsp;cf_ergs&nbsp;=><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mk_cf&nbsp;cf_exception_handler_location&nbsp;(f&nbsp;cf_sp)&nbsp;cf_pc&nbsp;cf_ergs<br/>
+&nbsp;end&nbsp;.<br/>
+<br/>
+Definition&nbsp;mod_sp&nbsp;f&nbsp;ef&nbsp;:=<br/>
+&nbsp;&nbsp;match&nbsp;ef&nbsp;with<br/>
+&nbsp;&nbsp;|&nbsp;InternalCall&nbsp;x&nbsp;tail&nbsp;=>&nbsp;InternalCall&nbsp;(mod_sp_cf&nbsp;f&nbsp;x)&nbsp;tail<br/>
+&nbsp;&nbsp;|&nbsp;ExternalCall&nbsp;x&nbsp;tail&nbsp;=>&nbsp;match&nbsp;x&nbsp;with<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;mk_extcf&nbsp;ecf_this_address&nbsp;ecf_msg_sender<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_code_address&nbsp;ecf_mem_context&nbsp;ecf_is_static<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_context_u128_value&nbsp;ecf_saved_storage_state<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecx_common&nbsp;=><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ExternalCall&nbsp;(mk_extcf&nbsp;ecf_this_address&nbsp;ecf_msg_sender<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_code_address&nbsp;ecf_mem_context&nbsp;ecf_is_static<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_context_u128_value&nbsp;ecf_saved_storage_state<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(mod_sp_cf&nbsp;f&nbsp;ecx_common))&nbsp;tail<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end<br/>
+&nbsp;end.<br/>
+<br/>
+Definition&nbsp;ef0&nbsp;:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ExternalCall<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_this_address&nbsp;:=&nbsp;zero160;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_msg_sender&nbsp;:=&nbsp;zero160;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_code_address&nbsp;:=&nbsp;zero16;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_mem_context&nbsp;:=&nbsp;mem_ctx0&nbsp;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_is_static&nbsp;:=&nbsp;false;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_context_u128_value&nbsp;:=&nbsp;zero128;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecf_saved_storage_state&nbsp;:=&nbsp;empty&nbsp;storage_params;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ecx_common&nbsp;:=&nbsp;{|&nbsp;cf_exception_handler_location&nbsp;:=&nbsp;zero16;&nbsp;cf_sp<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;zero16;&nbsp;cf_pc&nbsp;:=&nbsp;zero16;&nbsp;cf_ergs_remaining&nbsp;:=&nbsp;zero32|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}&nbsp;None.<br/>
+<br/>
+Definition&nbsp;init_state_from&nbsp;(from:&nbsp;list&nbsp;instruction_predicated)&nbsp;:=<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_flags&nbsp;:=&nbsp;flags_clear;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_regs&nbsp;:=&nbsp;regs_zero;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_contracts&nbsp;:=&nbsp;empty&nbsp;contracts_params;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_mem_pages&nbsp;:=&nbsp;[&nbsp;(0,&nbsp;mk_program_page&nbsp;from)];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_callstack&nbsp;:=&nbsp;ef0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;gs_context_u128&nbsp;:=&nbsp;zero128<br/>
+&nbsp;&nbsp;|}<br/>
+.<br/>
+<br/>
+<br/>
+<span class="comment">(*<br/>
+<br/>
+Theorem&nbsp;noop_reduces:<br/>
+&nbsp;&nbsp;forall&nbsp;mods,<br/>
+&nbsp;&nbsp;exists&nbsp;s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;step&nbsp;(init_state_from&nbsp;[Ins&nbsp;(OpNoOp&nbsp;(Reg&nbsp;R0)&nbsp;(Reg&nbsp;R0)&nbsp;(Reg&nbsp;R0)&nbsp;(Reg&nbsp;R0))&nbsp;mods&nbsp;IfAlways])&nbsp;s'.<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros&nbsp;[swap&nbsp;sf].<br/>
+&nbsp;&nbsp;eexists.<br/>
+&nbsp;&nbsp;econstructor;&nbsp;eauto;&nbsp;repeat&nbsp;econstructor;&nbsp;eauto;&nbsp;discriminate.<br/>
+Qed.<br/>
+<br/>
+<br/>
+Definition&nbsp;add_prog1&nbsp;mods&nbsp;:=&nbsp;&nbsp;[Ins&nbsp;(OpAdd&nbsp;&nbsp;(Imm&nbsp;(int_mod_of&nbsp;16&nbsp;42%Z))&nbsp;(Reg&nbsp;R1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Reg&nbsp;R1))&nbsp;mods<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IfAlways].<br/>
+Theorem&nbsp;add_reduces:<br/>
+&nbsp;&nbsp;forall&nbsp;mods,<br/>
+&nbsp;&nbsp;exists&nbsp;s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;step&nbsp;(init_state_from&nbsp;(add_prog1&nbsp;mods))&nbsp;s'.<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros&nbsp;[swap&nbsp;sflags].<br/>
+&nbsp;&nbsp;unfold&nbsp;add_prog1,&nbsp;init_state_from,&nbsp;ef0,&nbsp;regs_zero,&nbsp;mem_ctx0;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct&nbsp;swap&nbsp;&nbsp;eqn:Hsw,&nbsp;sflags&nbsp;eqn:Hsf;<br/>
+&nbsp;&nbsp;eexists&nbsp;(Build_global_state<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;sflags&nbsp;then&nbsp;{|&nbsp;fs_OF_LT&nbsp;:=&nbsp;Clear_OF_LT;&nbsp;fs_EQ<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:=&nbsp;Clear_EQ;&nbsp;fs_GT&nbsp;:=&nbsp;Set_GT&nbsp;|}&nbsp;else&nbsp;flags_clear)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(regs_zero&nbsp;<|&nbsp;gprs_r1&nbsp;:=&nbsp;IntValue&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z)|>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(empty&nbsp;contracts_params)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(gs_mem_pages&nbsp;(init_state_from&nbsp;(add_prog1&nbsp;(mk_cmod&nbsp;swap&nbsp;sflags))))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pc_mod&nbsp;(fun&nbsp;pc&nbsp;=>&nbsp;fst&nbsp;(uinc_overflow&nbsp;_&nbsp;pc))&nbsp;ef0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zero128<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;;<br/>
+&nbsp;&nbsp;apply&nbsp;step_Add&nbsp;with&nbsp;(in1&nbsp;:=&nbsp;(Imm&nbsp;(int_mod_of&nbsp;16&nbsp;42%Z)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(in2&nbsp;:=&nbsp;Reg&nbsp;R1)&nbsp;(out1:=Reg&nbsp;R1)&nbsp;(cond&nbsp;:=IfAlways)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(mod_swap&nbsp;:=&nbsp;swap)&nbsp;(mod_sf&nbsp;:=&nbsp;sflags)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op1&nbsp;:=&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op2&nbsp;:=&nbsp;zero256)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op1'&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then&nbsp;zero256&nbsp;else<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op2'&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z)&nbsp;else<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zero256)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(result&nbsp;:=&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(new_OF&nbsp;:=&nbsp;false)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(xstack1&nbsp;:=&nbsp;ef0);<br/>
+&nbsp;&nbsp;&nbsp;subst;&nbsp;try&nbsp;solve&nbsp;[repeat&nbsp;econstructor;&nbsp;discriminate].<br/>
+Qed.<br/>
+<br/>
+Definition&nbsp;sub_prog1&nbsp;mods&nbsp;:=&nbsp;&nbsp;[Ins&nbsp;(OpSub&nbsp;(Imm&nbsp;(int_mod_of&nbsp;16&nbsp;42%Z))&nbsp;(Reg&nbsp;R1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Reg&nbsp;R1))&nbsp;mods<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IfAlways].<br/>
+Theorem&nbsp;sub_reduces:<br/>
+&nbsp;&nbsp;forall&nbsp;mods,<br/>
+&nbsp;&nbsp;exists&nbsp;s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;step&nbsp;(init_state_from&nbsp;(sub_prog1&nbsp;mods))&nbsp;s'.<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros&nbsp;[swap&nbsp;sflags].<br/>
+&nbsp;&nbsp;unfold&nbsp;sub_prog1,&nbsp;init_state_from,&nbsp;ef0,&nbsp;regs_zero,&nbsp;mem_ctx0;&nbsp;simpl.<br/>
+&nbsp;&nbsp;destruct&nbsp;swap&nbsp;&nbsp;eqn:Hsw,&nbsp;sflags&nbsp;eqn:Hsf;<br/>
+&nbsp;&nbsp;eexists&nbsp;(Build_global_state<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(empty&nbsp;contracts_params)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(gs_mem_pages&nbsp;(init_state_from&nbsp;(sub_prog1&nbsp;(mk_cmod&nbsp;swap&nbsp;sflags))))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(pc_mod&nbsp;(fun&nbsp;pc&nbsp;=>&nbsp;fst&nbsp;(uinc_overflow&nbsp;_&nbsp;pc))&nbsp;ef0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zero128<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;;<br/>
+&nbsp;&nbsp;apply&nbsp;step_Sub&nbsp;with&nbsp;(in1&nbsp;:=&nbsp;(Imm&nbsp;(int_mod_of&nbsp;16&nbsp;42%Z)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(in2&nbsp;:=&nbsp;Reg&nbsp;R1)&nbsp;(out1:=Reg&nbsp;R1)&nbsp;(cond&nbsp;:=IfAlways)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(mod_swap&nbsp;:=&nbsp;swap)&nbsp;(mod_sf&nbsp;:=&nbsp;sflags)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op1&nbsp;:=&nbsp;int_mod_of&nbsp;256&nbsp;42%Z)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op2&nbsp;:=&nbsp;zero256)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op1'&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then&nbsp;zero256&nbsp;else&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(op2'&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z)&nbsp;else&nbsp;zero256)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(result&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fst&nbsp;(zero256&nbsp;-&nbsp;int_mod_of&nbsp;256&nbsp;42%Z)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;(int_mod_of&nbsp;256&nbsp;42%Z))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(new_OF&nbsp;:=&nbsp;if&nbsp;swap&nbsp;then&nbsp;true&nbsp;else&nbsp;false)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(xstack1&nbsp;:=&nbsp;ef0);<br/>
+&nbsp;&nbsp;&nbsp;subst;&nbsp;try&nbsp;solve&nbsp;[repeat&nbsp;econstructor;&nbsp;discriminate].<br/>
+Qed.<br/>
+<br/>
+Definition&nbsp;jmp_prog1&nbsp;mods&nbsp;:=&nbsp;&nbsp;[Ins&nbsp;(OpJump&nbsp;(Reg&nbsp;R0)&nbsp;)&nbsp;mods&nbsp;IfAlways].<br/>
+Theorem&nbsp;jmp_reduces:<br/>
+&nbsp;&nbsp;forall&nbsp;sf_mod,<br/>
+&nbsp;&nbsp;exists&nbsp;s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;step&nbsp;(init_state_from&nbsp;(jmp_prog1&nbsp;(mk_cmod&nbsp;NoSwap&nbsp;sf_mod)))&nbsp;s'.<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros&nbsp;sf_mod.<br/>
+&nbsp;&nbsp;destruct&nbsp;sf_mod&nbsp;eqn:Hswap;<br/>
+&nbsp;&nbsp;unfold&nbsp;sub_prog1,&nbsp;init_state_from,&nbsp;ef0,&nbsp;regs_zero,&nbsp;mem_ctx0;&nbsp;simpl;<br/>
+&nbsp;&nbsp;eexists;&nbsp;econstructor&nbsp;2;&nbsp;repeat&nbsp;econstructor;&nbsp;discriminate.<br/>
+Qed.<br/>
+<br/>
+Definition&nbsp;call_prog1&nbsp;mods&nbsp;:=&nbsp;&nbsp;[Ins&nbsp;(OpNearCall&nbsp;(Reg&nbsp;R0)&nbsp;(Imm&nbsp;zero16)&nbsp;(Imm&nbsp;zero16))&nbsp;mods&nbsp;IfAlways].<br/>
+Theorem&nbsp;call_reduces:<br/>
+&nbsp;&nbsp;forall&nbsp;mods,<br/>
+&nbsp;&nbsp;exists&nbsp;s',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;step&nbsp;(init_state_from&nbsp;(call_prog1&nbsp;mods))&nbsp;s'.<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros&nbsp;[swap&nbsp;sflags].<br/>
+&nbsp;&nbsp;unfold&nbsp;add_prog1,&nbsp;init_state_from,&nbsp;ef0,&nbsp;regs_zero,&nbsp;mem_ctx0;&nbsp;simpl.<br/>
+&nbsp;&nbsp;ABI.NearCall.nca_get_ergs_passed<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(ABI.decode&nbsp;ABI.NearCall.params&nbsp;ABI.NearCall.ABI&nbsp;zero256)<br/>
+<br/>
+&nbsp;&nbsp;destruct&nbsp;swap&nbsp;&nbsp;eqn:Hsw,&nbsp;sflags&nbsp;eqn:Hsf;&nbsp;eexists;&nbsp;eapply&nbsp;step_NearCall_underflow_pass_all_ergs<br/>
+&nbsp;&nbsp;;&nbsp;try&nbsp;solve&nbsp;[repeat&nbsp;econstructor].<br/>
+Qed.<br/>
+*)</span><br/>
+*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

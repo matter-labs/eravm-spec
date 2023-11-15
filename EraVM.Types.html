@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Types</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Types</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Bits</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">bits</span>.<br/>
+<span class="id" title="keyword">Export</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">spec</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="common-project-independent-definitions">Common
+project-independent definitions</h1>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Types" class="idref" href="#Types"><span class="id" title="section">Types</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <span class="id" title="module">bits</span>.<br/>
+</div>
+
+<div class="doc"><h2 id="unsigned-numbers">Unsigned numbers</h2>
+<p>Unsigned integers modulo <span class="math inline">2^n</span>.</p>
+<p>Type <span class="math inline">u_N</span> holds integers in range
+from 0 inclusive to <span class="math inline">2^N</span> exclusive.</p>
+<p>Definitions <span class="inlinecode"><span class="id"
+title="var">uN_of</span></span> are constructors of <span
+class="inlinecode"><span class="id" title="var">uN</span></span> types;
+they accept an integer and return its value modulo <span
+class="math inline">2^N</span> packed in a type <span
+class="inlinecode"><span class="id" title="var">int_mod</span></span>
+<span class="inlinecode"><span class="id"
+title="var">N</span></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u8" class="idref" href="#u8"><span class="id" title="definition">u8</span></a> := <span class="id" title="definition">BITS</span> 8.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u8_of" class="idref" href="#u8_of"><span class="id" title="definition">u8_of</span></a> := @<span class="id" title="definition">fromZ</span> 8.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u16" class="idref" href="#u16"><span class="id" title="definition">u16</span></a> := <span class="id" title="definition">BITS</span> 16.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u16_of" class="idref" href="#u16_of"><span class="id" title="definition">u16_of</span></a> := @<span class="id" title="definition">fromZ</span> 16.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u24" class="idref" href="#u24"><span class="id" title="definition">u24</span></a> := <span class="id" title="definition">BITS</span> 24.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u24_of" class="idref" href="#u24_of"><span class="id" title="definition">u24_of</span></a> := @<span class="id" title="definition">fromZ</span> 24.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u32" class="idref" href="#u32"><span class="id" title="definition">u32</span></a> := <span class="id" title="definition">BITS</span> 32.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u32_of" class="idref" href="#u32_of"><span class="id" title="definition">u32_of</span></a> := @<span class="id" title="definition">fromZ</span> 32.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u64" class="idref" href="#u64"><span class="id" title="definition">u64</span></a> := <span class="id" title="definition">BITS</span> 64.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u64_of" class="idref" href="#u64_of"><span class="id" title="definition">u64_of</span></a> := @<span class="id" title="definition">fromZ</span> 64.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u128" class="idref" href="#u128"><span class="id" title="definition">u128</span></a> := <span class="id" title="definition">BITS</span> 128.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u128_of" class="idref" href="#u128_of"><span class="id" title="definition">u128_of</span></a> := @<span class="id" title="definition">fromZ</span> 128.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u160" class="idref" href="#u160"><span class="id" title="definition">u160</span></a> := <span class="id" title="definition">BITS</span> 160.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u160_of" class="idref" href="#u160_of"><span class="id" title="definition">u160_of</span></a> := @<span class="id" title="definition">fromZ</span> 160.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u192" class="idref" href="#u192"><span class="id" title="definition">u192</span></a> := <span class="id" title="definition">BITS</span> 192.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u192_of" class="idref" href="#u192_of"><span class="id" title="definition">u192_of</span></a> := @<span class="id" title="definition">fromZ</span> 192.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u224" class="idref" href="#u224"><span class="id" title="definition">u224</span></a> := <span class="id" title="definition">BITS</span> 224.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u224_of" class="idref" href="#u224_of"><span class="id" title="definition">u224_of</span></a> := @<span class="id" title="definition">fromZ</span> 224.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u256" class="idref" href="#u256"><span class="id" title="definition">u256</span></a> := <span class="id" title="definition">BITS</span> 256.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="u256_of" class="idref" href="#u256_of"><span class="id" title="definition">u256_of</span></a> := @<span class="id" title="definition">fromZ</span> 256.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Definitions of zeros and ones for each fixed-width unsigned integer
+type.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero8" class="idref" href="#zero8"><span class="id" title="definition">zero8</span></a>   := <a class="idref" href="EraVM.Types.html#u8_of"><span class="id" title="definition">u8_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero16" class="idref" href="#zero16"><span class="id" title="definition">zero16</span></a>  := <a class="idref" href="EraVM.Types.html#u16_of"><span class="id" title="definition">u16_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero24" class="idref" href="#zero24"><span class="id" title="definition">zero24</span></a>  := <a class="idref" href="EraVM.Types.html#u24_of"><span class="id" title="definition">u24_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero32" class="idref" href="#zero32"><span class="id" title="definition">zero32</span></a>  := <a class="idref" href="EraVM.Types.html#u32_of"><span class="id" title="definition">u32_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero64" class="idref" href="#zero64"><span class="id" title="definition">zero64</span></a>  := <a class="idref" href="EraVM.Types.html#u64_of"><span class="id" title="definition">u64_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero128" class="idref" href="#zero128"><span class="id" title="definition">zero128</span></a> := <a class="idref" href="EraVM.Types.html#u128_of"><span class="id" title="definition">u128_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero160" class="idref" href="#zero160"><span class="id" title="definition">zero160</span></a> := <a class="idref" href="EraVM.Types.html#u160_of"><span class="id" title="definition">u160_of</span></a> 0.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="zero256" class="idref" href="#zero256"><span class="id" title="definition">zero256</span></a> := <a class="idref" href="EraVM.Types.html#u256_of"><span class="id" title="definition">u256_of</span></a> 0.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one8" class="idref" href="#one8"><span class="id" title="definition">one8</span></a>   := <a class="idref" href="EraVM.Types.html#u8_of"><span class="id" title="definition">u8_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one16" class="idref" href="#one16"><span class="id" title="definition">one16</span></a>  := <a class="idref" href="EraVM.Types.html#u16_of"><span class="id" title="definition">u16_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one24" class="idref" href="#one24"><span class="id" title="definition">one24</span></a>  := <a class="idref" href="EraVM.Types.html#u24_of"><span class="id" title="definition">u24_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one32" class="idref" href="#one32"><span class="id" title="definition">one32</span></a>  := <a class="idref" href="EraVM.Types.html#u32_of"><span class="id" title="definition">u32_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one64" class="idref" href="#one64"><span class="id" title="definition">one64</span></a>  := <a class="idref" href="EraVM.Types.html#u64_of"><span class="id" title="definition">u64_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one128" class="idref" href="#one128"><span class="id" title="definition">one128</span></a> := <a class="idref" href="EraVM.Types.html#u128_of"><span class="id" title="definition">u128_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one160" class="idref" href="#one160"><span class="id" title="definition">one160</span></a> := <a class="idref" href="EraVM.Types.html#u160_of"><span class="id" title="definition">u160_of</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="one256" class="idref" href="#one256"><span class="id" title="definition">one256</span></a> := <a class="idref" href="EraVM.Types.html#u256_of"><span class="id" title="definition">u256_of</span></a> 1.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The definition <span
+class="inlinecode"><a class="idref" href="EraVM.Types.html#bits_in_byte"><span
+class="id" title="definition">bits_in_byte</span></a></span> is provided
+for readability.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="bits_in_byte" class="idref" href="#bits_in_byte"><span class="id" title="definition">bits_in_byte</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>  := 8%<span class="id" title="var">nat</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Types.html#Types"><span class="id" title="section">Types</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

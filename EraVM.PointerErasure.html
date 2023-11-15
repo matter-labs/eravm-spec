@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.PointerErasure</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.PointerErasure</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="library">Pointer</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="pointer-erasure-since-v1.4.1">Pointer Erasure (since
+v1.4.1)</h1>
+<p>Recall that <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> contain four
+fields:</p>
+<pre><code>Record fat_ptr_layout := mk_fat_ptr_layout {
+                              length: u32;
+                              start: u32;
+                              page: u32;
+                              offset: u32;
+                            }.</code></pre>
+<p>In kernel mode, these fields are observable by all instructions, even
+by those that work with integers.</p>
+<p>In user mode, <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> are opaque: if an
+instruction expects an integer (with a cleared <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> tag), and it is
+provided a pointer instead (with a set <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#is_ptr"><span
+class="id" title="projection">is_ptr</span></a></span> tag), the pointer
+value is downcast to the integer before the instruction is able to
+observe it.</p>
+<p>The downcasting zeroes the fields <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#page"><span
+class="id" title="projection">page</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#start"><span
+class="id" title="projection">start</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Section</span> <a id="PointerErasure" class="idref" href="#PointerErasure"><span class="id" title="section">PointerErasure</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="is_kernel_mode:1" class="idref" href="#is_kernel_mode:1"><span class="id" title="binder">is_kernel_mode</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="span_erase" class="idref" href="#span_erase"><span class="id" title="definition">span_erase</span></a> (<a id="s:2" class="idref" href="#s:2"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a>) : <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.PointerErasure.html#PointerErasure.is_kernel_mode"><span class="id" title="variable">is_kernel_mode</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="EraVM.PointerErasure.html#s:2"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.PointerErasure.html#s:2"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="var">start</span> <span class="id" title="var">len</span> ⇒ <a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="notation">#</span> 0 <span class="id" title="var">len</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="free_ptr_erase" class="idref" href="#free_ptr_erase"><span class="id" title="definition">free_ptr_erase</span></a> (<a id="fp:4" class="idref" href="#fp:4"><span class="id" title="binder">fp</span></a>: <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>) : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.PointerErasure.html#PointerErasure.is_kernel_mode"><span class="id" title="variable">is_kernel_mode</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="EraVM.PointerErasure.html#fp:4"><span class="id" title="variable">fp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.PointerErasure.html#fp:4"><span class="id" title="variable">fp</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <span class="id" title="var">s</span> <span class="id" title="var">ofs</span> ⇒ <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.PointerErasure.html#span_erase"><span class="id" title="definition">span_erase</span></a> <span class="id" title="var">s</span>) <span class="id" title="var">ofs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_erase" class="idref" href="#fat_ptr_erase"><span class="id" title="definition">fat_ptr_erase</span></a> (<a id="fp:6" class="idref" href="#fp:6"><span class="id" title="binder">fp</span></a>:<a class="idref" href="EraVM.Pointer.html#fat_ptr"><span class="id" title="record">fat_ptr</span></a>) : <a class="idref" href="EraVM.Pointer.html#fat_ptr"><span class="id" title="record">fat_ptr</span></a>:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.PointerErasure.html#PointerErasure.is_kernel_mode"><span class="id" title="variable">is_kernel_mode</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="EraVM.PointerErasure.html#fp:6"><span class="id" title="variable">fp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.PointerErasure.html#fp:6"><span class="id" title="variable">fp</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_fat_ptr"><span class="id" title="constructor">mk_fat_ptr</span></a> <span class="id" title="var">page</span> <span class="id" title="var">ptr</span> ⇒ <a class="idref" href="EraVM.Pointer.html#mk_fat_ptr"><span class="id" title="constructor">mk_fat_ptr</span></a> 0%<span class="id" title="var">nat</span> (<a class="idref" href="EraVM.PointerErasure.html#free_ptr_erase"><span class="id" title="definition">free_ptr_erase</span></a> <span class="id" title="var">ptr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_nullable_erase" class="idref" href="#fat_ptr_nullable_erase"><span class="id" title="definition">fat_ptr_nullable_erase</span></a> (<a id="fp:8" class="idref" href="#fp:8"><span class="id" title="binder">fp</span></a>:<a class="idref" href="EraVM.Pointer.html#fat_ptr_nullable"><span class="id" title="inductive">fat_ptr_nullable</span></a>) : <a class="idref" href="EraVM.Pointer.html#fat_ptr_nullable"><span class="id" title="inductive">fat_ptr_nullable</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.PointerErasure.html#PointerErasure.is_kernel_mode"><span class="id" title="variable">is_kernel_mode</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="EraVM.PointerErasure.html#fp:8"><span class="id" title="variable">fp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.PointerErasure.html#fp:8"><span class="id" title="variable">fp</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#NullPtr"><span class="id" title="constructor">NullPtr</span></a> ⇒ <a class="idref" href="EraVM.Pointer.html#NullPtr"><span class="id" title="constructor">NullPtr</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#NotNullPtr"><span class="id" title="constructor">NotNullPtr</span></a> <span class="id" title="var">fp</span> ⇒ <a class="idref" href="EraVM.Pointer.html#NotNullPtr"><span class="id" title="constructor">NotNullPtr</span></a> (<a class="idref" href="EraVM.PointerErasure.html#fat_ptr_erase"><span class="id" title="definition">fat_ptr_erase</span></a> <a class="idref" href="EraVM.PointerErasure.html#fp:8"><span class="id" title="variable">fp</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.PointerErasure.html#PointerErasure"><span class="id" title="section">PointerErasure</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Event</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Event</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="library">ssreflect</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">tuple</span> <span class="id" title="library">zmodp</span>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Core.html#"><span class="id" title="library">Core</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="library">memory.Depot</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="module">memory.Depot</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Events" class="idref" href="#Events"><span class="id" title="section">Events</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">ssreflect.eqtype</span> <span class="id" title="module">ssrbool</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="contract_address:1" class="idref" href="#contract_address:1"><span class="id" title="binder">contract_address</span></a> <a id="precompile_params:2" class="idref" href="#precompile_params:2"><span class="id" title="binder">precompile_params</span></a>: <span class="id" title="abbreviation">eqType</span>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="events">Events</h1>
+<p>VM interfaces with two queues:</p>
+<ol type="1">
+<li>L1 <span
+class="inlinecode"><a class="idref" href="EraVM.Event.html#l1_msg"><span
+class="id" title="definition">l1_msg</span></a></span> events (see <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_l1_msgs"><span
+class="id" title="projection">gs_l1_msgs</span></a></span>), emitted by
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
+class="id" title="constructor">OpToL1Message</span></a></span>.</li>
+<li>L2 <span class="inlinecode"><span class="id"
+title="var">events</span></span> events (see <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_events"><span
+class="id" title="projection">gs_events</span></a></span>), emitted by
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
+class="id" title="constructor">OpEvent</span></a></span>.</li>
+</ol>
+<p>These queues are subject to <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>s: in case of
+revert or panic, the events emitted during the function or contract
+execution are rolled back.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="event" class="idref" href="#event"><span class="id" title="record">event</span></a> := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_shard_id" class="idref" href="#ev_shard_id"><span class="id" title="projection">ev_shard_id</span></a>: <a class="idref" href="EraVM.memory.Depot.html#shard_id"><span class="id" title="definition">shard_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_is_first" class="idref" href="#ev_is_first"><span class="id" title="projection">ev_is_first</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_tx_number_in_block" class="idref" href="#ev_tx_number_in_block"><span class="id" title="projection">ev_tx_number_in_block</span></a>: <a class="idref" href="EraVM.Core.html#tx_num"><span class="id" title="definition">tx_num</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_address" class="idref" href="#ev_address"><span class="id" title="projection">ev_address</span></a>: <a class="idref" href="EraVM.Event.html#Events.contract_address"><span class="id" title="variable">contract_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_key" class="idref" href="#ev_key"><span class="id" title="projection">ev_key</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ev_value" class="idref" href="#ev_value"><span class="id" title="projection">ev_value</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+<details><summary>equality on events </summary><div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ev_eqn" class="idref" href="#ev_eqn"><span class="id" title="definition">ev_eqn</span></a> (<a id="x:10" class="idref" href="#x:10"><span class="id" title="binder">x</span></a> <a id="y:11" class="idref" href="#y:11"><span class="id" title="binder">y</span></a>:<a class="idref" href="EraVM.Event.html#event"><span class="id" title="record">event</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Event.html#x:10"><span class="id" title="variable">x</span></a>,<a class="idref" href="EraVM.Event.html#y:11"><span class="id" title="variable">y</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Event.html#Build_event"><span class="id" title="constructor">Build_event</span></a> <span class="id" title="var">ev_shard_id1</span> <span class="id" title="var">ev_is_first1</span> <span class="id" title="var">ev_tx_number_in_block1</span> <span class="id" title="var">ev_address1</span> <span class="id" title="var">ev_key1</span> <span class="id" title="var">ev_value1</span> ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Event.html#Build_event"><span class="id" title="constructor">Build_event</span></a> <span class="id" title="var">ev_shard_id2</span> <span class="id" title="var">ev_is_first2</span> <span class="id" title="var">ev_tx_number_in_block2</span> <span class="id" title="var">ev_address2</span> <span class="id" title="var">ev_key2</span> <span class="id" title="var">ev_value2</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_shard_id1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_shard_id2</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_is_first1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_is_first2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_tx_number_in_block1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_tx_number_in_block2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_address1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_address2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_key1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_key2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ev_value1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ev_value2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="ev_eqnP" class="idref" href="#ev_eqnP"><span class="id" title="lemma">ev_eqnP</span></a> : <span class="id" title="definition">Equality.axiom</span> <a class="idref" href="EraVM.Event.html#ev_eqn"><span class="id" title="definition">ev_eqn</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> ⇒ [<span class="id" title="var">a</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> <span class="id" title="var">d</span> <span class="id" title="var">e</span> <span class="id" title="var">g</span>] [<span class="id" title="var">a'</span> <span class="id" title="var">b'</span> <span class="id" title="var">c'</span> <span class="id" title="var">d'</span> <span class="id" title="var">e'</span> <span class="id" title="var">g'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Local Ltac</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H</span> := <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span>! <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#andb_false_r"><span class="id" title="lemma">Bool.andb_false_r</span></a>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">injection</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">a</span> <span class="id" title="notation">==</span> <span class="id" title="var">a'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H1</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H1</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H1</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">b</span> <span class="id" title="notation">==</span> <span class="id" title="var">b'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H2</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H2</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H2</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">c</span> <span class="id" title="notation">==</span> <span class="id" title="var">c'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H3</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H3</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H3</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">d</span> <span class="id" title="notation">==</span> <span class="id" title="var">d'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H4</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H4</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H4</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">e</span> <span class="id" title="notation">==</span> <span class="id" title="var">e'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H5</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H5</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H5</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">g</span> <span class="id" title="notation">==</span> <span class="id" title="var">g'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H6</span>; [<span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H6</span>) ⇒ → | <span class="id" title="tactic">by</span> <span class="id" title="var">orelse</span> <span class="id" title="var">H6</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span>; <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="ev_eqMixin" class="idref" href="#ev_eqMixin"><span class="id" title="definition">ev_eqMixin</span></a> := <span class="id" title="abbreviation">EqMixin</span> <a class="idref" href="EraVM.Event.html#ev_eqnP"><span class="id" title="lemma">ev_eqnP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="ev_eqType" class="idref" href="#ev_eqType"><span class="id" title="definition">ev_eqType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">EqType</span> <span class="id" title="var">_</span> <a class="idref" href="EraVM.Event.html#ev_eqMixin"><span class="id" title="definition">ev_eqMixin</span></a>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="l1_msg" class="idref" href="#l1_msg"><span class="id" title="definition">l1_msg</span></a> := <a class="idref" href="EraVM.Event.html#event"><span class="id" title="record">event</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="precompile_query" class="idref" href="#precompile_query"><span class="id" title="record">precompile_query</span></a> := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="q_tx_number_in_block" class="idref" href="#q_tx_number_in_block"><span class="id" title="projection">q_tx_number_in_block</span></a>: <a class="idref" href="EraVM.Core.html#tx_num"><span class="id" title="definition">tx_num</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="q_shard_id" class="idref" href="#q_shard_id"><span class="id" title="projection">q_shard_id</span></a>: <a class="idref" href="EraVM.memory.Depot.html#shard_id"><span class="id" title="definition">shard_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="q_contract_address" class="idref" href="#q_contract_address"><span class="id" title="projection">q_contract_address</span></a>: <a class="idref" href="EraVM.Event.html#Events.contract_address"><span class="id" title="variable">contract_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="q_key" class="idref" href="#q_key"><span class="id" title="projection">q_key</span></a>: <a class="idref" href="EraVM.Event.html#Events.precompile_params"><span class="id" title="variable">precompile_params</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+<details><summary>equality on precompile queries </summary><div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="pq_eqn" class="idref" href="#pq_eqn"><span class="id" title="definition">pq_eqn</span></a> (<a id="x:19" class="idref" href="#x:19"><span class="id" title="binder">x</span></a> <a id="y:20" class="idref" href="#y:20"><span class="id" title="binder">y</span></a>:<a class="idref" href="EraVM.Event.html#precompile_query"><span class="id" title="record">precompile_query</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Event.html#x:19"><span class="id" title="variable">x</span></a>,<a class="idref" href="EraVM.Event.html#y:20"><span class="id" title="variable">y</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Event.html#Build_precompile_query"><span class="id" title="constructor">Build_precompile_query</span></a> <span class="id" title="var">q_tx_number_in_block1</span> <span class="id" title="var">q_shard_id1</span> <span class="id" title="var">q_contract_address1</span> <span class="id" title="var">q_key1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Event.html#Build_precompile_query"><span class="id" title="constructor">Build_precompile_query</span></a> <span class="id" title="var">q_tx_number_in_block2</span> <span class="id" title="var">q_shard_id2</span> <span class="id" title="var">q_contract_address2</span> <span class="id" title="var">q_key2</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">q_tx_number_in_block1</span> <span class="id" title="notation">==</span> <span class="id" title="var">q_tx_number_in_block2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">q_shard_id1</span> <span class="id" title="notation">==</span> <span class="id" title="var">q_shard_id2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">q_contract_address1</span> <span class="id" title="notation">==</span> <span class="id" title="var">q_contract_address2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)&&</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">q_key1</span> <span class="id" title="notation">==</span> <span class="id" title="var">q_key2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> .<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="pq_eqnP" class="idref" href="#pq_eqnP"><span class="id" title="lemma">pq_eqnP</span></a> : <span class="id" title="definition">Equality.axiom</span> <a class="idref" href="EraVM.Event.html#pq_eqn"><span class="id" title="definition">pq_eqn</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> ⇒ [<span class="id" title="var">a</span> <span class="id" title="var">b</span> <span class="id" title="var">c</span> <span class="id" title="var">d</span>] [<span class="id" title="var">a'</span> <span class="id" title="var">b'</span> <span class="id" title="var">c'</span> <span class="id" title="var">d'</span>] =>//=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">a</span> <span class="id" title="notation">==</span> <span class="id" title="var">a'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H1</span>; <span class="id" title="tactic">move</span>: <span class="id" title="var">H1</span>; <span class="id" title="var">last</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">injection</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">move</span>: <span class="id" title="var">H1</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> /<span class="id" title="lemma">eqP</span> ⇒ → //=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">b</span> <span class="id" title="notation">==</span> <span class="id" title="var">b'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H2</span>; [| <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H2</span>; <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">injection</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H2</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">c</span> <span class="id" title="notation">==</span> <span class="id" title="var">c'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H3</span>; [| <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ! <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#andb_false_r"><span class="id" title="lemma">Bool.andb_false_r</span></a>; <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">injection</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H3</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">d</span> <span class="id" title="notation">==</span> <span class="id" title="var">d'</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H4</span>; [| <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ! <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#andb_false_r"><span class="id" title="lemma">Bool.andb_false_r</span></a>; <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">injection</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span>: <span class="id" title="var">H2</span> (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H2</span>) ⇒ → → //=. <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H3</span>) (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H4</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="pq_eqMixin" class="idref" href="#pq_eqMixin"><span class="id" title="definition">pq_eqMixin</span></a> := <span class="id" title="abbreviation">EqMixin</span> <a class="idref" href="EraVM.Event.html#pq_eqnP"><span class="id" title="lemma">pq_eqnP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="pq_eqType" class="idref" href="#pq_eqType"><span class="id" title="definition">pq_eqType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">EqType</span> <span class="id" title="var">_</span> <a class="idref" href="EraVM.Event.html#pq_eqMixin"><span class="id" title="definition">pq_eqMixin</span></a>.<br/>
+
+<br/>
+</div>
+</details><div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="query" class="idref" href="#query"><span class="id" title="inductive">query</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="EventQuery" class="idref" href="#EventQuery"><span class="id" title="constructor">EventQuery</span></a> : <a class="idref" href="EraVM.Event.html#event"><span class="id" title="record">event</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Event.html#query:23"><span class="id" title="inductive">query</span></a><br/>
+&nbsp;&nbsp;| <a id="L1MsgQuery" class="idref" href="#L1MsgQuery"><span class="id" title="constructor">L1MsgQuery</span></a> : <a class="idref" href="EraVM.Event.html#l1_msg"><span class="id" title="definition">l1_msg</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Event.html#query:23"><span class="id" title="inductive">query</span></a><br/>
+&nbsp;&nbsp;| <a id="PrecompileQuery" class="idref" href="#PrecompileQuery"><span class="id" title="constructor">PrecompileQuery</span></a> : <a class="idref" href="EraVM.Event.html#precompile_query"><span class="id" title="record">precompile_query</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Event.html#query:23"><span class="id" title="inductive">query</span></a>.<br/>
+
+<br/>
+</div>
+<details><summary>equality on queries </summary><div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="query_eqn" class="idref" href="#query_eqn"><span class="id" title="definition">query_eqn</span></a> (<a id="x:25" class="idref" href="#x:25"><span class="id" title="binder">x</span></a> <a id="y:26" class="idref" href="#y:26"><span class="id" title="binder">y</span></a>: <a class="idref" href="EraVM.Event.html#query"><span class="id" title="inductive">query</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Event.html#x:25"><span class="id" title="variable">x</span></a>,<a class="idref" href="EraVM.Event.html#y:26"><span class="id" title="variable">y</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Event.html#EventQuery"><span class="id" title="constructor">EventQuery</span></a> <span class="id" title="var">x</span>, <a class="idref" href="EraVM.Event.html#EventQuery"><span class="id" title="constructor">EventQuery</span></a> <span class="id" title="var">y</span> ⇒ <a class="idref" href="EraVM.Event.html#x:25"><span class="id" title="variable">x</span></a> <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Event.html#y:26"><span class="id" title="variable">y</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Event.html#L1MsgQuery"><span class="id" title="constructor">L1MsgQuery</span></a> <span class="id" title="var">x</span>, <a class="idref" href="EraVM.Event.html#L1MsgQuery"><span class="id" title="constructor">L1MsgQuery</span></a> <span class="id" title="var">y</span> ⇒ <a class="idref" href="EraVM.Event.html#x:25"><span class="id" title="variable">x</span></a> <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Event.html#y:26"><span class="id" title="variable">y</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Event.html#PrecompileQuery"><span class="id" title="constructor">PrecompileQuery</span></a> <span class="id" title="var">x</span>, <a class="idref" href="EraVM.Event.html#PrecompileQuery"><span class="id" title="constructor">PrecompileQuery</span></a> <span class="id" title="var">y</span> ⇒ <a class="idref" href="EraVM.Event.html#x:25"><span class="id" title="variable">x</span></a> <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Event.html#y:26"><span class="id" title="variable">y</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>,<span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="query_eqnP" class="idref" href="#query_eqnP"><span class="id" title="lemma">query_eqnP</span></a> : <span class="id" title="definition">Equality.axiom</span> <a class="idref" href="EraVM.Event.html#query_eqn"><span class="id" title="definition">query_eqn</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="EraVM.Event.html#query_eqn"><span class="id" title="definition">query_eqn</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> ⇒ <span class="id" title="var">x</span> <span class="id" title="var">y</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>, <span class="id" title="var">y</span> =>//; <span class="id" title="tactic">try</span>  <span class="id" title="tactic">destruct</span> (<span class="id" title="var">_</span> <span class="id" title="notation">==</span> <span class="id" title="var">_</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">Heq</span>; <span class="id" title="tactic">try</span> (<span class="id" title="tactic">by</span> <span class="id" title="var">done</span>); <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">move</span> /<span class="id" title="lemma">eqP</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heq</span>; <span class="id" title="tactic">by</span> [<span class="id" title="tactic">subst</span>|<span class="id" title="tactic">injection</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="query_eqMixin" class="idref" href="#query_eqMixin"><span class="id" title="definition">query_eqMixin</span></a> := <span class="id" title="abbreviation">EqMixin</span> <a class="idref" href="EraVM.Event.html#query_eqnP"><span class="id" title="lemma">query_eqnP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="query_eqType" class="idref" href="#query_eqType"><span class="id" title="definition">query_eqType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">EqType</span> <span class="id" title="var">_</span> <a class="idref" href="EraVM.Event.html#query_eqMixin"><span class="id" title="definition">query_eqMixin</span></a>.<br/>
+</div>
+</details><div class="code">
+&nbsp;&nbsp;<span class="comment">(*&nbsp;todo:&nbsp;probably&nbsp;these&nbsp;structures&nbsp;can&nbsp;be&nbsp;redesigned&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Event.html#Events"><span class="id" title="section">Events</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

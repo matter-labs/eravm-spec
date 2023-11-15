@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.interpreter.InterpResolver</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.interpreter.InterpResolver</h1>
+
+<div class="code">
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;ExtLib.Structures.Monad.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Import&nbsp;MonadNotation.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_reg_rel&nbsp;{addr_bits}&nbsp;(rs:&nbsp;regs_state)&nbsp;(r:&nbsp;reg_name)&nbsp;(ofs:&nbsp;int_mod&nbsp;addr_bits)&nbsp;:&nbsp;&nbsp;res(&nbsp;int_mod&nbsp;addr_bits)&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;fetch_gpr&nbsp;rs&nbsp;r&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;IntValue&nbsp;reg_val&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(add_wrap&nbsp;_&nbsp;(resize&nbsp;_&nbsp;addr_bits&nbsp;reg_val)&nbsp;ofs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|_&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Expected&nbsp;a&nbsp;non-pointer&nbsp;value&nbsp;in&nbsp;register")&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Theorem&nbsp;reg_rel_spec&nbsp;:&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall&nbsp;addr_bits&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;abs,&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@reg_rel&nbsp;addr_bits&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;abs&nbsp;->&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@do_reg_rel&nbsp;addr_bits&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;=&nbsp;OK&nbsp;abs.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Proof.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;addr_bits&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;abs&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel,&nbsp;resize,&nbsp;add_wrap,&nbsp;uadd_overflow,&nbsp;as_unsigned&nbsp;in&nbsp;*.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H0;&nbsp;auto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Qed.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Definition&nbsp;do_resolve&nbsp;(xstack:&nbsp;callstack)&nbsp;(rs:regs_state)&nbsp;(a:any)&nbsp;:&nbsp;res&nbsp;loc&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;a&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyReg&nbsp;(Reg&nbsp;r)&nbsp;=>&nbsp;OK&nbsp;(LocReg&nbsp;r)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyImm&nbsp;(Imm&nbsp;i)&nbsp;=>&nbsp;OK&nbsp;(LocImm&nbsp;i)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyStack&nbsp;(StackAnyIO&nbsp;(Absolute&nbsp;r&nbsp;ofs))&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;abs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocStackAddress&nbsp;abs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyStack&nbsp;(StackAnyIO&nbsp;(RelSP&nbsp;r&nbsp;ofs))&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;sp_ofs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;abs&nbsp;:=&nbsp;sub_wrap&nbsp;_&nbsp;(sp_get&nbsp;xstack)&nbsp;sp_ofs&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocStackAddress&nbsp;abs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyStack&nbsp;(StackAnyIn&nbsp;(RelSpPop&nbsp;r&nbsp;ofs))&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;sp_ofs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;abs&nbsp;:=&nbsp;sub_wrap&nbsp;_&nbsp;(sp_get&nbsp;xstack)&nbsp;sp_ofs&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocStackAddress&nbsp;abs)&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyStack&nbsp;(StackAnyOut&nbsp;(RelSpPush&nbsp;r&nbsp;ofs))&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;sp_ofs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;abs&nbsp;:=&nbsp;add_wrap&nbsp;_&nbsp;(sp_get&nbsp;xstack)&nbsp;sp_ofs&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocStackAddress&nbsp;abs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyCode&nbsp;(CodeAddr&nbsp;r&nbsp;ofs)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;abs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocCodeAddr&nbsp;abs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;AnyConst&nbsp;(ConstAddr&nbsp;r&nbsp;ofs)&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;abs&nbsp;<-&nbsp;do_reg_rel&nbsp;rs&nbsp;r&nbsp;ofs&nbsp;;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK&nbsp;(LocConstAddr&nbsp;abs)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Theorem&nbsp;do_resolve_correct:&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forall&nbsp;xstack&nbsp;rs&nbsp;a&nbsp;res,&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolve&nbsp;xstack&nbsp;rs&nbsp;a&nbsp;res&nbsp;->&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_resolve&nbsp;xstack&nbsp;rs&nbsp;a&nbsp;=&nbsp;OK&nbsp;res.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Proof.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;xstack&nbsp;rs&nbsp;[]&nbsp;res;&nbsp;inversion_clear&nbsp;1;&nbsp;subst;&nbsp;simpl.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;destruct&nbsp;r;&nbsp;&nbsp;auto;&nbsp;inversion_clear&nbsp;H0;&nbsp;auto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;destruct&nbsp;i;&nbsp;&nbsp;auto;&nbsp;inversion_clear&nbsp;H0;&nbsp;auto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inversion_clear&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exploit&nbsp;(reg_rel_spec&nbsp;(address_bits&nbsp;stack_page_params)).&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;econstructor;&nbsp;eauto.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;intro&nbsp;H'.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl&nbsp;in&nbsp;*.&nbsp;rewrite&nbsp;H'.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H3.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;f_equal.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;add_wrap,&nbsp;uadd_overflow&nbsp;in&nbsp;*.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;f_equal.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inv&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H3.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H4.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;add_wrap,&nbsp;uadd_overflow,&nbsp;sub_wrap,&nbsp;usub_overflow&nbsp;in&nbsp;*.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inv&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H3.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inv&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inv&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H2.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inv&nbsp;H1.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;do_reg_rel.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;H0.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Qed.&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

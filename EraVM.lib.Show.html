@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.lib.Show</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.lib.Show</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">ExtLib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ExtLib</span> <span class="id" title="library">Show</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Bits</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">spec</span>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="library">Pointer</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#"><span class="id" title="module">Coq.Strings.String</span></a> <span class="id" title="module">Bool</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.Ascii.html#"><span class="id" title="module">Ascii</span></a> <span class="id" title="module">Show</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ShowNotation</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a> <a class="idref" href="EraVM.Types.html#"><span class="id" title="module">Types</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="ShowInstances" class="idref" href="#ShowInstances"><span class="id" title="section">ShowInstances</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">show_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Global Instance</span> <a id="bits_Show" class="idref" href="#bits_Show"><span class="id" title="instance">bits_Show</span></a> : <span class="id" title="keyword">∀</span> <a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a>, <span class="id" title="class">Show</span> (<span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.lib.Show.html#n:1"><span class="id" title="variable">n</span></a>):=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="b:2" class="idref" href="#b:2"><span class="id" title="binder">b</span></a> := <span class="id" title="definition">toHex</span> <a class="idref" href="EraVM.lib.Show.html#b:2"><span class="id" title="variable">b</span></a> }.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">string</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="span_Show" class="idref" href="#span_Show"><span class="id" title="instance">span_Show</span></a> : <span class="id" title="class">Show</span> <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.Show.html#s:3"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="var">s</span> <span class="id" title="var">l</span> ⇒ ("[" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <a class="idref" href="EraVM.lib.Show.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> ", " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <a class="idref" href="EraVM.lib.Show.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> " + " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <span class="id" title="var">l</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> ")")%<span class="id" title="var">string</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="free_ptr_Show" class="idref" href="#free_ptr_Show"><span class="id" title="instance">free_ptr_Show</span></a> : <span class="id" title="class">Show</span> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="p:5" class="idref" href="#p:5"><span class="id" title="binder">p</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.Show.html#p:5"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <span class="id" title="var">s</span> <span class="id" title="var">ofs</span> ⇒ "offset " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <span class="id" title="var">ofs</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> " in " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="fat_ptr_Show" class="idref" href="#fat_ptr_Show"><span class="id" title="instance">fat_ptr_Show</span></a> : <span class="id" title="class">Show</span> <a class="idref" href="EraVM.Pointer.html#fat_ptr"><span class="id" title="record">fat_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="p:7" class="idref" href="#p:7"><span class="id" title="binder">p</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.Show.html#p:7"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_fat_ptr"><span class="id" title="constructor">mk_fat_ptr</span></a> <span class="id" title="var">page</span> <span class="id" title="var">fp</span> ⇒ "fat ptr to page " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <span class="id" title="var">page</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> ", " <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#169ad156fbc6036a53a0338819a2b301"><span class="id" title="notation">++</span></a> <span class="id" title="definition">to_string</span> <span class="id" title="var">fp</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="fat_ptr_nullable_Show" class="idref" href="#fat_ptr_nullable_Show"><span class="id" title="instance">fat_ptr_nullable_Show</span></a> : <span class="id" title="class">Show</span> <a class="idref" href="EraVM.Pointer.html#fat_ptr_nullable"><span class="id" title="inductive">fat_ptr_nullable</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="p:9" class="idref" href="#p:9"><span class="id" title="binder">p</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.Show.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#NullPtr"><span class="id" title="constructor">NullPtr</span></a> ⇒ "NullPtr"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#NotNullPtr"><span class="id" title="constructor">NotNullPtr</span></a> <span class="id" title="var">ptr</span> ⇒ <span class="id" title="definition">to_string</span> <span class="id" title="var">ptr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="option_Show" class="idref" href="#option_Show"><span class="id" title="instance">option_Show</span></a> {<a id="T:11" class="idref" href="#T:11"><span class="id" title="binder">T</span></a>} `{<a id="H:12" class="idref" href="#H:12"><span class="id" title="binder">Show</span></a> <a id="H:12" class="idref" href="#H:12"><span class="id" title="binder">T</span></a>}: <span class="id" title="class">Show</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.lib.Show.html#T:11"><span class="id" title="variable">T</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="definition">show</span> <a id="o:13" class="idref" href="#o:13"><span class="id" title="binder">o</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.Show.html#o:13"><span class="id" title="variable">o</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">e</span>⇒ <span class="id" title="definition">show</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ "None"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<span class="comment">(*&nbsp;Examples:<br/>
+<br/>
+```<br/>
+Compute&nbsp;(to_string&nbsp;(FatPointerABI.ABI.(decode)&nbsp;(zero32&nbsp;##&nbsp;zero32&nbsp;##&nbsp;@fromNat&nbsp;32&nbsp;1&nbsp;&nbsp;##&nbsp;zero32))).<br/>
+Compute&nbsp;to_string&nbsp;(NotNullPtr&nbsp;(mk_fat_ptr&nbsp;#(1)&nbsp;(mk_ptr&nbsp;(mk_span&nbsp;zero32&nbsp;#(92))&nbsp;zero32))).<br/>
+```<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.lib.Show.html#ShowInstances"><span class="id" title="section">ShowInstances</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

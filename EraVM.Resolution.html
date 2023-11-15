@@ -1,0 +1,456 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Resolution</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Resolution</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Core.html#"><span class="id" title="library">Core</span></a> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="library">Addressing</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="library">CallStack</span></a> .<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span> <span class="id" title="module">ssrbool</span> <span class="id" title="module">eqtype</span> <span class="id" title="module">ssreflect.tuple</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="AllResolution" class="idref" href="#AllResolution"><span class="id" title="section">AllResolution</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="AllResolution.AddressingUtils" class="idref" href="#AllResolution.AddressingUtils"><span class="id" title="section">AddressingUtils</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="module">MemoryBase</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+</div>
+
+<div class="doc"><p>Predicate <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#reg_rel"><span
+class="id" title="inductive">reg_rel</span></a></span> implements the
+resolution for register-based relative addressing. Its specializations
+implement relative addressing for:</p>
+<ul>
+<li>the <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#code_page"><span
+class="id" title="definition">code_page</span></a></span>: <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#reg_rel_code"><span
+class="id" title="definition">reg_rel_code</span></a></span>;</li>
+<li>the <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span
+class="id" title="definition">const_page</span></a></span>: <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#reg_rel_const"><span
+class="id" title="definition">reg_rel_const</span></a></span>;</li>
+<li>the <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>: <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#reg_rel_const"><span
+class="id" title="definition">reg_rel_const</span></a></span>;</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Inductive&nbsp;equal_bits&nbsp;{n&nbsp;m}&nbsp;(x&nbsp;:BITS&nbsp;n)&nbsp;(y:&nbsp;BITS&nbsp;m)&nbsp;(H:&nbsp;n&nbsp;=&nbsp;m)&nbsp;:&nbsp;Prop&nbsp;:=&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="low16" class="idref" href="#low16"><span class="id" title="definition">low16</span></a> (<a id="w:1" class="idref" href="#w:1"><span class="id" title="binder">w</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>) : <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> := <span class="id" title="definition">low</span> 16 <a class="idref" href="EraVM.Resolution.html#w:1"><span class="id" title="variable">w</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="low32" class="idref" href="#low32"><span class="id" title="definition">low32</span></a> (<a id="w:2" class="idref" href="#w:2"><span class="id" title="binder">w</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>) : <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a> := <span class="id" title="definition">low</span> 32 <a class="idref" href="EraVM.Resolution.html#w:2"><span class="id" title="variable">w</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="reg_rel" class="idref" href="#reg_rel"><span class="id" title="inductive">reg_rel</span></a> : <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="rca_code_pp" class="idref" href="#rca_code_pp"><span class="id" title="constructor">rca_code_pp</span></a>: <span class="id" title="keyword">∀</span> <a id="regs:5" class="idref" href="#regs:5"><span class="id" title="binder">regs</span></a> <a id="reg:6" class="idref" href="#reg:6"><span class="id" title="binder">reg</span></a> <a id="reg_val:7" class="idref" href="#reg_val:7"><span class="id" title="binder">reg_val</span></a> <a id="base:8" class="idref" href="#base:8"><span class="id" title="binder">base</span></a> <a id="ofs:9" class="idref" href="#ofs:9"><span class="id" title="binder">ofs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="abs:10" class="idref" href="#abs:10"><span class="id" title="binder">abs</span></a> <a id="OF_ignored:11" class="idref" href="#OF_ignored:11"><span class="id" title="binder">OF_ignored</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.GPR.html#fetch_gpr"><span class="id" title="definition">fetch_gpr</span></a> <a class="idref" href="EraVM.Resolution.html#regs:5"><span class="id" title="variable">regs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:6"><span class="id" title="variable">reg</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.Resolution.html#reg_val:7"><span class="id" title="variable">reg_val</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#base:8"><span class="id" title="variable">base</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Resolution.html#low16"><span class="id" title="definition">low16</span></a> <a class="idref" href="EraVM.Resolution.html#reg_val:7"><span class="id" title="variable">reg_val</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#base:8"><span class="id" title="variable">base</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:9"><span class="id" title="variable">ofs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Resolution.html#OF_ignored:11"><span class="id" title="variable">OF_ignored</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#abs:10"><span class="id" title="variable">abs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#reg_rel:3"><span class="id" title="inductive">reg_rel</span></a> <a class="idref" href="EraVM.Resolution.html#regs:5"><span class="id" title="variable">regs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:6"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:9"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Resolution.html#abs:10"><span class="id" title="variable">abs</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="reg_rel_code" class="idref" href="#reg_rel_code"><span class="id" title="definition">reg_rel_code</span></a> : <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="EraVM.Resolution.html#reg_rel"><span class="id" title="inductive">reg_rel</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="reg_rel_const" class="idref" href="#reg_rel_const"><span class="id" title="definition">reg_rel_const</span></a> : <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#const_address"><span class="id" title="definition">const_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="EraVM.Resolution.html#reg_rel"><span class="id" title="inductive">reg_rel</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="reg_rel_stack" class="idref" href="#reg_rel_stack"><span class="id" title="definition">reg_rel_stack</span></a> : <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="EraVM.Resolution.html#reg_rel"><span class="id" title="inductive">reg_rel</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Note: in <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#sp_displ"><span
+class="id" title="definition">sp_displ</span></a></span>, <span
+class="inlinecode"><span class="id" title="keyword">delta</span></span>
+<span class="inlinecode">=</span> <span class="inlinecode"><span
+class="id" title="var">reg</span></span> <span
+class="inlinecode">+</span> <span class="inlinecode"><span class="id"
+title="var">imm</span></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="sp_displ" class="idref" href="#sp_displ"><span class="id" title="definition">sp_displ</span></a>: <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> := <a class="idref" href="EraVM.Resolution.html#reg_rel_stack"><span class="id" title="definition">reg_rel_stack</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Resolution.html#AllResolution.AddressingUtils"><span class="id" title="section">AddressingUtils</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="address-resolution">Address resolution</h1>
+<p>Instructions have multiple ways of addressing data, i.e. immediate
+16-bit values, GPRs, absolute or relative addresses in stack etc. They
+are described in section <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Addressing"><span
+class="id" title="section">Addressing</span></a></span> by types such as
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a></span>, and so on.</p>
+<p><strong>Location</strong> stands for a source and/or destination for
+data, addressable by instructions.</p>
+<p><strong>Address resolution</strong> is a matching between instruction
+operands and locations using the supported address modes.</p>
+<p>There are five main locations that instructions can address:</p>
+<ol type="1">
+<li>Immediate data: the operand is provided directly as an unsigned
+16-bit integer value.</li>
+<li>Register: data can be fetched or stored to general purpose registers
+<span class="inlinecode"><a class="idref" href="EraVM.GPR.html#r1"><span
+class="id" title="projection">r1</span></a></span>–<span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r15"><span
+class="id" title="projection">r15</span></a></span>.</li>
+<li>Stack address: data can be fetched or stored to stack.</li>
+<li>Code address: instructions can be fetched from a code page.</li>
+<li>Constant address: data can be fetched from a read-only page holding
+constant words.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="loc" class="idref" href="#loc"><span class="id" title="inductive">loc</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+| <a id="LocImm" class="idref" href="#LocImm"><span class="id" title="constructor">LocImm</span></a>: <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a>  <a class="idref" href="EraVM.Resolution.html#loc:12"><span class="id" title="inductive">loc</span></a><br/>
+| <a id="LocReg" class="idref" href="#LocReg"><span class="id" title="constructor">LocReg</span></a> : <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a>  <a class="idref" href="EraVM.Resolution.html#loc:12"><span class="id" title="inductive">loc</span></a><br/>
+| <a id="LocStackAddress" class="idref" href="#LocStackAddress"><span class="id" title="constructor">LocStackAddress</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Resolution.html#loc:12"><span class="id" title="inductive">loc</span></a><br/>
+| <a id="LocCodeAddr" class="idref" href="#LocCodeAddr"><span class="id" title="constructor">LocCodeAddr</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Resolution.html#loc:12"><span class="id" title="inductive">loc</span></a><br/>
+| <a id="LocConstAddr" class="idref" href="#LocConstAddr"><span class="id" title="constructor">LocConstAddr</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#const_address"><span class="id" title="definition">const_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a>  <a class="idref" href="EraVM.Resolution.html#loc:12"><span class="id" title="inductive">loc</span></a><br/>
+.<br/>
+</div>
+
+<div class="doc"><p>Additionally, data can be fetched and stored to data pages; this
+process is more complicated and requires putting in registers specially
+formed pointers <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#heap_ptr"><span
+class="id" title="record">heap_ptr</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="AllResolution.Resolution" class="idref" href="#AllResolution.Resolution"><span class="id" title="section">Resolution</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#Coercions"><span class="id" title="module">Addressing.Coercions</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Resolution of <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> addressing
+modes modifies the stack pointer. This, and possible future effects, is
+described by <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve_effect"><span
+class="id" title="inductive">resolve_effect</span></a></span>
+predicate.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="resolve_effect" class="idref" href="#resolve_effect"><span class="id" title="inductive">resolve_effect</span></a> := | <a id="NoEffect" class="idref" href="#NoEffect"><span class="id" title="constructor">NoEffect</span></a> | <a id="NewSP" class="idref" href="#NewSP"><span class="id" title="constructor">NewSP</span></a> (<a id="val:16" class="idref" href="#val:16"><span class="id" title="binder">val</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="resolve_result" class="idref" href="#resolve_result"><span class="id" title="record">resolve_result</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_resolved</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="effect" class="idref" href="#effect"><span class="id" title="projection">effect</span></a>: <a class="idref" href="EraVM.Resolution.html#resolve_effect"><span class="id" title="inductive">resolve_effect</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="location" class="idref" href="#location"><span class="id" title="projection">location</span></a>:> <a class="idref" href="EraVM.Resolution.html#loc"><span class="id" title="inductive">loc</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="state_checkpoint:20" class="idref" href="#state_checkpoint:20"><span class="id" title="binder">state_checkpoint</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="callstack:21" class="idref" href="#callstack:21"><span class="id" title="binder">callstack</span></a> := @<a class="idref" href="EraVM.CallStack.html#callstack"><span class="id" title="inductive">callstack</span></a> <a class="idref" href="EraVM.Resolution.html#state_checkpoint:20"><span class="id" title="variable">state_checkpoint</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="rs:22" class="idref" href="#rs:22"><span class="id" title="binder">rs</span></a>:<a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="cs:23" class="idref" href="#cs:23"><span class="id" title="binder">cs</span></a>: <a class="idref" href="EraVM.Resolution.html#callstack:21"><span class="id" title="variable">callstack</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="sp:24" class="idref" href="#sp:24"><span class="id" title="binder">sp</span></a>:= <a class="idref" href="EraVM.CallStack.html#sp_get"><span class="id" title="definition">sp_get</span></a> <a class="idref" href="EraVM.Resolution.html#cs:23"><span class="id" title="variable">cs</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Reserved Notation</span> "[[ resolved ]]" (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 9, <span class="id" title="keyword">no</span> <span class="id" title="keyword">associativity</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Reserved Notation</span> "[[ resolved ; 'SP' <- newsp ]]" (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 9, <span class="id" title="keyword">no</span> <span class="id" title="keyword">associativity</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Declare Scope</span> <span class="id" title="var">Resolution_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Resolution_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Address resolution is formalized by the predicate <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve"><span
+class="id" title="inductive">resolve</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="resolve" class="idref" href="#resolve"><span class="id" title="inductive">resolve</span></a> : <a class="idref" href="EraVM.Addressing.html#any"><span class="id" title="inductive">any</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Resolution.html#resolve_result"><span class="id" title="record">resolve_result</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc"><ul>
+<li>Registers and immediate values are resolved to themselves.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="rslv_reg" class="idref" href="#rslv_reg"><span class="id" title="constructor">rslv_reg</span></a> : <span class="id" title="keyword">∀</span> <a id="reg:27" class="idref" href="#reg:27"><span class="id" title="binder">reg</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a> (<a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">Reg</span></a> <a class="idref" href="EraVM.Resolution.html#reg:27"><span class="id" title="variable">reg</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocReg"><span class="id" title="constructor">LocReg</span></a> <a class="idref" href="EraVM.Resolution.html#reg:27"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+  | <a id="rslv_imm" class="idref" href="#rslv_imm"><span class="id" title="constructor">rslv_imm</span></a>: <span class="id" title="keyword">∀</span> <a id="imm:28" class="idref" href="#imm:28"><span class="id" title="binder">imm</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">Imm</span></a> <a class="idref" href="EraVM.Resolution.html#imm:28"><span class="id" title="variable">imm</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocImm"><span class="id" title="constructor">LocImm</span></a> <a class="idref" href="EraVM.Resolution.html#imm:28"><span class="id" title="variable">imm</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+</div>
+
+<div class="doc"><ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Absolute"><span
+class="id" title="constructor">Absolute</span></a></span> : Absolute
+stack addressing with a general purpose register and an immediate
+displacement is resolved to <span
+class="math inline">\mathit{reg}+\mathit{imm}</span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="rslv_stack_abs" class="idref" href="#rslv_stack_abs"><span class="id" title="constructor">rslv_stack_abs</span></a>: <span class="id" title="keyword">∀</span> <a id="regs:29" class="idref" href="#regs:29"><span class="id" title="binder">regs</span></a> <a id="reg:30" class="idref" href="#reg:30"><span class="id" title="binder">reg</span></a> <a id="imm:31" class="idref" href="#imm:31"><span class="id" title="binder">imm</span></a> <a id="abs:32" class="idref" href="#abs:32"><span class="id" title="binder">abs</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#reg_rel_stack"><span class="id" title="definition">reg_rel_stack</span></a> <a class="idref" href="EraVM.Resolution.html#regs:29"><span class="id" title="variable">regs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:30"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#imm:31"><span class="id" title="variable">imm</span></a> <a class="idref" href="EraVM.Resolution.html#abs:32"><span class="id" title="variable">abs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#Absolute"><span class="id" title="constructor">Absolute</span></a> <a class="idref" href="EraVM.Resolution.html#reg:30"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#imm:31"><span class="id" title="variable">imm</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocStackAddress"><span class="id" title="constructor">LocStackAddress</span></a> <a class="idref" href="EraVM.Resolution.html#abs:32"><span class="id" title="variable">abs</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+</div>
+
+<div class="doc"><ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSP"><span
+class="id" title="constructor">RelSP</span></a></span> : Addressing
+relative to SP with a general purpose register and an immediate
+displacement is resolved to <span
+class="math inline">\mathit{sp}-(\mathit{reg}+\mathit{imm})</span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="rslv_stack_rel" class="idref" href="#rslv_stack_rel"><span class="id" title="constructor">rslv_stack_rel</span></a>: <span class="id" title="keyword">∀</span> <a id="reg:33" class="idref" href="#reg:33"><span class="id" title="binder">reg</span></a> <a id="ofs:34" class="idref" href="#ofs:34"><span class="id" title="binder">ofs</span></a> <a id="delta_sp:35" class="idref" href="#delta_sp:35"><span class="id" title="binder">delta_sp</span></a> <a id="sp_rel:36" class="idref" href="#sp_rel:36"><span class="id" title="binder">sp_rel</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#sp_displ"><span class="id" title="definition">sp_displ</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.rs"><span class="id" title="variable">rs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:33"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:34"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:35"><span class="id" title="variable">delta_sp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#sp_rel:36"><span class="id" title="variable">sp_rel</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.sp"><span class="id" title="variable">sp</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:35"><span class="id" title="variable">delta_sp</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#RelSP"><span class="id" title="constructor">RelSP</span></a> <a class="idref" href="EraVM.Resolution.html#reg:33"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:34"><span class="id" title="variable">ofs</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocStackAddress"><span class="id" title="constructor">LocStackAddress</span></a> <a class="idref" href="EraVM.Resolution.html#sp_rel:36"><span class="id" title="variable">sp_rel</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+<br/>
+</div>
+
+<div class="doc"><ul>
+<li><p><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> :
+<strong>Reading</strong> relative to SP with a general purpose register
+and an immediate displacement, <strong>and SP decrement</strong>, is
+resolved to <span
+class="math inline">\mathit{sp}-(\mathit{reg}+\mathit{imm})</span>;
+additionally, SP is assigned the same value <span
+class="math inline">\mathit{sp}-(\mathit{reg}+\mathit{imm})</span>. The
+new SP value will then be used for the resolution of other operands.</p>
+<p>In other words, it is equivalent to a sequence of two actions:</p>
+<ol type="1">
+<li>SP = SP - (reg + imm)</li>
+<li>[SP] -&gt; result</li>
+</ol>
+<p>In other words, it is equivalent to:</p>
+<ol type="1">
+<li>pop the stack (reg + imm - 1) times, discard these values</li>
+<li>pop value from stack and return it</li>
+</ol></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="rslv_stack_gpop" class="idref" href="#rslv_stack_gpop"><span class="id" title="constructor">rslv_stack_gpop</span></a>: <span class="id" title="keyword">∀</span> <a id="reg:37" class="idref" href="#reg:37"><span class="id" title="binder">reg</span></a> <a id="ofs:38" class="idref" href="#ofs:38"><span class="id" title="binder">ofs</span></a> <a id="delta_sp:39" class="idref" href="#delta_sp:39"><span class="id" title="binder">delta_sp</span></a> <a id="new_sp:40" class="idref" href="#new_sp:40"><span class="id" title="binder">new_sp</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#sp_displ"><span class="id" title="definition">sp_displ</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.rs"><span class="id" title="variable">rs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:37"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:38"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:39"><span class="id" title="variable">delta_sp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:40"><span class="id" title="variable">new_sp</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.sp"><span class="id" title="variable">sp</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:39"><span class="id" title="variable">delta_sp</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#RelSpPop"><span class="id" title="constructor">RelSpPop</span></a> <a class="idref" href="EraVM.Resolution.html#reg:37"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:38"><span class="id" title="variable">ofs</span></a>) <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocStackAddress"><span class="id" title="constructor">LocStackAddress</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:40"><span class="id" title="variable">new_sp</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">;</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">SP</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation"><-</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:40"><span class="id" title="variable">new_sp</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">]]</span></a><br/>
+<br/>
+</div>
+
+<div class="doc"><ul>
+<li><p><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> :
+<strong>Writing</strong> relative to SP with a general purpose register
+and an immediate displacement, <strong>and SP increment</strong>, is
+resolved to <strong>the current value of SP</strong>. Additionally, SP
+is assigned a new value <span
+class="math inline">\mathit{sp}+(\mathit{reg}+\mathit{imm})</span>. The
+new SP value will then be used for the resolution of other operands.</p>
+<p>In other words, it is equivalent to a sequence of two actions:</p>
+<ol type="1">
+<li>[SP] &lt;- input value</li>
+<li>SP = SP + (reg + imm)</li>
+</ol>
+<p>In other words, it is equivalent to:</p>
+<ol type="1">
+<li>push the input value to the stack</li>
+<li>allocate (reg+imm-1) slots in stack</li>
+</ol></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="rslv_stack_gpush" class="idref" href="#rslv_stack_gpush"><span class="id" title="constructor">rslv_stack_gpush</span></a>: <span class="id" title="keyword">∀</span> <a id="reg:41" class="idref" href="#reg:41"><span class="id" title="binder">reg</span></a> <a id="ofs:42" class="idref" href="#ofs:42"><span class="id" title="binder">ofs</span></a> <a id="delta_sp:43" class="idref" href="#delta_sp:43"><span class="id" title="binder">delta_sp</span></a> <a id="new_sp:44" class="idref" href="#new_sp:44"><span class="id" title="binder">new_sp</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#sp_displ"><span class="id" title="definition">sp_displ</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.rs"><span class="id" title="variable">rs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:41"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:42"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:43"><span class="id" title="variable">delta_sp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:44"><span class="id" title="variable">new_sp</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.sp"><span class="id" title="variable">sp</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Resolution.html#delta_sp:43"><span class="id" title="variable">delta_sp</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#RelSpPush"><span class="id" title="constructor">RelSpPush</span></a> <a class="idref" href="EraVM.Resolution.html#reg:41"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#ofs:42"><span class="id" title="variable">ofs</span></a>) <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocStackAddress"><span class="id" title="constructor">LocStackAddress</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.sp"><span class="id" title="variable">sp</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">;</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">SP</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation"><-</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:44"><span class="id" title="variable">new_sp</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">]]</span></a><br/>
+<br/>
+&nbsp;&nbsp;| <a id="rslv_code" class="idref" href="#rslv_code"><span class="id" title="constructor">rslv_code</span></a>: <span class="id" title="keyword">∀</span> <a id="reg:45" class="idref" href="#reg:45"><span class="id" title="binder">reg</span></a> <a id="abs_imm:46" class="idref" href="#abs_imm:46"><span class="id" title="binder">abs_imm</span></a> <a id="addr:47" class="idref" href="#addr:47"><span class="id" title="binder">addr</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#reg_rel_code"><span class="id" title="definition">reg_rel_code</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.rs"><span class="id" title="variable">rs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:45"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#abs_imm:46"><span class="id" title="variable">abs_imm</span></a> <a class="idref" href="EraVM.Resolution.html#addr:47"><span class="id" title="variable">addr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#CodeAddr"><span class="id" title="constructor">CodeAddr</span></a> <a class="idref" href="EraVM.Resolution.html#reg:45"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#abs_imm:46"><span class="id" title="variable">abs_imm</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocCodeAddr"><span class="id" title="constructor">LocCodeAddr</span></a> <a class="idref" href="EraVM.Resolution.html#addr:47"><span class="id" title="variable">addr</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+  | <a id="rslv_const" class="idref" href="#rslv_const"><span class="id" title="constructor">rslv_const</span></a>: <span class="id" title="keyword">∀</span> <a id="reg:48" class="idref" href="#reg:48"><span class="id" title="binder">reg</span></a> <a id="abs_imm:49" class="idref" href="#abs_imm:49"><span class="id" title="binder">abs_imm</span></a> <a id="addr:50" class="idref" href="#addr:50"><span class="id" title="binder">addr</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#reg_rel_const"><span class="id" title="definition">reg_rel_const</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.rs"><span class="id" title="variable">rs</span></a> <a class="idref" href="EraVM.Resolution.html#reg:48"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#abs_imm:49"><span class="id" title="variable">abs_imm</span></a> <a class="idref" href="EraVM.Resolution.html#addr:50"><span class="id" title="variable">addr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve:25"><span class="id" title="inductive">resolve</span></a>  (<a class="idref" href="EraVM.Addressing.html#ConstAddr"><span class="id" title="constructor">ConstAddr</span></a> <a class="idref" href="EraVM.Resolution.html#reg:48"><span class="id" title="variable">reg</span></a> <a class="idref" href="EraVM.Resolution.html#abs_imm:49"><span class="id" title="variable">abs_imm</span></a>) <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#LocConstAddr"><span class="id" title="constructor">LocConstAddr</span></a> <a class="idref" href="EraVM.Resolution.html#addr:50"><span class="id" title="variable">addr</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a><br/>
+  <span class="id" title="keyword">where</span><br/>
+&nbsp;&nbsp;"[[ resolved ]]" := (<a class="idref" href="EraVM.Resolution.html#mk_resolved"><span class="id" title="constructor">mk_resolved</span></a> <a class="idref" href="EraVM.Resolution.html#NoEffect"><span class="id" title="constructor">NoEffect</span></a> <span class="id" title="var">resolved</span>) : <span class="id" title="var">Resolution_scope</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">and</span><br/>
+&nbsp;&nbsp;"[[ resolved ; 'SP' <- newsp ]]" := (<a class="idref" href="EraVM.Resolution.html#mk_resolved"><span class="id" title="constructor">mk_resolved</span></a> (<a class="idref" href="EraVM.Resolution.html#NewSP"><span class="id" title="constructor">NewSP</span></a> <span class="id" title="var">newsp</span>) <span class="id" title="var">resolved</span>) : <span class="id" title="var">Resolution_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Note: the reason of the asymmetry between <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> is because
+they are generalizations of <code>push</code> and <code>pop</code>
+operations.</p>
+<p>Consider a stack implemented as an array with a pointer. Suppose
+that, like in EraVM, SP points the the next address after the last value
+in stack; in other words, the topmost element in the stack is located at
+<span class="math inline">\mathit{sp}-1</span>. Then <code>push</code>
+and <code>pop</code> can be implemented in the following way:</p>
+<ul>
+<li><p>Push:</p>
+<ol type="1">
+<li>[SP] &lt;- new_value</li>
+<li>SP = SP + 1</li>
+</ol></li>
+<li><p>Pop:</p>
+<ol type="1">
+<li>SP = SP - 1</li>
+<li>[SP] -&gt; result</li>
+</ol></li>
+</ul>
+<p>This asymmetry naturally generalizes to <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span>.</p>
+<h2 id="using-relsppop-and-relsppush-in-one-instruction">Using <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> in one
+instruction</h2>
+<p>Suppose an instruction is using both <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span>, then both
+effects are applied in order:</p>
+<ul>
+<li>First, the “in” effect of <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span>.</li>
+<li>Then, the “out” effect of <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span>, where SP is
+already changed by <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span>.</li>
+<li>If the instruction accesses SP, both effects will be applied prior
+to the instruction-specific logic.</li>
+</ul>
+<p>See an example in <span class="inlinecode"><span class="id"
+title="var">sem.ModSP.step</span></span>.</p>
+<p>Predicate <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#apply_effects"><span
+class="id" title="inductive">apply_effects</span></a></span> formalizes
+the application of address resolution side effects to the state. In the
+current state of EraVM, only SP modifications are allowed, therefore the
+effect is limited to the topmost frame of callstack, which holds the
+current value of sp in <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_sp"><span
+class="id" title="projection">cf_sp</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="apply_effects" class="idref" href="#apply_effects"><span class="id" title="inductive">apply_effects</span></a> : <a class="idref" href="EraVM.Resolution.html#resolve_effect"><span class="id" title="inductive">resolve_effect</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.callstack"><span class="id" title="variable">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="ae_none" class="idref" href="#ae_none"><span class="id" title="constructor">ae_none</span></a>: <span class="id" title="keyword">∀</span> <a id="s:53" class="idref" href="#s:53"><span class="id" title="binder">s</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#apply_effects:51"><span class="id" title="inductive">apply_effects</span></a> <a class="idref" href="EraVM.Resolution.html#NoEffect"><span class="id" title="constructor">NoEffect</span></a> <a class="idref" href="EraVM.Resolution.html#s:53"><span class="id" title="variable">s</span></a><br/>
+&nbsp;&nbsp;| <a id="ae_sp" class="idref" href="#ae_sp"><span class="id" title="constructor">ae_sp</span></a>: <span class="id" title="keyword">∀</span>  <a id="cs':54" class="idref" href="#cs':54"><span class="id" title="binder">cs'</span></a> <a id="new_sp:55" class="idref" href="#new_sp:55"><span class="id" title="binder">new_sp</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.CallStack.html#sp_map_spec"><span class="id" title="inductive">sp_map_spec</span></a> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Resolution.html#new_sp:55"><span class="id" title="variable">new_sp</span></a>) <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.cs"><span class="id" title="variable">cs</span></a> <a class="idref" href="EraVM.Resolution.html#cs':54"><span class="id" title="variable">cs'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#apply_effects:51"><span class="id" title="inductive">apply_effects</span></a> (<a class="idref" href="EraVM.Resolution.html#NewSP"><span class="id" title="constructor">NewSP</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:55"><span class="id" title="variable">new_sp</span></a>) <a class="idref" href="EraVM.Resolution.html#cs':54"><span class="id" title="variable">cs'</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="resolve_apply" class="idref" href="#resolve_apply"><span class="id" title="inductive">resolve_apply</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="EraVM.Addressing.html#any"><span class="id" title="inductive">any</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.callstack"><span class="id" title="variable">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Resolution.html#loc"><span class="id" title="inductive">loc</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="ra_no_effect" class="idref" href="#ra_no_effect"><span class="id" title="constructor">ra_no_effect</span></a> : <span class="id" title="keyword">∀</span> <a id="arg:58" class="idref" href="#arg:58"><span class="id" title="binder">arg</span></a> <a id="loc:59" class="idref" href="#loc:59"><span class="id" title="binder">loc</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve"><span class="id" title="inductive">resolve</span></a> <a class="idref" href="EraVM.Resolution.html#arg:58"><span class="id" title="variable">arg</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#loc:59"><span class="id" title="variable">loc</span></a> <a class="idref" href="EraVM.Resolution.html#70f929f759656cee2cd7908f0e055073"><span class="id" title="notation">]]</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve_apply:56"><span class="id" title="inductive">resolve_apply</span></a> <a class="idref" href="EraVM.Resolution.html#arg:58"><span class="id" title="variable">arg</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.cs"><span class="id" title="variable">cs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#loc:59"><span class="id" title="variable">loc</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;| <a id="ra_effect" class="idref" href="#ra_effect"><span class="id" title="constructor">ra_effect</span></a> : <span class="id" title="keyword">∀</span> <a id="cs':60" class="idref" href="#cs':60"><span class="id" title="binder">cs'</span></a> <a id="arg:61" class="idref" href="#arg:61"><span class="id" title="binder">arg</span></a> <a id="loc:62" class="idref" href="#loc:62"><span class="id" title="binder">loc</span></a> <a id="new_sp:63" class="idref" href="#new_sp:63"><span class="id" title="binder">new_sp</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve"><span class="id" title="inductive">resolve</span></a> <a class="idref" href="EraVM.Resolution.html#arg:61"><span class="id" title="variable">arg</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">[[</span></a> <a class="idref" href="EraVM.Resolution.html#loc:62"><span class="id" title="variable">loc</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">;</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">SP</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation"><-</span></a> <a class="idref" href="EraVM.Resolution.html#new_sp:63"><span class="id" title="variable">new_sp</span></a> <a class="idref" href="EraVM.Resolution.html#f9fd17f50504ec964e85a617f4de02ef"><span class="id" title="notation">]]</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.CallStack.html#sp_map_spec"><span class="id" title="inductive">sp_map_spec</span></a> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Resolution.html#new_sp:63"><span class="id" title="variable">new_sp</span></a>) <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution.cs"><span class="id" title="variable">cs</span></a> <a class="idref" href="EraVM.Resolution.html#cs':60"><span class="id" title="variable">cs'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Resolution.html#resolve_apply:56"><span class="id" title="inductive">resolve_apply</span></a> <a class="idref" href="EraVM.Resolution.html#arg:61"><span class="id" title="variable">arg</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Resolution.html#cs':60"><span class="id" title="variable">cs'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Resolution.html#loc:62"><span class="id" title="variable">loc</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Resolution.html#AllResolution.Resolution"><span class="id" title="section">Resolution</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Resolution.html#AllResolution"><span class="id" title="section">AllResolution</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

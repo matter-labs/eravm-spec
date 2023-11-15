@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Bootloader</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Bootloader</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="library">memory.Depot</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="module">memory.Depot</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Bootloader" class="idref" href="#Bootloader"><span class="id" title="section">Bootloader</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <span class="id" title="module">spec</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z</span>.<br/>
+</div>
+
+<div class="doc"><h1 id="bootloader">Bootloader</h1>
+<p>Bootloader is a system contract in charge of block construction (<a
+href="https://github.com/matter-labs/system-contracts/blob/main/bootloader/bootloader.yul">sources</a>).</p>
+<p>Formally, bootloader is assigned an address <span
+class="inlinecode"><a class="idref" href="EraVM.Bootloader.html#BOOTLOADER_SYSTEM_CONTRACT_ADDRESS"><span
+class="id"
+title="definition">BOOTLOADER_SYSTEM_CONTRACT_ADDRESS</span></a></span>,
+but on execution start EraVM decommits its code directly by its <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="BOOTLOADER_SYSTEM_CONTRACT_ADDRESS" class="idref" href="#BOOTLOADER_SYSTEM_CONTRACT_ADDRESS"><span class="id" title="definition">BOOTLOADER_SYSTEM_CONTRACT_ADDRESS</span></a> : <a class="idref" href="EraVM.memory.Depot.html#contract_address"><span class="id" title="definition">contract_address</span></a> := <span class="id" title="definition">fromZ</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">(</span></a>2<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#14ef112b66e341f773bd1e9d05816f43"><span class="id" title="notation">^</span></a>15<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 1).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Using the bootloader <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span>, EraVM
+queries the bootloader code from decommitter and starts executing
+it.</p>
+<p>The heap page of the bootloader is different from other pages: it
+acts as an interface between server and EraVM. Server is able to modify
+the contents of this page at will. Server gradually fills it with
+transaction data, formatted according to an implementation-defined
+convention.</p>
+<p>The bootloader then acts roughly as the following code (not an actual
+implementation):</p>
+<pre class="solidity"><code>contract Bootloader {
+    function executeBlock(
+        address operatorAddress,
+      Transaction[2] memory transactions
+    ) {
+     for(uint i = 0; i &lt; transactions.length; i++) {
+        validateTransaction(transactions[i]);
+        chargeFee(operatorAddress, transactions[i]);
+        executeTransaction(transactions[i]);
+     }
+  }
+
+    function validateTransaction(Transaction memory tx) {
+    // validation logic
+    }
+  function chargeFee(address operatorAddress, Transaction memory tx) {
+    // charge fee
+    }
+  function executeTransaction(Transaction memory tx) {
+    // execution logic
+  }
+}</code></pre>
+<p>The bootloader is therefore responsible for:</p>
+<ul>
+<li>validating transactions;</li>
+<li>executing transactions to form a new block;</li>
+<li>setting some of the transaction- or block-wide transaction
+parameters (e.g. blockhash, tx.origin).</li>
+</ul>
+<p>Server makes a snapshot of EraVM state after completing every
+transaction. When the bootloader encounters a malformed transaction, it
+fails, and the server restarts EraVM from the most recent snapshot,
+skipping this transaction. If a transaction is well-formed, EraVM may
+still panic while handling it outside the bootloader code. This is a
+normal situation and is handled by EraVM in a regular way, through
+panics. See e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span>.</p>
+<p>The exact code of the bootloader is a part of a protocol; its <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span> is included
+in the block header.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Bootloader.html#Bootloader"><span class="id" title="section">Bootloader</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

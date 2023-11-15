@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Steps</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Steps</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.Flags.html#"><span class="id" title="library">Flags</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="library">isa.CoreSet</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.KernelMode.html#"><span class="id" title="library">KernelMode</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#"><span class="id" title="library">State</span></a>.<br/>
+<span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.Flags.html#"><span class="id" title="module">Flags</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.KernelMode.html#"><span class="id" title="module">KernelMode</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="module">RecordSetNotations</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>A type of a small step relation, in style of structural operational
+semantics.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="smallstep" class="idref" href="#smallstep"><span class="id" title="definition">smallstep</span></a> := <a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> .<br/>
+<span class="id" title="keyword">Definition</span> <a id="tsmallstep" class="idref" href="#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> := <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="flags_tsmallstep" class="idref" href="#flags_tsmallstep"><span class="id" title="definition">flags_tsmallstep</span></a> := <a class="idref" href="EraVM.Flags.html#flags_state"><span class="id" title="record">flags_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Flags.html#flags_state"><span class="id" title="record">flags_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="callstack_smallstep" class="idref" href="#callstack_smallstep"><span class="id" title="definition">callstack_smallstep</span></a> := <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Relations <span
+class="inlinecode"><a class="idref" href="EraVM.Steps.html#step_transient_only"><span
+class="id" title="inductive">step_transient_only</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.Steps.html#step_transient"><span
+class="id" title="inductive">step_transient</span></a></span> define the
+type of small steps only affecting <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_transient"><span
+class="id" title="projection">gs_transient</span></a></span> part.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_transient_only" class="idref" href="#step_transient_only"><span class="id" title="inductive">step_transient_only</span></a> (<a id="xs1:1" class="idref" href="#xs1:1"><span class="id" title="binder">xs1</span></a> <a id="xs2:2" class="idref" href="#xs2:2"><span class="id" title="binder">xs2</span></a>:<a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a>) : <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+| <a id="stransient_oapply" class="idref" href="#stransient_oapply"><span class="id" title="constructor">stransient_oapply</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="gs:5" class="idref" href="#gs:5"><span class="id" title="binder">gs</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient_only:3"><span class="id" title="inductive">step_transient_only</span></a> <a class="idref" href="EraVM.Steps.html#xs1:1"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:2"><span class="id" title="variable">xs2</span></a> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a>       := <a class="idref" href="EraVM.Steps.html#xs1:1"><span class="id" title="variable">xs1</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.Steps.html#gs:5"><span class="id" title="variable">gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a>       := <a class="idref" href="EraVM.Steps.html#xs2:2"><span class="id" title="variable">xs2</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.Steps.html#gs:5"><span class="id" title="variable">gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_transient" class="idref" href="#step_transient"><span class="id" title="inductive">step_transient</span></a> (<a id="S:6" class="idref" href="#S:6"><span class="id" title="binder">S</span></a>: <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>) : <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+| <a id="stransient_apply" class="idref" href="#stransient_apply"><span class="id" title="constructor">stransient_apply</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="xs1:9" class="idref" href="#xs1:9"><span class="id" title="binder">xs1</span></a> <a id="xs2:10" class="idref" href="#xs2:10"><span class="id" title="binder">xs2</span></a> <a id="s1:11" class="idref" href="#s1:11"><span class="id" title="binder">s1</span></a> <a id="s2:12" class="idref" href="#s2:12"><span class="id" title="binder">s2</span></a> ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#S:6"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#xs1:9"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:10"><span class="id" title="variable">xs2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient_only"><span class="id" title="inductive">step_transient_only</span></a> <a class="idref" href="EraVM.Steps.html#xs1:9"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:10"><span class="id" title="variable">xs2</span></a> <a class="idref" href="EraVM.Steps.html#s1:11"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.Steps.html#s2:12"><span class="id" title="variable">s2</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient:7"><span class="id" title="inductive">step_transient</span></a> <a class="idref" href="EraVM.Steps.html#S:6"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#s1:11"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.Steps.html#s2:12"><span class="id" title="variable">s2</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Relations <span
+class="inlinecode"><a class="idref" href="EraVM.Steps.html#tstep_flags"><span
+class="id" title="definition">tstep_flags</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Steps.html#step_transient_callstack"><span
+class="id" title="inductive">step_transient_callstack</span></a></span>
+help defining smallstep relations where only flags or callstack are
+changing.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="tstep_flags" class="idref" href="#tstep_flags"><span class="id" title="definition">tstep_flags</span></a> {<a id="descr:13" class="idref" href="#descr:13"><span class="id" title="binder">descr</span></a>:<a class="idref" href="EraVM.isa.CoreSet.html#descr"><span class="id" title="record">CoreSet.descr</span></a>} (<a id="P:14" class="idref" href="#P:14"><span class="id" title="binder">P</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Steps.html#descr:13"><span class="id" title="variable">descr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#flags_tsmallstep"><span class="id" title="definition">flags_tsmallstep</span></a>): @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Steps.html#descr:13"><span class="id" title="variable">descr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="i:15" class="idref" href="#i:15"><span class="id" title="binder">i</span></a> <a id="xs:16" class="idref" href="#xs:16"><span class="id" title="binder">xs</span></a> <a id="xs':17" class="idref" href="#xs':17"><span class="id" title="binder">xs'</span></a> ⇒ <span class="id" title="keyword">∀</span> <a id="f2:18" class="idref" href="#f2:18"><span class="id" title="binder">f2</span></a>, <a class="idref" href="EraVM.Steps.html#P:14"><span class="id" title="variable">P</span></a> <a class="idref" href="EraVM.Steps.html#i:15"><span class="id" title="variable">i</span></a> (<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a> <a class="idref" href="EraVM.Steps.html#xs:16"><span class="id" title="variable">xs</span></a>) <a class="idref" href="EraVM.Steps.html#f2:18"><span class="id" title="variable">f2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#xs':17"><span class="id" title="variable">xs'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Steps.html#xs:16"><span class="id" title="variable">xs</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a> <span class="id" title="notation">:=</span> <a class="idref" href="EraVM.Steps.html#f2:18"><span class="id" title="variable">f2</span></a> <span class="id" title="notation">|></span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Relations <span
+class="inlinecode"><a class="idref" href="EraVM.Steps.html#step_transient_callstack"><span
+class="id" title="inductive">step_transient_callstack</span></a></span>
+and help defining smallstep relations where only callstack is
+changing.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_transient_callstack" class="idref" href="#step_transient_callstack"><span class="id" title="inductive">step_transient_callstack</span></a> (<a id="S:19" class="idref" href="#S:19"><span class="id" title="binder">S</span></a>: <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>) : <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="scs_apply" class="idref" href="#scs_apply"><span class="id" title="constructor">scs_apply</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="flags:22" class="idref" href="#flags:22"><span class="id" title="binder">flags</span></a> <a id="regs:23" class="idref" href="#regs:23"><span class="id" title="binder">regs</span></a> <a id="pages:24" class="idref" href="#pages:24"><span class="id" title="binder">pages</span></a> <a id="ctx:25" class="idref" href="#ctx:25"><span class="id" title="binder">ctx</span></a> <a id="cs1:26" class="idref" href="#cs1:26"><span class="id" title="binder">cs1</span></a> <a id="cs2:27" class="idref" href="#cs2:27"><span class="id" title="binder">cs2</span></a> <a id="xs1:28" class="idref" href="#xs1:28"><span class="id" title="binder">xs1</span></a> <a id="xs2:29" class="idref" href="#xs2:29"><span class="id" title="binder">xs2</span></a> <a id="status:30" class="idref" href="#status:30"><span class="id" title="binder">status</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#S:19"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#cs1:26"><span class="id" title="variable">cs1</span></a> <a class="idref" href="EraVM.Steps.html#cs2:27"><span class="id" title="variable">cs2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#xs1:28"><span class="id" title="variable">xs1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">{|</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>    := <a class="idref" href="EraVM.Steps.html#cs1:26"><span class="id" title="variable">cs1</span></a>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a>        := <a class="idref" href="EraVM.Steps.html#flags:22"><span class="id" title="variable">flags</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_regs"><span class="id" title="projection">gs_regs</span></a>         := <a class="idref" href="EraVM.Steps.html#regs:23"><span class="id" title="variable">regs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.Steps.html#pages:24"><span class="id" title="variable">pages</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_context_u128"><span class="id" title="projection">gs_context_u128</span></a> := <a class="idref" href="EraVM.Steps.html#ctx:25"><span class="id" title="variable">ctx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.Steps.html#status:30"><span class="id" title="variable">status</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">|}</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#xs2:29"><span class="id" title="variable">xs2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">{|</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>    := <a class="idref" href="EraVM.Steps.html#cs2:27"><span class="id" title="variable">cs2</span></a>;<br/>
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a>        := <a class="idref" href="EraVM.Steps.html#flags:22"><span class="id" title="variable">flags</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_regs"><span class="id" title="projection">gs_regs</span></a>         := <a class="idref" href="EraVM.Steps.html#regs:23"><span class="id" title="variable">regs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.Steps.html#pages:24"><span class="id" title="variable">pages</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_context_u128"><span class="id" title="projection">gs_context_u128</span></a> := <a class="idref" href="EraVM.Steps.html#ctx:25"><span class="id" title="variable">ctx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.Steps.html#status:30"><span class="id" title="variable">status</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">|}</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient_callstack:20"><span class="id" title="inductive">step_transient_callstack</span></a> <a class="idref" href="EraVM.Steps.html#S:19"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#xs1:28"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:29"><span class="id" title="variable">xs2</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_callstack" class="idref" href="#step_callstack"><span class="id" title="inductive">step_callstack</span></a> (<a id="S:31" class="idref" href="#S:31"><span class="id" title="binder">S</span></a>: <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>) : <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+| <a id="sc_apply" class="idref" href="#sc_apply"><span class="id" title="constructor">sc_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="xs1:34" class="idref" href="#xs1:34"><span class="id" title="binder">xs1</span></a> <a id="xs2:35" class="idref" href="#xs2:35"><span class="id" title="binder">xs2</span></a> <a id="s1:36" class="idref" href="#s1:36"><span class="id" title="binder">s1</span></a> <a id="s2:37" class="idref" href="#s2:37"><span class="id" title="binder">s2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient_callstack"><span class="id" title="inductive">step_transient_callstack</span></a> <a class="idref" href="EraVM.Steps.html#S:31"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#xs1:34"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:35"><span class="id" title="variable">xs2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_transient_only"><span class="id" title="inductive">step_transient_only</span></a> <a class="idref" href="EraVM.Steps.html#xs1:34"><span class="id" title="variable">xs1</span></a> <a class="idref" href="EraVM.Steps.html#xs2:35"><span class="id" title="variable">xs2</span></a> <a class="idref" href="EraVM.Steps.html#s1:36"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.Steps.html#s2:37"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Steps.html#step_callstack:32"><span class="id" title="inductive">step_callstack</span></a> <a class="idref" href="EraVM.Steps.html#S:31"><span class="id" title="variable">S</span></a> <a class="idref" href="EraVM.Steps.html#s1:36"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.Steps.html#s2:37"><span class="id" title="variable">s2</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Coder</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Coder</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Encoding" class="idref" href="#Encoding"><span class="id" title="section">Encoding</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="encoding">Encoding</h1>
+<p>Application Binary Interfaces (<span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#ABI"><span
+class="id" title="definition">ABI</span></a></span>) require describing
+serialization and deserialization.</p>
+<ul>
+<li>Serialization encodes an instance of type <span
+class="inlinecode"><span class="id" title="var">T</span></span> into a
+word of type <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span>.</li>
+<li>Deserialization tries to decode an instance of type <span
+class="inlinecode"><span class="id" title="var">T</span></span> from a
+word of type <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="U:1" class="idref" href="#U:1"><span class="id" title="binder">U</span></a> <a id="T:2" class="idref" href="#T:2"><span class="id" title="binder">T</span></a>:<span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The type <span
+class="inlinecode"><a class="idref" href="EraVM.Coder.html#decoder"><span
+class="id" title="definition">decoder</span></a></span> defines an
+embedding of a subset of words of type <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> to a type <span
+class="inlinecode"><span class="id" title="var">T</span></span>.
+Decoding may fail if the input word is malformed.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="decoder" class="idref" href="#decoder"><span class="id" title="definition">decoder</span></a> := <a class="idref" href="EraVM.Coder.html#Encoding.U"><span class="id" title="variable">U</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Coder.html#Encoding.T"><span class="id" title="variable">T</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Definition <span
+class="inlinecode"><a class="idref" href="EraVM.Coder.html#encoder"><span
+class="id" title="definition">encoder</span></a></span> defines an
+embedding of type <span class="inlinecode"><span class="id"
+title="var">T</span></span> to a set of possible <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> values.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="encoder" class="idref" href="#encoder"><span class="id" title="definition">encoder</span></a> := <a class="idref" href="EraVM.Coder.html#Encoding.T"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Coder.html#Encoding.U"><span class="id" title="variable">U</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="revertible" class="idref" href="#revertible"><span class="id" title="definition">revertible</span></a> (<a id="decode:3" class="idref" href="#decode:3"><span class="id" title="binder">decode</span></a>:<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a>) (<a id="encode:4" class="idref" href="#encode:4"><span class="id" title="binder">encode</span></a>:<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a>):= <span class="id" title="keyword">∀</span> <a id="obj:5" class="idref" href="#obj:5"><span class="id" title="binder">obj</span></a> <a id="encoded:6" class="idref" href="#encoded:6"><span class="id" title="binder">encoded</span></a>, <a class="idref" href="EraVM.Coder.html#encode:4"><span class="id" title="variable">encode</span></a> <a class="idref" href="EraVM.Coder.html#obj:5"><span class="id" title="variable">obj</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="EraVM.Coder.html#encoded:6"><span class="id" title="variable">encoded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Coder.html#decode:3"><span class="id" title="variable">decode</span></a> <a class="idref" href="EraVM.Coder.html#encoded:6"><span class="id" title="variable">encoded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="EraVM.Coder.html#obj:5"><span class="id" title="variable">obj</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The record <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#coder"><span
+class="id" title="definition">coder</span></a></span> connects a
+specific decoder with the matching encoder, and proofs of their
+properties.</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Coder.html#revertible"><span
+class="id" title="definition">revertible</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.NearCallABI.html#decode"><span
+class="id" title="definition">decode</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.NearCallABI.html#encode"><span
+class="id" title="definition">encode</span></a></span> formalizes the
+following: if we encode an element <span
+class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.t"><span
+class="id" title="definition">t</span></a></span> of type</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="coder" class="idref" href="#coder"><span class="id" title="record">coder</span></a>  := <span class="id" title="var">mk_coder</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="decode" class="idref" href="#decode"><span class="id" title="projection">decode</span></a>: <a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="encode" class="idref" href="#encode"><span class="id" title="projection">encode</span></a>:  <a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc"><p><span
+class="inlinecode"><a class="idref" href="EraVM.ABI.NearCallABI.html#decode"><span
+class="id" title="definition">decode</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.NearCallABI.html#encode"><span
+class="id" title="definition">encode</span></a></span> should be mutual
+inverses in the following sense:</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">_</span>: <a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.Coder.html#decode:8"><span class="id" title="method">decode</span></a> <a class="idref" href="EraVM.Coder.html#encode:9"><span class="id" title="method">encode</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Coder.html#Encoding"><span class="id" title="section">Encoding</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Properties" class="idref" href="#Properties"><span class="id" title="section">Properties</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a> <a id="B:11" class="idref" href="#B:11"><span class="id" title="binder">B</span></a> <a id="C:12" class="idref" href="#C:12"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="Properties.PropertyComposition" class="idref" href="#Properties.PropertyComposition"><span class="id" title="section">PropertyComposition</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="encode1:13" class="idref" href="#encode1:13"><span class="id" title="binder">encode1</span></a>: @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a> <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a>) (<a id="decode1:14" class="idref" href="#decode1:14"><span class="id" title="binder">decode1</span></a>:@<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a> <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a>) (<a id="encode2:15" class="idref" href="#encode2:15"><span class="id" title="binder">encode2</span></a>: @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a>) (<a id="decode2:16" class="idref" href="#decode2:16"><span class="id" title="binder">decode2</span></a>: @<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="revertible1_compose" class="idref" href="#revertible1_compose"><span class="id" title="lemma">revertible1_compose</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.decode1"><span class="id" title="variable">decode1</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.encode1"><span class="id" title="variable">encode1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.decode2"><span class="id" title="variable">decode2</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.encode2"><span class="id" title="variable">encode2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="encode3:17" class="idref" href="#encode3:17"><span class="id" title="binder">encode3</span></a> : <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssrfun.html#pcomp"><span class="id" title="definition">pcomp</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.encode2"><span class="id" title="variable">encode2</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.encode1"><span class="id" title="variable">encode1</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="decode3:18" class="idref" href="#decode3:18"><span class="id" title="binder">decode3</span></a> : <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssrfun.html#pcomp"><span class="id" title="definition">pcomp</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.decode1"><span class="id" title="variable">decode1</span></a> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition.decode2"><span class="id" title="variable">decode2</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.Coder.html#decode3:18"><span class="id" title="variable">decode3</span></a> <a class="idref" href="EraVM.Coder.html#encode3:17"><span class="id" title="variable">encode3</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Coder.html#Properties.PropertyComposition"><span class="id" title="section">PropertyComposition</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="coder_compose" class="idref" href="#coder_compose"><span class="id" title="definition">coder_compose</span></a> (<a id="c2:19" class="idref" href="#c2:19"><span class="id" title="binder">c2</span></a>: @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">coder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a>) (<a id="c1:20" class="idref" href="#c1:20"><span class="id" title="binder">c1</span></a>: @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">coder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.B"><span class="id" title="variable">B</span></a> <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a>) : @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">coder</span></a> <a class="idref" href="EraVM.Coder.html#Properties.C"><span class="id" title="variable">C</span></a> <a class="idref" href="EraVM.Coder.html#Properties.A"><span class="id" title="variable">A</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Coder.html#Properties"><span class="id" title="section">Properties</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

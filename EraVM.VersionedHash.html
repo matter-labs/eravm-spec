@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.VersionedHash</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.VersionedHash</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="library">Coder</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="library">PrimitiveValue</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="VersionedHash" class="idref" href="#VersionedHash"><span class="id" title="section">VersionedHash</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <span class="id" title="module">ssrbool</span> <span class="id" title="module">eqtype</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span> <span class="id" title="module">ssrbool</span> <span class="id" title="module">ssreflect.eqtype</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">zmodp</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="word:1" class="idref" href="#word:1"><span class="id" title="binder">word</span></a>: <span class="id" title="keyword">Type</span>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="ins_type:2" class="idref" href="#ins_type:2"><span class="id" title="binder">ins_type</span></a>: <span class="id" title="keyword">Type</span>} (<a id="invalid_ins:3" class="idref" href="#invalid_ins:3"><span class="id" title="binder">invalid_ins</span></a>: <a class="idref" href="EraVM.VersionedHash.html#ins_type:2"><span class="id" title="variable">ins_type</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="versioned-hash">Versioned hash</h1>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span> is a hash
+augmented with additional information. It is used as a key to identify
+the contract code for decommitter.</p>
+<p>Additional information includes:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#VERSION_BYTE"><span
+class="id" title="definition">VERSION_BYTE</span></a></span> (currently
+1)</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#marker"><span
+class="id" title="inductive">marker</span></a></span> (is the contract
+being constructed or already constructed?)</li>
+</ul>
+<p>The hash itself is described by <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#partial_hash"><span
+class="id" title="projection">partial_hash</span></a></span>; it is
+computed as SHA256 hash modulo <span class="math inline">2^{28 \times
+8}</span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="VERSION_BYTE" class="idref" href="#VERSION_BYTE"><span class="id" title="definition">VERSION_BYTE</span></a>: <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a> := <span class="id" title="definition">fromZ</span> 1%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="marker" class="idref" href="#marker"><span class="id" title="inductive">marker</span></a> := <a id="CODE_AT_REST" class="idref" href="#CODE_AT_REST"><span class="id" title="constructor">CODE_AT_REST</span></a> | <a id="YET_CONSTRUCTED" class="idref" href="#YET_CONSTRUCTED"><span class="id" title="constructor">YET_CONSTRUCTED</span></a> | <a id="INVALID" class="idref" href="#INVALID"><span class="id" title="constructor">INVALID</span></a>.<br/>
+
+<br/>
+</div>
+<details><summary>decidable equality </summary><div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Scheme</span> <span class="id" title="var">Equality</span> <span class="id" title="keyword">for</span> <a class="idref" href="EraVM.VersionedHash.html#marker"><span class="id" title="inductive">marker</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="marker_eqP" class="idref" href="#marker_eqP"><span class="id" title="lemma">marker_eqP</span></a> : <span class="id" title="definition">Equality.axiom</span> <a class="idref" href="EraVM.VersionedHash.html#marker_beq"><span class="id" title="definition">marker_beq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">move</span> ⇒ [] []; <span class="id" title="tactic">constructor</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="marker_eqMixin" class="idref" href="#marker_eqMixin"><span class="id" title="definition">marker_eqMixin</span></a> := <span class="id" title="abbreviation">EqMixin</span> <a class="idref" href="EraVM.VersionedHash.html#marker_eqP"><span class="id" title="lemma">marker_eqP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="marker_eqType" class="idref" href="#marker_eqType"><span class="id" title="definition">marker_eqType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">EqType</span> <a class="idref" href="EraVM.VersionedHash.html#marker"><span class="id" title="inductive">marker</span></a> <a class="idref" href="EraVM.VersionedHash.html#marker_eqMixin"><span class="id" title="definition">marker_eqMixin</span></a>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="marker_valid" class="idref" href="#marker_valid"><span class="id" title="definition">marker_valid</span></a> (<a id="m:6" class="idref" href="#m:6"><span class="id" title="binder">m</span></a>: <a class="idref" href="EraVM.VersionedHash.html#marker"><span class="id" title="inductive">marker</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.VersionedHash.html#m:6"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.VersionedHash.html#INVALID"><span class="id" title="constructor">INVALID</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="versioned_hash" class="idref" href="#versioned_hash"><span class="id" title="record">versioned_hash</span></a> := <span class="id" title="var">mk_vhash</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="code_length_in_words" class="idref" href="#code_length_in_words"><span class="id" title="projection">code_length_in_words</span></a>: <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="extra_marker" class="idref" href="#extra_marker"><span class="id" title="projection">extra_marker</span></a>: <a class="idref" href="EraVM.VersionedHash.html#marker"><span class="id" title="inductive">marker</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="partial_hash" class="idref" href="#partial_hash"><span class="id" title="projection">partial_hash</span></a>: <span class="id" title="definition">BITS</span> (28<span class="id" title="notation">×</span><a class="idref" href="EraVM.Types.html#bits_in_byte"><span class="id" title="definition">bits_in_byte</span></a>)%<span class="id" title="var">nat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="hash_coder" class="idref" href="#hash_coder"><span class="id" title="axiom">hash_coder</span></a>: @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">Coder.coder</span></a> <a class="idref" href="EraVM.VersionedHash.html#VersionedHash.word"><span class="id" title="variable">word</span></a> <a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span class="id" title="record">versioned_hash</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>EraVM accepts <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#DEFAULT_AA_VHASH"><span
+class="id" title="axiom">DEFAULT_AA_VHASH</span></a></span> as a
+parameter. See also <span class="inlinecode"><span class="id"
+title="keyword">Parameters</span></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="DEFAULT_AA_VHASH" class="idref" href="#DEFAULT_AA_VHASH"><span class="id" title="axiom">DEFAULT_AA_VHASH</span></a>: <a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span class="id" title="record">versioned_hash</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+
+<br/>
+</div>
+<details><summary>equality on versioned hashes </summary><div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="eqn" class="idref" href="#eqn"><span class="id" title="definition">eqn</span></a> (<a id="x:14" class="idref" href="#x:14"><span class="id" title="binder">x</span></a> <a id="y:15" class="idref" href="#y:15"><span class="id" title="binder">y</span></a>:<a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span class="id" title="record">versioned_hash</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.VersionedHash.html#x:14"><span class="id" title="variable">x</span></a>,<a class="idref" href="EraVM.VersionedHash.html#y:15"><span class="id" title="variable">y</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.VersionedHash.html#mk_vhash"><span class="id" title="constructor">mk_vhash</span></a> <span class="id" title="var">l1</span> <span class="id" title="var">em1</span> <span class="id" title="var">ph1</span> , <a class="idref" href="EraVM.VersionedHash.html#mk_vhash"><span class="id" title="constructor">mk_vhash</span></a> <span class="id" title="var">l2</span> <span class="id" title="var">em2</span> <span class="id" title="var">ph2</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">l1</span> <span class="id" title="notation">==</span> <span class="id" title="var">l2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">em1</span> <span class="id" title="notation">==</span> <span class="id" title="var">em2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><span class="id" title="var">ph1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ph2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="eqnP" class="idref" href="#eqnP"><span class="id" title="lemma">eqnP</span></a> : <span class="id" title="definition">Equality.axiom</span> <a class="idref" href="EraVM.VersionedHash.html#eqn"><span class="id" title="definition">eqn</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> ⇒ [<span class="id" title="var">l1</span> <span class="id" title="var">em1</span> <span class="id" title="var">ph1</span>] [<span class="id" title="var">l2</span> <span class="id" title="var">em2</span> <span class="id" title="var">ph2</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">l1</span> <span class="id" title="notation">==</span> <span class="id" title="var">l2</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">em1</span> <span class="id" title="notation">==</span> <span class="id" title="var">em2</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">ph1</span> <span class="id" title="notation">==</span> <span class="id" title="var">ph2</span>) <span class="id" title="var">eqn</span>: <span class="id" title="var">H3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H1</span>) ⇒ ->; <span class="id" title="tactic">try</span> <span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H2</span>) ⇒ ->; <span class="id" title="tactic">try</span> <span class="id" title="tactic">move</span>: (<span class="id" title="lemma">eqP</span> <span class="id" title="var">H3</span>) ⇒ ->; <span class="id" title="tactic">constructor</span> =>//.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">injection</span>. <span class="id" title="tactic">move</span> ⇒ ?; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">eq_refl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="vh_eqMixin" class="idref" href="#vh_eqMixin"><span class="id" title="definition">vh_eqMixin</span></a> := <span class="id" title="abbreviation">EqMixin</span> <a class="idref" href="EraVM.VersionedHash.html#eqnP"><span class="id" title="lemma">eqnP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Canonical</span> <a id="vh_eqType" class="idref" href="#vh_eqType"><span class="id" title="definition">vh_eqType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">EqType</span> <span class="id" title="var">_</span> <a class="idref" href="EraVM.VersionedHash.html#vh_eqMixin"><span class="id" title="definition">vh_eqMixin</span></a>.<br/>
+
+<br/>
+</div>
+</details><div class="code">
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.VersionedHash.html#VersionedHash"><span class="id" title="section">VersionedHash</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.Panic</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.Panic</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a> <a class="idref" href="EraVM.VMPanic.html#"><span class="id" title="library">VMPanic</span></a> <a class="idref" href="EraVM.sem.StepPanic.html#"><span class="id" title="library">StepPanic</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <a class="idref" href="EraVM.VMPanic.html#"><span class="id" title="module">VMPanic</span></a> <a class="idref" href="EraVM.sem.StepPanic.html#"><span class="id" title="module">StepPanic</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_oppanic" class="idref" href="#step_oppanic"><span class="id" title="inductive">step_oppanic</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+</div>
+
+<div class="doc"><h1
+id="panic-irrecoverable-error-not-normal-returnnot-return-from-recoverable-error">Panic
+(irrecoverable error, not normal return/not return from recoverable
+error)</h1>
+<p>Return from a function/contract signaling an error; execute exception
+handler, burn all ergs in current frame, set OF flag, return nothing,
+perform <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#Panics"><span
+class="id" title="section">Panics</span></a></span>.</p>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>ret.panic</code> aliased as <code>panic</code></p>
+<p>An abnormal return from a <strong>near</strong> call. Will drop
+current callframe, burn all ergs and pass control to the current
+exception handler, setting OF flag.</p>
+<p>Additionally, restore storage and event queues to the state before
+external call.</p>
+<h2 id="semantic">Semantic</h2>
+<p>Trigger panic with a reason <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span
+class="id" title="constructor">TriggeredExplicitly</span></a></span>.
+See <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#Panics"><span
+class="id" title="section">Panics</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+| <a id="step_trigger_panic" class="idref" href="#step_trigger_panic"><span class="id" title="constructor">step_trigger_panic</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> <a id="s':4" class="idref" href="#s':4"><span class="id" title="binder">s'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Panic.html#step_oppanic:1"><span class="id" title="inductive">step_oppanic</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpPanic"><span class="id" title="constructor">OpPanic</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li>Flags are cleared, then OF is set.</li>
+<li>Context register is zeroed (only returns from far calls).</li>
+<li>Registers are cleared (only returns from far calls).</li>
+<li>Execution stack:
+<ul>
+<li>Current frame is dropped.</li>
+<li>Caller frame:
+<ul>
+<li>if a label is explicitly provided, and current frame is internal
+(near call), then caller’s PC is overwritten with the label. Returns
+from external calls ignore label, even if it is explicitly
+provided.</li>
+<li>Unspent ergs are given back to caller (but memory growth is paid
+first).</li>
+</ul></li>
+</ul></li>
+<li>Storage changes are reverted.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Abnormal returns from near/far calls when an irrecoverable error has
+happened. Use <code>revert</code> for recoverable errors.</li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<ul>
+<li><code>ret</code> returns to the caller instead of executing an
+exception handler, and does not burn ergs.</li>
+<li><code>revert</code> acts similar to <code>panic</code> but does not
+burn ergs, returns data to the caller, and does not set an overflow
+flag.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

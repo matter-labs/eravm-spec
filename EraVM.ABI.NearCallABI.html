@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.ABI.NearCallABI</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.ABI.NearCallABI</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="library">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="library">Ergs</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Types.html#"><span class="id" title="module">Types</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="NearCallABI" class="idref" href="#NearCallABI"><span class="id" title="section">NearCallABI</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Near call may only accept one parameter: the amount of ergs allocated
+to it.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Record</span> <a id="params" class="idref" href="#params"><span class="id" title="record">params</span></a>: <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_params</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ergs_passed" class="idref" href="#ergs_passed"><span class="id" title="projection">ergs_passed</span></a>: <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a>; <span class="comment">(*&nbsp;in&nbsp;low&nbsp;32&nbsp;bits&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode" class="idref" href="#encode"><span class="id" title="definition">encode</span></a> : <a class="idref" href="EraVM.ABI.NearCallABI.html#params"><span class="id" title="record">params</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a> := <span class="id" title="keyword">fun</span> <a id="p:3" class="idref" href="#p:3"><span class="id" title="binder">p</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#p:3"><span class="id" title="variable">p</span></a>.(<a class="idref" href="EraVM.ABI.NearCallABI.html#ergs_passed"><span class="id" title="projection">ergs_passed</span></a>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="decode" class="idref" href="#decode"><span class="id" title="definition">decode</span></a> : <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#params"><span class="id" title="record">params</span></a> := <span class="id" title="keyword">fun</span> <a id="u:4" class="idref" href="#u:4"><span class="id" title="binder">u</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.ABI.NearCallABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#u:4"><span class="id" title="variable">u</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_word" class="idref" href="#encode_word"><span class="id" title="definition">encode_word</span></a> (<a id="p:5" class="idref" href="#p:5"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.ABI.NearCallABI.html#params"><span class="id" title="record">params</span></a>) (<a id="high224:6" class="idref" href="#high224:6"><span class="id" title="binder">high224</span></a>: <a class="idref" href="EraVM.Types.html#u224"><span class="id" title="definition">u224</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option_map"><span class="id" title="definition">option_map</span></a> (<span class="id" title="keyword">fun</span> <a id="encoded:7" class="idref" href="#encoded:7"><span class="id" title="binder">encoded</span></a> ⇒ <a class="idref" href="EraVM.ABI.NearCallABI.html#high224:6"><span class="id" title="variable">high224</span></a> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.ABI.NearCallABI.html#encoded:7"><span class="id" title="variable">encoded</span></a>) (<a class="idref" href="EraVM.ABI.NearCallABI.html#encode"><span class="id" title="definition">encode</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#p:5"><span class="id" title="variable">p</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="decode_word" class="idref" href="#decode_word"><span class="id" title="definition">decode_word</span></a> (<a id="w:8" class="idref" href="#w:8"><span class="id" title="binder">w</span></a>:<a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="EraVM.Types.html#u224"><span class="id" title="definition">u224</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#params"><span class="id" title="record">params</span></a>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option_map"><span class="id" title="definition">option_map</span></a> (<span class="id" title="keyword">fun</span> <a id="decoded:9" class="idref" href="#decoded:9"><span class="id" title="binder">decoded</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>@<span class="id" title="definition">high</span> 224 32 <a class="idref" href="EraVM.ABI.NearCallABI.html#w:8"><span class="id" title="variable">w</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#decoded:9"><span class="id" title="variable">decoded</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) (<a class="idref" href="EraVM.ABI.NearCallABI.html#decode"><span class="id" title="definition">decode</span></a> (<span class="id" title="definition">low</span> 32 <a class="idref" href="EraVM.ABI.NearCallABI.html#w:8"><span class="id" title="variable">w</span></a>)).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="coder" class="idref" href="#coder"><span class="id" title="definition">coder</span></a> : @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">coder</span></a> <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#params"><span class="id" title="record">params</span></a>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.NearCallABI.html#NearCallABI"><span class="id" title="section">NearCallABI</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

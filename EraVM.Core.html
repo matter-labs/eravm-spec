@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Core</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Core</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="EraVM.Types.html#"><span class="id" title="module">Types</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Parameters" class="idref" href="#Parameters"><span class="id" title="section">Parameters</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="eravm-architecture-overview">EraVM architecture overview</h1>
+<p>EraVM is a 256-bit register-based language machine with two stacks
+and dedicated memory for code, data, stack and constants.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="word_bits" class="idref" href="#word_bits"><span class="id" title="definition">word_bits</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := 256.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="word" class="idref" href="#word"><span class="id" title="definition">word</span></a>: <span class="id" title="keyword">Type</span> := <span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.Core.html#word_bits"><span class="id" title="definition">word_bits</span></a>.<br/>
+</div>
+
+<div class="doc"><p><span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word0"><span
+class="id" title="definition">word0</span></a></span> is a word with a
+zero value.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="word0" class="idref" href="#word0"><span class="id" title="definition">word0</span></a>: <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> := <span class="id" title="definition">fromZ</span> 0%<span class="id" title="var">Z</span>.<br/>
+</div>
+<details><summary>Helpers </summary><div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="bytes_in_word" class="idref" href="#bytes_in_word"><span class="id" title="definition">bytes_in_word</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="EraVM.Core.html#word_bits"><span class="id" title="definition">word_bits</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Arith.PeanoNat.html#2e0d8202c5a48097752d760d3a1db6a7"><span class="id" title="notation">/</span></a><a class="idref" href="EraVM.Types.html#bits_in_byte"><span class="id" title="definition">bits_in_byte</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="z_bytes_in_word" class="idref" href="#z_bytes_in_word"><span class="id" title="definition">z_bytes_in_word</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.of_nat"><span class="id" title="definition">Z.of_nat</span></a> <a class="idref" href="EraVM.Core.html#bytes_in_word"><span class="id" title="definition">bytes_in_word</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="word_to_bytes" class="idref" href="#word_to_bytes"><span class="id" title="definition">word_to_bytes</span></a> (<a id="w:1" class="idref" href="#w:1"><span class="id" title="binder">w</span></a>:<a class="idref" href="EraVM.Types.html#u256"><span class="id" title="definition">u256</span></a>) : <span class="id" title="record">tuple.tuple_of</span> 32 <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a> := @<span class="id" title="definition">bitsToBytes</span> 32 <a class="idref" href="EraVM.Core.html#w:1"><span class="id" title="variable">w</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="bytes_to_word" class="idref" href="#bytes_to_word"><span class="id" title="definition">bytes_to_word</span></a> (<a id="bs:2" class="idref" href="#bs:2"><span class="id" title="binder">bs</span></a>: <span class="id" title="record">tuple.tuple_of</span> 32 <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>) : <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> := @<span class="id" title="definition">bytesToBits</span> <span class="id" title="var">_</span> <a class="idref" href="EraVM.Core.html#bs:2"><span class="id" title="variable">bs</span></a>.<br/>
+
+<br/>
+</div>
+</details><div class="code">
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Core.html#Parameters"><span class="id" title="section">Parameters</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="ArchOverview" class="idref" href="#ArchOverview"><span class="id" title="section">ArchOverview</span></a>.<br/>
+</div>
+
+<div class="doc"><p><img src="img/arch-overview.png" /></p>
+<ul>
+<li><strong>Memory</strong> provides access to transient memory pages.
+See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#Memory"><span
+class="id" title="section">Memory</span></a></span>.</li>
+<li><strong>Storage</strong> provides access to persistent storage with
+two shards, each shard maps <span class="math inline">2^{160}</span>
+contracts, to a key-value storage. See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.SemanticCommon.html#Depot"><span
+class="id" title="section">Depot</span></a></span>.</li>
+<li><strong>EventSink</strong> collects events and messages to L1. See
+<span
+class="inlinecode"><a class="idref" href="EraVM.Event.html#Events"><span
+class="id" title="section">Events</span></a></span>.</li>
+<li><strong>Precompile processor</strong> executes system
+contract-specific extensions to the EraVM instruction set, called
+precompiles, e.g. <code>keccak256</code>, <code>sha256</code>, and so
+on. See <span
+class="inlinecode"><a class="idref" href="EraVM.Precompiles.html#Precompiles"><span
+class="id" title="section">Precompiles</span></a></span>.</li>
+<li><strong>Decommitment processor</strong> stores and decommits the
+code of contracts. See <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>.</li>
+</ul>
+<h2 id="functions-and-contracts">Functions and contracts</h2>
+<p>In EraVM, contracts are the coarse-grained execution units. Contracts
+may have multiple <strong>functions</strong> in them; a contract may
+execute its functions by using <strong>near call</strong> instruction
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span>. A contract
+may also call other contracts by using <strong>far call</strong>
+instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>, or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>.</p>
+<p>A <strong>running instance</strong> of a function or a contract is a
+piece of VM runtime state associated with the current execution of a
+function or a contract, as described by <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack"><span
+class="id" title="inductive">callstack</span></a></span>.</p>
+<p>EraVM allows recursive execution of functions and contracts. For
+example, a contract <span class="math inline">A</span> calls a function
+<span class="math inline">f_1</span> which calls a function <span
+class="math inline">f_2</span> which calls a contract <span
+class="math inline">B</span>, which calls a function <span
+class="math inline">g_1</span>, which calls <span
+class="math inline">A</span> again …</p>
+<p><span class="math display">A \rightarrow f_1 \rightarrow f_2
+\rightarrow B \rightarrow g_1 \rightarrow A \rightarrow \dots</span></p>
+<p>During the execution of <span class="math inline">g_1</span>,
+<strong>running instances</strong> of <span
+class="math inline">A</span>, <span class="math inline">f_1</span>,
+<span class="math inline">f_2</span> keep existing, waiting for the
+control to return to them.</p>
+<p>Executing a contract allocates memory pages dedicated to it (see
+<span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#alloc_pages_extframe"><span
+class="id" title="inductive">alloc_pages_extframe</span></a></span>). In
+a running instance of a contract, this contract’s functions share these
+memory pages.</p>
+<p>Contracts have more contract-specific state associated to them than
+functions (compare <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ExternalCall"><span
+class="id" title="constructor">ExternalCall</span></a></span>). However,
+running instances of both functions and contracts have their own
+exception handlers, program counters, stack pointers and allocated ergs
+(see <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack_common"><span
+class="id" title="record">callstack_common</span></a></span>).</p>
+<h2 id="execution-state">Execution state</h2>
+<p>EraVM’s functionality is to sequentially execute instructions.</p>
+<p>The main components of EraVM’s execution state are:</p>
+<ul>
+<li>256-bit tagged general-purpose registers R1–R15 and a reserved
+constant register R0 holding 0. See <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#regs_state"><span
+class="id" title="record">regs_state</span></a></span>.</li>
+<li>Three flags: OverFlow/Less-Than, EQuals, Greater-Than. See <span
+class="inlinecode"><a class="idref" href="EraVM.Flags.html#flags_state"><span
+class="id" title="record">flags_state</span></a></span>.</li>
+<li>Data stack containing tagged words. It is located on a dedicated
+<span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>.</li>
+<li>Callstack, holding callframes, which contain such information as the
+program counter, data stack pointer, ergs for the current
+function/contract instance, current contract’s address, and so on. See
+<span class="inlinecode"><span class="id"
+title="library">CallStack</span></span>.</li>
+<li>Frames in callstack; can be internal (belong to a function, near
+called) frames or external frames (belong to a contract, far called,
+richer state).</li>
+<li>Read-only pages for constants and code, one per contract stack
+frame.</li>
+</ul>
+<h2 id="instructions">Instructions</h2>
+<p>The type <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> describes
+the supported instructions.</p>
+<p>All instructions are <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#predicated"><span
+class="id" title="record">predicated</span></a></span>: they contain an
+explicit condition related to the current flags state. If the condition
+is satisfied, they are executed, otherwise they are skipped (but their
+<span class="inlinecode"><span class="id"
+title="var">basic_cost</span></span> is still paid).</p>
+<p>Instructions accept data and return results in various formats:</p>
+<ul>
+<li>The formats of instruction operands are described in <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Addressing"><span
+class="id" title="section">Addressing</span></a></span>.</li>
+<li>The address resolution to locations in memory/registers is described
+in <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve"><span
+class="id" title="inductive">resolve</span></a></span></li>
+<li>Reading and writing to memory is described in <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryOps.html#MemoryOps"><span
+class="id" title="section">MemoryOps</span></a></span>.</li>
+</ul>
+<h2 id="modes">Modes</h2>
+<p>EraVM has two modes which can be independently turned on and off.</p>
+<ol type="1">
+<li>Kernel mode/User Mode</li>
+</ol>
+<p>First <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KERNEL_MODE_MAXADDR_LIMIT"><span
+class="id"
+title="definition">KERNEL_MODE_MAXADDR_LIMIT</span></a></span> contracts
+are marked as <strong>system contracts</strong>. EraVM executes them in
+kernel mode, allowing an access to a richer instruction set, containing
+instructions potentially harmful to the global state e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
+class="id"
+title="constructor">OpContextIncrementTxNumber</span></a></span>. See
+<span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span>.</p>
+<ol start="2" type="1">
+<li><p>Static mode/Non-static mode</p>
+<p>Intuitively, executing code in static mode aims at limiting its
+effects on the global state, similar to executing pure functions.
+Globally visible actions like emitting events or writing to storage are
+forbidden in static mode. See <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span>.</p></li>
+</ol>
+<h2 id="ergs">Ergs</h2>
+<p>Instructions and some other actions should be paid for with a
+resource called <strong>ergs</strong>, similar to Ethereum’s gas. See
+the overview in <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#Ergs"><span
+class="id" title="section">Ergs</span></a></span>.</p>
+<h2 id="operation">Operation</h2>
+<p>The VM is started by a server that controls it and feeds the
+transactions to the <span
+class="inlinecode"><a class="idref" href="EraVM.Bootloader.html#Bootloader"><span
+class="id" title="section">Bootloader</span></a></span>.</p>
+<h3 id="context-of-eravm">Context of EraVM</h3>
+<p>When the server needs to build a new batch, it starts an instance of
+EraVM.</p>
+<p>EraVM accepts three parameters:</p>
+<ol type="1">
+<li>Bootloader’s <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span>. It is used
+to fetch the bootloader code from <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>.</li>
+<li>Default code hash <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#DEFAULT_AA_VHASH"><span
+class="id" title="axiom">DEFAULT_AA_VHASH</span></a></span>. It is used
+to fetch the default code from <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span> in case of a
+far call to a contract without any associated code.</li>
+<li>A boolean flag <code>is_porter_available</code>, to determine the
+number of shards (two if zkPorter is available, one otherwise).</li>
+</ol>
+<p>Bootloader is a contract written in YUL in charge of block
+construction. See <span
+class="inlinecode"><a class="idref" href="EraVM.Bootloader.html#Bootloader"><span
+class="id" title="section">Bootloader</span></a></span>.</p>
+<p>EraVM retrives the code of bootloader from <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span> and proceeds
+with sequential execution of instructions on the bootloader’s code
+page.</p>
+<h3 id="failures-and-rollbacks">Failures and rollbacks</h3>
+<p>There are three types of behaviors triggered by execution
+failures.</p>
+<ol type="1">
+<li><p>Skipping a malformed transaction. It is a mechanism implemented
+by the server, external to EraVM. Server makes a snapshot of EraVM state
+after completing every transaction. When the bootloader encounters a
+malformed transaction, it fails, and the server restarts EraVM from the
+most recent snapshot, skipping this transaction.</p>
+<p>This behavior is specific to bootloader; the contract code has no
+ways of invoking it.</p></li>
+<li><p>Revert is triggered by the contract code explicitly by executing
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span>. EraVM saves
+its persistent state to <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
+class="id" title="record">state_checkpoint</span></a></span> on every
+near or far call. If the contract code identifies a recoverable error,
+it may execute <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span>. Then EraVM
+rolls the storage and event queues back to the last <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
+class="id" title="record">state_checkpoint</span></a></span> and
+executes the exception handler. See <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>.</p></li>
+<li><p>Panic is triggered either explicitly by executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>, or
+internally when some execution invariants are violated. For example,
+attempting to execute in user mode an instruction, which is exclusive to
+kernel mode, results in panic.</p>
+<p>On panic, the persistent state of EraVM is rolled back in the same
+way as on revert. See <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>.</p></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Core.html#ArchOverview"><span class="id" title="section">ArchOverview</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="timestamp" class="idref" href="#timestamp"><span class="id" title="definition">timestamp</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="tx_num" class="idref" href="#tx_num"><span class="id" title="definition">tx_num</span></a> := <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

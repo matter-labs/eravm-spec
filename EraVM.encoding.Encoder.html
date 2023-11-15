@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.encoding.Encoder</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.encoding.Encoder</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+<span class="id" title="keyword">Require</span><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.isa.Modifiers.html#"><span class="id" title="library">isa.Modifiers</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.isa.GeneratedMachISA.html#"><span class="id" title="library">isa.GeneratedMachISA</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.isa.AssemblyToMach.html#"><span class="id" title="library">isa.AssemblyToMach</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.encoding.EncodingUtils.html#"><span class="id" title="library">encoding.EncodingUtils</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.encoding.GeneratedEncodeOpcode.html#"><span class="id" title="library">encoding.GeneratedEncodeOpcode</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="MachEncoder" class="idref" href="#MachEncoder"><span class="id" title="section">MachEncoder</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.isa.Assembly.html#"><span class="id" title="module">Assembly</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#"><span class="id" title="module">GeneratedMachISA</span></a> <a class="idref" href="EraVM.encoding.GeneratedEncodeOpcode.html#"><span class="id" title="module">GeneratedEncodeOpcode</span></a> <a class="idref" href="EraVM.isa.AssemblyToMach.html#"><span class="id" title="module">isa.AssemblyToMach</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.encoding.EncodingUtils.html#"><span class="id" title="module">EncodingUtils</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="encoding-machine-instructions">Encoding machine
+instructions</h1>
+<p>For an overview of instruction sets and different layers of
+instructions definitions, used in this specification, refer to <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Instructions.html#InstructionSets"><span
+class="id" title="section">InstructionSets</span></a></span>.</p>
+<p>The binary encoding is defined for <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span>, which is a
+representation of an EraVM instruction aware of its encoding and layout.
+Once the <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span> has been
+transformed into <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span> via <span
+class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToMach.html#asm_to_mach"><span
+class="id" title="definition">asm_to_mach</span></a></span>, it is
+trivial to put all of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span>’s fields in
+binary form via <span
+class="inlinecode"><a class="idref" href="EraVM.encoding.Encoder.html#encode_mach_instruction"><span
+class="id"
+title="definition">encode_mach_instruction</span></a></span>.</p>
+<p>Reminder: <code>##</code> notation stands for concatenating binary
+strings; <code>a ## b</code> signifies that <code>b</code> holds less
+significant bits and <code>a</code> is prepended to it, forming a more
+significant part.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_mach_instruction" class="idref" href="#encode_mach_instruction"><span class="id" title="definition">encode_mach_instruction</span></a> (<a id="i:1" class="idref" href="#i:1"><span class="id" title="binder">i</span></a>:@<a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span class="id" title="record">mach_instruction</span></a> <a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">GPR.reg_name</span></a> <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a>) : <span class="id" title="definition">BITS</span> 64 :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.Encoder.html#i:1"><span class="id" title="variable">i</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#mk_ins"><span class="id" title="constructor">mk_ins</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_code"><span class="id" title="projection">op_code</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_predicate"><span class="id" title="projection">op_predicate</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_src0"><span class="id" title="projection">op_src0</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_src1"><span class="id" title="projection">op_src1</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_dst0"><span class="id" title="projection">op_dst0</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_dst1"><span class="id" title="projection">op_dst1</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_imm0"><span class="id" title="projection">op_imm0</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#op_imm1"><span class="id" title="projection">op_imm1</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="reserved2:3" class="idref" href="#reserved2:3"><span class="id" title="binder">reserved2</span></a> := @<span class="id" title="definition">fromNat</span> 2 0 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">op_imm1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <span class="id" title="var">op_imm0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_reg"><span class="id" title="definition">encode_reg</span></a> <span class="id" title="var">op_dst1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_reg"><span class="id" title="definition">encode_reg</span></a> <span class="id" title="var">op_dst0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_reg"><span class="id" title="definition">encode_reg</span></a> <span class="id" title="var">op_src1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_reg"><span class="id" title="definition">encode_reg</span></a> <span class="id" title="var">op_src0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#encode_predicate"><span class="id" title="definition">encode_predicate</span></a> <span class="id" title="var">op_predicate</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> <a class="idref" href="EraVM.encoding.Encoder.html#reserved2:3"><span class="id" title="variable">reserved2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">##</span> @<span class="id" title="definition">fromZ</span> 11 (<a class="idref" href="EraVM.encoding.GeneratedEncodeOpcode.html#encode_opcode"><span class="id" title="definition">encode_opcode</span></a> <span class="id" title="var">op_code</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_asm" class="idref" href="#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a id="i:4" class="idref" href="#i:4"><span class="id" title="binder">i</span></a>:<a class="idref" href="EraVM.Predication.html#predicated"><span class="id" title="record">predicated</span></a> <a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span class="id" title="inductive">asm_instruction</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="definition">BITS</span> 64) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option_map"><span class="id" title="definition">option_map</span></a> <a class="idref" href="EraVM.encoding.Encoder.html#encode_mach_instruction"><span class="id" title="definition">encode_mach_instruction</span></a> (<a class="idref" href="EraVM.isa.AssemblyToMach.html#asm_to_mach"><span class="id" title="definition">asm_to_mach</span></a> <a class="idref" href="EraVM.encoding.Encoder.html#i:4"><span class="id" title="variable">i</span></a>)<br/>
+.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.encoding.Encoder.html#MachEncoder"><span class="id" title="section">MachEncoder</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

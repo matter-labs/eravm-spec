@@ -1,0 +1,660 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Addressing</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Addressing</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="library">GPR</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Addressing" class="idref" href="#Addressing"><span class="id" title="section">Addressing</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="addressing-modes">Addressing modes</h1>
+<p>This section describes the addressing modes in <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span>. Section
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Addressing.InstructionArguments"><span
+class="id" title="section">InstructionArguments</span></a></span>
+describes the types of the instruction arguments; each type corresponds
+to one or multiple possible addressing modes. Assembly instruction
+formats with the types of their arguments are described by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span>.</p>
+<p>Core instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span
+class="id" title="definition">decoded</span></a></span> have different
+types of operands detailed by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span
+class="id" title="definition">decoded</span></a></span>.</p>
+<p><strong>Operands</strong> are entities operated upon by instructions.
+They serve as sources of data, or as destinations for the results of the
+instruction execution.</p>
+<p><strong>Addressing mode</strong> refers to the way in which an
+instruction specifies the location of data that needs to be accessed or
+operated upon.</p>
+<p>Abstract EraVM supports 8 addressing modes. Some of them only support
+reading (indicated by “in”), or writing (indicated by “out”).</p>
+<ol type="1">
+<li><p>Register (in/out).</p>
+<p><em>Concrete syntax example</em>. Use <code>r1</code> as a
+source:</p>
+<pre><code>add r1, r0, r3</code></pre></li>
+<li><p>Imm (in)</p>
+<p><em>Concrete syntax example</em>. Use immediate <code>42</code> as a
+source:</p>
+<pre><code>add 42, r0, r3</code></pre></li>
+<li><p>Code page, relative to GPR (in)</p>
+<p><em>Concrete syntax example</em>. Use 42-th <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the code page as
+a source:</p>
+<pre><code>add code[42], r0, r3</code></pre>
+<p>Note: words are enumerated starting at 0, each word contains 4
+instructions, adjacent words are disjoint.</p></li>
+<li><p>Const page, relative to GPR (in)</p>
+<p>Currently, the concrete syntax is absent because code and constant
+pages coincide in current EraVM implementation. Use the following
+instead:</p>
+<pre><code>add code[42], r0, r3</code></pre></li>
+<li><p>Stack page, relative to GPR (in/out)</p>
+<p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source has two equivalent forms:</p>
+<pre><code>add stack[r1+42], r0, r3
+add stack=[r1+42], r0, r3</code></pre></li>
+<li><p>Stack page, relative to GPR and SP (in/out)</p>
+<p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source:</p>
+<pre><code>add stack-[r1+42], r0, r3</code></pre>
+<p>Note, that the following form is forbidden:</p>
+<pre><code>add stack-[r1+42], r0, r3</code></pre></li>
+<li><p>Stack page, relative to GPR and SP, with decreasing SP (in)</p>
+<p><em>Concrete syntax example</em>. Use <code>SP-(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source:</p>
+<pre><code>add stack-=[r1+42], r0, r3</code></pre>
+<p>Note, that the following form is forbidden:</p>
+<pre><code>add stack+=[r1+42], r0, r3</code></pre></li>
+<li><p>Stack page, relative to GPR and SP, with increasing SP (out)</p>
+<p><em>Concrete syntax example</em>. Use <code>SP+(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a destination:</p>
+<pre><code>add r3, r0, stack+=[r1+42]</code></pre></li>
+</ol>
+<p>Note that the current implementation encodes some of these modes in
+the same way e.g. mode 7 and mode 8 only differ by <em>in</em> or
+<em>out</em> position.</p>
+<p>Predicate <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve"><span
+class="id" title="inductive">resolve</span></a></span> formalizes
+resolving operands to immediate values, registers and memory
+locations.</p>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.MemoryOps.html#MemoryOps"><span
+class="id" title="section">MemoryOps</span></a></span> formalizes
+reading and writing to locations.</p>
+<ol type="1">
+<li><p><strong>Register addressing</strong> (in/out)</p>
+<ul>
+<li><p>Refers to one of General Purpose Registers (GPR).</p></li>
+<li><p><em>Concrete syntax example</em>. Use <code>r1</code> as a
+source:</p>
+<pre><code>add r1, r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="reg_io" class="idref" href="#reg_io"><span class="id" title="inductive">reg_io</span></a> : <span class="id" title="keyword">Type</span> := <a id="Reg" class="idref" href="#Reg"><span class="id" title="constructor">Reg</span></a> (<a id="reg:3" class="idref" href="#reg:3"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="2" type="1">
+<li><p><strong>Immediate 16-bit value</strong> (in)</p>
+<ul>
+<li><p><em>Concrete syntax example</em>. Use immediate <code>42</code>
+as a source:</p>
+<pre><code>add 42, r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="imm_in" class="idref" href="#imm_in"><span class="id" title="inductive">imm_in</span></a> : <span class="id" title="keyword">Type</span> := <a id="Imm" class="idref" href="#Imm"><span class="id" title="constructor">Imm</span></a> (<a id="imm:6" class="idref" href="#imm:6"><span class="id" title="binder">imm</span></a>: <a class="idref" href="EraVM.Types.html#u16"><span class="id" title="definition">u16</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="3" type="1">
+<li><p><strong>Address on a code page, relative to a GPR</strong>
+(in)</p>
+<ul>
+<li><p>Resolved to <span class="math inline">\mathit{(reg + imm) \mod
+2^{16}}</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#rslv_code"><span
+class="id" title="constructor">rslv_code</span></a></span>.</p></li>
+<li><p>Code and const pages may coincide in the implementation.</p></li>
+<li><p><em>Concrete syntax example</em>. Use 42-th <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the code page as
+a source:</p>
+<pre><code>add code[42], r0, r3</code></pre>
+<p>Note: words are enumerated starting at 0, each word contains 4
+instructions, adjacent words are disjoint.</p></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="code_in" class="idref" href="#code_in"><span class="id" title="inductive">code_in</span></a> : <span class="id" title="keyword">Type</span> := <a id="CodeAddr" class="idref" href="#CodeAddr"><span class="id" title="constructor">CodeAddr</span></a> (<a id="reg:9" class="idref" href="#reg:9"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="imm:10" class="idref" href="#imm:10"><span class="id" title="binder">imm</span></a>:<a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="4" type="1">
+<li><p><strong>Address on a const page, relative to a GPR</strong>
+(in)</p>
+<ul>
+<li><p>Resolved to <span class="math inline">\mathit{(reg + imm) \mod
+2^{16}}</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#rslv_const"><span
+class="id" title="constructor">rslv_const</span></a></span>.</p></li>
+<li><p>Code and const pages may coincide.</p></li>
+<li><p>Currently, the concrete syntax is absent because code and
+constant pages coincide in current EraVM implementation. Use the
+following instead:</p>
+<pre><code>add code[42], r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="const_in" class="idref" href="#const_in"><span class="id" title="inductive">const_in</span></a>: <span class="id" title="keyword">Type</span> := <a id="ConstAddr" class="idref" href="#ConstAddr"><span class="id" title="constructor">ConstAddr</span></a> (<a id="reg:13" class="idref" href="#reg:13"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="imm:14" class="idref" href="#imm:14"><span class="id" title="binder">imm</span></a>:<a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="5" type="1">
+<li><p><strong>Address on a stack page, relative to a GPR</strong>
+(in/out)</p>
+<ul>
+<li><p>Resolved to <span class="math inline">\mathit{(reg + imm)\mod
+2^{16}}</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#rslv_stack_abs"><span
+class="id"
+title="constructor">rslv_stack_abs</span></a></span>.</p></li>
+<li><p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source has two equivalent forms:</p>
+<pre><code>add stack[r1+42], r0, r3
+add stack=[r1+42], r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_io" class="idref" href="#stack_io"><span class="id" title="inductive">stack_io</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="Absolute" class="idref" href="#Absolute"><span class="id" title="constructor">Absolute</span></a> (<a id="reg:17" class="idref" href="#reg:17"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="imm:18" class="idref" href="#imm:18"><span class="id" title="binder">imm</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ol start="6" type="1">
+<li><p><strong>Address on a stack page, relative to SP and
+GPR</strong></p>
+<ul>
+<li><p>Resolved to <span class="math inline">\mathit{(SP - (reg +
+imm))\mod 2^{16}}</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#rslv_stack_rel"><span
+class="id"
+title="constructor">rslv_stack_rel</span></a></span>.</p></li>
+<li><p>Unlike <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span>, the direction
+of offset does not change depending on read/write.</p></li>
+<li><p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source:</p>
+<pre><code>add stack-[r1+42], r0, r3</code></pre>
+<p>Note, that the following form is forbidden:</p>
+<pre><code>add stack[r1+42], r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="RelSP" class="idref" href="#RelSP"><span class="id" title="constructor">RelSP</span></a>    (<a id="reg:19" class="idref" href="#reg:19"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="offset:20" class="idref" href="#offset:20"><span class="id" title="binder">offset</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="7" type="1">
+<li><p><strong>Stack page, relative to GPR and SP, accompanied by
+decreasing SP (in).</strong></p>
+<ul>
+<li><p>A generalized version of <code>pop</code> operation.</p></li>
+<li><p>Resolved to <span class="math inline">\mathit{(SP - (reg +
+imm))\mod 2^{16}}</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#rslv_stack_rel"><span
+class="id"
+title="constructor">rslv_stack_rel</span></a></span>.</p></li>
+<li><p>Additionally, after the resolution, SP is modified:
+<code>SP -= (reg + imm)</code>.</p></li>
+<li><p><em>Concrete syntax example</em>. Use <code>SP-(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a source:</p>
+<pre><code>add stack-=[r1+42], r0, r3</code></pre>
+<p>Note, that the following form is forbidden:</p>
+<pre><code>add stack+=[r1+42], r0, r3</code></pre></li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_in_only" class="idref" href="#stack_in_only"><span class="id" title="inductive">stack_in_only</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="RelSpPop" class="idref" href="#RelSpPop"><span class="id" title="constructor">RelSpPop</span></a> (<a id="reg:23" class="idref" href="#reg:23"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="offset:24" class="idref" href="#offset:24"><span class="id" title="binder">offset</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="8" type="1">
+<li><p><strong>Stack page, relative to GPR and SP, accompanied by
+increasing SP (out).</strong></p>
+<ul>
+<li><p>A generalized version of <code>push</code> operation.</p></li>
+<li><p>Resolved to <span class="math inline">\mathit{(SP + (reg +
+imm))\mod 2^{16}}</span>.</p></li>
+<li><p>Additionally, after the resolution, SP is modified:
+<code>SP += (reg + imm)</code>.</p></li>
+<li><p><em>Concrete syntax example</em>. Use <code>SP+(r1+42)</code>-th
+<span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span> on the stack page
+as a destination:</p>
+<pre><code>add r3, r0, stack+=[r1+42]</code></pre></li>
+</ul>
+<p><strong>WARNING: KNOWN DIVERGENCE (in versions prior to
+v1.4.1)</strong> implementation of earlier versions diverged from the
+described spec:</p>
+<ul>
+<li>Implementation: the write happens to the new SP address</li>
+<li>Specification: the write happens to the old SP address</li>
+</ul>
+<p>Since v 1.4.1 the implementation conforms to the spec.</p></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_out_only" class="idref" href="#stack_out_only"><span class="id" title="inductive">stack_out_only</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="RelSpPush" class="idref" href="#RelSpPush"><span class="id" title="constructor">RelSpPush</span></a> (<a id="reg:27" class="idref" href="#reg:27"><span class="id" title="binder">reg</span></a>:<a class="idref" href="EraVM.GPR.html#reg_name"><span class="id" title="inductive">reg_name</span></a>) (<a id="offset:28" class="idref" href="#offset:28"><span class="id" title="binder">offset</span></a>: <a class="idref" href="EraVM.TransientMemory.html#stack_address"><span class="id" title="definition">stack_address</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="Addressing.InstructionArguments" class="idref" href="#Addressing.InstructionArguments"><span class="id" title="section">InstructionArguments</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="operand-types">Operand types</h1>
+<p>This section details the types of operand for <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span
+class="id" title="inductive">asm_instruction</span></a></span>. The
+types of operands for <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span> are different
+and detailed by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
+class="id" title="inductive">instruction</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#descr"><span
+class="id" title="record">descr</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span
+class="id" title="definition">decoded</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Binding.html#bound"><span
+class="id" title="definition">bound</span></a></span>.</p>
+<p>Instruction may have <em>input</em> and <em>output</em> operands.</p>
+<ul>
+<li><p>There are three types of input operands:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a></span> : read from a
+GPR.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span> : read from reg,
+immediate value, or any memory. May be a generalized pop <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span>.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_regimm"><span
+class="id" title="inductive">in_regimm</span></a></span> read from
+either reg or immmediate value.</li>
+</ul></li>
+<li><p>There are two types of input operands:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a></span> : store to a
+GPR.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a></span> : store to a GPR
+or any writable memory location. May be a generalized push <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span>.</li>
+</ul></li>
+</ul>
+<p>To describe these types, we create a hierarchy of subtypes ordered by
+inclusion (see <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Coercions"><span
+class="id" title="module">Coercions</span></a></span>).</p>
+<p>We denote input arguments as <span
+class="math inline">\mathit{in_1}</span>, <span
+class="math inline">\mathit{in_2}</span>, and output arguments as <span
+class="math inline">\mathit{out_1}</span>, <span
+class="math inline">\mathit{out_2}</span>. Many instructions have 2
+input arguments and 1 output argument. The encoding limits the number of
+arguments of type <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a></span>:</p>
+<ul>
+<li>For each instruction, there can be no more one argument of type
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span>.</li>
+<li>For each instruction, there can be no more one argument of type
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a></span>.</li>
+</ul>
+<p>It is allowed to have both <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a></span> in the same
+instruction.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_in" class="idref" href="#stack_in"><span class="id" title="inductive">stack_in</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackInOnly" class="idref" href="#StackInOnly"><span class="id" title="constructor">StackInOnly</span></a> (<a id="arg:31" class="idref" href="#arg:31"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_in_only"><span class="id" title="inductive">stack_in_only</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackInAny" class="idref" href="#StackInAny"><span class="id" title="constructor">StackInAny</span></a> (<a id="arg:32" class="idref" href="#arg:32"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_io"><span class="id" title="inductive">stack_io</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_out" class="idref" href="#stack_out"><span class="id" title="inductive">stack_out</span></a>: <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackOutOnly" class="idref" href="#StackOutOnly"><span class="id" title="constructor">StackOutOnly</span></a> (<a id="arg:35" class="idref" href="#arg:35"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_out_only"><span class="id" title="inductive">stack_out_only</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackOutAny" class="idref" href="#StackOutAny"><span class="id" title="constructor">StackOutAny</span></a> (<a id="arg:36" class="idref" href="#arg:36"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_io"><span class="id" title="inductive">stack_io</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="stack_any" class="idref" href="#stack_any"><span class="id" title="inductive">stack_any</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackAnyIO" class="idref" href="#StackAnyIO"><span class="id" title="constructor">StackAnyIO</span></a> (<a id="arg:39" class="idref" href="#arg:39"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_io"><span class="id" title="inductive">stack_io</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackAnyIn" class="idref" href="#StackAnyIn"><span class="id" title="constructor">StackAnyIn</span></a> (<a id="arg:40" class="idref" href="#arg:40"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_in_only"><span class="id" title="inductive">stack_in_only</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="StackAnyOut" class="idref" href="#StackAnyOut"><span class="id" title="constructor">StackAnyOut</span></a> (<a id="arg:41" class="idref" href="#arg:41"><span class="id" title="binder">arg</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_out_only"><span class="id" title="inductive">stack_out_only</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+<details><summary>Utility conversions, click to unfold </summary><div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_in_to_any" class="idref" href="#stack_in_to_any"><span class="id" title="definition">stack_in_to_any</span></a> (<a id="s:42" class="idref" href="#s:42"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.Addressing.html#stack_in"><span class="id" title="inductive">stack_in</span></a>) : <a class="idref" href="EraVM.Addressing.html#stack_any"><span class="id" title="inductive">stack_any</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Addressing.html#s:42"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">StackInOnly</span></a> <span class="id" title="var">arg</span> ⇒ <a class="idref" href="EraVM.Addressing.html#StackAnyIn"><span class="id" title="constructor">StackAnyIn</span></a> <span class="id" title="var">arg</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">StackInAny</span></a> <span class="id" title="var">arg</span> ⇒ <a class="idref" href="EraVM.Addressing.html#StackAnyIO"><span class="id" title="constructor">StackAnyIO</span></a> <span class="id" title="var">arg</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_out_to_any" class="idref" href="#stack_out_to_any"><span class="id" title="definition">stack_out_to_any</span></a> (<a id="s:44" class="idref" href="#s:44"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.Addressing.html#stack_out"><span class="id" title="inductive">stack_out</span></a>) : <a class="idref" href="EraVM.Addressing.html#stack_any"><span class="id" title="inductive">stack_any</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Addressing.html#s:44"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">StackOutOnly</span></a> <span class="id" title="var">arg</span> ⇒ <a class="idref" href="EraVM.Addressing.html#StackAnyOut"><span class="id" title="constructor">StackAnyOut</span></a> <span class="id" title="var">arg</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#StackOutAny"><span class="id" title="constructor">StackOutAny</span></a> <span class="id" title="var">arg</span> ⇒ <a class="idref" href="EraVM.Addressing.html#StackAnyIO"><span class="id" title="constructor">StackAnyIO</span></a> <span class="id" title="var">arg</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+</div>
+
+<div class="doc"><p>The <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#any"><span
+class="id" title="inductive">any</span></a></span> auxiliary argument
+type allows for all addressing modes; it never occurs in instructions
+but is used to <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve"><span
+class="id" title="inductive">resolve</span></a></span> argument
+locations.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="any" class="idref" href="#any"><span class="id" title="inductive">any</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="AnyReg" class="idref" href="#AnyReg"><span class="id" title="constructor">AnyReg</span></a>  : <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a>   <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#any:46"><span class="id" title="inductive">any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="AnyImm" class="idref" href="#AnyImm"><span class="id" title="constructor">AnyImm</span></a>  : <a class="idref" href="EraVM.Addressing.html#imm_in"><span class="id" title="inductive">imm_in</span></a>   <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#any:46"><span class="id" title="inductive">any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="AnyStack" class="idref" href="#AnyStack"><span class="id" title="constructor">AnyStack</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_any"><span class="id" title="inductive">stack_any</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#any:46"><span class="id" title="inductive">any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="AnyCode" class="idref" href="#AnyCode"><span class="id" title="constructor">AnyCode</span></a> : <a class="idref" href="EraVM.Addressing.html#code_in"><span class="id" title="inductive">code_in</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#any:46"><span class="id" title="inductive">any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="AnyConst" class="idref" href="#AnyConst"><span class="id" title="constructor">AnyConst</span></a>: <a class="idref" href="EraVM.Addressing.html#const_in"><span class="id" title="inductive">const_in</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#any:46"><span class="id" title="inductive">any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="input-arguments">Input arguments</h2>
+<p>Instructions may have no more than two input arguments.</p>
+<p>Usually, <span class="math inline">\mathit{in_1}</span> supports any
+types of arguments, except for <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="in_any" class="idref" href="#in_any"><span class="id" title="inductive">in_any</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="InReg" class="idref" href="#InReg"><span class="id" title="constructor">InReg</span></a>  : <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a>   <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_any:48"><span class="id" title="inductive">in_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="InImm" class="idref" href="#InImm"><span class="id" title="constructor">InImm</span></a>  : <a class="idref" href="EraVM.Addressing.html#imm_in"><span class="id" title="inductive">imm_in</span></a>   <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_any:48"><span class="id" title="inductive">in_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="InStack" class="idref" href="#InStack"><span class="id" title="constructor">InStack</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_in"><span class="id" title="inductive">stack_in</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_any:48"><span class="id" title="inductive">in_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="InCode" class="idref" href="#InCode"><span class="id" title="constructor">InCode</span></a> : <a class="idref" href="EraVM.Addressing.html#code_in"><span class="id" title="inductive">code_in</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_any:48"><span class="id" title="inductive">in_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="InConst" class="idref" href="#InConst"><span class="id" title="constructor">InConst</span></a>: <a class="idref" href="EraVM.Addressing.html#const_in"><span class="id" title="inductive">const_in</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_any:48"><span class="id" title="inductive">in_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+<details><summary>Inclusion function </summary><div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="in_any_incl" class="idref" href="#in_any_incl"><span class="id" title="definition">in_any_incl</span></a> (<a id="ia:50" class="idref" href="#ia:50"><span class="id" title="binder">ia</span></a>: <a class="idref" href="EraVM.Addressing.html#in_any"><span class="id" title="inductive">in_any</span></a>) : <a class="idref" href="EraVM.Addressing.html#any"><span class="id" title="inductive">any</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Addressing.html#ia:50"><span class="id" title="variable">ia</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">InReg</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyReg"><span class="id" title="constructor">AnyReg</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">InImm</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyImm"><span class="id" title="constructor">AnyImm</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">InStack</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">AnyStack</span></a> (<a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">stack_in_to_any</span></a> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">InCode</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyCode"><span class="id" title="constructor">AnyCode</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">InConst</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyConst"><span class="id" title="constructor">AnyConst</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+</details><div class="code">
+
+<br/>
+</div>
+
+<div class="doc"><p>Usually, <span class="math inline">\mathit{in_2}</span> supports only
+arguments in GPRs.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="in_reg" class="idref" href="#in_reg"><span class="id" title="definition">in_reg</span></a> : <span class="id" title="keyword">Type</span> := <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>In exotic cases, an input argument may either be a register, or an
+immediate value, but not anything else.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="in_regimm" class="idref" href="#in_regimm"><span class="id" title="inductive">in_regimm</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="RegImmR" class="idref" href="#RegImmR"><span class="id" title="constructor">RegImmR</span></a> : <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_regimm:52"><span class="id" title="inductive">in_regimm</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="RegImmI" class="idref" href="#RegImmI"><span class="id" title="constructor">RegImmI</span></a> : <a class="idref" href="EraVM.Addressing.html#imm_in"><span class="id" title="inductive">imm_in</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#in_regimm:52"><span class="id" title="inductive">in_regimm</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+<details><summary>Inclusion function </summary><div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="in_regimm_incl" class="idref" href="#in_regimm_incl"><span class="id" title="definition">in_regimm_incl</span></a> (<a id="ri:54" class="idref" href="#ri:54"><span class="id" title="binder">ri</span></a>: <a class="idref" href="EraVM.Addressing.html#in_regimm"><span class="id" title="inductive">in_regimm</span></a>) : <a class="idref" href="EraVM.Addressing.html#in_any"><span class="id" title="inductive">in_any</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Addressing.html#ri:54"><span class="id" title="variable">ri</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#RegImmR"><span class="id" title="constructor">RegImmR</span></a> <span class="id" title="var">r</span> ⇒ <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">InReg</span></a> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#RegImmI"><span class="id" title="constructor">RegImmI</span></a> <span class="id" title="var">i</span> ⇒ <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">InImm</span></a> <span class="id" title="var">i</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="output-arguments">Output arguments</h2>
+<p>Instructions may have no more than two output arguments.</p>
+<p>Output arguments can not be immediate values.</p>
+<p>A single immediate value is not sufficient to identify a memory cell,
+because we have multiple pages (see <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#page"><span
+class="id" title="projection">page</span></a></span>).</p>
+<p>Out arguments can not resolve to the addresses of constants or
+instructions, because <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#code_page"><span
+class="id" title="definition">code_page</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span
+class="id" title="definition">const_page</span></a></span> are not
+writable.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="out_any" class="idref" href="#out_any"><span class="id" title="inductive">out_any</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="OutReg" class="idref" href="#OutReg"><span class="id" title="constructor">OutReg</span></a>  : <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a>    <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#out_any:56"><span class="id" title="inductive">out_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="OutStack" class="idref" href="#OutStack"><span class="id" title="constructor">OutStack</span></a>: <a class="idref" href="EraVM.Addressing.html#stack_out"><span class="id" title="inductive">stack_out</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Addressing.html#out_any:56"><span class="id" title="inductive">out_any</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+<details><summary>Inclusion function </summary><div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="out_any_incl" class="idref" href="#out_any_incl"><span class="id" title="definition">out_any_incl</span></a> (<a id="ia:58" class="idref" href="#ia:58"><span class="id" title="binder">ia</span></a>: <a class="idref" href="EraVM.Addressing.html#out_any"><span class="id" title="inductive">out_any</span></a>) : <a class="idref" href="EraVM.Addressing.html#any"><span class="id" title="inductive">any</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Addressing.html#ia:58"><span class="id" title="variable">ia</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">OutReg</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyReg"><span class="id" title="constructor">AnyReg</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">OutStack</span></a> <span class="id" title="var">x</span> ⇒ <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">AnyStack</span></a> (<a class="idref" href="EraVM.Addressing.html#stack_out_to_any"><span class="id" title="definition">stack_out_to_any</span></a> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="out_reg" class="idref" href="#out_reg"><span class="id" title="definition">out_reg</span></a> : <span class="id" title="keyword">Type</span> := <a class="idref" href="EraVM.Addressing.html#reg_io"><span class="id" title="inductive">reg_io</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Addressing.html#Addressing.InstructionArguments"><span class="id" title="section">InstructionArguments</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Addressing.html#Addressing"><span class="id" title="section">Addressing</span></a>.<br/>
+</div>
+
+<div class="doc"><p>Therefore, we do not define <span class="inlinecode"><span class="id"
+title="var">out_regimm</span></span>, because it is impossible to write
+to immediate values.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Coercions" class="idref" href="#Coercions"><span class="id" title="module">Coercions</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#in_any_incl"><span class="id" title="definition">in_any_incl</span></a><a class="idref" href="EraVM.Addressing.html#in_any_incl"><span class="id" title="definition">:</span></a> <a class="idref" href="EraVM.Addressing.html#in_any_incl"><span class="id" title="definition">in_any</span></a> <a class="idref" href="EraVM.Addressing.html#in_any_incl"><span class="id" title="definition">>-></span></a> <a class="idref" href="EraVM.Addressing.html#in_any_incl"><span class="id" title="definition">any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#out_any_incl"><span class="id" title="definition">out_any_incl</span></a> <a class="idref" href="EraVM.Addressing.html#out_any_incl"><span class="id" title="definition">:</span></a> <a class="idref" href="EraVM.Addressing.html#out_any_incl"><span class="id" title="definition">out_any</span></a> <a class="idref" href="EraVM.Addressing.html#out_any_incl"><span class="id" title="definition">>-></span></a> <a class="idref" href="EraVM.Addressing.html#out_any_incl"><span class="id" title="definition">any</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">Imm</span></a> <a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">:</span></a>  <a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">u16</span></a> <a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">imm_in</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">InReg</span></a> <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">:</span></a>  <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">reg_io</span></a> <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#InReg"><span class="id" title="constructor">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">InImm</span></a> <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">:</span></a>  <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">imm_in</span></a> <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#InImm"><span class="id" title="constructor">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">InStack</span></a><a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">stack_in</span></a> <a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#InStack"><span class="id" title="constructor">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">InCode</span></a><a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">:</span></a>  <a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">code_in</span></a> <a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#InCode"><span class="id" title="constructor">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">InConst</span></a><a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">:</span></a>  <a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">const_in</span></a> <a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#InConst"><span class="id" title="constructor">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">StackInOnly</span></a><a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">stack_in_only</span></a> <a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#StackInOnly"><span class="id" title="constructor">stack_in</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">stack_in_to_any</span></a><a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">:</span></a> <a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">stack_in</span></a> <a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">>-></span></a> <a class="idref" href="EraVM.Addressing.html#stack_in_to_any"><span class="id" title="definition">stack_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">OutReg</span></a> <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">reg_io</span></a> <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#OutReg"><span class="id" title="constructor">out_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">OutStack</span></a><a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">stack_out</span></a> <a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#OutStack"><span class="id" title="constructor">out_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">AnyStack</span></a><a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">stack_any</span></a> <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#AnyStack"><span class="id" title="constructor">any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">StackOutOnly</span></a><a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">stack_out_only</span></a> <a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#StackOutOnly"><span class="id" title="constructor">stack_out</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#in_regimm_incl"><span class="id" title="definition">in_regimm_incl</span></a><a class="idref" href="EraVM.Addressing.html#in_regimm_incl"><span class="id" title="definition">:</span></a> <a class="idref" href="EraVM.Addressing.html#in_regimm_incl"><span class="id" title="definition">in_regimm</span></a> <a class="idref" href="EraVM.Addressing.html#in_regimm_incl"><span class="id" title="definition">>-></span></a> <a class="idref" href="EraVM.Addressing.html#in_regimm_incl"><span class="id" title="definition">in_any</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">StackInAny</span></a> <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">stack_io</span></a> <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#StackInAny"><span class="id" title="constructor">stack_in</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Coercion</span> <a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">Reg</span></a> <a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">:</span></a> <a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">reg_name</span></a> <a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">>-></span></a> <a class="idref" href="EraVM.Addressing.html#Reg"><span class="id" title="constructor">reg_io</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Addressing.html#Coercions"><span class="id" title="module">Coercions</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

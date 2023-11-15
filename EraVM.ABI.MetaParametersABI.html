@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.ABI.MetaParametersABI</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.ABI.MetaParametersABI</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="library">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="library">Ergs</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="library">memory.Depot</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="library">MemoryManagement</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="library">Pointer</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#"><span class="id" title="library">lib.BitsExt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssreflect.ssrfun</span> <span class="id" title="module">ssreflect.eqtype</span> <span class="id" title="module">ssreflect.tuple</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="module">Arith</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="module">memory.Depot</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="module">MemoryManagement</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#"><span class="id" title="module">lib.BitsExt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="MetaParametersABI" class="idref" href="#MetaParametersABI"><span class="id" title="section">MetaParametersABI</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Meta parameters are returned by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextMeta"><span
+class="id" title="constructor">OpContextMeta</span></a></span>. This
+record shows the data that is contained in it.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Record</span> <a id="params" class="idref" href="#params"><span class="id" title="record">params</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_params</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ergs_per_pubdata_byte" class="idref" href="#ergs_per_pubdata_byte"><span class="id" title="projection">ergs_per_pubdata_byte</span></a>: <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="heap_size" class="idref" href="#heap_size"><span class="id" title="projection">heap_size</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="aux_heap_size" class="idref" href="#aux_heap_size"><span class="id" title="projection">aux_heap_size</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="this_shard_id" class="idref" href="#this_shard_id"><span class="id" title="projection">this_shard_id</span></a>: <a class="idref" href="EraVM.memory.Depot.html#shard_id"><span class="id" title="definition">shard_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="caller_shard_id" class="idref" href="#caller_shard_id"><span class="id" title="projection">caller_shard_id</span></a>: <a class="idref" href="EraVM.memory.Depot.html#shard_id"><span class="id" title="definition">shard_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="code_shard_id" class="idref" href="#code_shard_id"><span class="id" title="projection">code_shard_id</span></a>: <a class="idref" href="EraVM.memory.Depot.html#shard_id"><span class="id" title="definition">shard_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+</div>
+
+<div class="doc"><p>This record describes the exact memory layout in a 256-bit word,
+which holds parameters.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Record</span> <a id="params_layout" class="idref" href="#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_params_layout</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u8&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_code_shard_id" class="idref" href="#l_code_shard_id"><span class="id" title="projection">l_code_shard_id</span></a> : <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_caller_shard_id" class="idref" href="#l_caller_shard_id"><span class="id" title="projection">l_caller_shard_id</span></a> : <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_this_shard_id" class="idref" href="#l_this_shard_id"><span class="id" title="projection">l_this_shard_id</span></a> : <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u96&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_aux_heap_size" class="idref" href="#l_aux_heap_size"><span class="id" title="projection">l_aux_heap_size</span></a> : <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_heap_size" class="idref" href="#l_heap_size"><span class="id" title="projection">l_heap_size</span></a> : <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u32&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="l_ergs_per_pubdata_byte" class="idref" href="#l_ergs_per_pubdata_byte"><span class="id" title="projection">l_ergs_per_pubdata_byte</span></a>: <a class="idref" href="EraVM.Types.html#u32"><span class="id" title="definition">u32</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="MetaParametersABI.BinaryCoder" class="idref" href="#MetaParametersABI.BinaryCoder"><span class="id" title="section">BinaryCoder</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="zero96:15" class="idref" href="#zero96:15"><span class="id" title="binder">zero96</span></a> : <span class="id" title="definition">BITS</span> 96 := <span class="id" title="notation">#</span> 0).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="encode_bin" class="idref" href="#encode_bin"><span class="id" title="definition">encode_bin</span></a> : @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="layout:16" class="idref" href="#layout:16"><span class="id" title="binder">layout</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#layout:16"><span class="id" title="variable">layout</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.MetaParametersABI.html#mk_params_layout"><span class="id" title="constructor">mk_params_layout</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_code_shard_id8</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_caller_shard_id8</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_this_shard_id8</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_aux_heap_size32</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_heap_size32</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">l_ergs_per_pubdata_byte32</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Types.html#zero8"><span class="id" title="definition">zero8</span></a> <span class="id" title="notation">##</span> <span class="id" title="var">l_code_shard_id8</span> <span class="id" title="notation">##</span> <span class="id" title="var">l_caller_shard_id8</span> <span class="id" title="notation">##</span> <span class="id" title="var">l_this_shard_id8</span> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#MetaParametersABI.BinaryCoder.zero96"><span class="id" title="variable">zero96</span></a> <span class="id" title="notation">##</span> <span class="id" title="var">l_aux_heap_size32</span> <span class="id" title="notation">##</span> <span class="id" title="var">l_heap_size32</span> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a> <span class="id" title="notation">##</span> <span class="id" title="var">l_ergs_per_pubdata_byte32</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="decode_bin" class="idref" href="#decode_bin"><span class="id" title="definition">decode_bin</span></a>: @<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="w:18" class="idref" href="#w:18"><span class="id" title="binder">w</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u8&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_code_shard_id"><span class="id" title="projection">l_code_shard_id</span></a> := <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a> 256 <span class="id" title="notation">-</span> 2<span class="id" title="notation">×</span>8 <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 256 <span class="id" title="notation">-</span> 8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_caller_shard_id"><span class="id" title="projection">l_caller_shard_id</span></a> := <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a>256 <span class="id" title="notation">-</span> 3 <span class="id" title="notation">×</span> 8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 256 <span class="id" title="notation">-</span> 2 <span class="id" title="notation">×</span> 8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_this_shard_id"><span class="id" title="projection">l_this_shard_id</span></a> := <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a>256 <span class="id" title="notation">-</span> 4 <span class="id" title="notation">×</span> 8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 256 <span class="id" title="notation">-</span> 3 <span class="id" title="notation">×</span> 8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u96&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_aux_heap_size"><span class="id" title="projection">l_aux_heap_size</span></a> := <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a> 3 <span class="id" title="notation">×</span> 32<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 4 <span class="id" title="notation">×</span> 32 <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_heap_size"><span class="id" title="projection">l_heap_size</span></a> := <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a> 2 <span class="id" title="notation">×</span> 32<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 3 <span class="id" title="notation">×</span> 32 <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved:&nbsp;u32&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_ergs_per_pubdata_byte"><span class="id" title="projection">l_ergs_per_pubdata_byte</span></a>:= <a class="idref" href="EraVM.ABI.MetaParametersABI.html#w:18"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a> 0<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 32 <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="binary_coder_revertible" class="idref" href="#binary_coder_revertible"><span class="id" title="lemma">binary_coder_revertible</span></a>: <a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#decode_bin"><span class="id" title="definition">decode_bin</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#encode_bin"><span class="id" title="definition">encode_bin</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="binary_coder" class="idref" href="#binary_coder"><span class="id" title="definition">binary_coder</span></a> := <a class="idref" href="EraVM.Coder.html#mk_coder"><span class="id" title="constructor">mk_coder</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#decode_bin"><span class="id" title="definition">decode_bin</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#encode_bin"><span class="id" title="definition">encode_bin</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#binary_coder_revertible"><span class="id" title="lemma">binary_coder_revertible</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#MetaParametersABI.BinaryCoder"><span class="id" title="section">BinaryCoder</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="MetaParametersABI.LayoutCoder" class="idref" href="#MetaParametersABI.LayoutCoder"><span class="id" title="section">LayoutCoder</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="decode_layout" class="idref" href="#decode_layout"><span class="id" title="definition">decode_layout</span></a> : @<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params_layout"><span class="id" title="record">params_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params"><span class="id" title="record">params</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="layout:19" class="idref" href="#layout:19"><span class="id" title="binder">layout</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#layout:19"><span class="id" title="variable">layout</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.MetaParametersABI.html#mk_params_layout"><span class="id" title="constructor">mk_params_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_code_shard_id"><span class="id" title="projection">l_code_shard_id</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_caller_shard_id"><span class="id" title="projection">l_caller_shard_id</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_this_shard_id"><span class="id" title="projection">l_this_shard_id</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_aux_heap_size"><span class="id" title="projection">l_aux_heap_size</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_heap_size"><span class="id" title="projection">l_heap_size</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_ergs_per_pubdata_byte"><span class="id" title="projection">l_ergs_per_pubdata_byte</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#ergs_per_pubdata_byte"><span class="id" title="projection">ergs_per_pubdata_byte</span></a> := <span class="id" title="var">l_ergs_per_pubdata_byte</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#heap_size"><span class="id" title="projection">heap_size</span></a> := <span class="id" title="var">l_heap_size</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#aux_heap_size"><span class="id" title="projection">aux_heap_size</span></a> := <span class="id" title="var">l_aux_heap_size</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#this_shard_id"><span class="id" title="projection">this_shard_id</span></a> := <span class="id" title="var">l_this_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#caller_shard_id"><span class="id" title="projection">caller_shard_id</span></a> := <span class="id" title="var">l_caller_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#code_shard_id"><span class="id" title="projection">code_shard_id</span></a> := <span class="id" title="var">l_code_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="encode_layout" class="idref" href="#encode_layout"><span class="id" title="definition">encode_layout</span></a> : @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params_layout"><span class="id" title="record">params_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params"><span class="id" title="record">params</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="params:21" class="idref" href="#params:21"><span class="id" title="binder">params</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#params:21"><span class="id" title="variable">params</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.MetaParametersABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#ergs_per_pubdata_byte"><span class="id" title="projection">ergs_per_pubdata_byte</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#heap_size"><span class="id" title="projection">heap_size</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#aux_heap_size"><span class="id" title="projection">aux_heap_size</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#this_shard_id"><span class="id" title="projection">this_shard_id</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#caller_shard_id"><span class="id" title="projection">caller_shard_id</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#code_shard_id"><span class="id" title="projection">code_shard_id</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_ergs_per_pubdata_byte"><span class="id" title="projection">l_ergs_per_pubdata_byte</span></a> := <span class="id" title="var">ergs_per_pubdata_byte</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_heap_size"><span class="id" title="projection">l_heap_size</span></a> := <span class="id" title="var">heap_size</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_aux_heap_size"><span class="id" title="projection">l_aux_heap_size</span></a> := <span class="id" title="var">aux_heap_size</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_this_shard_id"><span class="id" title="projection">l_this_shard_id</span></a> := <span class="id" title="var">this_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_caller_shard_id"><span class="id" title="projection">l_caller_shard_id</span></a> := <span class="id" title="var">caller_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#l_code_shard_id"><span class="id" title="projection">l_code_shard_id</span></a> := <span class="id" title="var">code_shard_id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="layout_coder_revertible" class="idref" href="#layout_coder_revertible"><span class="id" title="lemma">layout_coder_revertible</span></a>: <a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#decode_layout"><span class="id" title="definition">decode_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#encode_layout"><span class="id" title="definition">encode_layout</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="layout_coder" class="idref" href="#layout_coder"><span class="id" title="definition">layout_coder</span></a> := <a class="idref" href="EraVM.Coder.html#mk_coder"><span class="id" title="constructor">mk_coder</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#decode_layout"><span class="id" title="definition">decode_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#encode_layout"><span class="id" title="definition">encode_layout</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#layout_coder_revertible"><span class="id" title="lemma">layout_coder_revertible</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#MetaParametersABI.LayoutCoder"><span class="id" title="section">LayoutCoder</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="coder" class="idref" href="#coder"><span class="id" title="definition">coder</span></a> := <a class="idref" href="EraVM.Coder.html#coder_compose"><span class="id" title="definition">coder_compose</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#binary_coder"><span class="id" title="definition">binary_coder</span></a> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#layout_coder"><span class="id" title="definition">layout_coder</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#MetaParametersABI"><span class="id" title="section">MetaParametersABI</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

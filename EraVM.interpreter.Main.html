@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.interpreter.Main</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.interpreter.Main</h1>
+
+<div class="code">
+<span class="comment">(*&nbsp;Require&nbsp;Instruction&nbsp;State&nbsp;MemoryOps&nbsp;Error.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Import&nbsp;ZMod&nbsp;Architecture&nbsp;Common&nbsp;GPR&nbsp;Error&nbsp;Instruction&nbsp;CallStack&nbsp;MemoryBase&nbsp;Memory&nbsp;MemoryOps&nbsp;Pages&nbsp;State&nbsp;String.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Open&nbsp;Scope&nbsp;error_monad_scope.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;page_by_id&nbsp;(id&nbsp;:&nbsp;page_id)&nbsp;(pg:memory)&nbsp;:&nbsp;option&nbsp;page&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;option_map&nbsp;snd&nbsp;(List.find&nbsp;(fun&nbsp;elem&nbsp;=>&nbsp;Nat.eqb&nbsp;(fst&nbsp;elem)&nbsp;id)&nbsp;pg).&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_load_from_code_page&nbsp;(cp:&nbsp;code_page&nbsp;instruction_invalid)&nbsp;(addr:code_address)&nbsp;:&nbsp;instruction_predicated&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;load&nbsp;(code_page_params&nbsp;instruction_invalid)&nbsp;addr&nbsp;cp&nbsp;.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_load_from_const_page&nbsp;(cp:&nbsp;const_page)&nbsp;(addr:const_address)&nbsp;:&nbsp;word&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;load&nbsp;const_page_params&nbsp;addr&nbsp;cp&nbsp;.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_load_from_data_page&nbsp;(cp:&nbsp;data_page)&nbsp;(addr:mem_address)&nbsp;:&nbsp;u8&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;load&nbsp;data_page_params&nbsp;addr&nbsp;cp&nbsp;.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_load_from_stack_page&nbsp;(cp:&nbsp;stack_page)&nbsp;(addr:stack_address)&nbsp;:&nbsp;primitive_value&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;load&nbsp;stack_page_params&nbsp;addr&nbsp;cp&nbsp;.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;do_load&nbsp;(xstate:exec_state)&nbsp;(l:&nbsp;loc)&nbsp;:&nbsp;res&nbsp;fetch_result&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;xstate&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;mk_exec_state&nbsp;_&nbsp;regs&nbsp;pg&nbsp;xstack&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;l&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;LocImm&nbsp;x&nbsp;=>&nbsp;OK&nbsp;(FetchPV&nbsp;(IntValue&nbsp;(resize&nbsp;_&nbsp;_&nbsp;x)))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;LocReg&nbsp;x&nbsp;=>&nbsp;OK&nbsp;(FetchPV&nbsp;(fetch_gpr&nbsp;regs&nbsp;x))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;LocCodeAddr&nbsp;addr&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;code_page_id&nbsp;:=&nbsp;(get_active_pages&nbsp;xstack).(ctx_code_page_id)&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;page_by_id&nbsp;code_page_id&nbsp;pg&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;(CodePage&nbsp;_&nbsp;cp)&nbsp;=>&nbsp;OK&nbsp;(FetchIns&nbsp;(do_load_from_code_page&nbsp;cp&nbsp;addr))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;_&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Expected&nbsp;a&nbsp;code&nbsp;page")&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;None&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Page&nbsp;with&nbsp;requested&nbsp;id&nbsp;is&nbsp;not&nbsp;found"&nbsp;)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;LocConstAddr&nbsp;addr&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;const_page_id&nbsp;:=&nbsp;(get_active_pages&nbsp;xstack).(ctx_const_page_id)&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;page_by_id&nbsp;const_page_id&nbsp;pg&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;(ConstPage&nbsp;_&nbsp;cp)&nbsp;=>&nbsp;OK&nbsp;(FetchPV&nbsp;(IntValue&nbsp;(do_load_from_const_page&nbsp;cp&nbsp;addr)))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;_&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Expected&nbsp;a&nbsp;const&nbsp;page")&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;None&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Page&nbsp;with&nbsp;requested&nbsp;id&nbsp;is&nbsp;not&nbsp;found"&nbsp;)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;LocStackAddress&nbsp;addr&nbsp;=>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;stack_page_id&nbsp;:=&nbsp;(get_active_pages&nbsp;xstack).(ctx_stack_page_id)&nbsp;in&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;page_by_id&nbsp;stack_page_id&nbsp;pg&nbsp;with&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;(StackPage&nbsp;_&nbsp;cp)&nbsp;=>&nbsp;OK&nbsp;(FetchPV&nbsp;(do_load_from_stack_page&nbsp;cp&nbsp;addr))&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Some&nbsp;_&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Expected&nbsp;a&nbsp;code&nbsp;page")&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;None&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"Page&nbsp;with&nbsp;requested&nbsp;id&nbsp;is&nbsp;not&nbsp;found"&nbsp;)&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;end.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;Definition&nbsp;fetch_instruction&nbsp;(s:state)&nbsp;:&nbsp;res&nbsp;(code_address&nbsp;*&nbsp;instruction)&nbsp;:=&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;let&nbsp;pc&nbsp;:=&nbsp;pc_get&nbsp;s.(gs_callstack)&nbsp;in&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;match&nbsp;uinc_overflow&nbsp;_&nbsp;pc&nbsp;with&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(pc',&nbsp;true)&nbsp;&nbsp;=>&nbsp;Error&nbsp;(msg&nbsp;"End&nbsp;of&nbsp;code&nbsp;memory&nbsp;reached")&nbsp;*)</span>&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;|&nbsp;(pc',&nbsp;false)&nbsp;&nbsp;=>&nbsp;OK&nbsp;(pc',&nbsp;do_load&nbsp;s.(gs_regs)&nbsp;s.(gs_callstack)&nbsp;s.(gs_pages)&nbsp;l&nbsp;&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="comment">(*&nbsp;&nbsp;&nbsp;.&nbsp;*)</span>&nbsp;*)</span><br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

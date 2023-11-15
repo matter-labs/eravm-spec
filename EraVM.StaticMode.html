@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.StaticMode</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.StaticMode</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="library">isa.CoreSet</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a>.<br/>
+<span class="id" title="keyword">Section</span> <a id="StaticMode" class="idref" href="#StaticMode"><span class="id" title="section">StaticMode</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="static-mode">Static mode</h1>
+<p><strong>Static mode</strong> is a mode of execution.</p>
+<p>Intuitively, executing code in static mode aims at limiting its
+effects on the global state, similar to executing pure functions.</p>
+<p>If VM is in static mode, attempting to execute instructions affecting
+global system state results in panic with reason <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#ForbiddenInStaticMode"><span
+class="id" title="constructor">ForbiddenInStaticMode</span></a></span>.
+Refer to <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#forbidden_static"><span
+class="id" title="definition">forbidden_static</span></a></span> for a
+full list of instructions forbidden in static mode.</p>
+<p>Current mode is determined by the flag <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_is_static"><span
+class="id" title="projection">ecf_is_static</span></a></span> in the
+<span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#active_extframe"><span
+class="id" title="definition">active_extframe</span></a></span> in <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_callstack"><span
+class="id" title="projection">gs_callstack</span></a></span>.</p>
+<h2 id="entering-static-mode">Entering static mode</h2>
+<p>To execute the code of a contract in static mode, use one of far call
+instructions with a static modifier, for example:</p>
+<pre><code>OpFarCall (Reg R1) (Reg R2) (Imm zero16) true false
+                                         ^ is_static</code></pre>
+<p>The same applies to <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>.</p>
+<h2 id="exiting-static-mode">Exiting static mode</h2>
+<p>If VM executes a contract <span class="math inline">C</span> in
+static mode, the mode will persist until the end of execution of <span
+class="math inline">C</span>. If <span class="math inline">C</span>
+calls itself or other contracts, these calls will be automatically
+marked as static, even if the far call instruction was not explicit
+about it.</p>
+<p>There is no other way to exit the static mode.</p>
+<h2 id="usage">Usage</h2>
+<p>Static mode is unrelated and orthogonal to kernel mode.</p>
+<p>Executing a contract <span class="math inline">C</span> in static
+mode restricts the changes to the state produced by <span
+class="math inline">C</span> or any other code that it might call.</p>
+<p>Static calls are guaranteed to preserve the state of storage, will
+not emit events, or modify the <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span>
+register.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Function <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#forbidden_static"><span
+class="id" title="definition">forbidden_static</span></a></span> returns
+<span
+class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span
+class="id" title="constructor">true</span></a></span> if instruction
+<span class="inlinecode"><span class="id" title="var">ins</span></span>
+is forbidden in static mode.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="forbidden:1" class="idref" href="#forbidden:1"><span class="id" title="binder">forbidden</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>) (<a id="allowed:2" class="idref" href="#allowed:2"><span class="id" title="binder">allowed</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>) {<a id="descr:3" class="idref" href="#descr:3"><span class="id" title="binder">descr</span></a>:<a class="idref" href="EraVM.isa.CoreSet.html#descr"><span class="id" title="record">descr</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="forbidden_static" class="idref" href="#forbidden_static"><span class="id" title="definition">forbidden_static</span></a> (<a id="ins:4" class="idref" href="#ins:4"><span class="id" title="binder">ins</span></a>:@<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.StaticMode.html#StaticMode.descr"><span class="id" title="variable">descr</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.StaticMode.html#ins:4"><span class="id" title="variable">ins</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpContextSetContextU128"><span class="id" title="constructor">OpContextSetContextU128</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpContextSetErgsPerPubdataByte"><span class="id" title="constructor">OpContextSetErgsPerPubdataByte</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpContextIncrementTxNumber"><span class="id" title="constructor">OpContextIncrementTxNumber</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpSStore"><span class="id" title="constructor">OpSStore</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpEvent"><span class="id" title="constructor">OpEvent</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.CoreSet.html#OpToL1Message"><span class="id" title="constructor">OpToL1Message</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⇒ <a class="idref" href="EraVM.StaticMode.html#StaticMode.forbidden"><span class="id" title="variable">forbidden</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.StaticMode.html#StaticMode.allowed"><span class="id" title="variable">allowed</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Function <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#check_forbidden_static"><span
+class="id" title="definition">check_forbidden_static</span></a></span>
+returns <span
+class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span
+class="id" title="constructor">false</span></a></span> if:</p>
+<ul>
+<li>an instruction <span class="inlinecode"><span class="id"
+title="var">ins</span></span> is not allowed in static mode, and</li>
+<li>the current mode is static, as indicated by <span
+class="inlinecode"><span class="id"
+title="var">static_mode_active</span></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="check_forbidden_static" class="idref" href="#check_forbidden_static"><span class="id" title="definition">check_forbidden_static</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="ins:6" class="idref" href="#ins:6"><span class="id" title="binder">ins</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="static_mode_active:7" class="idref" href="#static_mode_active:7"><span class="id" title="binder">static_mode_active</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.StaticMode.html#static_mode_active:7"><span class="id" title="variable">static_mode_active</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (<a class="idref" href="EraVM.StaticMode.html#forbidden_static"><span class="id" title="definition">forbidden_static</span></a> <a class="idref" href="EraVM.StaticMode.html#ins:6"><span class="id" title="variable">ins</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.StaticMode.html#StaticMode"><span class="id" title="section">StaticMode</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

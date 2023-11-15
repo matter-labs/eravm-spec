@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.ABI.FarRetABI</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.ABI.FarRetABI</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="library">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="library">Ergs</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="library">MemoryManagement</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="library">Pointer</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#"><span class="id" title="library">lib.BitsExt</span></a> <a class="idref" href="EraVM.ABI.FatPointerABI.html#"><span class="id" title="library">ABI.FatPointerABI</span></a> <a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#"><span class="id" title="library">ABI.ForwardPageTypesABI</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssreflect.ssrfun</span> <span class="id" title="module">ssreflect.eqtype</span> <span class="id" title="module">ssreflect.tuple</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="module">Arith</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="module">MemoryManagement</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#"><span class="id" title="module">lib.BitsExt</span></a> <a class="idref" href="EraVM.ABI.FatPointerABI.html#"><span class="id" title="module">FatPointerABI</span></a> <a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#"><span class="id" title="module">ForwardPageTypesABI</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>This record describes all the parameters that far returns can
+use.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Section</span> <a id="FarRetABI" class="idref" href="#FarRetABI"><span class="id" title="section">FarRetABI</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="params" class="idref" href="#params"><span class="id" title="record">params</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_params</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="fwd_memory" class="idref" href="#fwd_memory"><span class="id" title="projection">fwd_memory</span></a>: <a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span class="id" title="inductive">fwd_memory</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>This record describes the layout of 256-bit word that encodes these
+parameters.</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Record</span> <a id="params_layout" class="idref" href="#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_params_layout</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;reserved&nbsp;3&nbsp;bytes&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="raw_memory_forwarding_type_enum" class="idref" href="#raw_memory_forwarding_type_enum"><span class="id" title="projection">raw_memory_forwarding_type_enum</span></a> : <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;last&nbsp;16&nbsp;bytes&nbsp;contain&nbsp;the&nbsp;pointer&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="raw_fat_ptr_layout" class="idref" href="#raw_fat_ptr_layout"><span class="id" title="projection">raw_fat_ptr_layout</span></a>: <a class="idref" href="EraVM.ABI.FatPointerABI.html#fat_ptr_layout"><span class="id" title="record">fat_ptr_layout</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="FarRetABI.BinaryCoder" class="idref" href="#FarRetABI.BinaryCoder"><span class="id" title="section">BinaryCoder</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="encode_bin" class="idref" href="#encode_bin"><span class="id" title="definition">encode_bin</span></a> : @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="params:6" class="idref" href="#params:6"><span class="id" title="binder">params</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#params:6"><span class="id" title="variable">params</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params_layout"><span class="id" title="constructor">mk_params_layout</span></a> <span class="id" title="var">memory_forwarding_type8</span> <span class="id" title="var">fat_ptr_layout128</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FatPointerABI.html#encode_bin"><span class="id" title="definition">FatPointerABI.encode_bin</span></a> <span class="id" title="var">fat_ptr_layout128</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">ptr_encoded128</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.Types.html#zero8"><span class="id" title="definition">zero8</span></a> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.Types.html#zero8"><span class="id" title="definition">zero8</span></a> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.Types.html#zero8"><span class="id" title="definition">zero8</span></a> <span class="id" title="notation">##</span> <span class="id" title="var">memory_forwarding_type8</span> <span class="id" title="notation">##</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a> <span class="id" title="notation">##</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Types.html#zero64"><span class="id" title="definition">zero64</span></a> <span class="id" title="notation">##</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ptr_encoded128</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="decode_bin" class="idref" href="#decode_bin"><span class="id" title="definition">decode_bin</span></a> : @<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="w:8" class="idref" href="#w:8"><span class="id" title="binder">w</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="memory_forwarding_type:9" class="idref" href="#memory_forwarding_type:9"><span class="id" title="binder">memory_forwarding_type</span></a> : <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a> := <a class="idref" href="EraVM.ABI.FarRetABI.html#w:8"><span class="id" title="variable">w</span></a> <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">{</span></a> 256 <span class="id" title="notation">-</span> 4<span class="id" title="notation">×</span>8<a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">,</span></a> 256 <span class="id" title="notation">-</span> 3<span class="id" title="notation">×</span>8 <a class="idref" href="EraVM.Arith.html#a5d933b2c0c6802abf1895ee4efcc42a"><span class="id" title="notation">}</span></a>  <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="ptr:10" class="idref" href="#ptr:10"><span class="id" title="binder">ptr</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.ABI.FatPointerABI.html#fat_ptr_layout"><span class="id" title="record">fat_ptr_layout</span></a> := <a class="idref" href="EraVM.ABI.FatPointerABI.html#decode_bin"><span class="id" title="definition">FatPointerABI.decode_bin</span></a> (<span class="id" title="definition">low</span> 128 <a class="idref" href="EraVM.ABI.FarRetABI.html#w:8"><span class="id" title="variable">w</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#ptr:10"><span class="id" title="variable">ptr</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">ptr</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params_layout"><span class="id" title="constructor">mk_params_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#memory_forwarding_type:9"><span class="id" title="variable">memory_forwarding_type</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#ptr:10"><span class="id" title="variable">ptr</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="binary_coder_revertible" class="idref" href="#binary_coder_revertible"><span class="id" title="lemma">binary_coder_revertible</span></a>: <a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#decode_bin"><span class="id" title="definition">decode_bin</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#encode_bin"><span class="id" title="definition">encode_bin</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="coder_binary" class="idref" href="#coder_binary"><span class="id" title="definition">coder_binary</span></a> : @<a class="idref" href="EraVM.Coder.html#coder"><span class="id" title="record">coder</span></a> <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params_layout"><span class="id" title="record">params_layout</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Coder.html#mk_coder"><span class="id" title="constructor">mk_coder</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#decode_bin"><span class="id" title="definition">decode_bin</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#encode_bin"><span class="id" title="definition">encode_bin</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#binary_coder_revertible"><span class="id" title="lemma">binary_coder_revertible</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#FarRetABI.BinaryCoder"><span class="id" title="section">BinaryCoder</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="FarRetABI.LayoutCoder" class="idref" href="#FarRetABI.LayoutCoder"><span class="id" title="section">LayoutCoder</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="encode_layout" class="idref" href="#encode_layout"><span class="id" title="definition">encode_layout</span></a>: @<a class="idref" href="EraVM.Coder.html#encoder"><span class="id" title="definition">encoder</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params_layout"><span class="id" title="record">params_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params"><span class="id" title="record">params</span></a> :=<br/>
+<span class="id" title="keyword">fun</span> <a id="params:12" class="idref" href="#params:12"><span class="id" title="binder">params</span></a> ⇒<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#params:12"><span class="id" title="variable">params</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> (<a class="idref" href="EraVM.MemoryManagement.html#ForwardExistingFatPointer"><span class="id" title="constructor">ForwardExistingFatPointer</span></a> <span class="id" title="var">fptr</span>) ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FatPointerABI.html#encode_layout"><span class="id" title="definition">FatPointerABI.encode_layout</span></a> <span class="id" title="var">fptr</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">ptr_layout</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FarRetABI.html#raw_memory_forwarding_type_enum"><span class="id" title="projection">raw_memory_forwarding_type_enum</span></a> := <a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#FarCallForwardPageType.ForwardFatPointer"><span class="id" title="definition">FarCallForwardPageType.ForwardFatPointer</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FarRetABI.html#raw_fat_ptr_layout"><span class="id" title="projection">raw_fat_ptr_layout</span></a>:= <span class="id" title="var">ptr_layout</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> (<a class="idref" href="EraVM.MemoryManagement.html#ForwardNewFatPointer"><span class="id" title="constructor">ForwardNewFatPointer</span></a> <span class="id" title="var">heap_variant</span> <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a>) ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FarRetABI.html#raw_memory_forwarding_type_enum"><span class="id" title="projection">raw_memory_forwarding_type_enum</span></a> := <a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#data_page_type_to_u8"><span class="id" title="definition">data_page_type_to_u8</span></a> <span class="id" title="var">heap_variant</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FarRetABI.html#raw_fat_ptr_layout"><span class="id" title="projection">raw_fat_ptr_layout</span></a>:= {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FatPointerABI.html#start"><span class="id" title="projection">start</span></a> := <span class="id" title="var">span</span>.(<a class="idref" href="EraVM.Pointer.html#s_start"><span class="id" title="projection">s_start</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FatPointerABI.html#length"><span class="id" title="projection">length</span></a> := <span class="id" title="var">span</span>.(<a class="idref" href="EraVM.Pointer.html#s_length"><span class="id" title="projection">s_length</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FatPointerABI.html#page"><span class="id" title="projection">page</span></a> := <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.FatPointerABI.html#offset"><span class="id" title="projection">offset</span></a> := <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|};<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="decode_layout" class="idref" href="#decode_layout"><span class="id" title="definition">decode_layout</span></a>: @<a class="idref" href="EraVM.Coder.html#decoder"><span class="id" title="definition">decoder</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params_layout"><span class="id" title="record">params_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#params"><span class="id" title="record">params</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="layout:14" class="idref" href="#layout:14"><span class="id" title="binder">layout</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#layout:14"><span class="id" title="variable">layout</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params_layout"><span class="id" title="constructor">mk_params_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#raw_memory_forwarding_type_enum"><span class="id" title="projection">raw_memory_forwarding_type_enum</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#raw_fat_ptr_layout"><span class="id" title="projection">raw_fat_ptr_layout</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#fwd_memory_adapter"><span class="id" title="definition">fwd_memory_adapter</span></a> <span class="id" title="var">raw_memory_forwarding_type_enum</span> <span class="id" title="var">raw_fat_ptr_layout</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">fwd_memory_value</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.ABI.FarRetABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> <span class="id" title="var">fwd_memory_value</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="layout_coding_revertible" class="idref" href="#layout_coding_revertible"><span class="id" title="lemma">layout_coding_revertible</span></a>: <a class="idref" href="EraVM.Coder.html#revertible"><span class="id" title="definition">revertible</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#decode_layout"><span class="id" title="definition">decode_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#encode_layout"><span class="id" title="definition">encode_layout</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="coder_layout" class="idref" href="#coder_layout"><span class="id" title="definition">coder_layout</span></a> := <a class="idref" href="EraVM.Coder.html#mk_coder"><span class="id" title="constructor">mk_coder</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#decode_layout"><span class="id" title="definition">decode_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#encode_layout"><span class="id" title="definition">encode_layout</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#layout_coding_revertible"><span class="id" title="lemma">layout_coding_revertible</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#FarRetABI.LayoutCoder"><span class="id" title="section">LayoutCoder</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="coder" class="idref" href="#coder"><span class="id" title="definition">coder</span></a> := <a class="idref" href="EraVM.Coder.html#coder_compose"><span class="id" title="definition">coder_compose</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#coder_binary"><span class="id" title="definition">coder_binary</span></a> <a class="idref" href="EraVM.ABI.FarRetABI.html#coder_layout"><span class="id" title="definition">coder_layout</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.ABI.FarRetABI.html#FarRetABI"><span class="id" title="section">FarRetABI</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

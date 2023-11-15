@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.Xor</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.Xor</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">CoreSet</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#"><span class="id" title="module">Modifiers</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="XorDefinition" class="idref" href="#XorDefinition"><span class="id" title="section">XorDefinition</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variables</span> <span class="id" title="var">op</span> <span class="id" title="var">tag</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_xor" class="idref" href="#step_xor"><span class="id" title="inductive">step_xor</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#flags_tsmallstep"><span class="id" title="definition">flags_tsmallstep</span></a> :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="bitwise-xor">Bitwise XOR</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpXor"><span
+class="id" title="constructor">OpXor</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_any"><span
+class="id" title="inductive">in_any</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">in2</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
+class="id" title="inductive">out_any</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">flags</span>:<a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="id" title="inductive">mod_set_flags</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<ul>
+<li><code>or in1, in2, out</code></li>
+<li><code>or! in1, in2, out</code>, to set <code>set flags</code>
+modifier.</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>Bitwise XOR of two 256-bit numbers.</p>
+<h2 id="semantic">Semantic</h2>
+<ul>
+<li><span class="math inline">result</span> is computed as a bitwise XOR
+of two operands.</li>
+<li>flags are computed as follows:
+<ul>
+<li><code>EQ</code> is set if <span class="math inline">result =
+0</span>.</li>
+<li><code>OF_LT</code> and <code>GT</code> are cleared</li>
+</ul></li>
+</ul>
+<p>Reminder: flags are only set if <code>set_flags</code> modifier is
+set.</p>
+<h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li>execution stack: PC, as by any instruction; SP, if <code>in1</code>
+uses <code>RelPop</code> addressing mode, or if <code>out</code> uses
+<code>RelPush</code> addressing mode.</li>
+<li>Current stack memory page, if <code>out</code> resolves to it.</li>
+<li>GPRs, if <code>out</code> resolves to a register.</li>
+<li>flags, if <code>set_flags</code> modifier is set.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>operations with bit masks</li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<ul>
+<li><code>and</code>, <code>or</code> and <code>xor</code> are encoded
+as variants of the same instruction.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<br/>
+&nbsp;&nbsp;| <a id="step_Xor" class="idref" href="#step_Xor"><span class="id" title="constructor">step_Xor</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="mod_sf:3" class="idref" href="#mod_sf:3"><span class="id" title="binder">mod_sf</span></a> <a id="old_flags:4" class="idref" href="#old_flags:4"><span class="id" title="binder">old_flags</span></a> <a id="new_flags:5" class="idref" href="#new_flags:5"><span class="id" title="binder">new_flags</span></a> <a id="result:6" class="idref" href="#result:6"><span class="id" title="binder">result</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Xor.html#result:6"><span class="id" title="variable">result</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Arith.html#bitwise_xor"><span class="id" title="definition">bitwise_xor</span></a> <span class="id" title="var">op1</span> <span class="id" title="var">op2</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Xor.html#new_flags:5"><span class="id" title="variable">new_flags</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#apply_set_flags"><span class="id" title="definition">apply_set_flags</span></a> <a class="idref" href="EraVM.sem.Xor.html#mod_sf:3"><span class="id" title="variable">mod_sf</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Xor.html#old_flags:4"><span class="id" title="variable">old_flags</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.sem.SemanticCommon.html#bitwise_flags"><span class="id" title="definition">bitwise_flags</span></a> <a class="idref" href="EraVM.sem.Xor.html#result:6"><span class="id" title="variable">result</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Xor.html#step_xor:1"><span class="id" title="inductive">step_xor</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpXor"><span class="id" title="constructor">OpXor</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <span class="id" title="var">tag1</span> <span class="id" title="var">op1</span>) (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <span class="id" title="var">tag2</span> <span class="id" title="var">op2</span>) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.Xor.html#result:6"><span class="id" title="variable">result</span></a>) <a class="idref" href="EraVM.sem.Xor.html#mod_sf:3"><span class="id" title="variable">mod_sf</span></a>) <a class="idref" href="EraVM.sem.Xor.html#old_flags:4"><span class="id" title="variable">old_flags</span></a> <a class="idref" href="EraVM.sem.Xor.html#new_flags:5"><span class="id" title="variable">new_flags</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.Xor.html#XorDefinition"><span class="id" title="section">XorDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

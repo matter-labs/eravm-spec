@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.lib.BitsExt</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.lib.BitsExt</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssreflect</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">seq</span> <span class="id" title="library">tuple</span> <span class="id" title="library">ssrbool</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Bits</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">spec</span> <span class="id" title="library">bits</span> <span class="id" title="library">tuple</span> <span class="id" title="library">nat</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">EraVM</span> <span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="library">Arith</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect.eqtype</span> <span class="id" title="module">ssreflect.tuple</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="module">Arith</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="low_val" class="idref" href="#low_val"><span class="id" title="lemma">low_val</span></a> <a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a> <a id="m:2" class="idref" href="#m:2"><span class="id" title="binder">m</span></a> <a id="b:3" class="idref" href="#b:3"><span class="id" title="binder">b</span></a>: <span class="id" title="projection">val</span> (@<span class="id" title="definition">low</span> <a class="idref" href="EraVM.lib.BitsExt.html#n:1"><span class="id" title="variable">n</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#m:2"><span class="id" title="variable">m</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#b:3"><span class="id" title="variable">b</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">take</span> <a class="idref" href="EraVM.lib.BitsExt.html#m:2"><span class="id" title="variable">m</span></a> (<span class="id" title="projection">val</span> <a class="idref" href="EraVM.lib.BitsExt.html#b:3"><span class="id" title="variable">b</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="high_val" class="idref" href="#high_val"><span class="id" title="lemma">high_val</span></a> <a id="n:4" class="idref" href="#n:4"><span class="id" title="binder">n</span></a> <a id="m:5" class="idref" href="#m:5"><span class="id" title="binder">m</span></a> <a id="b:6" class="idref" href="#b:6"><span class="id" title="binder">b</span></a>: <span class="id" title="projection">val</span> (@<span class="id" title="definition">high</span> <a class="idref" href="EraVM.lib.BitsExt.html#n:4"><span class="id" title="variable">n</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#m:5"><span class="id" title="variable">m</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#b:6"><span class="id" title="variable">b</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">drop</span> <a class="idref" href="EraVM.lib.BitsExt.html#m:5"><span class="id" title="variable">m</span></a> (<span class="id" title="projection">val</span> <a class="idref" href="EraVM.lib.BitsExt.html#b:6"><span class="id" title="variable">b</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="val_catB" class="idref" href="#val_catB"><span class="id" title="lemma">val_catB</span></a> <a id="n:7" class="idref" href="#n:7"><span class="id" title="binder">n</span></a> <a id="m:8" class="idref" href="#m:8"><span class="id" title="binder">m</span></a> (<a id="a:9" class="idref" href="#a:9"><span class="id" title="binder">a</span></a>:<span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.lib.BitsExt.html#n:7"><span class="id" title="variable">n</span></a>) (<a id="b:10" class="idref" href="#b:10"><span class="id" title="binder">b</span></a>:<span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.lib.BitsExt.html#m:8"><span class="id" title="variable">m</span></a>): <span class="id" title="projection">val</span> (<a class="idref" href="EraVM.lib.BitsExt.html#a:9"><span class="id" title="variable">a</span></a> <span class="id" title="notation">##</span> <a class="idref" href="EraVM.lib.BitsExt.html#b:10"><span class="id" title="variable">b</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#b:10"><span class="id" title="variable">b</span></a> <span class="id" title="notation">++</span> <a class="idref" href="EraVM.lib.BitsExt.html#a:9"><span class="id" title="variable">a</span></a>.<br/>
+ 
+<br/>
+&nbsp;<span class="id" title="keyword">Lemma</span> <a id="bits_size" class="idref" href="#bits_size"><span class="id" title="lemma">bits_size</span></a> {<a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a>} (<a id="b:12" class="idref" href="#b:12"><span class="id" title="binder">b</span></a>:<span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.lib.BitsExt.html#n:11"><span class="id" title="variable">n</span></a>): <span class="id" title="definition">size</span> <a class="idref" href="EraVM.lib.BitsExt.html#b:12"><span class="id" title="variable">b</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.lib.BitsExt.html#n:11"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">bits_subst_size</span>:= <span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> | [<span class="id" title="var">H</span> : <span class="id" title="definition">size</span> ?<span class="id" title="var">x</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">_</span> |- <span class="id" title="keyword">context</span> [<span class="id" title="definition">size</span> ?<span class="id" title="var">x</span>]] ⇒ <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span> <span class="id" title="keyword">end</span>.<br/>
+&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">bits_solve_size</span> := <span class="id" title="tactic">rewrite</span> !<span class="id" title="lemma">size_cat</span>; <span class="id" title="var">bits_subst_size</span>.<br/>
+&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">bits_solve_subranges</span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="EraVM.Arith.html#subrange"><span class="id" title="definition">subrange</span></a>, <a class="idref" href="EraVM.Arith.html#subrange_len"><span class="id" title="definition">subrange_len</span></a>; <span class="id" title="tactic">apply</span> /<span class="id" title="lemma">eqP</span>; <span class="id" title="tactic">rewrite</span> -<span class="id" title="lemma">val_eqE</span>;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="EraVM.lib.BitsExt.html#high_val"><span class="id" title="lemma">high_val</span></a>; <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="EraVM.lib.BitsExt.html#low_val"><span class="id" title="lemma">low_val</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> (<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">take_cat</span>; <span class="id" title="var">bits_solve_size</span>; <span class="id" title="tactic">simpl</span>);<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> (<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">drop_cat</span>; <span class="id" title="var">bits_solve_size</span>; <span class="id" title="tactic">simpl</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">try</span> <span class="id" title="tactic">do</span> [<span class="id" title="tactic">rewrite</span> !<span class="id" title="lemma">take0</span>| <span class="id" title="tactic">rewrite</span>! <span class="id" title="lemma">drop0</span> | <span class="id" title="tactic">rewrite</span>! <span class="id" title="lemma">cats0</span> | <span class="id" title="tactic">rewrite</span>! <span class="id" title="lemma">take_oversize</span>| <span class="id" title="tactic">rewrite</span>! <span class="id" title="lemma">take_size_cat</span> | <span class="id" title="var">bits_subst_size</span>].<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

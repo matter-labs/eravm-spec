@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.TransientMemory</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.TransientMemory</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="library">PrimitiveValue</span></a> <a class="idref" href="EraVM.memory.Pages.html#"><span class="id" title="library">memory.Pages</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#"><span class="id" title="library">memory.PageTypes</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="library">Pointer</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.memory.Pages.html#"><span class="id" title="module">memory.Pages</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#"><span class="id" title="module">memory.PageTypes</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="EraVM.memory.Pages.html#"><span class="id" title="module">memory.Pages</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#"><span class="id" title="module">memory.PageTypes</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="informal-overview">Informal overview</h1>
+<p>All memory available to the contract code can be divided into
+transient and persistent memory.</p>
+<ul>
+<li><strong>Transient memory</strong> exists to enable computations and
+does not persist between VM, like the main memory of personal
+computers.</li>
+<li><strong>Persistent memory</strong> exists as a storage of untagged
+256-bit <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span>s shared between the
+network participants.</li>
+</ul>
+<p>Contract code uses transient memory to perform computations and uses
+the storage to publish its results</p>
+<h2 id="persistent-memory">Persistent memory</h2>
+<p>The global persistent data structure is the <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#depot"><span
+class="id" title="definition">depot</span></a></span>. It holds untagged
+256-bit words.</p>
+<p>Depot is split in two <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#shard"><span
+class="id" title="definition">shard</span></a></span>s: one corresponds
+to rollup, another to porter (see <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#shard_exists"><span
+class="id" title="inductive">shard_exists</span></a></span>).</p>
+<p>Each shard is a map from a <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#contract_address"><span
+class="id" title="definition">contract_address</span></a></span> (160
+bit, might be extended in future to up to 256 bits) to contract <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#storage"><span
+class="id" title="definition">storage</span></a></span>.</p>
+<p>Each contract <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#storage"><span
+class="id" title="definition">storage</span></a></span> is a linear
+mapping from <span class="math inline">2^{256}</span>
+<strong>keys</strong> to 256-bit untagged words.</p>
+<p>To address a word in any contract’s storage, it is sufficient to
+know:</p>
+<ul>
+<li>shard</li>
+<li>contract address</li>
+<li>key</li>
+</ul>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#fqa_key"><span
+class="id" title="record">fqa_key</span></a></span>.</p>
+<p>Contract has one independent storage per shard.</p>
+<p>One shard is selected as currently active in <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state"><span
+class="id" title="record">state</span></a></span>.</p>
+<p>Contract code is global and shared between shards.</p>
+<h2 id="transient-memory">Transient memory</h2>
+<p>Transient memory consists of <strong>pages</strong> (<span
+class="inlinecode"><a class="idref" href="EraVM.memory.Pages.html#page_type"><span
+class="id" title="inductive">page_type</span></a></span>) holding data
+or code. Each page holds <span class="math inline">2^{32}</span> bytes;
+all bytes are initialized to zero at genesis.</p>
+<p>New pages are allocated implicitly when the contract execution
+starts; calling another contract allocates more pages. Pages persist for
+as long as they are referenced from the live code.</p>
+<p>Pages hold one of:</p>
+<ul>
+<li>data: <span class="math inline">2^{32}</span> byte-addressable data
+for heap or auxheap; bounded, so reading or writing outside bounds leads
+to a paid growth of available portion.</li>
+<li>code: instruction-addressable, read-only;</li>
+<li>constants: <span class="math inline">2^{16}</span> word-addressable,
+read-only;</li>
+<li>stack: <span class="math inline">2^{16}</span> words,
+word-addressable, tagged words. When the execution of a contract starts,
+the initial value of stack pointer is <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#INITIAL_SP_ON_FAR_CALL"><span
+class="id"
+title="definition">INITIAL_SP_ON_FAR_CALL</span></a></span>.</li>
+</ul>
+<p>The following describes all types of memory formally and with greater
+detail.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>The definition <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#vm_page"><span
+class="id" title="definition">vm_page</span></a></span> collects the
+specific types of pages used by EraVM semantic.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="stack_address" class="idref" href="#stack_address"><span class="id" title="definition">stack_address</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#stack_address"><span class="id" title="definition">stack_address</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#pv0"><span class="id" title="definition">pv0</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="stack_address_bits" class="idref" href="#stack_address_bits"><span class="id" title="definition">stack_address_bits</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#stack_address_bits"><span class="id" title="definition">stack_address_bits</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#pv0"><span class="id" title="definition">pv0</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="stack_page" class="idref" href="#stack_page"><span class="id" title="definition">stack_page</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#stack_page"><span class="id" title="definition">stack_page</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#pv0"><span class="id" title="definition">pv0</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="stack_page_params" class="idref" href="#stack_page_params"><span class="id" title="definition">stack_page_params</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#stack_page_params"><span class="id" title="definition">stack_page_params</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#pv0"><span class="id" title="definition">pv0</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="var">Canonical</span> <a id="vm_page" class="idref" href="#vm_page"><span class="id" title="definition">vm_page</span></a> {<a id="instr:1" class="idref" href="#instr:1"><span class="id" title="binder">instr</span></a>} (<a id="inv:2" class="idref" href="#inv:2"><span class="id" title="binder">inv</span></a>:<a class="idref" href="EraVM.TransientMemory.html#instr:1"><span class="id" title="variable">instr</span></a>) <a id="type:3" class="idref" href="#type:3"><span class="id" title="binder">type</span></a> : <a class="idref" href="EraVM.memory.Pages.html#page"><span class="id" title="record">page</span></a> := @<a class="idref" href="EraVM.memory.Pages.html#mk_page"><span class="id" title="constructor">mk_page</span></a> (<a class="idref" href="EraVM.memory.PageTypes.html#code_page"><span class="id" title="record">code_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#inv:2"><span class="id" title="variable">inv</span></a>) <a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span class="id" title="definition">const_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span class="id" title="definition">data_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_page"><span class="id" title="definition">stack_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#type:3"><span class="id" title="variable">type</span></a>.<br/>
+#[<span class="id" title="var">global</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="var">Canonical</span> <a id="vm_mem" class="idref" href="#vm_mem"><span class="id" title="definition">vm_mem</span></a> {<a id="instr:4" class="idref" href="#instr:4"><span class="id" title="binder">instr</span></a>} (<a id="inv:5" class="idref" href="#inv:5"><span class="id" title="binder">inv</span></a>:<a class="idref" href="EraVM.TransientMemory.html#instr:4"><span class="id" title="variable">instr</span></a>) <a id="type:6" class="idref" href="#type:6"><span class="id" title="binder">type</span></a> : <a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> := @<a class="idref" href="EraVM.memory.Pages.html#mk_pages"><span class="id" title="constructor">mk_pages</span></a> (<a class="idref" href="EraVM.memory.PageTypes.html#code_page"><span class="id" title="record">code_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#inv:5"><span class="id" title="variable">inv</span></a>) <a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span class="id" title="definition">const_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span class="id" title="definition">data_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_page"><span class="id" title="definition">stack_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#type:6"><span class="id" title="variable">type</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

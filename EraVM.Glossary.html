@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Glossary</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Glossary</h1>
+
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="Glossary" class="idref" href="#Glossary"><span class="id" title="section">Glossary</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="notations">Notations</h1>
+<ul>
+<li><p>Definitional equality is denoted with <span
+class="math inline">A:=B</span>. Its meaning is: <span
+class="math inline">A</span> can be substituted with <span
+class="math inline">B</span>.</p></li>
+<li><p>Ranges of numbers are denoted as follows:</p>
+<p><span class="math display">\mathit{[start, limit) := \{n | start \leq
+n \lt limit\}}</span></p>
+<p>In other words, start of the range is included, and limit is
+excluded.</p></li>
+<li><p>Accessing subranges of a binary representation of a number is
+denoted with <span class="math inline">\{low, high\}</span>. For
+example, this denotes a binary number obtained by taking bits from
+128-th inclusive to to 256-th exclusive of the value <span
+class="math inline">\mathit{op}</span>:</p>
+<p><span class="math display">\mathit{op}\{128, 256\}</span></p></li>
+<li><p>Concatenation of sequences of binary numbers is denoted with
+<span class="math inline">\#\#</span></p>
+<p>For example, the following denotes concatenating bit representations
+of the numbers <span class="math inline">a</span> and <span
+class="math inline">b</span>: <span class="math display">a \#\#
+b</span></p></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="glossary">Glossary</h1>
+<ul>
+<li><strong>ABI</strong> – application binary interface. See <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#ABI"><span
+class="id" title="definition">ABI</span></a></span>.</li>
+<li><strong>Active external frame</strong> – the closest external frame
+to the top of call stack. For example, in a callstack <span
+class="inlinecode">(<a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span> <span
+class="inlinecode"><span class="id" title="var"><em></span></span> <span
+class="inlinecode">(<a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span>
+<span class="inlinecode"><span class="id" title="var"></em></span></span>
+<span
+class="inlinecode">(<a class="idref" href="EraVM.CallStack.html#ExternalCall"><span
+class="id" title="constructor">ExternalCall</span></a></span> <span
+class="inlinecode"><span class="id" title="var"><em></span></span> <span
+class="inlinecode">(<a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span>
+<span class="inlinecode"><span class="id" title="var"></em></span></span>
+<span class="inlinecode">…))))</span> the active external frame will be
+the third frame in stack. See <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#active_extframe"><span
+class="id" title="definition">active_extframe</span></a></span>.</li>
+<li><strong>Auxheap</strong> – one of two heap variants (heap and
+auxheap), mostly used by system contracts. Executing one of far call
+instructions creates a new external frame and allocates pages for code,
+constants, data stack, heap and aux heap.</li>
+<li><strong>Burning ergs</strong> – setting ergs to zero in topmost call
+stack frame, external or internal. See <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#Ergs"><span
+class="id" title="section">Ergs</span></a></span>.</li>
+<li><strong>Callstack</strong> – a stack of context information.
+Executing one of near call instructions pushes a frame of type <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span> to the
+callstack, executing one of far call instructions pushes a frame of type
+<span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ExternalCall"><span
+class="id" title="constructor">ExternalCall</span></a></span>. See <span
+class="inlinecode"><span class="id"
+title="library">CallStack</span></span>.</li>
+<li><strong>Checkpoint</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
+class="id" title="record">state_checkpoint</span></a></span>. Not to
+confuse with EraVM snapshot.</li>
+<li><strong>Code page</strong> – a read only page filled with <span
+class="inlinecode"><span class="id"
+title="var">instruction_predicated</span></span>. Created by far calls,
+filled with code obtained from <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#code_page"><span
+class="id" title="definition">code_page</span></a></span>.</li>
+<li><strong>Const page</strong> – a read only page filled with constant
+data. Created by far calls, filled with constants obtained from <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>. Can be
+implemented by putting constants to code pages instead. See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span
+class="id" title="definition">const_page</span></a></span>.</li>
+<li><strong>Context instructions</strong> – instructions implemented as
+variants of <code>context</code> machine instruction:
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextCaller"><span
+class="id" title="constructor">OpContextCaller</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextCodeAddress"><span
+class="id"
+title="constructor">OpContextCodeAddress</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextErgsLeft"><span
+class="id" title="constructor">OpContextErgsLeft</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextGetContextU128"><span
+class="id"
+title="constructor">OpContextGetContextU128</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
+class="id"
+title="constructor">OpContextIncrementTxNumber</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextMeta"><span
+class="id" title="constructor">OpContextMeta</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetContextU128"><span
+class="id"
+title="constructor">OpContextSetContextU128</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetErgsPerPubdataByte"><span
+class="id"
+title="constructor">OpContextSetErgsPerPubdataByte</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSp"><span
+class="id" title="constructor">OpContextSp</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextThis"><span
+class="id" title="constructor">OpContextThis</span></a></span></li>
+</ul></li>
+<li><strong>Running instance of a contract, or a function</strong> – a
+set of memory pages, call stack frames, and other resources associated
+with a running contract or function. They are distinct per
+function/contract call.</li>
+<li><strong>Current contract</strong> – contract currently being
+executed. See <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_this_address"><span
+class="id" title="projection">ecf_this_address</span></a></span> and
+<span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#active_extframe"><span
+class="id" title="definition">active_extframe</span></a></span>.</li>
+<li><strong>Current function</strong> – the most recent of functions
+currently being executed.</li>
+<li><strong>Data page</strong> – one of types of memory pages. See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span>.</li>
+<li><strong>Data stack</strong> – a stack implicitly operated upon by
+instructions using address modes like <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> or <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSP"><span
+class="id" title="constructor">RelSP</span></a></span>. Located on pages
+of type <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>. Every
+contract instance has its own stack; functions invoked by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span> share the
+stack with their caller.</li>
+<li><strong>Decommitter</strong> – a module responsible for storing
+contract code and providing it upon query.</li>
+<li><strong>Exception handler</strong> – a <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span
+class="id" title="definition">code_address</span></a></span> of a piece
+of code associated to a call stack frame. This code will be executed if
+the corresponding function reverts or panics.</li>
+<li><strong>External/internal frame, function/contract frame</strong>
+–</li>
+<li><strong>Far call</strong> – execution of one of the following
+instructions: <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>.</li>
+<li><strong>Fat pointer</strong> – a full 128-bit <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span> pointer
+encoding page id, a span of addresses from some starting address and
+with a specified length, and an offset inside this span. See <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>.</li>
+<li><strong>GPR, general purpose register</strong> – one of 16 registers
+<span class="inlinecode"><span class="id"
+title="var">r0</span></span>–<span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r15"><span
+class="id" title="projection">r15</span></a></span> containing primitive
+values. Register <span class="inlinecode"><span class="id"
+title="var">r0</span></span> is a constant register, can not be written
+to and is read-only.</li>
+<li><strong>Heap</strong> – one of two heap variants (heap and auxheap),
+mostly used by system contracts. Executing one of far call instructions
+creates a new external frame and allocates pages for code, constants,
+data stack, heap and aux heap.</li>
+<li><strong>Heap pointer</strong> – a pair of address in heap and a
+limit; it is associated with a span <span class="math inline">[0;
+limit)</span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#heap_ptr"><span
+class="id" title="record">heap_ptr</span></a></span>.</li>
+<li><strong>Heap variant</strong> – either Heap or Auxheap, depending on
+the context.</li>
+<li><strong>Integer value</strong> – a <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span
+class="id" title="record">primitive_value</span></a></span> with a reset
+pointer tag. See <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span
+class="id" title="abbreviation">IntValue</span></a></span>.</li>
+<li><strong>L1</strong> – level-1, refers to the main Ethereum
+blockchain, also known as the Ethereum Mainnet. Used to distinguish from
+scaling solutions or Layer 2 solutions that aim to improve the
+scalability and throughput of the Ethereum blockchain.</li>
+<li><strong>Log instructions</strong> – variations of <code>log</code>
+machine instruction: <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSLoad"><span
+class="id" title="constructor">OpSLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
+class="id" title="constructor">OpEvent</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
+class="id" title="constructor">OpToL1Message</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
+class="id" title="constructor">OpPrecompileCall</span></a></span>.</li>
+<li><strong>Memory forwarding</strong> – a mechanism of sharing a
+read-only fragment ofmemory between contracts. The memory fragment is
+created from <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span"><span
+class="id" title="record">span</span></a></span> and described by <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>. This fragment can
+be narrowed or shrunk as a result of far call or executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrShrink"><span
+class="id" title="constructor">OpPtrShrink</span></a></span>.</li>
+<li><strong>Machine instruction</strong> – a low-level machine
+instruction with a fixed format. The high-level <span
+class="inlinecode"><span class="id"
+title="var">instruction_predicated</span></span> is encoded to machine
+instructions.</li>
+<li><strong>Memory growth</strong> – a process, where an access to a
+heap variant beyond its bound leads to increasing the bound and
+payment.</li>
+<li><strong>Narrowing a fat pointer</strong> – subtract a given number
+from its length and add it to its start; it is guaranteed to not
+overflow. See <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_narrow"><span
+class="id" title="definition">fat_ptr_narrow</span></a></span>. Used
+when passing a fat pointer to a far call, or returning it from a
+contract.</li>
+<li><strong>Near call</strong> – calling a function that belongs to the
+same contract.</li>
+<li><strong>Operand</strong> – data or the address that is operated upon
+by the instruction. It represents the input or output values used by the
+instruction to perform a specific operation or computation. See <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#Addressing.InstructionArguments"><span
+class="id" title="section">InstructionArguments</span></a></span>.</li>
+<li><strong>Page</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Pages.html#page_type"><span
+class="id" title="inductive">page_type</span></a></span>.</li>
+<li><strong>Pointer value</strong> – a <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span
+class="id" title="record">primitive_value</span></a></span> with a set
+pointer tag. May contain a fat pointer. See <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span
+class="id" title="abbreviation">PtrValue</span></a></span>.</li>
+<li><strong>Precompile call</strong> – an invokation of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
+class="id" title="constructor">OpPrecompileCall</span></a></span>.
+Precompiles are extensions of EraVM bound to one of the system
+contracts. When this contract executes an instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
+class="id" title="constructor">OpPrecompileCall</span></a></span>, EraVM
+executes an algorithm specific to this contract. See <span
+class="inlinecode"><a class="idref" href="EraVM.Precompiles.html#Precompiles"><span
+class="id" title="section">Precompiles</span></a></span>.</li>
+<li><strong>Precompile processor</strong> – a module responsible for
+encoding the algorithms of precompile calls and executing them.</li>
+<li><strong>Primitive value</strong> – a tagged word. See <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span
+class="id" title="record">primitive_value</span></a></span>.</li>
+<li><strong>Shrinking a fat pointer</strong> – subtract a given number
+from its length; it is guaranteed to not overflow. See <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_shrink"><span
+class="id" title="definition">fat_ptr_shrink</span></a></span>.
+Triggered by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPtrShrink"><span
+class="id" title="constructor">OpPtrShrink</span></a></span>
+instruction.</li>
+<li><strong>Slice</strong> – see <span class="inlinecode"><span
+class="id" title="var">slice</span></span>.</li>
+<li><strong>Span</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span"><span
+class="id" title="record">span</span></a></span>.</li>
+<li><strong>Stack page</strong> – a type of pages. See <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_page"><span
+class="id" title="definition">stack_page</span></a></span>.</li>
+<li><strong>System contracts</strong> – contracts with addresses from 0
+to <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KERNEL_MODE_MAXADDR_LIMIT"><span
+class="id"
+title="definition">KERNEL_MODE_MAXADDR_LIMIT</span></a></span>. They are
+executed in <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span>.</li>
+<li><strong>Topmost callstack frame</strong> – the last frame pushed to
+call stack.</li>
+<li><strong>Word</strong> – 256-bit unsigned untagged integer
+value.</li>
+<li><strong>Address resolution</strong> – a matching between instruction
+operands and locations using the supported address modes. See <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#resolve"><span
+class="id" title="inductive">resolve</span></a></span>.</li>
+<li><strong>Base cost</strong> – the fixed cost of executing
+instruction, in ergs. Some instructions imply additional costs, e.g. far
+calls may require paying for code decommitment.</li>
+<li><strong>Bootloader</strong> – a system contract written in YUL in
+charge of block construction.</li>
+<li><strong>Cell</strong> – alias to “word”. Often used to distinguish
+between values themselves and the memory locations holding them.</li>
+<li><strong>Depot</strong> – all storages in all shards. See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#depot"><span
+class="id" title="definition">depot</span></a></span>.</li>
+<li><strong>Ergs</strong> – resource spent on actions such as executing
+instructions. See <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#Ergs"><span
+class="id" title="section">Ergs</span></a></span>.</li>
+<li><strong>Instruction predicate</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#Predication"><span
+class="id" title="section">Predication</span></a></span>.</li>
+<li><strong>Flag</strong> – see <span class="inlinecode"><span
+class="id" title="var">flag_state</span></span>.</li>
+<li><strong>Fully qualified address</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#fqa_key"><span
+class="id" title="record">fqa_key</span></a></span>.</li>
+<li><strong>Instruction</strong> – low-level command or operation that
+is executed by a virtual machine to perform a specific task.
+Instructions supported by EraVm are described by the type <span
+class="inlinecode"><span class="id"
+title="var">instruction_predicated</span></span>.</li>
+<li><strong>Kernel mode</strong> – a mode of execution for system
+contracts opening access to full instruction set, containing
+instructions potentially harmful to the global state e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
+class="id"
+title="constructor">OpContextIncrementTxNumber</span></a></span>. See
+<span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span>.</li>
+<li><strong>Key</strong> – a 256-bit address of a cell in storage.</li>
+<li><strong>Location</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.Resolution.html#loc"><span
+class="id" title="inductive">loc</span></a></span>.</li>
+<li><strong>Panic</strong> – irrecoverable error. Handled by formally
+executing <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span>.</li>
+<li><strong>Revert</strong> – execution of <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span>, usually as a
+consequence of recoverable error.</li>
+<li><strong>Malformed transaction</strong> – a transaction rejected by
+the bootloader. Handling it is the responsibility of the server that
+controls EraVM.</li>
+<li><strong>Predicate</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#Predication"><span
+class="id" title="section">Predication</span></a></span>.</li>
+<li><strong>Predication</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#Predication"><span
+class="id" title="section">Predication</span></a></span>.</li>
+<li><strong>Program counter</strong> – the <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span
+class="id" title="definition">code_address</span></a></span> of the next
+instruction to be executed. See <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_pc"><span
+class="id" title="projection">cf_pc</span></a></span>.</li>
+<li><strong>Rollback</strong> – restoration of the <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_revertable"><span
+class="id" title="projection">gs_revertable</span></a></span> portion of
+<span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state"><span
+class="id" title="record">state</span></a></span> as a result of revert
+or panic. The state is saved at every near or far call. See also <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
+class="id" title="record">state_checkpoint</span></a></span>.</li>
+<li><strong>Shard</strong> – a collection of <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#storage"><span
+class="id" title="definition">storage</span></a></span>s. See <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#shard"><span
+class="id" title="definition">shard</span></a></span>.</li>
+<li><strong>Snapshot</strong> – a copy of the full state of EraVM.
+Server makes a snapshot of VM state every time a transaction is
+successfully completed. When the bootloader encounters a malformed
+transaction, it fails, and the server restarts EraVM from the most
+recent snapshot, skipping this transaction.</li>
+<li><strong>Server</strong> – a program that launches EraVM and controls
+it. Feeds the transactions to the bootloader, provides decommitter and
+other external modules, restarts EraVM from the latest snapshot in case
+of malformed transactions.</li>
+<li><strong>Stack pointer</strong> – the <span
+class="inlinecode"><a class="idref" href="EraVM.TransientMemory.html#stack_address"><span
+class="id" title="definition">stack_address</span></a></span> where the
+next element will be pushed. It is the address of the (top of the stack
++ 1).</li>
+<li><strong>Static mode</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span>.</li>
+<li><strong>Storage</strong> – see <span
+class="inlinecode"><a class="idref" href="EraVM.memory.Depot.html#storage"><span
+class="id" title="definition">storage</span></a></span>.</li>
+<li><strong>Total cost</strong> – a sum of <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#base_cost"><span
+class="id" title="definition">base_cost</span></a></span> of an
+instruction and all its additional costs.</li>
+<li><strong>Versioned hash</strong> – a key used to retrieve the
+contract code from decommitter. See <span
+class="inlinecode"><a class="idref" href="EraVM.VersionedHash.html#versioned_hash"><span
+class="id" title="record">versioned_hash</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>.</li>
+<li><strong>VM</strong> – the same as EraVM, the abstract virtual
+machine that this document specifies.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Glossary.html#Glossary"><span class="id" title="section">Glossary</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

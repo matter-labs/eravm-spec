@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.NearCall</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.NearCall</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.ABI.NearCallABI.html#"><span class="id" title="module">NearCallABI</span></a> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Flags.html#"><span class="id" title="module">Flags</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span> <span class="id" title="module">ssrbool</span> <span class="id" title="module">eqtype</span> <span class="id" title="module">ssreflect.tuple</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="NearCallDefinition" class="idref" href="#NearCallDefinition"><span class="id" title="section">NearCallDefinition</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+</div>
+
+<div class="doc"><h1 id="nearcall">NearCall</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">dest</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">handler</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<ul>
+<li><code>call abi_reg, callee_address, exception_handler</code> as a
+fully expanded form.</li>
+<li><code>call abi_reg, callee_address</code>
+<ul>
+<li>The assembler expands this variation to
+<code>call abi_reg, callee_address, DEFAULT_UNWIND_DEST</code>. Here:
+<ul>
+<li><code>DEFAULT_UNWIND_DEST</code> is a reserved system label; the
+linker will resolve it to the default exception handler.</li>
+</ul></li>
+</ul></li>
+<li><code>call callee_address</code> is a simplified form.
+<ul>
+<li>Assembler expands this variation to
+<code>call r0, callee_address, DEFAULT_UNWIND_DEST</code>, where:
+<ul>
+<li><code>DEFAULT_UNWIND_DEST</code> is a reserved system label; linker
+will resolve it to the default exception handler.</li>
+<li><code>R0</code> is a reserved read-only register that holds 0. This
+variation passes all ergs to the callee.</li>
+</ul></li>
+</ul></li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>Reserves a portion of the currently available ergs for a new function
+instance and calls the code inside the current contract space.</p>
+<h2 id="semantic">Semantic</h2>
+<p>Reminder: the <em>callee</em> is the function that we call; the
+<em>caller</em> is the currently executing function where a call takes
+place. In other words, the caller calls the callee.</p>
+<p>Step-by-step explanation:</p>
+<ol type="1">
+<li><p>Read the value of <code>abi_reg</code> and decode the following
+structure from <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.NearCallABI.html#NearCallABI"><span
+class="id" title="section">NearCallABI</span></a></span> from it. The
+<code>ergs_passed</code> field indicates the amount of ergs we intend to
+pass, but the actual amount of ergs passed gets decided at runtime (see
+step 2).</p>
+<pre><code>Record params := { ergs_passed: u32; }.</code></pre>
+<p>The actual amount of passed ergs is determined by <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#split_ergs_callee_caller"><span
+class="id" title="definition">split_ergs_callee_caller</span></a></span>
+based on:</p>
+<ul>
+<li>The ergs allocated for the caller frame.</li>
+<li>The value of <code>ergs_passed</code>.</li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="split_ergs_callee_caller" class="idref" href="#split_ergs_callee_caller"><span class="id" title="definition">split_ergs_callee_caller</span></a> (<a id="ergs_passed:1" class="idref" href="#ergs_passed:1"><span class="id" title="binder">ergs_passed</span></a> <a id="caller_ergs:2" class="idref" href="#caller_ergs:2"><span class="id" title="binder">caller_ergs</span></a>:<a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a>) : <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.sem.NearCall.html#ergs_passed:1"><span class="id" title="variable">ergs_passed</span></a> <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.NearCall.html#caller_ergs:2"><span class="id" title="variable">caller_ergs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.sem.NearCall.html#caller_ergs:2"><span class="id" title="variable">caller_ergs</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.sem.NearCall.html#ergs_passed:1"><span class="id" title="variable">ergs_passed</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">remaining</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.NearCall.html#ergs_passed:1"><span class="id" title="variable">ergs_passed</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">remaining</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">remaining</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.NearCall.html#caller_ergs:2"><span class="id" title="variable">caller_ergs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="2" type="1">
+<li><p>Explanation for <span class="inlinecode"><span class="id"
+title="var">split_ergs_caller_callee</span></span>:</p>
+<ul>
+<li><p>if <code>ergs_passed</code> = 0, pass all available ergs to the
+callee and set the <code>caller_ergs</code> to zero. Upon the callee’s
+normal return, its unspent ergs are returned back to the
+caller.</p></li>
+<li><p>otherwise, if <code>caller_ergs</code> <span
+class="math inline">\geq</span> <code>ergs_passed</code>, pass exactly
+<code>ergs_passed</code>. The <code>caller_ergs</code> is set to the
+unspent amount <code>ergs_passed - caller_ergs</code>.</p></li>
+<li><p>otherwise, if the call is not affordable
+(<code>ergs_passed</code> <span class="math inline">\gt</span>
+<code>caller_ergs</code>), pass all available ergs to the
+callee.</p></li>
+</ul>
+<p>Function <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#split_ergs_callee_caller"><span
+class="id" title="definition">split_ergs_callee_caller</span></a></span>
+returns a pair of erg values, where:</p>
+<ul>
+<li>the first component is the amount of ergs actually passed to the
+callee;</li>
+<li>the second component is the amount of ergs left to the caller.</li>
+</ul>
+<p>Note: after a normal return (not <code>panic</code>), the remaining
+ergs are returned to the caller.</p></li>
+<li><p>Decrease the number of ergs in the caller frame.</p></li>
+<li><p>Set up the new frame:</p>
+<ul>
+<li>new PC is assigned the instruction’s <code>callee_address</code>
+argument.</li>
+<li>new exception handler is assigned the instruction’s
+<code>handler_address</code> argument.</li>
+<li>new SP is copied from the old frame as is.</li>
+<li>the allocated ergs are determined by <span class="inlinecode"><span
+class="id" title="var">split_ergs_caller_callee</span></span> in
+(2).</li>
+</ul></li>
+<li><p>Clear flags.</p></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_nearcall" class="idref" href="#step_nearcall"><span class="id" title="inductive">step_nearcall</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="step_NearCall_pass_some_ergs" class="idref" href="#step_NearCall_pass_some_ergs"><span class="id" title="constructor">step_NearCall_pass_some_ergs</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="expt_handler:5" class="idref" href="#expt_handler:5"><span class="id" title="binder">expt_handler</span></a> <a id="call_addr:6" class="idref" href="#call_addr:6"><span class="id" title="binder">call_addr</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="passed_ergs:7" class="idref" href="#passed_ergs:7"><span class="id" title="binder">passed_ergs</span></a> <a id="callee_ergs:8" class="idref" href="#callee_ergs:8"><span class="id" title="binder">callee_ergs</span></a> <a id="caller_ergs:9" class="idref" href="#caller_ergs:9"><span class="id" title="binder">caller_ergs</span></a>: <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="new_caller:10" class="idref" href="#new_caller:10"><span class="id" title="binder">new_caller</span></a>:<a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a>) (<a id="new_frame:11" class="idref" href="#new_frame:11"><span class="id" title="binder">new_frame</span></a>:<a class="idref" href="EraVM.CallStack.html#callstack_common"><span class="id" title="record">callstack_common</span></a>) <a id="__flags:12" class="idref" href="#__flags:12"><span class="id" title="binder">__flags</span></a> (<a id="cs:13" class="idref" href="#cs:13"><span class="id" title="binder">cs</span></a>:<a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a>) <a id="high224:14" class="idref" href="#high224:14"><span class="id" title="binder">high224</span></a> <a id="regs:15" class="idref" href="#regs:15"><span class="id" title="binder">regs</span></a> <a id="ctx:16" class="idref" href="#ctx:16"><span class="id" title="binder">ctx</span></a> <a id="pages:17" class="idref" href="#pages:17"><span class="id" title="binder">pages</span></a> <a id="gs:18" class="idref" href="#gs:18"><span class="id" title="binder">gs</span></a>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.NearCall.html#callee_ergs:8"><span class="id" title="variable">callee_ergs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.sem.NearCall.html#caller_ergs:9"><span class="id" title="variable">caller_ergs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.sem.NearCall.html#split_ergs_callee_caller"><span class="id" title="definition">split_ergs_callee_caller</span></a> <a class="idref" href="EraVM.sem.NearCall.html#passed_ergs:7"><span class="id" title="variable">passed_ergs</span></a> (<a class="idref" href="EraVM.CallStack.html#ergs_remaining"><span class="id" title="definition">ergs_remaining</span></a> <a class="idref" href="EraVM.sem.NearCall.html#cs:13"><span class="id" title="variable">cs</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearCall.html#new_caller:10"><span class="id" title="variable">new_caller</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.CallStack.html#ergs_set"><span class="id" title="definition">ergs_set</span></a> <a class="idref" href="EraVM.sem.NearCall.html#caller_ergs:9"><span class="id" title="variable">caller_ergs</span></a> <a class="idref" href="EraVM.sem.NearCall.html#cs:13"><span class="id" title="variable">cs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearCall.html#new_frame:11"><span class="id" title="variable">new_frame</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.CallStack.html#mk_cf"><span class="id" title="constructor">mk_cf</span></a> <a class="idref" href="EraVM.sem.NearCall.html#expt_handler:5"><span class="id" title="variable">expt_handler</span></a> (<a class="idref" href="EraVM.CallStack.html#sp_get"><span class="id" title="definition">sp_get</span></a> <a class="idref" href="EraVM.sem.NearCall.html#cs:13"><span class="id" title="variable">cs</span></a>) <a class="idref" href="EraVM.sem.NearCall.html#call_addr:6"><span class="id" title="variable">call_addr</span></a> <a class="idref" href="EraVM.sem.NearCall.html#callee_ergs:8"><span class="id" title="variable">callee_ergs</span></a> (<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> <a class="idref" href="EraVM.sem.NearCall.html#gs:18"><span class="id" title="variable">gs</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearCall.html#step_nearcall:3"><span class="id" title="inductive">step_nearcall</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.isa.CoreSet.html#OpNearCall"><span class="id" title="constructor">OpNearCall</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.NearCall.html#high224:14"><span class="id" title="variable">high224</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.ABI.NearCallABI.html#mk_params"><span class="id" title="constructor">mk_params</span></a> <a class="idref" href="EraVM.sem.NearCall.html#passed_ergs:7"><span class="id" title="variable">passed_ergs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)) <a class="idref" href="EraVM.sem.NearCall.html#call_addr:6"><span class="id" title="variable">call_addr</span></a> <a class="idref" href="EraVM.sem.NearCall.html#expt_handler:5"><span class="id" title="variable">expt_handler</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a>        := <a class="idref" href="EraVM.sem.NearCall.html#__flags:12"><span class="id" title="variable">__flags</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>    := <a class="idref" href="EraVM.sem.NearCall.html#cs:13"><span class="id" title="variable">cs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_regs"><span class="id" title="projection">gs_regs</span></a>         := <a class="idref" href="EraVM.sem.NearCall.html#regs:15"><span class="id" title="variable">regs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_context_u128"><span class="id" title="projection">gs_context_u128</span></a> := <a class="idref" href="EraVM.sem.NearCall.html#ctx:16"><span class="id" title="variable">ctx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.sem.NearCall.html#pages:17"><span class="id" title="variable">pages</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|};<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.sem.NearCall.html#gs:18"><span class="id" title="variable">gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a>        := <a class="idref" href="EraVM.Flags.html#flags_clear"><span class="id" title="definition">flags_clear</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>    := <a class="idref" href="EraVM.CallStack.html#InternalCall"><span class="id" title="constructor">InternalCall</span></a> <a class="idref" href="EraVM.sem.NearCall.html#new_frame:11"><span class="id" title="variable">new_frame</span></a> <a class="idref" href="EraVM.sem.NearCall.html#new_caller:10"><span class="id" title="variable">new_caller</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_regs"><span class="id" title="projection">gs_regs</span></a>         := <a class="idref" href="EraVM.sem.NearCall.html#regs:15"><span class="id" title="variable">regs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_context_u128"><span class="id" title="projection">gs_context_u128</span></a> := <a class="idref" href="EraVM.sem.NearCall.html#ctx:16"><span class="id" title="variable">ctx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.sem.NearCall.html#pages:17"><span class="id" title="variable">pages</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|};<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.sem.NearCall.html#gs:18"><span class="id" title="variable">gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li>Execution stack: a new frame is pushed on top of the execution
+stack, and the caller frame is changed.
+<ul>
+<li>Caller frame:
+<ul>
+<li>PC of the caller frame is advanced by one, as in any
+instruction.</li>
+<li>Ergs are split between caller and callee frames. See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#split_ergs_callee_caller"><span
+class="id"
+title="definition">split_ergs_callee_caller</span></a></span>.</li>
+</ul></li>
+<li>New (callee) frame:
+<ul>
+<li>PC is set to <code>callee_address</code></li>
+<li>SP is copied to the new frame as is.</li>
+<li>ergs are set to the actual amount passed. See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#split_ergs_callee_caller"><span
+class="id"
+title="definition">split_ergs_callee_caller</span></a></span>.</li>
+<li>exception handler</li>
+</ul></li>
+</ul></li>
+<li>Flags are always cleared.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li><p>Set <code>ergs_passed=0</code> to pass all available ergs to
+callee.</p></li>
+<li><p>If the first argument is omitted, all available ergs will be
+passed to callee.</p>
+<p>Explanation: if the first argument is omitted, the assembler
+implicitly puts <code>r0</code> in its place. The reserved register
+<code>r0</code> always holds zero, therefore <code>ergs_passed</code>
+will be decoded into zero as well.</p></li>
+<li><p>No particular calling convention is enforced for near calls, so
+it can be decided by compiler.</p></li>
+<li><p>Can be used for internal system code, like bootloader. For
+example, wrap a pair of AA call + fee payment in any order in such
+<code>near_call</code>, and then rollback the entire frame
+atomically.</p></li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>. They
+are used to call code of other contracts.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.NearCall.html#NearCallDefinition"><span class="id" title="section">NearCallDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

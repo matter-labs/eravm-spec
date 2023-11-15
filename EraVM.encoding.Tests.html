@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.encoding.Tests</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.encoding.Tests</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.encoding.Encoder.html#"><span class="id" title="library">Encoder</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.lib.BitsExt.html#"><span class="id" title="library">lib.BitsExt</span></a> <a class="idref" href="EraVM.lib.Show.html#"><span class="id" title="library">lib.Show</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Coq.Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="EraVM.isa.AssemblyToMach.html#"><span class="id" title="module">AssemblyToMach</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.isa.GeneratedMachISA.html#"><span class="id" title="module">GeneratedMachISA</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#"><span class="id" title="module">Modifiers</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.Types.html#"><span class="id" title="module">Types</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#Coercions"><span class="id" title="module">Addressing.Coercions</span></a>.<br/>
+</div>
+
+<div class="doc"><p>Test cases: sub r0, r1, r2 00 00 00 00 02 10 00 49 sub.s r0, r1, r2
+00 00 00 00 02 10 00 4a sub! r0, r1, r2 00 00 00 00 02 10 00 4b sub 10,
+r1, r2 00 00 00 0a 02 10 00 89</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.isa.Assembly.html#"><span class="id" title="module">Assembly</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="equals" class="idref" href="#equals"><span class="id" title="abbreviation">equals</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">string</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub" class="idref" href="#sub"><span class="id" title="definition">sub</span></a> <a id="in1:1" class="idref" href="#in1:1"><span class="id" title="binder">in1</span></a> <a id="in2:2" class="idref" href="#in2:2"><span class="id" title="binder">in2</span></a> <a id="out1:3" class="idref" href="#out1:3"><span class="id" title="binder">out1</span></a> := (<a class="idref" href="EraVM.Predication.html#Ins"><span class="id" title="constructor">Ins</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.isa.Assembly.html#OpSub"><span class="id" title="constructor">OpSub</span></a> <a class="idref" href="EraVM.encoding.Tests.html#in1:1"><span class="id" title="variable">in1</span></a> <a class="idref" href="EraVM.encoding.Tests.html#in2:2"><span class="id" title="variable">in2</span></a> <a class="idref" href="EraVM.encoding.Tests.html#out1:3"><span class="id" title="variable">out1</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#NoSwap"><span class="id" title="constructor">NoSwap</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#PreserveFlags"><span class="id" title="constructor">PreserveFlags</span></a>) <a class="idref" href="EraVM.Predication.html#IfAlways"><span class="id" title="constructor">IfAlways</span></a>).<br/>
+<span class="id" title="keyword">Check</span> (<a class="idref" href="EraVM.encoding.Tests.html#equals"><span class="id" title="abbreviation">equals</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> "000000000210004B" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Show.to_string</span> (<a class="idref" href="EraVM.encoding.Encoder.html#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a class="idref" href="EraVM.Predication.html#Ins"><span class="id" title="constructor">Ins</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.isa.Assembly.html#OpSub"><span class="id" title="constructor">OpSub</span></a> <a class="idref" href="EraVM.GPR.html#R0"><span class="id" title="constructor">R0</span></a> <a class="idref" href="EraVM.GPR.html#R1"><span class="id" title="constructor">R1</span></a> <a class="idref" href="EraVM.GPR.html#R2"><span class="id" title="constructor">R2</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#NoSwap"><span class="id" title="constructor">NoSwap</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#SetFlags"><span class="id" title="constructor">SetFlags</span></a>) <a class="idref" href="EraVM.Predication.html#IfAlways"><span class="id" title="constructor">IfAlways</span></a>))).<br/>
+<span class="id" title="keyword">Check</span> (<a class="idref" href="EraVM.encoding.Tests.html#equals"><span class="id" title="abbreviation">equals</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> "000000000210004A" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Show.to_string</span> (<a class="idref" href="EraVM.encoding.Encoder.html#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a class="idref" href="EraVM.Predication.html#Ins"><span class="id" title="constructor">Ins</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.isa.Assembly.html#OpSub"><span class="id" title="constructor">OpSub</span></a> <a class="idref" href="EraVM.GPR.html#R0"><span class="id" title="constructor">R0</span></a> <a class="idref" href="EraVM.GPR.html#R1"><span class="id" title="constructor">R1</span></a> <a class="idref" href="EraVM.GPR.html#R2"><span class="id" title="constructor">R2</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#Swap"><span class="id" title="constructor">Swap</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#PreserveFlags"><span class="id" title="constructor">PreserveFlags</span></a>) <a class="idref" href="EraVM.Predication.html#IfAlways"><span class="id" title="constructor">IfAlways</span></a>))).<br/>
+<span class="id" title="keyword">Check</span> (<a class="idref" href="EraVM.encoding.Tests.html#equals"><span class="id" title="abbreviation">equals</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> "0000000002100049" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Show.to_string</span> (<a class="idref" href="EraVM.encoding.Encoder.html#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a class="idref" href="EraVM.encoding.Tests.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="EraVM.GPR.html#R0"><span class="id" title="constructor">R0</span></a> <a class="idref" href="EraVM.GPR.html#R1"><span class="id" title="constructor">R1</span></a> <a class="idref" href="EraVM.GPR.html#R2"><span class="id" title="constructor">R2</span></a>))).<br/>
+<span class="id" title="keyword">Check</span> (<a class="idref" href="EraVM.encoding.Tests.html#equals"><span class="id" title="abbreviation">equals</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> "0000000A02100089" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Show.to_string</span> (<a class="idref" href="EraVM.encoding.Encoder.html#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a class="idref" href="EraVM.encoding.Tests.html#sub"><span class="id" title="definition">sub</span></a> (<a class="idref" href="EraVM.Addressing.html#Imm"><span class="id" title="constructor">Imm</span></a> (<span class="id" title="notation">#</span> 10)) <a class="idref" href="EraVM.GPR.html#R1"><span class="id" title="constructor">R1</span></a> <a class="idref" href="EraVM.GPR.html#R2"><span class="id" title="constructor">R2</span></a>))).<br/>
+<span class="id" title="keyword">Check</span> (<a class="idref" href="EraVM.encoding.Tests.html#equals"><span class="id" title="abbreviation">equals</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> "0000000A02100079" <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><span class="id" title="definition">Show.to_string</span> (<a class="idref" href="EraVM.encoding.Encoder.html#encode_asm"><span class="id" title="definition">encode_asm</span></a> (<a class="idref" href="EraVM.Predication.html#Ins"><span class="id" title="constructor">Ins</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.isa.Assembly.html#OpSub"><span class="id" title="constructor">OpSub</span></a> (<a class="idref" href="EraVM.Addressing.html#Absolute"><span class="id" title="constructor">Absolute</span></a> <a class="idref" href="EraVM.GPR.html#R0"><span class="id" title="constructor">R0</span></a> (<span class="id" title="notation">#</span> 10)) <a class="idref" href="EraVM.GPR.html#R1"><span class="id" title="constructor">R1</span></a> <a class="idref" href="EraVM.GPR.html#R2"><span class="id" title="constructor">R2</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#NoSwap"><span class="id" title="constructor">NoSwap</span></a> <a class="idref" href="EraVM.isa.Modifiers.html#PreserveFlags"><span class="id" title="constructor">PreserveFlags</span></a>) <a class="idref" href="EraVM.Predication.html#IfAlways"><span class="id" title="constructor">IfAlways</span></a>))<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a>).<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;Extraction.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;ExtrOcamlBasic.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;ExtrOcamlString.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Extract&nbsp;Inlined&nbsp;Constant&nbsp;Datatypes.fst&nbsp;=>&nbsp;"fst".&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Extract&nbsp;Inlined&nbsp;Constant&nbsp;Datatypes.snd&nbsp;=>&nbsp;"snd".&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Extraction&nbsp;Blacklist&nbsp;List&nbsp;String&nbsp;Int.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Recursive&nbsp;Extraction&nbsp;encode_asm.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Definition&nbsp;ins_encode&nbsp;(i:predicated&nbsp;asm_instruction)&nbsp;:&nbsp;string&nbsp;:=&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;Show.to_string&nbsp;(encode_asm&nbsp;i).&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Recursive&nbsp;Extraction&nbsp;sub&nbsp;ins_encode.&nbsp;*)</span><br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.Nop</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.Nop</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="NoOpDefinition" class="idref" href="#NoOpDefinition"><span class="id" title="section">NoOpDefinition</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="nop">Nop</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
+class="id" title="constructor">OpNoOp</span></a></span></p>
+<h2 id="syntax">Syntax</h2>
+<pre><code>nop</code></pre>
+<h2 id="summary">Summary</h2>
+<p>Do nothing.</p>
+<h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<ul>
+<li>execution stack : PC is increased.</li>
+</ul>
+<h2 id="similar-instructions">Similar instructions</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpAdd"><span
+class="id" title="constructor">OpSpAdd</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span
+class="id" title="constructor">OpSpSub</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
+class="id" title="constructor">OpNoOp</span></a></span> are translated
+to <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
+class="id" title="record">mach_instruction</span></a></span> with the
+same <span
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
+class="id" title="inductive">mach_opcode</span></a></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToMach.html#asm_to_mach"><span
+class="id" title="definition">asm_to_mach</span></a></span>.</p>
+<h2 id="encoding">Encoding</h2>
+<ul>
+<li><code>NoOp</code>, <code>SpAdd</code>, <code>SpSub</code> are
+encoded as the same instruction.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_nop" class="idref" href="#step_nop"><span class="id" title="inductive">step_nop</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="step_NoOp" class="idref" href="#step_NoOp"><span class="id" title="constructor">step_NoOp</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a>, <a class="idref" href="EraVM.sem.Nop.html#step_nop:1"><span class="id" title="inductive">step_nop</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpNoOp"><span class="id" title="constructor">OpNoOp</span></a> <a class="idref" href="EraVM.sem.Nop.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Nop.html#s:3"><span class="id" title="variable">s</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.Nop.html#NoOpDefinition"><span class="id" title="section">NoOpDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

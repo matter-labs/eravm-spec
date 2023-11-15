@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Pointer</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Pointer</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.memory.Pages.html#"><span class="id" title="library">memory.Pages</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#"><span class="id" title="library">memory.PageTypes</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="module">Arith</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="module">MemoryBase</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#"><span class="id" title="module">PageTypes</span></a> <a class="idref" href="EraVM.memory.Pages.html#"><span class="id" title="module">Pages</span></a> <span class="id" title="module">RecordSetNotations</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#"><span class="id" title="module">BinInt</span></a> <span class="id" title="module">zmodp</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">ssreflect.eqtype</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="PointerDefinitions" class="idref" href="#PointerDefinitions"><span class="id" title="section">PointerDefinitions</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="bytes_in_word:1" class="idref" href="#bytes_in_word:1"><span class="id" title="binder">bytes_in_word</span></a> := <a class="idref" href="EraVM.Types.html#u32_of"><span class="id" title="definition">u32_of</span></a> <a class="idref" href="EraVM.Core.html#z_bytes_in_word"><span class="id" title="definition">z_bytes_in_word</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+</div>
+
+<div class="doc"><p>This library describes concepts related to <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span>s: spans, heap
+pointers, and fat pointers.</p>
+<h1 id="span">Span</h1>
+<p>A <strong>span</strong> is a range of addresses from <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#s_start"><span
+class="id" title="projection">s_start</span></a></span> inclusive to
+<span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#s_start"><span
+class="id" title="projection">s_start</span></a></span> <span
+class="inlinecode">+</span> <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#s_length"><span
+class="id" title="projection">s_length</span></a></span> exclusive. It
+is not bound to a specific page.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="span" class="idref" href="#span"><span class="id" title="record">span</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_span</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="s_start" class="idref" href="#s_start"><span class="id" title="projection">s_start</span></a> : <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="s_length" class="idref" href="#s_length"><span class="id" title="projection">s_length</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="span_empty" class="idref" href="#span_empty"><span class="id" title="definition">span_empty</span></a> := <a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="span_limit" class="idref" href="#span_limit"><span class="id" title="inductive">span_limit</span></a>: <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="sl_apply" class="idref" href="#sl_apply"><span class="id" title="constructor">sl_apply</span></a>:<span class="id" title="keyword">∀</span> <a id="start:7" class="idref" href="#start:7"><span class="id" title="binder">start</span></a> <a id="length:8" class="idref" href="#length:8"><span class="id" title="binder">length</span></a> <a id="limit:9" class="idref" href="#limit:9"><span class="id" title="binder">limit</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#limit:9"><span class="id" title="variable">limit</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Pointer.html#start:7"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#length:8"><span class="id" title="variable">length</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#span_limit:5"><span class="id" title="inductive">span_limit</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:7"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:8"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#limit:9"><span class="id" title="variable">limit</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="bound_of_span" class="idref" href="#bound_of_span"><span class="id" title="inductive">bound_of_span</span></a> : <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span class="id" title="inductive">data_page_type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#page_bound"><span class="id" title="definition">page_bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="qos_apply" class="idref" href="#qos_apply"><span class="id" title="constructor">qos_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="s:12" class="idref" href="#s:12"><span class="id" title="binder">s</span></a> <a id="limit:13" class="idref" href="#limit:13"><span class="id" title="binder">limit</span></a> <a id="hv:14" class="idref" href="#hv:14"><span class="id" title="binder">hv</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#span_limit"><span class="id" title="inductive">span_limit</span></a> <a class="idref" href="EraVM.Pointer.html#s:12"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.Pointer.html#limit:13"><span class="id" title="variable">limit</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#bound_of_span:10"><span class="id" title="inductive">bound_of_span</span></a> <a class="idref" href="EraVM.Pointer.html#s:12"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.Pointer.html#hv:14"><span class="id" title="variable">hv</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Pointer.html#hv:14"><span class="id" title="variable">hv</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#limit:13"><span class="id" title="variable">limit</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+</div>
+
+<div class="doc"><h2 id="usage">Usage</h2>
+<p>Passing a span in <span class="inlinecode"><span class="id"
+title="var">ForwardNewHeapPointer</span></span> as an argument to far
+calls or far returns creates a <strong>fat pointer</strong>. The
+required encoding is described by <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarRetABI.html#FarRetABI"><span
+class="id" title="section">FarRetABI</span></a></span> or <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#FarCallABI"><span
+class="id" title="section">FarCallABI</span></a></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#FarCallDefinitions"><span
+class="id" title="section">FarCallDefinitions</span></a></span> and
+<span class="inlinecode"><span class="id"
+title="library">FarRet</span></span>.</p>
+<p>See also: <span
+class="inlinecode"><a class="idref" href="EraVM.Slice.html#Slices"><span
+class="id" title="section">Slices</span></a></span>.</p>
+<p>In EraVM, heap variants have a bound, stored in call stack frames
+(see <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryContext.html#ctx_heap_bound"><span
+class="id" title="projection">ctx_heap_bound</span></a></span> of <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_mem_ctx"><span
+class="id" title="projection">ecf_mem_ctx</span></a></span>). If memory
+is accessed beyond this bound, the bound is adjusted and the growth
+(difference between bounds) is paid in ergs. Definition <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span_induced_growth"><span
+class="id" title="inductive">span_induced_growth</span></a></span>
+computes how many bytes should the user pay for.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="span_induced_growth" class="idref" href="#span_induced_growth"><span class="id" title="inductive">span_induced_growth</span></a>: <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="gb_bytes" class="idref" href="#gb_bytes"><span class="id" title="constructor">gb_bytes</span></a>: <span class="id" title="keyword">∀</span> <a id="start:17" class="idref" href="#start:17"><span class="id" title="binder">start</span></a> <a id="length:18" class="idref" href="#length:18"><span class="id" title="binder">length</span></a> <a id="query_bound:19" class="idref" href="#query_bound:19"><span class="id" title="binder">query_bound</span></a> <a id="current_bound:20" class="idref" href="#current_bound:20"><span class="id" title="binder">current_bound</span></a> <a id="diff:21" class="idref" href="#diff:21"><span class="id" title="binder">diff</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#start:17"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#length:18"><span class="id" title="variable">length</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.Pointer.html#query_bound:19"><span class="id" title="variable">query_bound</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#diff:21"><span class="id" title="variable">diff</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#growth"><span class="id" title="definition">growth</span></a> <a class="idref" href="EraVM.Pointer.html#current_bound:20"><span class="id" title="variable">current_bound</span></a> <a class="idref" href="EraVM.Pointer.html#query_bound:19"><span class="id" title="variable">query_bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#span_induced_growth:15"><span class="id" title="inductive">span_induced_growth</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:17"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:18"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#current_bound:20"><span class="id" title="variable">current_bound</span></a> <a class="idref" href="EraVM.Pointer.html#diff:21"><span class="id" title="variable">diff</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="PointerDefinitions.HeapPointer" class="idref" href="#PointerDefinitions.HeapPointer"><span class="id" title="section">HeapPointer</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="heap-pointer">Heap pointer</h1>
+<p>A <strong>heap pointer</strong> is an absolute address <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#hp_addr"><span
+class="id" title="projection">hp_addr</span></a></span> on some data
+page. Heap pointers are used in instructions:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="heap_ptr" class="idref" href="#heap_ptr"><span class="id" title="record">heap_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_hptr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="hp_addr" class="idref" href="#hp_addr"><span class="id" title="projection">hp_addr</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="heap_ptr_empty" class="idref" href="#heap_ptr_empty"><span class="id" title="definition">heap_ptr_empty</span></a> : <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> := <a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="hp_resolves_to" class="idref" href="#hp_resolves_to"><span class="id" title="inductive">hp_resolves_to</span></a> : <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="tpr_apply" class="idref" href="#tpr_apply"><span class="id" title="constructor">tpr_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="addr:26" class="idref" href="#addr:26"><span class="id" title="binder">addr</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#hp_resolves_to:24"><span class="id" title="inductive">hp_resolves_to</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.Pointer.html#addr:26"><span class="id" title="variable">addr</span></a>) <a class="idref" href="EraVM.Pointer.html#addr:26"><span class="id" title="variable">addr</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Incrementing a heap pointer with <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#hp_inc"><span
+class="id" title="inductive">hp_inc</span></a></span> increases its
+offset by 32, the size of a word in bytes. This is used by instructions
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="hp_inc" class="idref" href="#hp_inc"><span class="id" title="inductive">hp_inc</span></a> : <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|<a id="fpi_apply" class="idref" href="#fpi_apply"><span class="id" title="constructor">fpi_apply</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="ofs:29" class="idref" href="#ofs:29"><span class="id" title="binder">ofs</span></a> <a id="ofs':30" class="idref" href="#ofs':30"><span class="id" title="binder">ofs'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ofs:29"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.bytes_in_word"><span class="id" title="variable">bytes_in_word</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.Pointer.html#ofs':30"><span class="id" title="variable">ofs'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#hp_inc:27"><span class="id" title="inductive">hp_inc</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.Pointer.html#ofs:29"><span class="id" title="variable">ofs</span></a>) (<a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.Pointer.html#ofs':30"><span class="id" title="variable">ofs'</span></a> ).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="hp_inc_OF" class="idref" href="#hp_inc_OF"><span class="id" title="definition">hp_inc_OF</span></a> (<a id="hp:31" class="idref" href="#hp:31"><span class="id" title="binder">hp</span></a>: <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Pointer.html#hp:31"><span class="id" title="variable">hp</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <span class="id" title="var">ofs</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">ofs</span> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.bytes_in_word"><span class="id" title="variable">bytes_in_word</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ofs'</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <span class="id" title="var">ofs'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+
+<div class="doc"><h2 id="usage">Usage</h2>
+<p>Heap pointers are used by the following instructions:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span></li>
+</ul>
+<p>The layout of a heap pointer in a 256-bit word is described by <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.FatPointerABI.html#decode_heap_ptr"><span
+class="id" title="definition">decode_heap_ptr</span></a></span>.</p>
+<h2 id="relation-to-fat-pointers">Relation to fat pointers</h2>
+<p>Heap pointers are bearing a similarity to fat pointers. They can be
+thought about as fat pointers where:</p>
+<ul>
+<li>the span starts at 0;</li>
+<li>an offset is the address;</li>
+<li>length is the limit, and</li>
+<li>page ID is ignored.</li>
+</ul>
+<p>Heap pointers are not necessarily tagged and do not receive any
+special treatment from the VM’s side.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.HeapPointer"><span class="id" title="section">HeapPointer</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Definition <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#free_ptr"><span
+class="id" title="record">free_ptr</span></a></span> is auxiliary and is
+only used to facilitate the definition of <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="free_ptr" class="idref" href="#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_ptr</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="p_span" class="idref" href="#p_span"><span class="id" title="projection">p_span</span></a> :> <a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="p_offset" class="idref" href="#p_offset"><span class="id" title="projection">p_offset</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fresh_ptr" class="idref" href="#fresh_ptr"><span class="id" title="definition">fresh_ptr</span></a> (<a id="s:36" class="idref" href="#s:36"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.Pointer.html#span"><span class="id" title="record">span</span></a>) : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <a class="idref" href="EraVM.Pointer.html#s:36"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="validate_in_bounds" class="idref" href="#validate_in_bounds"><span class="id" title="definition">validate_in_bounds</span></a> (<a id="p:37" class="idref" href="#p:37"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=  <a class="idref" href="EraVM.Pointer.html#p:37"><span class="id" title="variable">p</span></a>.(<a class="idref" href="EraVM.Pointer.html#p_offset"><span class="id" title="projection">p_offset</span></a>) <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'<'_x"><span class="id" title="notation"><</span></a> <a class="idref" href="EraVM.Pointer.html#p:37"><span class="id" title="variable">p</span></a>.(<a class="idref" href="EraVM.Pointer.html#s_length"><span class="id" title="projection">s_length</span></a>) .<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="ptr_resolves_to" class="idref" href="#ptr_resolves_to"><span class="id" title="inductive">ptr_resolves_to</span></a> : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="upr_apply" class="idref" href="#upr_apply"><span class="id" title="constructor">upr_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="addr:40" class="idref" href="#addr:40"><span class="id" title="binder">addr</span></a> <a id="start:41" class="idref" href="#start:41"><span class="id" title="binder">start</span></a> <a id="ofs:42" class="idref" href="#ofs:42"><span class="id" title="binder">ofs</span></a> <a id="length:43" class="idref" href="#length:43"><span class="id" title="binder">length</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Pointer.html#ofs:42"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'<'_x"><span class="id" title="notation"><</span></a> <a class="idref" href="EraVM.Pointer.html#length:43"><span class="id" title="variable">length</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#addr:40"><span class="id" title="variable">addr</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Pointer.html#start:41"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#ofs:42"><span class="id" title="variable">ofs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ptr_resolves_to:38"><span class="id" title="inductive">ptr_resolves_to</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:41"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:43"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#ofs:42"><span class="id" title="variable">ofs</span></a>) <a class="idref" href="EraVM.Pointer.html#addr:40"><span class="id" title="variable">addr</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="word_upper_bound" class="idref" href="#word_upper_bound"><span class="id" title="inductive">word_upper_bound</span></a> : <a class="idref" href="EraVM.Pointer.html#heap_ptr"><span class="id" title="record">heap_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="qbu_apply" class="idref" href="#qbu_apply"><span class="id" title="constructor">qbu_apply</span></a> : <span class="id" title="keyword">∀</span> <a id="start:46" class="idref" href="#start:46"><span class="id" title="binder">start</span></a> <a id="upper_bound:47" class="idref" href="#upper_bound:47"><span class="id" title="binder">upper_bound</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="bytes_in_word:48" class="idref" href="#bytes_in_word:48"><span class="id" title="binder">bytes_in_word</span></a> := <span class="id" title="definition">fromNat</span> <a class="idref" href="EraVM.Core.html#bytes_in_word"><span class="id" title="definition">Core.bytes_in_word</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#start:46"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#bytes_in_word:48"><span class="id" title="variable">bytes_in_word</span></a>  <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><a class="idref" href="EraVM.Pointer.html#upper_bound:47"><span class="id" title="variable">upper_bound</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#word_upper_bound:44"><span class="id" title="inductive">word_upper_bound</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.Pointer.html#start:46"><span class="id" title="variable">start</span></a>) <a class="idref" href="EraVM.Pointer.html#upper_bound:47"><span class="id" title="variable">upper_bound</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="PointerDefinitions.FatPointer" class="idref" href="#PointerDefinitions.FatPointer"><span class="id" title="section">FatPointer</span></a>.<br/>
+</div>
+
+<div class="doc"><h1 id="fat-pointer">Fat pointer</h1>
+<p>A <strong>fat pointer</strong> defines an address inside a <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span"><span
+class="id" title="record">span</span></a></span> of a specific data
+memory page <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fp_page"><span
+class="id" title="projection">fp_page</span></a></span>. We may denote
+is as a 4-tuple: <span class="math inline">(\mathit{page, start, length,
+offset})</span>. These four components are enough to unambiguously
+identify a <strong><span class="inlinecode"><span class="id"
+title="var">slice</span></span></strong> of a data memory page.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="fat_ptr" class="idref" href="#fat_ptr"><span class="id" title="record">fat_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_fat_ptr</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="fp_page" class="idref" href="#fp_page"><span class="id" title="projection">fp_page</span></a>: <a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="fp_ptr" class="idref" href="#fp_ptr"><span class="id" title="projection">fp_ptr</span></a> :> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="usage">Usage</h2>
+<ul>
+<li><p>Fat pointers are used to pass read-only spans of <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span
+class="id" title="definition">data_page</span></a></span>s between
+contracts.</p></li>
+<li><p>Fat pointers are created from spans by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span> or
+through <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span
+class="id" title="constructor">OpFarRevert</span></a></span>.</p>
+<ul>
+<li>Far calls accept a serialized instance of <span
+class="inlinecode"><span class="id"
+title="var">FarCall.params</span></span> in a register. If it contains a
+span in <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span
+class="id" title="inductive">fwd_memory</span></a></span>, then when the
+contract starts executing, <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r1"><span
+class="id" title="projection">r1</span></a></span> is assigned the fat
+pointer obtained from the slice.</li>
+<li>Far returns accept a serialized instance of <span
+class="inlinecode"><span class="id"
+title="var">FarRet.fwd_memory</span></span> in a register. If it
+contains a span in <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span
+class="id" title="inductive">fwd_memory</span></a></span>, then after
+return <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r1"><span
+class="id" title="projection">r1</span></a></span> is assigned the fat
+pointer obtained from the slice.</li>
+</ul></li>
+<li><p>An existing fat pointer is passed by using <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#FarCallForwardPageType.ForwardFatPointer"><span
+class="id"
+title="definition">ForwardFatPointer</span></a></span>.</p></li>
+</ul>
+<p>Pointers may be created only by far calls (<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>) or far
+returns (<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span
+class="id" title="constructor">OpFarRevert</span></a></span>).</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="validation_exception" class="idref" href="#validation_exception"><span class="id" title="record">validation_exception</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_ptr_validation_exception</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ptr_deref_beyond_heap_range" class="idref" href="#ptr_deref_beyond_heap_range"><span class="id" title="projection">ptr_deref_beyond_heap_range</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="ptr_bad_span" class="idref" href="#ptr_bad_span"><span class="id" title="projection">ptr_bad_span</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="no_exceptions" class="idref" href="#no_exceptions"><span class="id" title="definition">no_exceptions</span></a> : <a class="idref" href="EraVM.Pointer.html#validation_exception"><span class="id" title="record">validation_exception</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="EraVM.Pointer.html#mk_ptr_validation_exception"><span class="id" title="constructor">mk_ptr_validation_exception</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="fat_ptr_nullable" class="idref" href="#fat_ptr_nullable"><span class="id" title="inductive">fat_ptr_nullable</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="NullPtr" class="idref" href="#NullPtr"><span class="id" title="constructor">NullPtr</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="NotNullPtr" class="idref" href="#NotNullPtr"><span class="id" title="constructor">NotNullPtr</span></a> (<a id="ptr:66" class="idref" href="#ptr:66"><span class="id" title="binder">ptr</span></a>: <a class="idref" href="EraVM.Pointer.html#fat_ptr"><span class="id" title="record">fat_ptr</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>A fat pointer <span class="math inline">(\mathit{page},
+\mathit{start}, \mathit{length}, \mathit{offset})</span> is
+<strong>invalid</strong> if:</p>
+<ul>
+<li><span class="math inline">\mathit{start}+\mathit{length} \geq
+2^{256}</span>, or</li>
+<li><span class="math inline">\mathit{offset} &gt;
+\mathit{length}</span>.</li>
+</ul>
+<p>If <span class="math inline">\mathit{offset} =
+\mathit{length}</span>, the span of the pointer is empty, but it is
+still valid.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">ssrbool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="validate" class="idref" href="#validate"><span class="id" title="definition">validate</span></a> (<a id="p:67" class="idref" href="#p:67"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>) : <a class="idref" href="EraVM.Pointer.html#validation_exception"><span class="id" title="record">validation_exception</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Pointer.html#p:67"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="var">start</span> <span class="id" title="var">len</span>) <span class="id" title="var">ofs</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ptr_deref_beyond_heap_range"><span class="id" title="projection">ptr_deref_beyond_heap_range</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> (<span class="id" title="var">start</span> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <span class="id" title="var">len</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ptr_bad_span"><span class="id" title="projection">ptr_bad_span</span></a> := <span class="id" title="var">ofs</span> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'>'_x"><span class="id" title="notation">></span></a> <span class="id" title="var">len</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="is_trivial" class="idref" href="#is_trivial"><span class="id" title="definition">is_trivial</span></a> (<a id="p:69" class="idref" href="#p:69"><span class="id" title="binder">p</span></a>:<a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>) := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Pointer.html#p:69"><span class="id" title="variable">p</span></a>.(<a class="idref" href="EraVM.Pointer.html#s_length"><span class="id" title="projection">s_length</span></a>) <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">&&</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.Pointer.html#p:69"><span class="id" title="variable">p</span></a>.(<a class="idref" href="EraVM.Pointer.html#p_offset"><span class="id" title="projection">p_offset</span></a>) <span class="id" title="notation">==</span> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#::bool_scope:x_'&&'_x"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p><strong>Narrowing a fat pointer</strong> moves its <span
+class="math inline">\mathit{start}</span> to where <span
+class="math inline">\mathit{start} + \mathit{offset}</span> was, and
+sets <span class="math inline">\mathit{offset}</span> to zero:</p>
+<p><span class="math inline">(\mathit{page}, \mathit{start},
+\mathit{length}, \mathit{offset}) \mapsto (\mathit{page},
+\mathit{start}+\mathit{offset}, \mathit{length}-\mathit{offset},
+0)</span></p>
+<p><img src="img/ptr-narrowing.svg" /></p>
+<p>A fat pointer is automatically narrowed in two situations:</p>
+<ul>
+<li>by far calls with forwarding mode <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#FarCallForwardPageType.ForwardFatPointer"><span
+class="id" title="definition">ForwardFatPointer</span></a></span>;</li>
+<li>by returns from far calls with forwarding mode <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#FarCallForwardPageType.ForwardFatPointer"><span
+class="id" title="definition">ForwardFatPointer</span></a></span>.</li>
+</ul>
+<p><strong>Attention</strong>: <strong>shrinking</strong> and
+<strong>narrowing</strong> far pointers are different. See <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_shrink"><span
+class="id" title="definition">fat_ptr_shrink</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_narrow"><span
+class="id" title="definition">fat_ptr_narrow</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="free_ptr_narrow" class="idref" href="#free_ptr_narrow"><span class="id" title="inductive">free_ptr_narrow</span></a>: <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="tps_narrow" class="idref" href="#tps_narrow"><span class="id" title="constructor">tps_narrow</span></a>: <span class="id" title="keyword">∀</span> <a id="start:72" class="idref" href="#start:72"><span class="id" title="binder">start</span></a> <a id="start':73" class="idref" href="#start':73"><span class="id" title="binder">start'</span></a> <a id="length:74" class="idref" href="#length:74"><span class="id" title="binder">length</span></a> <a id="length':75" class="idref" href="#length':75"><span class="id" title="binder">length'</span></a> <a id="ofs:76" class="idref" href="#ofs:76"><span class="id" title="binder">ofs</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#validate"><span class="id" title="definition">validate</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:72"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:74"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#ofs:76"><span class="id" title="variable">ofs</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Pointer.html#no_exceptions"><span class="id" title="definition">no_exceptions</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#start:72"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#ofs:76"><span class="id" title="variable">ofs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#start':73"><span class="id" title="variable">start'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#length:74"><span class="id" title="variable">length</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Pointer.html#ofs:76"><span class="id" title="variable">ofs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#length':75"><span class="id" title="variable">length'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#free_ptr_narrow:70"><span class="id" title="inductive">free_ptr_narrow</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:72"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:74"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#ofs:76"><span class="id" title="variable">ofs</span></a>) (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start':73"><span class="id" title="variable">start'</span></a> <a class="idref" href="EraVM.Pointer.html#length':75"><span class="id" title="variable">length'</span></a>) <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_narrow" class="idref" href="#fat_ptr_narrow"><span class="id" title="definition">fat_ptr_narrow</span></a> := <a class="idref" href="EraVM.Pointer.html#fat_ptr_liftP"><span class="id" title="inductive">fat_ptr_liftP</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr_narrow"><span class="id" title="inductive">free_ptr_narrow</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p><strong>Shrinking a fat pointer</strong> with <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_shrink"><span
+class="id" title="definition">fat_ptr_shrink</span></a></span> subtracts
+a given number <span class="inlinecode"><span class="id"
+title="var">diff</span></span> from its length; it is guaranteed to not
+overflow.</p>
+<p>Shrinking may result in a pointer with <span
+class="math inline">\mathit{offset}&gt;\mathit{length}</span>, but such
+pointer will not resolve to a memory location.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="free_ptr_shrink" class="idref" href="#free_ptr_shrink"><span class="id" title="inductive">free_ptr_shrink</span></a> (<a id="diff:77" class="idref" href="#diff:77"><span class="id" title="binder">diff</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>) : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a id="tptl_apply" class="idref" href="#tptl_apply"><span class="id" title="constructor">tptl_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="start:80" class="idref" href="#start:80"><span class="id" title="binder">start</span></a> <a id="ofs:81" class="idref" href="#ofs:81"><span class="id" title="binder">ofs</span></a> <a id="length:82" class="idref" href="#length:82"><span class="id" title="binder">length</span></a> <a id="length':83" class="idref" href="#length':83"><span class="id" title="binder">length'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#length:82"><span class="id" title="variable">length</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Pointer.html#diff:77"><span class="id" title="variable">diff</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#length':83"><span class="id" title="variable">length'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#free_ptr_shrink:78"><span class="id" title="inductive">free_ptr_shrink</span></a> <a class="idref" href="EraVM.Pointer.html#diff:77"><span class="id" title="variable">diff</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:80"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length:82"><span class="id" title="variable">length</span></a>) <a class="idref" href="EraVM.Pointer.html#ofs:81"><span class="id" title="variable">ofs</span></a>) (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <a class="idref" href="EraVM.Pointer.html#start:80"><span class="id" title="variable">start</span></a> <a class="idref" href="EraVM.Pointer.html#length':83"><span class="id" title="variable">length'</span></a>) <a class="idref" href="EraVM.Pointer.html#ofs:81"><span class="id" title="variable">ofs</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="free_ptr_shrink_OF" class="idref" href="#free_ptr_shrink_OF"><span class="id" title="definition">free_ptr_shrink_OF</span></a> (<a id="diff:84" class="idref" href="#diff:84"><span class="id" title="binder">diff</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>) : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="fp:85" class="idref" href="#fp:85"><span class="id" title="binder">fp</span></a> ⇒ <span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Pointer.html#fp:85"><span class="id" title="variable">fp</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="var">start</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#length"><span class="id" title="definition">length</span></a>) <a class="idref" href="EraVM.Pointer.html#p_offset"><span class="id" title="projection">p_offset</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">length</span> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Pointer.html#diff:84"><span class="id" title="variable">diff</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">length'</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_span"><span class="id" title="constructor">mk_span</span></a> <span class="id" title="var">start</span> <span class="id" title="var">length'</span>) <span class="id" title="var">p_offset</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_shrink" class="idref" href="#fat_ptr_shrink"><span class="id" title="definition">fat_ptr_shrink</span></a> <a id="diff:87" class="idref" href="#diff:87"><span class="id" title="binder">diff</span></a> := <a class="idref" href="EraVM.Pointer.html#fat_ptr_liftP"><span class="id" title="inductive">fat_ptr_liftP</span></a> (<a class="idref" href="EraVM.Pointer.html#free_ptr_shrink"><span class="id" title="inductive">free_ptr_shrink</span></a> <a class="idref" href="EraVM.Pointer.html#diff:87"><span class="id" title="variable">diff</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_shrink_OF" class="idref" href="#fat_ptr_shrink_OF"><span class="id" title="definition">fat_ptr_shrink_OF</span></a> <a id="diff:88" class="idref" href="#diff:88"><span class="id" title="binder">diff</span></a> := <a class="idref" href="EraVM.Pointer.html#fat_ptr_opt_map"><span class="id" title="definition">fat_ptr_opt_map</span></a> (<a class="idref" href="EraVM.Pointer.html#free_ptr_shrink_OF"><span class="id" title="definition">free_ptr_shrink_OF</span></a> <a class="idref" href="EraVM.Pointer.html#diff:88"><span class="id" title="variable">diff</span></a>).<br/>
+</div>
+
+<div class="doc"><p>Incrementing a fat pointer with <span class="inlinecode"><span
+class="id" title="var">fp_inc</span></span> increases its offset by 32,
+the size of a word in bytes. This is used by the instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ptr_inc_OF" class="idref" href="#ptr_inc_OF"><span class="id" title="definition">ptr_inc_OF</span></a> (<a id="p:89" class="idref" href="#p:89"><span class="id" title="binder">p</span></a>: <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Pointer.html#p:89"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <span class="id" title="var">s</span> <span class="id" title="var">ofs</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">ofs</span> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.bytes_in_word"><span class="id" title="variable">bytes_in_word</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ofs'</span><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <span class="id" title="var">s</span> <span class="id" title="var">ofs'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="ptr_inc" class="idref" href="#ptr_inc"><span class="id" title="inductive">ptr_inc</span></a> : <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Pointer.html#free_ptr"><span class="id" title="record">free_ptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|<a id="fpf_apply" class="idref" href="#fpf_apply"><span class="id" title="constructor">fpf_apply</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="ofs:93" class="idref" href="#ofs:93"><span class="id" title="binder">ofs</span></a> <a id="ofs':94" class="idref" href="#ofs':94"><span class="id" title="binder">ofs'</span></a> <a id="s:95" class="idref" href="#s:95"><span class="id" title="binder">s</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ofs:93"><span class="id" title="variable">ofs</span></a> <a class="idref" href="EraVM.Arith.html#7d9ad0405e299fff5d06f96450066fc0"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.bytes_in_word"><span class="id" title="variable">bytes_in_word</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#ofs':94"><span class="id" title="variable">ofs'</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#ptr_inc:91"><span class="id" title="inductive">ptr_inc</span></a> (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <a class="idref" href="EraVM.Pointer.html#s:95"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.Pointer.html#ofs:93"><span class="id" title="variable">ofs</span></a>) (<a class="idref" href="EraVM.Pointer.html#mk_ptr"><span class="id" title="constructor">mk_ptr</span></a> <a class="idref" href="EraVM.Pointer.html#s:95"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.Pointer.html#ofs':94"><span class="id" title="variable">ofs'</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_inc" class="idref" href="#fat_ptr_inc"><span class="id" title="definition">fat_ptr_inc</span></a> := <a class="idref" href="EraVM.Pointer.html#fat_ptr_liftP"><span class="id" title="inductive">fat_ptr_liftP</span></a> <a class="idref" href="EraVM.Pointer.html#ptr_inc"><span class="id" title="inductive">ptr_inc</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="fat_ptr_inc_OF" class="idref" href="#fat_ptr_inc_OF"><span class="id" title="definition">fat_ptr_inc_OF</span></a> := <a class="idref" href="EraVM.Pointer.html#fat_ptr_opt_map"><span class="id" title="definition">fat_ptr_opt_map</span></a> <a class="idref" href="EraVM.Pointer.html#ptr_inc_OF"><span class="id" title="definition">ptr_inc_OF</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions.FatPointer"><span class="id" title="section">FatPointer</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Pointer.html#PointerDefinitions"><span class="id" title="section">PointerDefinitions</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.Ergs</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.Ergs</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a> <a class="idref" href="EraVM.isa.Assembly.html#"><span class="id" title="library">isa.Assembly</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.isa.Assembly.html#"><span class="id" title="module">Assembly</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Ergs" class="idref" href="#Ergs"><span class="id" title="section">Ergs</span></a>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="ergs">Ergs</h1>
+<p><strong>Ergs</strong> is the resource spent on executing actions in
+EraVM.</p>
+<p>The most common action consuming ergs is executing an instruction.
+Instructions have a fixed <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#base_cost"><span
+class="id" title="definition">base_cost</span></a></span>, failure to
+pay this cost results in panic.</p>
+<p>In EraVM, the instructions are <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#predicated"><span
+class="id" title="record">predicated</span></a></span>. If an
+instruction is not executed because of mismatch between their predicate
+<span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#ins_cond"><span
+class="id" title="projection">ins_cond</span></a></span> with the
+current <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_flags"><span
+class="id" title="projection">gs_flags</span></a></span>, its base cost
+is still paid. Therefore, it is cheaper to jump over expensive
+instructions like <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span> than to
+predicate them so that they are not executed.</p>
+<p>Additionally, actions like decommitting code for execution, accessing
+contract storage, or growing memory bounds, also cost ergs.</p>
+<p>Internally, ergs are 32-bit unsigned numbers.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="ergs_bits" class="idref" href="#ergs_bits"><span class="id" title="definition">ergs_bits</span></a> := 32%<span class="id" title="var">nat</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="ergs" class="idref" href="#ergs"><span class="id" title="definition">ergs</span></a> := <span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.Ergs.html#ergs_bits"><span class="id" title="definition">ergs_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="ergs_of" class="idref" href="#ergs_of"><span class="id" title="definition">ergs_of</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a> := <span class="id" title="definition">fromZ</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="ergs-and-callstack">Ergs and callstack</h2>
+<p>Every frame in <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack"><span
+class="id" title="inductive">callstack</span></a></span>, whether
+external or internal, keeps its associated ergs in the field <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_ergs_remaining"><span
+class="id" title="projection">cf_ergs_remaining</span></a></span>.
+Spending ergs decreases this value <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_ergs_remaining"><span
+class="id" title="projection">cf_ergs_remaining</span></a></span>.</p>
+<h3 id="calls">Calls</h3>
+<p>Calling functions/contracts requires passing ergs to the new calling
+frame, so that the callee’s code would be able to operate and spend ergs
+(see e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#step_nearcall"><span
+class="id" title="inductive">step_nearcall</span></a></span>).</p>
+<p>For far calls, it is not possible to pass more than <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#max_passable"><span
+class="id" title="definition">max_passable</span></a></span> ergs
+(currently 63/64 of ergs available in current frame). For near calls,
+passing 0 ergs leads to passing all ergs in the current frame.</p>
+<h3 id="returns">Returns</h3>
+<p>If a function returns without panic, the remaining ergs are returned
+to its parent frame i.e. added to the parent frame’s <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_ergs_remaining"><span
+class="id" title="projection">cf_ergs_remaining</span></a></span>.</p>
+<p>If a function panics, all its ergs are burned (see <span
+class="inlinecode"><span class="id"
+title="var">sem.Panic.step_panic</span></span>). Panic does not burn
+ergs of parent frames.</p>
+<p>The following return instructions lead to returning remaining ergs to
+the caller:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRet"><span
+class="id" title="constructor">OpNearRet</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevert"><span
+class="id" title="constructor">OpNearRevert</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span
+class="id" title="constructor">OpNearRevertTo</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span
+class="id" title="constructor">OpFarRevert</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span></li>
+</ul>
+<h2 id="actions-consuming-ergs">Actions consuming ergs</h2>
+<p>Each instruction has a fixed based cost that gets deducted before
+executing it (see <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#base_cost"><span
+class="id" title="definition">base_cost</span></a></span>).</p>
+<p>Additionally, the following actions lead to spending ergs:</p>
+<ol type="1">
+<li>Decommitting contract code. Performing far call to a contract which
+was not called during the construction of the current block costs ergs
+per each word of contract code. See <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#Decommitter"><span
+class="id" title="section">Decommitter</span></a></span>, <span
+class="inlinecode"><span class="id"
+title="var">FarCall</span></span>.</li>
+<li>TODO Accessing storage</li>
+<li>Memory growth. Data pages holding heap variants are bounded, and
+only accesses to addresses within these bounds are free. Reading or
+writing to these pages outside bounds forces the <strong>memory
+growth</strong> with bound adjustment. The number of bytes by which the
+bounded area has grown has to be paid; see <span
+class="inlinecode"><span class="id"
+title="var">grow_and_pay</span></span>.</li>
+<li>Passing messages to L1 by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
+class="id" title="constructor">OpToL1Message</span></a></span>.</li>
+</ol>
+<h2 id="burning-ergs">Burning ergs</h2>
+<p>Burning ergs refers to a situation of panic, when the topmost <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack"><span
+class="id" title="inductive">callstack</span></a></span> frame is
+destroyed with its allocated ergs. The general rule is: if some
+invariant of execution breaks, VM panics, burning all ergs in the
+current frame. This is a fail-fast behavior in case of irrecoverable
+errors. Some examples are:</p>
+<ul>
+<li>using an integer value where pointer value is expected</li>
+<li>executing kernel-only instruction in user mode</li>
+<li>call stack overflow</li>
+</ul>
+<p>Some situations that provoke panic are:</p>
+<ul>
+<li>having not enough ergs to pay, e.g. for memory growth;</li>
+<li>attempting to execute an instruction with an invalid encoding;</li>
+<li>attempting to execute kernel-only instruction in user mode.</li>
+</ul>
+<p>See section <span
+class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#Panics"><span
+class="id" title="section">Panics</span></a></span> for the full
+description.</p>
+<h2 id="parameters">Parameters</h2>
+<p>The following definitions are used to derive the costs of
+instructions and other actions.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="VM_CYCLE_COST_IN_ERGS" class="idref" href="#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 4.<br/>
+<span class="id" title="keyword">Definition</span> <a id="RAM_PERMUTATION_COST_IN_ERGS" class="idref" href="#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1.<br/>
+<span class="id" title="keyword">Definition</span> <a id="CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS" class="idref" href="#CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS"><span class="id" title="definition">CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 4.<br/>
+<span class="id" title="keyword">Definition</span> <a id="STORAGE_APPLICATION_COST_IN_ERGS" class="idref" href="#STORAGE_APPLICATION_COST_IN_ERGS"><span class="id" title="definition">STORAGE_APPLICATION_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 678.<br/>
+<span class="id" title="keyword">Definition</span> <a id="CODE_DECOMMITTER_SORTER_COST_IN_ERGS" class="idref" href="#CODE_DECOMMITTER_SORTER_COST_IN_ERGS"><span class="id" title="definition">CODE_DECOMMITTER_SORTER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1.<br/>
+<span class="id" title="keyword">Definition</span> <a id="LOG_DEMUXER_COST_IN_ERGS" class="idref" href="#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1.<br/>
+<span class="id" title="keyword">Definition</span> <a id="STORAGE_SORTER_COST_IN_ERGS" class="idref" href="#STORAGE_SORTER_COST_IN_ERGS"><span class="id" title="definition">STORAGE_SORTER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 2.<br/>
+<span class="id" title="keyword">Definition</span> <a id="EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS" class="idref" href="#EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS"><span class="id" title="definition">EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1.<br/>
+<span class="id" title="keyword">Definition</span> <a id="INITIAL_WRITES_PUBDATA_HASHER_COST_IN_ERGS" class="idref" href="#INITIAL_WRITES_PUBDATA_HASHER_COST_IN_ERGS"><span class="id" title="definition">INITIAL_WRITES_PUBDATA_HASHER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 18.<br/>
+<span class="id" title="keyword">Definition</span> <a id="REPEATED_WRITES_PUBDATA_HASHER_COST_IN_ERGS" class="idref" href="#REPEATED_WRITES_PUBDATA_HASHER_COST_IN_ERGS"><span class="id" title="definition">REPEATED_WRITES_PUBDATA_HASHER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 11.<br/>
+<span class="id" title="keyword">Definition</span> <a id="CODE_DECOMMITMENT_SORTER_COST_IN_ERGS" class="idref" href="#CODE_DECOMMITMENT_SORTER_COST_IN_ERGS"><span class="id" title="definition">CODE_DECOMMITMENT_SORTER_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="L1_MESSAGE_MIN_COST_IN_ERGS" class="idref" href="#L1_MESSAGE_MIN_COST_IN_ERGS"><span class="id" title="definition">L1_MESSAGE_MIN_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 156250.<br/>
+<span class="id" title="keyword">Definition</span> <a id="INITIAL_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS" class="idref" href="#INITIAL_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS"><span class="id" title="definition">INITIAL_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 0.<br/>
+<span class="id" title="keyword">Definition</span> <a id="REPEATED_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS" class="idref" href="#REPEATED_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS"><span class="id" title="definition">REPEATED_WRITES_PUBDATA_HASHER_MIN_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 0.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS" class="idref" href="#STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS"><span class="id" title="definition">STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 0.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="KECCAK256_CIRCUIT_COST_IN_ERGS" class="idref" href="#KECCAK256_CIRCUIT_COST_IN_ERGS"><span class="id" title="definition">KECCAK256_CIRCUIT_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 40.<br/>
+<span class="id" title="keyword">Definition</span> <a id="SHA256_CIRCUIT_COST_IN_ERGS" class="idref" href="#SHA256_CIRCUIT_COST_IN_ERGS"><span class="id" title="definition">SHA256_CIRCUIT_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 7.<br/>
+<span class="id" title="keyword">Definition</span> <a id="ECRECOVER_CIRCUIT_COST_IN_ERGS" class="idref" href="#ECRECOVER_CIRCUIT_COST_IN_ERGS"><span class="id" title="definition">ECRECOVER_CIRCUIT_COST_IN_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1112.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="INVALID_OPCODE_ERGS" class="idref" href="#INVALID_OPCODE_ERGS"><span class="id" title="definition">INVALID_OPCODE_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := <a class="idref" href="EraVM.Arith.html#unsigned_max"><span class="id" title="definition">unsigned_max</span></a> 32.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="RICH_ADDRESSING_OPCODE_ERGS" class="idref" href="#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><br/>
+&nbsp;&nbsp;:= <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="AVERAGE_OPCODE_ERGS" class="idref" href="#AVERAGE_OPCODE_ERGS"><span class="id" title="definition">AVERAGE_OPCODE_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><br/>
+&nbsp;&nbsp;:= <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="STORAGE_READ_IO_PRICE" class="idref" href="#STORAGE_READ_IO_PRICE"><span class="id" title="definition">STORAGE_READ_IO_PRICE</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 150.<br/>
+<span class="id" title="keyword">Definition</span> <a id="STORAGE_WRITE_IO_PRICE" class="idref" href="#STORAGE_WRITE_IO_PRICE"><span class="id" title="definition">STORAGE_WRITE_IO_PRICE</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 250.<br/>
+<span class="id" title="keyword">Definition</span> <a id="EVENT_IO_PRICE" class="idref" href="#EVENT_IO_PRICE"><span class="id" title="definition">EVENT_IO_PRICE</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 25.<br/>
+<span class="id" title="keyword">Definition</span> <a id="L1_MESSAGE_IO_PRICE" class="idref" href="#L1_MESSAGE_IO_PRICE"><span class="id" title="definition">L1_MESSAGE_IO_PRICE</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 100.<br/>
+<span class="id" title="keyword">Definition</span> <a id="CALL_LIKE_ERGS_COST" class="idref" href="#CALL_LIKE_ERGS_COST"><span class="id" title="definition">CALL_LIKE_ERGS_COST</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 20.<br/>
+<span class="id" title="keyword">Definition</span> <a id="ERGS_PER_CODE_WORD_DECOMMITTMENT" class="idref" href="#ERGS_PER_CODE_WORD_DECOMMITTMENT"><span class="id" title="definition">ERGS_PER_CODE_WORD_DECOMMITTMENT</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := <a class="idref" href="EraVM.Ergs.html#CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS"><span class="id" title="definition">CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD" class="idref" href="#DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD"><span class="id" title="definition">DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 64000.<br/>
+<span class="id" title="keyword">Definition</span> <a id="MSG_VALUE_SIMULATOR_ADDITIVE_COST" class="idref" href="#MSG_VALUE_SIMULATOR_ADDITIVE_COST"><span class="id" title="definition">MSG_VALUE_SIMULATOR_ADDITIVE_COST</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 11500 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD"><span class="id" title="definition">DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="MSG_VALUE_SIMULATOR_MIN_USED_ERGS" class="idref" href="#MSG_VALUE_SIMULATOR_MIN_USED_ERGS"><span class="id" title="definition">MSG_VALUE_SIMULATOR_MIN_USED_ERGS</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 8000 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD"><span class="id" title="definition">DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION" class="idref" href="#MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION"><span class="id" title="definition">MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.max"><span class="id" title="definition">Z.max</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.Ergs.html#MSG_VALUE_SIMULATOR_ADDITIVE_COST"><span class="id" title="definition">MSG_VALUE_SIMULATOR_ADDITIVE_COST</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#::Z_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.Ergs.html#MSG_VALUE_SIMULATOR_MIN_USED_ERGS"><span class="id" title="definition">MSG_VALUE_SIMULATOR_MIN_USED_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2300 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 1).<br/>
+<span class="id" title="keyword">Definition</span> <a id="MIN_STORAGE_WRITE_COST" class="idref" href="#MIN_STORAGE_WRITE_COST"><span class="id" title="definition">MIN_STORAGE_WRITE_COST</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.max"><span class="id" title="definition">Z.max</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Ergs.html#MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION"><span class="id" title="definition">MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Ergs.html#STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS"><span class="id" title="definition">STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="INITIAL_STORAGE_WRITE_PUBDATA_BYTES" class="idref" href="#INITIAL_STORAGE_WRITE_PUBDATA_BYTES"><span class="id" title="definition">INITIAL_STORAGE_WRITE_PUBDATA_BYTES</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 64.<br/>
+<span class="id" title="keyword">Definition</span> <a id="REPEATED_STORAGE_WRITE_PUBDATA_BYTES" class="idref" href="#REPEATED_STORAGE_WRITE_PUBDATA_BYTES"><span class="id" title="definition">REPEATED_STORAGE_WRITE_PUBDATA_BYTES</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 40.<br/>
+<span class="id" title="keyword">Definition</span> <a id="L1_MESSAGE_PUBDATA_BYTES" class="idref" href="#L1_MESSAGE_PUBDATA_BYTES"><span class="id" title="definition">L1_MESSAGE_PUBDATA_BYTES</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := (1 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 20 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 32 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 32).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="growth_cost" class="idref" href="#growth_cost"><span class="id" title="definition">growth_cost</span></a> (<a id="diff:1" class="idref" href="#diff:1"><span class="id" title="binder">diff</span></a>:<a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>) : <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a> := <a class="idref" href="EraVM.Ergs.html#diff:1"><span class="id" title="variable">diff</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Ergs.html#Ergs"><span class="id" title="section">Ergs</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Costs" class="idref" href="#Costs"><span class="id" title="section">Costs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+</div>
+
+<div class="doc"><h1 id="costs">Costs</h1>
+<p>Basic costs of all instructions. They are paid when the instruction
+starts executing; see <span class="inlinecode"><span class="id"
+title="var">Semantics.step</span></span>.</p>
+<p>Instructions may also impose additional costs e.g. far returns and
+far calls may grow heap; far calls also may induce code <span
+class="inlinecode"><a class="idref" href="EraVM.Decommitter.html#decommitment_cost"><span
+class="id" title="inductive">decommitment_cost</span></a></span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="base_cost" class="idref" href="#base_cost"><span class="id" title="definition">base_cost</span></a> (<a id="ins:2" class="idref" href="#ins:2"><span class="id" title="binder">ins</span></a>:<a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span class="id" title="inductive">asm_instruction</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.Ergs.html#ins:2"><span class="id" title="variable">ins</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpInvalid"><span class="id" title="constructor">OpInvalid</span></a> ⇒ <a class="idref" href="EraVM.Ergs.html#INVALID_OPCODE_ERGS"><span class="id" title="definition">INVALID_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span class="id" title="constructor">OpNoOp</span></a> | <a class="idref" href="EraVM.isa.Assembly.html#OpSpAdd"><span class="id" title="constructor">OpSpAdd</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> | <a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span class="id" title="constructor">OpSpSub</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span class="id" title="constructor">OpJump</span></a> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpAnd"><span class="id" title="constructor">OpAnd</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpOr"><span class="id" title="constructor">OpOr</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpXor"><span class="id" title="constructor">OpXor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpAdd"><span class="id" title="constructor">OpAdd</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpSub"><span class="id" title="constructor">OpSub</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpShl"><span class="id" title="constructor">OpShl</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpShr"><span class="id" title="constructor">OpShr</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpRol"><span class="id" title="constructor">OpRol</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpRor"><span class="id" title="constructor">OpRor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpMul"><span class="id" title="constructor">OpMul</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpDiv"><span class="id" title="constructor">OpDiv</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span class="id" title="constructor">OpNearCall</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#AVERAGE_OPCODE_ERGS"><span class="id" title="definition">AVERAGE_OPCODE_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#CALL_LIKE_ERGS_COST"><span class="id" title="definition">CALL_LIKE_ERGS_COST</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span class="id" title="constructor">OpFarCall</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span class="id" title="constructor">OpDelegateCall</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span class="id" title="constructor">OpMimicCall</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#STORAGE_READ_IO_PRICE"><span class="id" title="definition">STORAGE_READ_IO_PRICE</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#CALL_LIKE_ERGS_COST"><span class="id" title="definition">CALL_LIKE_ERGS_COST</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#STORAGE_SORTER_COST_IN_ERGS"><span class="id" title="definition">STORAGE_SORTER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#CODE_DECOMMITMENT_SORTER_COST_IN_ERGS"><span class="id" title="definition">CODE_DECOMMITMENT_SORTER_COST_IN_ERGS</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpNearRet"><span class="id" title="constructor">OpNearRet</span></a> | <a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span class="id" title="constructor">OpNearRetTo</span></a> <span class="id" title="var">_</span> | <a class="idref" href="EraVM.isa.Assembly.html#OpNearRevert"><span class="id" title="constructor">OpNearRevert</span></a> | <a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span class="id" title="constructor">OpNearRevertTo</span></a> <span class="id" title="var">_</span> | <a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span class="id" title="constructor">OpNearPanicTo</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> <span class="id" title="var">_</span> | <a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span class="id" title="constructor">OpFarRevert</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span class="id" title="constructor">OpPanic</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⇒ <a class="idref" href="EraVM.Ergs.html#AVERAGE_OPCODE_ERGS"><span class="id" title="definition">AVERAGE_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPtrAdd"><span class="id" title="constructor">OpPtrAdd</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPtrSub"><span class="id" title="constructor">OpPtrSub</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPtrShrink"><span class="id" title="constructor">OpPtrShrink</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPtrPack"><span class="id" title="constructor">OpPtrPack</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#RICH_ADDRESSING_OPCODE_ERGS"><span class="id" title="definition">RICH_ADDRESSING_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span class="id" title="constructor">OpStore</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span class="id" title="constructor">OpStoreInc</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⇒ 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 5 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span class="id" title="constructor">OpLoad</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span class="id" title="constructor">OpLoadInc</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span class="id" title="constructor">OpLoadPointer</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span class="id" title="constructor">OpLoadPointerInc</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⇒ <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 3 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextThis"><span class="id" title="constructor">OpContextThis</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextCaller"><span class="id" title="constructor">OpContextCaller</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextCodeAddress"><span class="id" title="constructor">OpContextCodeAddress</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextMeta"><span class="id" title="constructor">OpContextMeta</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextErgsLeft"><span class="id" title="constructor">OpContextErgsLeft</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextSp"><span class="id" title="constructor">OpContextSp</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextGetContextU128"><span class="id" title="constructor">OpContextGetContextU128</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextSetContextU128"><span class="id" title="constructor">OpContextSetContextU128</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextSetErgsPerPubdataByte"><span class="id" title="constructor">OpContextSetErgsPerPubdataByte</span></a> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span class="id" title="constructor">OpContextIncrementTxNumber</span></a> ⇒ <a class="idref" href="EraVM.Ergs.html#AVERAGE_OPCODE_ERGS"><span class="id" title="definition">AVERAGE_OPCODE_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpSLoad"><span class="id" title="constructor">OpSLoad</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>⇒ <a class="idref" href="EraVM.Ergs.html#STORAGE_READ_IO_PRICE"><span class="id" title="definition">STORAGE_READ_IO_PRICE</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#STORAGE_SORTER_COST_IN_ERGS"><span class="id" title="definition">STORAGE_SORTER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span class="id" title="constructor">OpSStore</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.max"><span class="id" title="definition">Z.max</span></a> <a class="idref" href="EraVM.Ergs.html#MIN_STORAGE_WRITE_COST"><span class="id" title="definition">MIN_STORAGE_WRITE_COST</span></a> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Ergs.html#STORAGE_WRITE_IO_PRICE"><span class="id" title="definition">STORAGE_WRITE_IO_PRICE</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#STORAGE_SORTER_COST_IN_ERGS"><span class="id" title="definition">STORAGE_SORTER_COST_IN_ERGS</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span class="id" title="constructor">OpToL1Message</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="intrinsic_cost:4" class="idref" href="#intrinsic_cost:4"><span class="id" title="binder">intrinsic_cost</span></a> := <a class="idref" href="EraVM.Ergs.html#L1_MESSAGE_IO_PRICE"><span class="id" title="definition">L1_MESSAGE_IO_PRICE</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS"><span class="id" title="definition">EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.max"><span class="id" title="definition">Z.max</span></a> <a class="idref" href="EraVM.Ergs.html#intrinsic_cost:4"><span class="id" title="variable">intrinsic_cost</span></a> <a class="idref" href="EraVM.Ergs.html#L1_MESSAGE_MIN_COST_IN_ERGS"><span class="id" title="definition">L1_MESSAGE_MIN_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span class="id" title="constructor">OpEvent</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="EraVM.Ergs.html#EVENT_IO_PRICE"><span class="id" title="definition">EVENT_IO_PRICE</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#d3ea1afb7d81263dc23c4eb0da2a3c4e"><span class="id" title="notation">×</span></a> <a class="idref" href="EraVM.Ergs.html#EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS"><span class="id" title="definition">EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span class="id" title="constructor">OpPrecompileCall</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Ergs.html#VM_CYCLE_COST_IN_ERGS"><span class="id" title="definition">VM_CYCLE_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#RAM_PERMUTATION_COST_IN_ERGS"><span class="id" title="definition">RAM_PERMUTATION_COST_IN_ERGS</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#46584eddd5fdb16176a10a2843177d3a"><span class="id" title="notation">+</span></a> <a class="idref" href="EraVM.Ergs.html#LOG_DEMUXER_COST_IN_ERGS"><span class="id" title="definition">LOG_DEMUXER_COST_IN_ERGS</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>)%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>Implementation note: Coq allows partially evaluating <span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#base_cost"><span
+class="id" title="definition">base_cost</span></a></span> to get the
+absolute erg costs for each instruction:</p>
+<pre><code>Compute base_costs.</code></pre>
+<p>Current costs are:</p>
+<pre><code>| Invalid =&gt; 4294967295
+| NearCall =&gt; 25
+| FarCall
+| MimicCall
+| DelegateCall =&gt; 182
+| Store
+| StoreInc =&gt; 13
+| Load
+| LoadInc
+| LoadPointer
+| LoadPointerInc =&gt; 7
+| NearRet
+| NearRetTo
+| FarRet
+| NearRevert
+| NearRevertTo
+| FarRevert
+| NearPanicTo
+| Panic
+| ContextThis
+| ContextCaller
+| ContextCodeAddress
+| ContextMeta
+| ContextErgsLeft
+| ContextSp
+| ContextGetContextU128
+| ContextSetContextU128
+| ContextSetErgsPerPubdataByte
+| ContextIncrementTxNumber =&gt; 5
+| SLoad =&gt; 158
+| SStore =&gt; 3501
+| ToL1Message =&gt; 156250
+| Event =&gt; 38
+| &lt;otherwise&gt; =&gt; 6</code></pre>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.Ergs.html#Costs"><span class="id" title="section">Costs</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

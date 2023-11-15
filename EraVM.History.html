@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.History</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.History</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="library">Common</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="History" class="idref" href="#History"><span class="id" title="section">History</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span> <span class="id" title="module">ssrbool</span> <span class="id" title="module">eqtype</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">seq</span>.<br/>
+</div>
+
+<div class="doc"><h1 id="history">History</h1>
+<p><strong>History</strong> is a data structure supporting appending
+elements of type <span class="inlinecode"><span class="id"
+title="var">T</span></span> to it.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>:<span class="id" title="abbreviation">eqType</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="history" class="idref" href="#history"><span class="id" title="definition">history</span></a> := <span class="id" title="abbreviation">seq</span> <a class="idref" href="EraVM.History.html#History.T"><span class="id" title="variable">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="l:2" class="idref" href="#l:2"><span class="id" title="binder">l</span></a>:<a class="idref" href="EraVM.History.html#history"><span class="id" title="definition">history</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p><span
+class="inlinecode"><a class="idref" href="EraVM.History.html#history"><span
+class="id" title="definition">history</span></a></span> supports
+checking if an element is contained in it.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="contains" class="idref" href="#contains"><span class="id" title="definition">contains</span></a> (<a id="elem:3" class="idref" href="#elem:3"><span class="id" title="binder">elem</span></a>:<a class="idref" href="EraVM.History.html#History.T"><span class="id" title="variable">T</span></a>): <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <span class="id" title="definition">has</span> (<span class="id" title="keyword">fun</span> <a id="e:4" class="idref" href="#e:4"><span class="id" title="binder">e</span></a> ⇒ <a class="idref" href="EraVM.History.html#e:4"><span class="id" title="variable">e</span></a> <span class="id" title="notation">==</span> <a class="idref" href="EraVM.History.html#elem:3"><span class="id" title="variable">elem</span></a>) <a class="idref" href="EraVM.History.html#History.l"><span class="id" title="variable">l</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.History.html#History"><span class="id" title="section">History</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

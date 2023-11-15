@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.memory.PageTypes</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.memory.PageTypes</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#"><span class="id" title="library">List</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="library">Core</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="library">MemoryBase</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="module">MemoryBase</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#"><span class="id" title="module">List</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Memory" class="idref" href="#Memory"><span class="id" title="section">Memory</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h3 id="data-pages">Data pages</h3>
+<p>A <strong>data page</strong> contains individually addressable bytes.
+Each data page holds <span class="math inline">2^{32}</span> bytes.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="data_page_params" class="idref" href="#data_page_params"><span class="id" title="definition">data_page_params</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#addressable_block"><span class="id" title="projection">addressable_block</span></a> := <a class="idref" href="EraVM.Types.html#u8"><span class="id" title="definition">u8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a> := 32;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#default_value"><span class="id" title="projection">default_value</span></a> := <a class="idref" href="EraVM.Types.html#zero8"><span class="id" title="definition">zero8</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#writable"><span class="id" title="projection">writable</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="mem_address" class="idref" href="#mem_address"><span class="id" title="definition">mem_address</span></a> := <a class="idref" href="EraVM.MemoryBase.html#address"><span class="id" title="definition">address</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page_params"><span class="id" title="definition">data_page_params</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="mem_address_zero" class="idref" href="#mem_address_zero"><span class="id" title="definition">mem_address_zero</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> := <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="mem_address_bits" class="idref" href="#mem_address_bits"><span class="id" title="definition">mem_address_bits</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#data_page_params"><span class="id" title="definition">data_page_params</span></a>.(<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="data_page" class="idref" href="#data_page"><span class="id" title="definition">data_page</span></a> := <a class="idref" href="EraVM.MemoryBase.html#mem_parameterized"><span class="id" title="record">mem_parameterized</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page_params"><span class="id" title="definition">data_page_params</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>There are currently two types of data pages:</p>
+<ul>
+<li><p><span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#Heap"><span
+class="id" title="constructor">Heap</span></a></span></p></li>
+<li><p><span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#AuxHeap"><span
+class="id" title="constructor">AuxHeap</span></a></span>.</p>
+<p>We call both of them <strong>heap variants</strong> for brevity, as
+in almost all cases they are handled in a similar way.</p></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="data_page_type" class="idref" href="#data_page_type"><span class="id" title="inductive">data_page_type</span></a> := <a id="Heap" class="idref" href="#Heap"><span class="id" title="constructor">Heap</span></a> | <a id="AuxHeap" class="idref" href="#AuxHeap"><span class="id" title="constructor">AuxHeap</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="page_bound" class="idref" href="#page_bound"><span class="id" title="definition">page_bound</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#prod"><span class="id" title="inductive">prod</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span class="id" title="inductive">data_page_type</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="growth" class="idref" href="#growth"><span class="id" title="definition">growth</span></a> (<a id="current_bound:3" class="idref" href="#current_bound:3"><span class="id" title="binder">current_bound</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>) (<a id="query_bound:4" class="idref" href="#query_bound:4"><span class="id" title="binder">query_bound</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="EraVM.memory.PageTypes.html#mem_address"><span class="id" title="definition">mem_address</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#query_bound:4"><span class="id" title="variable">query_bound</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'<'_x"><span class="id" title="notation"><</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#current_bound:3"><span class="id" title="variable">current_bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="EraVM.Types.html#zero32"><span class="id" title="definition">zero32</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> (<a class="idref" href="EraVM.memory.PageTypes.html#query_bound:4"><span class="id" title="variable">query_bound</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'-'_x"><span class="id" title="notation">-</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#current_bound:3"><span class="id" title="variable">current_bound</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.<br/>
+</div>
+
+<div class="doc"><p>Note: only selected few instructions can access data pages:</p>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>/<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span></li>
+</ul>
+<p>Every byte on data pages has an address, but these instructions read
+or store 32-byte words.</p>
+<hr />
+<p>Fat pointers <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> define slices of
+data pages and allow passing them between contracts.</p>
+<h3 id="stack-pages">Stack pages</h3>
+<p>A <strong>stack page</strong> contains <span
+class="math inline">2^{16}</span> primitive values (see <span
+class="inlinecode"><a class="idref" href="EraVM.PrimitiveValue.html#primitive_value"><span
+class="id" title="record">primitive_value</span></a></span>). Reminder:
+primitive values are tagged words.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="primitive_value:5" class="idref" href="#primitive_value:5"><span class="id" title="binder">primitive_value</span></a>: <span class="id" title="keyword">Type</span>} (<a id="pv0:6" class="idref" href="#pv0:6"><span class="id" title="binder">pv0</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#primitive_value:5"><span class="id" title="variable">primitive_value</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_page_params" class="idref" href="#stack_page_params"><span class="id" title="definition">stack_page_params</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#addressable_block"><span class="id" title="projection">addressable_block</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#Memory.primitive_value"><span class="id" title="variable">primitive_value</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a> := 16;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#default_value"><span class="id" title="projection">default_value</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#Memory.pv0"><span class="id" title="variable">pv0</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#writable"><span class="id" title="projection">writable</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_address" class="idref" href="#stack_address"><span class="id" title="definition">stack_address</span></a> := <a class="idref" href="EraVM.MemoryBase.html#address"><span class="id" title="definition">address</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#stack_page_params"><span class="id" title="definition">stack_page_params</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_address_bits" class="idref" href="#stack_address_bits"><span class="id" title="definition">stack_address_bits</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#stack_page_params"><span class="id" title="definition">stack_page_params</span></a>.(<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_address_zero" class="idref" href="#stack_address_zero"><span class="id" title="definition">stack_address_zero</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#stack_address"><span class="id" title="definition">stack_address</span></a> := <a class="idref" href="EraVM.Types.html#zero16"><span class="id" title="definition">zero16</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="stack_page" class="idref" href="#stack_page"><span class="id" title="definition">stack_page</span></a> := <a class="idref" href="EraVM.MemoryBase.html#mem_parameterized"><span class="id" title="record">mem_parameterized</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#stack_page_params"><span class="id" title="definition">stack_page_params</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h4 id="data-stack-in-eravm">Data stack in EraVM</h4>
+<p>There are two stacks in EraVM: call stack to support the execution of
+functions and contracts, and data stack to facilitate computations. This
+section details the data stack.</p>
+<p>At each moment of execution, one stack page is active; it is
+associated with the topmost of external frames, which belongs to the
+contract currently being executed. See <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#active_extframe"><span
+class="id" title="definition">active_extframe</span></a></span>, its
+field <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_mem_ctx"><span
+class="id" title="projection">ecf_mem_ctx</span></a></span> and subfield
+<span
+class="inlinecode"><a class="idref" href="EraVM.MemoryContext.html#ctx_stack_page_id"><span
+class="id" title="projection">ctx_stack_page_id</span></a></span>.</p>
+<p>Each contract instance has an independent stack on a separate page.
+Instead of zero, stack pointer on new stack pages start with a value
+<span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#INITIAL_SP_ON_FAR_CALL"><span
+class="id" title="definition">INITIAL_SP_ON_FAR_CALL</span></a></span>.
+Stack addresses in range [0; <span
+class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#INITIAL_SP_ON_FAR_CALL"><span
+class="id" title="definition">INITIAL_SP_ON_FAR_CALL</span></a></span>)
+can be used as a scratch space.</p>
+<p>Topmost frame of the callstack, whether internal or external,
+contains the stack pointer (SP) value <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#cf_sp"><span
+class="id" title="projection">cf_sp</span></a></span>; which points to
+the address after the topmost element of the stack. That means that the
+topmost element of the stack is located in word number <span
+class="math inline">(\mathit{SP}-1)</span> on the associated stack
+page.</p>
+<p>Data stack grows towards greater addresses. In other words, pushing
+to stack increases stack pointer value, and popping elements decreases
+stack pointer.</p>
+<h3 id="const-pages">Const pages</h3>
+<p>A <strong>const page</strong> contains <span
+class="math inline">2^{16}</span> non tagged <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
+class="id" title="definition">word</span></a></span>s. They are not
+writable.</p>
+<p>Implementation may put constants and code on the same pages. In this
+case, the bytes on the same virtual page can be addressed in two
+ways:</p>
+<ul>
+<li>For instructions <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearCall"><span
+class="id" title="constructor">OpNearCall</span></a></span>, the code
+addressing will be used: consecutive addresses correspond to 8-bytes
+instructions.</li>
+<li>For instructions like <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpAdd"><span
+class="id" title="constructor">OpAdd</span></a></span> with <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#CodeAddr"><span
+class="id" title="constructor">CodeAddr</span></a></span> addressing
+mode, the const data addressing will be used: consecutive addresses
+correspond to 32-bytes words.</li>
+</ul>
+<p>For example, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> <span
+class="inlinecode">0</span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> <span
+class="inlinecode">1</span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> <span
+class="inlinecode">2</span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpJump"><span
+class="id" title="constructor">OpJump</span></a></span> <span
+class="inlinecode">3</span> will refer to the first four instructions on
+the page; their binary representations, put together, can be fetched by
+addressing the const page’s 0-th word e.g. <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpAdd"><span
+class="id" title="constructor">OpAdd</span></a></span> <span
+class="inlinecode">(<a class="idref" href="EraVM.Addressing.html#CodeAddr"><span
+class="id" title="constructor">CodeAddr</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#R0"><span
+class="id" title="constructor">R0</span></a></span> <span
+class="inlinecode"><span class="id" title="var">zero_16</span></span>
+<span class="inlinecode">)</span> <span
+class="inlinecode">(<a class="idref" href="EraVM.Addressing.html#Reg"><span
+class="id" title="constructor">Reg</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#R0"><span
+class="id" title="constructor">R0</span></a>)</span> <span
+class="inlinecode">(<a class="idref" href="EraVM.Addressing.html#Reg"><span
+class="id" title="constructor">Reg</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#R1"><span
+class="id" title="constructor">R1</span></a>)</span>.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="const_address_bits" class="idref" href="#const_address_bits"><span class="id" title="definition">const_address_bits</span></a> := 16.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="const_page_params" class="idref" href="#const_page_params"><span class="id" title="definition">const_page_params</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#addressable_block"><span class="id" title="projection">addressable_block</span></a> := <a class="idref" href="EraVM.Core.html#word"><span class="id" title="definition">word</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#const_address_bits"><span class="id" title="definition">const_address_bits</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#default_value"><span class="id" title="projection">default_value</span></a> := <a class="idref" href="EraVM.Core.html#word0"><span class="id" title="definition">word0</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#writable"><span class="id" title="projection">writable</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="const_address" class="idref" href="#const_address"><span class="id" title="definition">const_address</span></a> :=  <a class="idref" href="EraVM.MemoryBase.html#address"><span class="id" title="definition">address</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#const_page_params"><span class="id" title="definition">const_page_params</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="const_page" class="idref" href="#const_page"><span class="id" title="definition">const_page</span></a> := <a class="idref" href="EraVM.MemoryBase.html#mem_parameterized"><span class="id" title="record">mem_parameterized</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#const_page_params"><span class="id" title="definition">const_page_params</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h3 id="code-pages">Code pages</h3>
+<p>A <strong>code page</strong> contains <span
+class="math inline">2^{16}</span> instructions. They are not
+writable.</p>
+<p>On genesis, code pages are filled as follows:</p>
+<ul>
+<li>The contract code is places starting from the address 0.</li>
+<li>The rest is filled with a value guaranteed to decode as <span
+class="inlinecode"><a class="idref" href="EraVM.Predication.html#invalid"><span
+class="id" title="definition">invalid</span></a></span>
+instruction.</li>
+</ul>
+<p>Const pages can coincide with code pages.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="ins_type:7" class="idref" href="#ins_type:7"><span class="id" title="binder">ins_type</span></a>: <span class="id" title="keyword">Type</span>} (<a id="invalid_ins:8" class="idref" href="#invalid_ins:8"><span class="id" title="binder">invalid_ins</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#ins_type:7"><span class="id" title="variable">ins_type</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Implementation&nbsp;note:&nbsp;<span class="inlinecode"><span class="id" title="var">code_address</span></span>&nbsp;should&nbsp;be&nbsp;<span class="inlinecode"><span class="id" title="var">address</span></span> <span class="inlinecode"><span class="id" title="var">code_page_params</span></span>&nbsp;but&nbsp;we&nbsp;don't&nbsp;want&nbsp;to&nbsp;introduce<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dependency&nbsp;between&nbsp;code_address&nbsp;and&nbsp;instruction&nbsp;type&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="code_address_bits" class="idref" href="#code_address_bits"><span class="id" title="definition">code_address_bits</span></a> := 16.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="code_address" class="idref" href="#code_address"><span class="id" title="definition">code_address</span></a> := <span class="id" title="definition">BITS</span> <a class="idref" href="EraVM.memory.PageTypes.html#code_address_bits"><span class="id" title="definition">code_address_bits</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="code_address_zero" class="idref" href="#code_address_zero"><span class="id" title="definition">code_address_zero</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#stack_address"><span class="id" title="definition">stack_address</span></a> := <a class="idref" href="EraVM.Types.html#zero16"><span class="id" title="definition">zero16</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="code_page_params" class="idref" href="#code_page_params"><span class="id" title="definition">code_page_params</span></a> := {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#addressable_block"><span class="id" title="projection">addressable_block</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#Memory.ins_type"><span class="id" title="variable">ins_type</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#address_bits"><span class="id" title="projection">address_bits</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#code_address_bits"><span class="id" title="definition">code_address_bits</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#default_value"><span class="id" title="projection">default_value</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#Memory.invalid_ins"><span class="id" title="variable">invalid_ins</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryBase.html#writable"><span class="id" title="projection">writable</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="code_page" class="idref" href="#code_page"><span class="id" title="record">code_page</span></a> := <span class="id" title="var">mk_code_page</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="cp_insns" class="idref" href="#cp_insns"><span class="id" title="projection">cp_insns</span></a>:> <a class="idref" href="EraVM.MemoryBase.html#mem_parameterized"><span class="id" title="record">mem_parameterized</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#code_page_params"><span class="id" title="definition">code_page_params</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="code_length" class="idref" href="#code_length"><span class="id" title="definition">code_length</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.memory.PageTypes.html#Memory"><span class="id" title="section">Memory</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

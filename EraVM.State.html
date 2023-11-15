@@ -1,0 +1,406 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.State</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.State</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.ABI.html#"><span class="id" title="library">ABI</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="library">Core</span></a> <a class="idref" href="EraVM.Decommitter.html#"><span class="id" title="library">Decommitter</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="library">GPR</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="library">Ergs</span></a> <a class="idref" href="EraVM.Event.html#"><span class="id" title="library">Event</span></a> <a class="idref" href="EraVM.History.html#"><span class="id" title="library">History</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="library">CallStack</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="library">TransientMemory</span></a> <a class="idref" href="EraVM.VMPanic.html#"><span class="id" title="library">VMPanic</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect</span> <span class="id" title="module">ssrfun</span> <span class="id" title="module">ssrbool</span> <span class="id" title="module">eqtype</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">zmodp</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">RecordSetNotations</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Flags.html#"><span class="id" title="module">Flags</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="EraVM.ABI.html#"><span class="id" title="module">ABI</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.Event.html#"><span class="id" title="module">Event</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.History.html#"><span class="id" title="module">History</span></a> <a class="idref" href="EraVM.MemoryBase.html#"><span class="id" title="module">MemoryBase</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="module">memory.Depot</span></a> <a class="idref" href="EraVM.Decommitter.html#"><span class="id" title="module">Decommitter</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.VMPanic.html#"><span class="id" title="module">VMPanic</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="StateDefinitions" class="idref" href="#StateDefinitions"><span class="id" title="section">StateDefinitions</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="exception_handler" class="idref" href="#exception_handler"><span class="id" title="definition">exception_handler</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span class="id" title="definition">code_address</span></a>.<br/>
+
+<br/>
+</div>
+<details><summary>helpers </summary><div class="code">
+<span class="id" title="keyword">Definition</span> <a id="instruction_invalid" class="idref" href="#instruction_invalid"><span class="id" title="definition">instruction_invalid</span></a> : <a class="idref" href="EraVM.Predication.html#predicated"><span class="id" title="record">predicated</span></a> <a class="idref" href="EraVM.isa.Assembly.html#asm_instruction"><span class="id" title="inductive">Assembly.asm_instruction</span></a> := <a class="idref" href="EraVM.Predication.html#invalid"><span class="id" title="definition">invalid</span></a> <a class="idref" href="EraVM.isa.Assembly.html#OpInvalid"><span class="id" title="constructor">Assembly.OpInvalid</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="decommitter" class="idref" href="#decommitter"><span class="id" title="definition">decommitter</span></a> := <a class="idref" href="EraVM.Decommitter.html#decommitter"><span class="id" title="record">decommitter</span></a> <a class="idref" href="EraVM.State.html#instruction_invalid"><span class="id" title="definition">instruction_invalid</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="code_page" class="idref" href="#code_page"><span class="id" title="definition">code_page</span></a> := <a class="idref" href="EraVM.memory.PageTypes.html#code_page"><span class="id" title="record">code_page</span></a> <a class="idref" href="EraVM.State.html#instruction_invalid"><span class="id" title="definition">instruction_invalid</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="memory" class="idref" href="#memory"><span class="id" title="definition">memory</span></a> := @<a class="idref" href="EraVM.memory.Pages.html#memory"><span class="id" title="record">memory</span></a> <a class="idref" href="EraVM.State.html#code_page"><span class="id" title="definition">code_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span class="id" title="definition">const_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span class="id" title="definition">data_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_page"><span class="id" title="definition">stack_page</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="query" class="idref" href="#query"><span class="id" title="definition">query</span></a> := @<a class="idref" href="EraVM.Event.html#query"><span class="id" title="inductive">query</span></a> <span class="id" title="notation">[</span> <span class="id" title="notation">eqType</span> <span class="id" title="notation">of</span> <a class="idref" href="EraVM.memory.Depot.html#contract_address"><span class="id" title="definition">contract_address</span></a><span class="id" title="notation">]</span> <span class="id" title="notation">[</span><span class="id" title="notation">eqType</span> <span class="id" title="notation">of</span> <a class="idref" href="EraVM.ABI.PrecompileParametersABI.html#params"><span class="id" title="record">PrecompileParametersABI.params</span></a><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="event" class="idref" href="#event"><span class="id" title="definition">event</span></a> := @<a class="idref" href="EraVM.Event.html#event"><span class="id" title="record">event</span></a> <span class="id" title="notation">[</span> <span class="id" title="notation">eqType</span> <span class="id" title="notation">of</span> <a class="idref" href="EraVM.memory.Depot.html#contract_address"><span class="id" title="definition">contract_address</span></a><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="page_has_id" class="idref" href="#page_has_id"><span class="id" title="definition">page_has_id</span></a> := @<a class="idref" href="EraVM.memory.Pages.html#page_has_id"><span class="id" title="inductive">page_has_id</span></a> <a class="idref" href="EraVM.State.html#code_page"><span class="id" title="definition">code_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#const_page"><span class="id" title="definition">const_page</span></a> <a class="idref" href="EraVM.memory.PageTypes.html#data_page"><span class="id" title="definition">data_page</span></a> <a class="idref" href="EraVM.TransientMemory.html#stack_page"><span class="id" title="definition">stack_page</span></a>.<br/>
+
+<br/>
+
+<br/>
+</div>
+</details><div class="code">
+
+<br/>
+</div>
+
+<div class="doc"><h1 id="eravm-state">EraVM state</h1>
+<p>EraVM employs a <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state"><span
+class="id" title="record">state</span></a></span> that comprises the
+following components:</p>
+<ol type="1">
+<li>The <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#global_state"><span
+class="id" title="record">global_state</span></a></span> contains:</li>
+</ol>
+<ul>
+<li><p>current price of publishing one byte of <strong>pubdata</strong>
+to L1 <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span
+class="id"
+title="projection">gs_current_ergs_per_pubdata_byte</span></a></span>.</p></li>
+<li><p>transaction number in the current block <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span
+class="id"
+title="projection">gs_tx_number_in_block</span></a></span></p></li>
+<li><p>decommitter <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_contracts"><span
+class="id" title="projection">gs_contracts</span></a></span></p></li>
+<li><p>a revertable part <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
+class="id" title="record">state_checkpoint</span></a></span>. It houses
+the <strong>depot</strong> state, embodying all contracts storages
+across all shards, as well as two queues for events and L1 messages.</p>
+<p>Launching a contract (far call) or a function (near call) defines a
+checkpoint. If a contract or a function reverts or panics, the state
+rolls back to the latest snapshot (see <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>).</p>
+<p>The rollback may be implemented in any efficient way conforming to
+this behavior.</p></li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Record</span> <a id="state_checkpoint" class="idref" href="#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a> := {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_depot" class="idref" href="#gs_depot"><span class="id" title="projection">gs_depot</span></a>: <a class="idref" href="EraVM.memory.Depot.html#depot"><span class="id" title="definition">depot</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_events" class="idref" href="#gs_events"><span class="id" title="projection">gs_events</span></a>: @<a class="idref" href="EraVM.History.html#history"><span class="id" title="definition">history</span></a> <span class="id" title="notation">[</span><span class="id" title="notation">eqType</span> <span class="id" title="notation">of</span> <a class="idref" href="EraVM.State.html#query"><span class="id" title="definition">query</span></a><span class="id" title="notation">]</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_l1_msgs" class="idref" href="#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a>: @<a class="idref" href="EraVM.History.html#history"><span class="id" title="definition">history</span></a> <span class="id" title="notation">[</span><span class="id" title="notation">eqType</span> <span class="id" title="notation">of</span> <a class="idref" href="EraVM.State.html#event"><span class="id" title="definition">event</span></a><span class="id" title="notation">]</span>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="global_state" class="idref" href="#global_state"><span class="id" title="record">global_state</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_gstate</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_current_ergs_per_pubdata_byte" class="idref" href="#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a>: <a class="idref" href="EraVM.Ergs.html#ergs"><span class="id" title="definition">ergs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_tx_number_in_block" class="idref" href="#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a>: <a class="idref" href="EraVM.Core.html#tx_num"><span class="id" title="definition">tx_num</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_contracts" class="idref" href="#gs_contracts"><span class="id" title="projection">gs_contracts</span></a>: <a class="idref" href="EraVM.State.html#decommitter"><span class="id" title="definition">decommitter</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_revertable" class="idref" href="#gs_revertable"><span class="id" title="projection">gs_revertable</span></a>:> <a class="idref" href="EraVM.State.html#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="rollback" class="idref" href="#rollback"><span class="id" title="inductive">rollback</span></a> <a id="checkpoint:11" class="idref" href="#checkpoint:11"><span class="id" title="binder">checkpoint</span></a>: <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="rb_apply" class="idref" href="#rb_apply"><span class="id" title="constructor">rb_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="e:14" class="idref" href="#e:14"><span class="id" title="binder">e</span></a> <a id="tx:15" class="idref" href="#tx:15"><span class="id" title="binder">tx</span></a> <a id="ccs:16" class="idref" href="#ccs:16"><span class="id" title="binder">ccs</span></a> <a id="_cp:17" class="idref" href="#_cp:17"><span class="id" title="binder">_cp</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#rollback:12"><span class="id" title="inductive">rollback</span></a> <a class="idref" href="EraVM.State.html#checkpoint:11"><span class="id" title="variable">checkpoint</span></a> (<a class="idref" href="EraVM.State.html#mk_gstate"><span class="id" title="constructor">mk_gstate</span></a> <a class="idref" href="EraVM.State.html#e:14"><span class="id" title="variable">e</span></a> <a class="idref" href="EraVM.State.html#tx:15"><span class="id" title="variable">tx</span></a> <a class="idref" href="EraVM.State.html#ccs:16"><span class="id" title="variable">ccs</span></a> <a class="idref" href="EraVM.State.html#_cp:17"><span class="id" title="variable">_cp</span></a>) (<a class="idref" href="EraVM.State.html#mk_gstate"><span class="id" title="constructor">mk_gstate</span></a> <a class="idref" href="EraVM.State.html#e:14"><span class="id" title="variable">e</span></a> <a class="idref" href="EraVM.State.html#tx:15"><span class="id" title="variable">tx</span></a> <a class="idref" href="EraVM.State.html#ccs:16"><span class="id" title="variable">ccs</span></a> <a class="idref" href="EraVM.State.html#checkpoint:11"><span class="id" title="variable">checkpoint</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ol start="2" type="1">
+<li>The <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#transient_state"><span
+class="id" title="record">transient_state</span></a></span> contains:
+<ul>
+<li>flags <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_flags"><span
+class="id" title="projection">gs_flags</span></a></span>: boolean values
+representing some characteristics of the computation results. See <span
+class="inlinecode"><a class="idref" href="EraVM.Flags.html#Flags"><span
+class="id" title="section">Flags</span></a></span>.</li>
+<li>general purpose registers <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_regs"><span
+class="id" title="projection">gs_regs</span></a></span>: 15 mutable
+tagged words (primitive values) <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r1"><span
+class="id" title="projection">r1</span></a></span>–<span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#r15"><span
+class="id" title="projection">r15</span></a></span>, and a reserved
+read-only zero valued <span class="inlinecode"><span class="id"
+title="var">r0</span></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.GPR.html#Registers"><span
+class="id" title="section">Registers</span></a></span>.</li>
+<li>all memory <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_pages"><span
+class="id" title="projection">gs_pages</span></a></span> allocated by
+VM, including code pages, data stack pages, data pages for heap variants
+etc. See <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#memory"><span
+class="id" title="definition">memory</span></a></span>.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_callstack"><span
+class="id" title="projection">gs_callstack</span></a></span>, where each
+currently running contract and function has a stack frame. Note, that
+program counter, data stack pointer, and the remaining ergs allocated
+for the current function’s run are parts of a stack frame. See <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#Callstack"><span
+class="id" title="section">Callstack</span></a></span>.</li>
+<li>128-bit register <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span>. Its
+usage is detailed below.</li>
+</ul></li>
+</ol>
+</div>
+<div class="code">
+<br/>
+</div>
+<details><summary>helpers </summary><div class="code">
+<span class="id" title="keyword">Definition</span> <a id="callstack" class="idref" href="#callstack"><span class="id" title="definition">callstack</span></a> := @<a class="idref" href="EraVM.CallStack.html#callstack"><span class="id" title="inductive">callstack</span></a> <a class="idref" href="EraVM.State.html#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a>.<br/>
+</div>
+</details><div class="code">
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="transient_state" class="idref" href="#transient_state"><span class="id" title="record">transient_state</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_transient_state</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_flags" class="idref" href="#gs_flags"><span class="id" title="projection">gs_flags</span></a> : <a class="idref" href="EraVM.Flags.html#flags_state"><span class="id" title="record">flags_state</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_regs" class="idref" href="#gs_regs"><span class="id" title="projection">gs_regs</span></a>: <a class="idref" href="EraVM.GPR.html#regs_state"><span class="id" title="record">regs_state</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_pages" class="idref" href="#gs_pages"><span class="id" title="projection">gs_pages</span></a>: <a class="idref" href="EraVM.State.html#memory"><span class="id" title="definition">memory</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_callstack" class="idref" href="#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>: <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_context_u128" class="idref" href="#gs_context_u128"><span class="id" title="projection">gs_context_u128</span></a>: <a class="idref" href="EraVM.Types.html#u128"><span class="id" title="definition">u128</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_status" class="idref" href="#gs_status"><span class="id" title="projection">gs_status</span></a>: <a class="idref" href="EraVM.VMPanic.html#status"><span class="id" title="inductive">status</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="state" class="idref" href="#state"><span class="id" title="record">state</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">mk_state</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_transient" class="idref" href="#gs_transient"><span class="id" title="projection">gs_transient</span></a> :> <a class="idref" href="EraVM.State.html#transient_state"><span class="id" title="record">transient_state</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="gs_global" class="idref" href="#gs_global"><span class="id" title="projection">gs_global</span></a> :> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><h2 id="context-register">Context register</h2>
+<p>The 128-bit context value occurs in two places in EraVM:</p>
+<ul>
+<li>In the mutable <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span>
+register, forming a part of the EraVM state <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#state"><span
+class="id" title="record">state</span></a></span>.</li>
+<li>In the read-only <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_context_u128_value"><span
+class="id" title="projection">ecf_context_u128_value</span></a></span>
+of each external call stack frame <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack_external"><span
+class="id" title="record">callstack_external</span></a></span>.</li>
+</ul>
+<p>These values are distinct: the value in callstack is a snapshot of
+the register <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span> in a
+moment of a far call.</p>
+<p>The typical usage of the context value is as follows:</p>
+<ol type="1">
+<li>Set the value of <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span> to <span
+class="math inline">C</span> by executing the instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetContextU128"><span
+class="id"
+title="constructor">OpContextSetContextU128</span></a></span>.</li>
+<li>Launch a contract using one of the far call instructions. This
+action pushes a new <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack_external"><span
+class="id" title="record">callstack_external</span></a></span> frame
+<span class="math inline">F</span> onto the <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_callstack"><span
+class="id" title="projection">gs_callstack</span></a></span>. The value
+of the <span class="math inline">F</span>’s field <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_context_u128_value"><span
+class="id" title="projection">ecf_context_u128_value</span></a></span>
+is equal to <span class="math inline">C</span>. In addition, far calls
+reset <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span> to
+0.</li>
+<li>Retrieve the context value by executing the instruction <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextGetContextU128"><span
+class="id" title="constructor">OpContextGetContextU128</span></a></span>
+to use it.</li>
+<li>On contract code completion, the <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span> is reset
+to zero by either <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
+class="id" title="constructor">OpFarRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span
+class="id" title="constructor">OpFarRevert</span></a></span>, or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span>.</li>
+</ol>
+<p>Note that setting the context register <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
+class="id" title="projection">gs_context_u128</span></a></span> is
+forbidden in <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span>. See <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#forbidden_static"><span
+class="id" title="definition">forbidden_static</span></a></span>.</p>
+<p>Context is used to simulate <code>msg.value</code>, a Solidity
+construction standing for the amount of wei sent in a transaction. The
+system contract <code>MsgValueSimulator</code> is responsible for
+ensuring that whenever this context value is set to <span
+class="math inline">C</span>, there are indeed <span
+class="math inline">C</span> wei transferred to the callee.</p>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+
+<br/>
+</div>
+<details><summary>Helpers </summary><div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="global_state_new_depot" class="idref" href="#global_state_new_depot"><span class="id" title="inductive">global_state_new_depot</span></a>: <a class="idref" href="EraVM.memory.Depot.html#depot"><span class="id" title="definition">depot</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="gsnd_apply" class="idref" href="#gsnd_apply"><span class="id" title="constructor">gsnd_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="current_ergs_per_pubdata_byte:30" class="idref" href="#current_ergs_per_pubdata_byte:30"><span class="id" title="binder">current_ergs_per_pubdata_byte</span></a> <a id="tx:31" class="idref" href="#tx:31"><span class="id" title="binder">tx</span></a> <a id="codes:32" class="idref" href="#codes:32"><span class="id" title="binder">codes</span></a> <a id="d:33" class="idref" href="#d:33"><span class="id" title="binder">d</span></a> <a id="evs:34" class="idref" href="#evs:34"><span class="id" title="binder">evs</span></a> <a id="l1s:35" class="idref" href="#l1s:35"><span class="id" title="binder">l1s</span></a> <a id="d':36" class="idref" href="#d':36"><span class="id" title="binder">d'</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#global_state_new_depot:28"><span class="id" title="inductive">global_state_new_depot</span></a> <a class="idref" href="EraVM.State.html#d':36"><span class="id" title="variable">d'</span></a><br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:30"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:31"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:32"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d:33"><span class="id" title="variable">d</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#evs:34"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#l1s:35"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:30"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:31"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:32"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d':36"><span class="id" title="variable">d'</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#evs:34"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#l1s:35"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="emit_event" class="idref" href="#emit_event"><span class="id" title="inductive">emit_event</span></a> <a id="e:37" class="idref" href="#e:37"><span class="id" title="binder">e</span></a>: <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="ee_apply" class="idref" href="#ee_apply"><span class="id" title="constructor">ee_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="current_ergs_per_pubdata_byte:40" class="idref" href="#current_ergs_per_pubdata_byte:40"><span class="id" title="binder">current_ergs_per_pubdata_byte</span></a> <a id="tx:41" class="idref" href="#tx:41"><span class="id" title="binder">tx</span></a> <a id="codes:42" class="idref" href="#codes:42"><span class="id" title="binder">codes</span></a> <a id="d:43" class="idref" href="#d:43"><span class="id" title="binder">d</span></a> <a id="evs:44" class="idref" href="#evs:44"><span class="id" title="binder">evs</span></a> <a id="l1s:45" class="idref" href="#l1s:45"><span class="id" title="binder">l1s</span></a> <a id="d':46" class="idref" href="#d':46"><span class="id" title="binder">d'</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#emit_event:38"><span class="id" title="inductive">emit_event</span></a> <a class="idref" href="EraVM.State.html#e:37"><span class="id" title="variable">e</span></a><br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:40"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:41"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:42"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d:43"><span class="id" title="variable">d</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#evs:44"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#l1s:45"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:40"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:41"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:42"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d':46"><span class="id" title="variable">d'</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#e:37"><span class="id" title="variable">e</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.State.html#evs:44"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#l1s:45"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="emit_l1_msg" class="idref" href="#emit_l1_msg"><span class="id" title="inductive">emit_l1_msg</span></a> <a id="e:47" class="idref" href="#e:47"><span class="id" title="binder">e</span></a>: <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="eel1_apply" class="idref" href="#eel1_apply"><span class="id" title="constructor">eel1_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="current_ergs_per_pubdata_byte:50" class="idref" href="#current_ergs_per_pubdata_byte:50"><span class="id" title="binder">current_ergs_per_pubdata_byte</span></a> <a id="tx:51" class="idref" href="#tx:51"><span class="id" title="binder">tx</span></a> <a id="codes:52" class="idref" href="#codes:52"><span class="id" title="binder">codes</span></a> <a id="d:53" class="idref" href="#d:53"><span class="id" title="binder">d</span></a> <a id="evs:54" class="idref" href="#evs:54"><span class="id" title="binder">evs</span></a> <a id="l1s:55" class="idref" href="#l1s:55"><span class="id" title="binder">l1s</span></a> <a id="d':56" class="idref" href="#d':56"><span class="id" title="binder">d'</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#emit_l1_msg:48"><span class="id" title="inductive">emit_l1_msg</span></a> <a class="idref" href="EraVM.State.html#e:47"><span class="id" title="variable">e</span></a><br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:50"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:51"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:52"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d:53"><span class="id" title="variable">d</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#evs:54"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#l1s:55"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:50"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:51"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:52"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := {| <a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a> := <a class="idref" href="EraVM.State.html#d':56"><span class="id" title="variable">d'</span></a>; <a class="idref" href="EraVM.State.html#gs_events"><span class="id" title="projection">gs_events</span></a> := <a class="idref" href="EraVM.State.html#evs:54"><span class="id" title="variable">evs</span></a>; <a class="idref" href="EraVM.State.html#gs_l1_msgs"><span class="id" title="projection">gs_l1_msgs</span></a> := <a class="idref" href="EraVM.State.html#e:47"><span class="id" title="variable">e</span></a><span class="id" title="notation">::</span><a class="idref" href="EraVM.State.html#l1s:55"><span class="id" title="variable">l1s</span></a> |} ;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="tx_inc" class="idref" href="#tx_inc"><span class="id" title="inductive">tx_inc</span></a> : <a class="idref" href="EraVM.Core.html#tx_num"><span class="id" title="definition">tx_num</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Core.html#tx_num"><span class="id" title="definition">tx_num</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> := | <a id="txi_apply" class="idref" href="#txi_apply"><span class="id" title="constructor">txi_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="n:59" class="idref" href="#n:59"><span class="id" title="binder">n</span></a> <a id="m:60" class="idref" href="#m:60"><span class="id" title="binder">m</span></a>, <a class="idref" href="EraVM.Arith.html#uinc_of"><span class="id" title="definition">uinc_of</span></a> <a class="idref" href="EraVM.State.html#n:59"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.State.html#m:60"><span class="id" title="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#tx_inc:57"><span class="id" title="inductive">tx_inc</span></a> <a class="idref" href="EraVM.State.html#n:59"><span class="id" title="variable">n</span></a> <a class="idref" href="EraVM.State.html#m:60"><span class="id" title="variable">m</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="global_state_increment_tx" class="idref" href="#global_state_increment_tx"><span class="id" title="inductive">global_state_increment_tx</span></a> <a id="tx_mod:61" class="idref" href="#tx_mod:61"><span class="id" title="binder">tx_mod</span></a>: <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.State.html#global_state"><span class="id" title="record">global_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="gsit_apply" class="idref" href="#gsit_apply"><span class="id" title="constructor">gsit_apply</span></a>: <span class="id" title="keyword">∀</span> <a id="current_ergs_per_pubdata_byte:64" class="idref" href="#current_ergs_per_pubdata_byte:64"><span class="id" title="binder">current_ergs_per_pubdata_byte</span></a> <a id="tx:65" class="idref" href="#tx:65"><span class="id" title="binder">tx</span></a> <a id="new_tx:66" class="idref" href="#new_tx:66"><span class="id" title="binder">new_tx</span></a> <a id="codes:67" class="idref" href="#codes:67"><span class="id" title="binder">codes</span></a> <a id="rev:68" class="idref" href="#rev:68"><span class="id" title="binder">rev</span></a> ,<br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#tx_mod:61"><span class="id" title="variable">tx_mod</span></a> <a class="idref" href="EraVM.State.html#tx:65"><span class="id" title="variable">tx</span></a> <a class="idref" href="EraVM.State.html#new_tx:66"><span class="id" title="variable">new_tx</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#global_state_increment_tx:62"><span class="id" title="inductive">global_state_increment_tx</span></a> <a class="idref" href="EraVM.State.html#tx_mod:61"><span class="id" title="variable">tx_mod</span></a><br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:64"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#tx:65"><span class="id" title="variable">tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:67"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := <a class="idref" href="EraVM.State.html#rev:68"><span class="id" title="variable">rev</span></a>;<br/>
+&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#current_ergs_per_pubdata_byte:64"><span class="id" title="variable">current_ergs_per_pubdata_byte</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span class="id" title="projection">gs_tx_number_in_block</span></a> := <a class="idref" href="EraVM.State.html#new_tx:66"><span class="id" title="variable">new_tx</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_contracts"><span class="id" title="projection">gs_contracts</span></a> := <a class="idref" href="EraVM.State.html#codes:67"><span class="id" title="variable">codes</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> := <a class="idref" href="EraVM.State.html#rev:68"><span class="id" title="variable">rev</span></a>;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.State.html#StateDefinitions"><span class="id" title="section">StateDefinitions</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="heap_variant_page_id" class="idref" href="#heap_variant_page_id"><span class="id" title="definition">heap_variant_page_id</span></a> (<a id="page_type:69" class="idref" href="#page_type:69"><span class="id" title="binder">page_type</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span class="id" title="inductive">data_page_type</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.State.html#page_type:69"><span class="id" title="variable">page_type</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#Heap"><span class="id" title="constructor">Heap</span></a> ⇒ @<a class="idref" href="EraVM.CallStack.html#active_heap_id"><span class="id" title="definition">active_heap_id</span></a> <a class="idref" href="EraVM.State.html#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#AuxHeap"><span class="id" title="constructor">AuxHeap</span></a> ⇒ @<a class="idref" href="EraVM.CallStack.html#active_auxheap_id"><span class="id" title="definition">active_auxheap_id</span></a> <a class="idref" href="EraVM.State.html#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="heap_variant_page" class="idref" href="#heap_variant_page"><span class="id" title="definition">heap_variant_page</span></a> (<a id="page_type:71" class="idref" href="#page_type:71"><span class="id" title="binder">page_type</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span class="id" title="inductive">data_page_type</span></a>) (<a id="cs:72" class="idref" href="#cs:72"><span class="id" title="binder">cs</span></a>:<a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a>) (<a id="mem:73" class="idref" href="#mem:73"><span class="id" title="binder">mem</span></a>:<a class="idref" href="EraVM.State.html#memory"><span class="id" title="definition">memory</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.State.html#page_type:71"><span class="id" title="variable">page_type</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#Heap"><span class="id" title="constructor">Heap</span></a> ⇒ <a class="idref" href="EraVM.CallStack.html#active_heappage"><span class="id" title="inductive">active_heappage</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#AuxHeap"><span class="id" title="constructor">AuxHeap</span></a> ⇒  <a class="idref" href="EraVM.CallStack.html#active_auxheappage"><span class="id" title="inductive">active_auxheappage</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> (<a class="idref" href="EraVM.State.html#page_has_id"><span class="id" title="definition">page_has_id</span></a> <a class="idref" href="EraVM.State.html#mem:73"><span class="id" title="variable">mem</span></a>) <a class="idref" href="EraVM.State.html#cs:72"><span class="id" title="variable">cs</span></a> .<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="heap_variant_id" class="idref" href="#heap_variant_id"><span class="id" title="definition">heap_variant_id</span></a> (<a id="page_type:75" class="idref" href="#page_type:75"><span class="id" title="binder">page_type</span></a>: <a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span class="id" title="inductive">data_page_type</span></a>)<br/>
+&nbsp;&nbsp;:  <a class="idref" href="EraVM.State.html#callstack"><span class="id" title="definition">callstack</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.memory.Pages.html#page_id"><span class="id" title="definition">page_id</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.State.html#page_type:75"><span class="id" title="variable">page_type</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#Heap"><span class="id" title="constructor">Heap</span></a> ⇒ @<a class="idref" href="EraVM.CallStack.html#active_heap_id"><span class="id" title="definition">active_heap_id</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.memory.PageTypes.html#AuxHeap"><span class="id" title="constructor">AuxHeap</span></a> ⇒ @<a class="idref" href="EraVM.CallStack.html#active_auxheap_id"><span class="id" title="definition">active_auxheap_id</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span> <a class="idref" href="EraVM.State.html#state_checkpoint"><span class="id" title="record">state_checkpoint</span></a>.<br/>
+
+<br/>
+</div>
+</details><div class="code">
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
