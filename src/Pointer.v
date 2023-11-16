@@ -206,8 +206,10 @@ Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDel
 
     (** A fat pointer $(\mathit{page}, \mathit{start}, \mathit{length}, \mathit{offset})$ is **invalid** if:
 
-- $\mathit{start}+\mathit{length} \geq 2^{256}$, or
+- $\mathit{start}_{\mathbb{N}}+\mathit{length}_{\mathbb{N}} \geq 2^{32}$, or
 - $\mathit{offset} > \mathit{length}$.
+
+By a subscript $\mathbb{N}$ we denote that we explicitly interpret $\mathit{start}$ and $\mathit{length}$ as natural numbers, and addition on natural numbers does not overflow.
 
 If $\mathit{offset} = \mathit{length}$, the span of the pointer is empty, but it is still valid.
      *)
