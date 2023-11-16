@@ -157,20 +157,22 @@ fun params =>
         intros Hptr.
         inversion_clear 1.
         rewrite Hptr.
-        by destruct constructor_call, to_system.
+        simpl.
+        f_equal.
+        by case constructor_call, to_system.
       }
     }
     {
       intros heap_var s H.
       inversion 1.
       subst encoded.
-     simpl.
-     repeat f_equal =>//=; try by destruct constructor_call, to_system.
-     clear H0.
-     {
-       unfold span_of. destruct heap_var;
-       repeat f_equal =>//=; try by destruct constructor_call, to_system, s.
-     }
+      simpl.
+      repeat f_equal =>//=; try by destruct constructor_call, to_system.
+      clear H0.
+      {
+        unfold span_of. destruct heap_var;
+          repeat f_equal =>//=; try by destruct constructor_call, to_system, s.
+      }
     }
   Qed.
 

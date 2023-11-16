@@ -309,6 +309,8 @@ A system call is a far call that satisfies the following conditions:
      [%fat_ptr] is created. This pointer refers to the provided [%span] of
      specified heap `variant`.
 
+     Note the decoding of [%ForwardNewFatPointer] in [%fwd_memory_adapter] and especially [%span_of].
+
 5. Allocate new pages for code, constants, stack, heap and auxheap (formalized by [%alloc_pages_extframe]).
 6. Reserve ergs for the new external frame (formalized by [%pass_allowed_ergs]).
 
