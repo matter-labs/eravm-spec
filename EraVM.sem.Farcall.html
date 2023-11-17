@@ -437,7 +437,7 @@ block, pay for decommitment.</p></li>
 class="inlinecode"><span class="id"
 title="var">paid_forward_and_adjust_bounds</span></span>).</p>
 <ul>
-<li>If <span
+<li><p>If <span
 class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#params"><span
 class="id"
 title="record">params</span></a>.(<a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span
@@ -446,7 +446,7 @@ class="inlinecode"><a class="idref" href="EraVM.MemoryManagement.html#ForwardExi
 class="id"
 title="constructor">ForwardExistingFatPointer</span></a></span> <span
 class="inlinecode"><span class="id" title="var">p</span></span>, we are
-forwarding an existing fat pointer.
+forwarding an existing fat pointer.</p>
 <ul>
 <li>ensure that <code>abi_reg</code> is tagged as a pointer.</li>
 <li>check the pointer validity;</li>
@@ -455,7 +455,7 @@ class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr_narrow"><sp
 class="id" title="definition">fat_ptr_narrow</span></a></span> the
 pointer;</li>
 </ul></li>
-<li>If <span
+<li><p>If <span
 class="inlinecode"><a class="idref" href="EraVM.ABI.FarCallABI.html#params"><span
 class="id"
 title="record">params</span></a>.(<a class="idref" href="EraVM.MemoryManagement.html#fwd_memory"><span
@@ -471,7 +471,16 @@ class="id" title="record">fat_ptr</span></a></span> is created. This
 pointer refers to the provided <span
 class="inlinecode"><a class="idref" href="EraVM.Pointer.html#span"><span
 class="id" title="record">span</span></a></span> of specified heap
-<code>variant</code>.</li>
+<code>variant</code>.</p>
+<p>Note the decoding of <span
+class="inlinecode"><a class="idref" href="EraVM.MemoryManagement.html#ForwardNewFatPointer"><span
+class="id" title="constructor">ForwardNewFatPointer</span></a></span> in
+<span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#fwd_memory_adapter"><span
+class="id" title="definition">fwd_memory_adapter</span></a></span> and
+especially <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.ForwardPageTypesABI.html#span_of"><span
+class="id" title="definition">span_of</span></a></span>.</p></li>
 </ul></li>
 <li><p>Allocate new pages for code, constants, stack, heap and auxheap
 (formalized by <span

@@ -386,11 +386,17 @@ class="id" title="constructor">OpFarRevert</span></a></span>).</p>
 \mathit{start}, \mathit{length}, \mathit{offset})</span> is
 <strong>invalid</strong> if:</p>
 <ul>
-<li><span class="math inline">\mathit{start}+\mathit{length} \geq
-2^{256}</span>, or</li>
+<li><span
+class="math inline">\mathit{start}_{\mathbb{N}}+\mathit{length}_{\mathbb{N}}
+\geq 2^{32}</span>, or</li>
 <li><span class="math inline">\mathit{offset} &gt;
 \mathit{length}</span>.</li>
 </ul>
+<p>By a subscript <span class="math inline">\mathbb{N}</span> we denote
+that we explicitly interpret <span
+class="math inline">\mathit{start}</span> and <span
+class="math inline">\mathit{length}</span> as natural numbers, and
+addition on natural numbers does not overflow.</p>
 <p>If <span class="math inline">\mathit{offset} =
 \mathit{length}</span>, the span of the pointer is empty, but it is
 still valid.</p>
