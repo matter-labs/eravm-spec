@@ -390,7 +390,7 @@ Definition regs_effect regs (is_system is_ctor:bool) ptr :=
 
        + Mimic call sets:
          * `this_address` <- destination address;
-         * `msg_sender` <- value of `r3`;
+         * `msg_sender` <- value of `r15`;
          * `context` <- value of context register [%gs_context_u128].
  *)
 Definition CALL_IMPLICIT_PARAMETER_REG := R15.
