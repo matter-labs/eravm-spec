@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.lib.PMap_ext</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.lib.PMap_ext</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#"><span class="id" title="library">FMapPositive</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap"><span class="id" title="module">FMapPositive.PositiveMap</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.PArith.BinPos.html#"><span class="id" title="module">BinPos</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="pmap_slice" class="idref" href="#pmap_slice"><span class="id" title="definition">pmap_slice</span></a> {<a id="V:1" class="idref" href="#V:1"><span class="id" title="binder">V</span></a>} (<a id="m:2" class="idref" href="#m:2"><span class="id" title="binder">m</span></a>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.t"><span class="id" title="definition">t</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#V:1"><span class="id" title="variable">V</span></a>) (<a id="from_incl:3" class="idref" href="#from_incl:3"><span class="id" title="binder">from_incl</span></a> <a id="to_excl:4" class="idref" href="#to_excl:4"><span class="id" title="binder">to_excl</span></a>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a> ) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.t"><span class="id" title="definition">t</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#V:1"><span class="id" title="variable">V</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="leb:7" class="idref" href="#leb:7"><span class="id" title="binder">leb</span></a> <a id="x:5" class="idref" href="#x:5"><span class="id" title="binder">x</span></a> <a id="y:6" class="idref" href="#y:6"><span class="id" title="binder">y</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.PArith.BinPos.html#Pos.ltb"><span class="id" title="definition">Pos.ltb</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#y:6"><span class="id" title="variable">y</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#x:5"><span class="id" title="variable">x</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="in_range:9" class="idref" href="#in_range:9"><span class="id" title="binder">in_range</span></a> <a id="k:8" class="idref" href="#k:8"><span class="id" title="binder">k</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#andb"><span class="id" title="definition">andb</span></a> (<a class="idref" href="EraVM.lib.PMap_ext.html#leb:7"><span class="id" title="variable">leb</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#from_incl:3"><span class="id" title="variable">from_incl</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#k:8"><span class="id" title="variable">k</span></a>) (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.PArith.BinPos.html#Pos.ltb"><span class="id" title="definition">Pos.ltb</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#k:8"><span class="id" title="variable">k</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#to_excl:4"><span class="id" title="variable">to_excl</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="f:13" class="idref" href="#f:13"><span class="id" title="binder">f</span></a> <a id="k:10" class="idref" href="#k:10"><span class="id" title="binder">k</span></a> <a id="cell:11" class="idref" href="#cell:11"><span class="id" title="binder">cell</span></a> <a id="accmap:12" class="idref" href="#accmap:12"><span class="id" title="binder">accmap</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="EraVM.lib.PMap_ext.html#in_range:9"><span class="id" title="variable">in_range</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#k:10"><span class="id" title="variable">k</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.add"><span class="id" title="definition">add</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#k:10"><span class="id" title="variable">k</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#cell:11"><span class="id" title="variable">cell</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#accmap:12"><span class="id" title="variable">accmap</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.lib.PMap_ext.html#accmap:12"><span class="id" title="variable">accmap</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.fold"><span class="id" title="definition">fold</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#f:13"><span class="id" title="variable">f</span></a> <a class="idref" href="EraVM.lib.PMap_ext.html#m:2"><span class="id" title="variable">m</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.FSets.FMapPositive.html#PositiveMap.empty"><span class="id" title="definition">empty</span></a> <span class="id" title="var">_</span>).<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

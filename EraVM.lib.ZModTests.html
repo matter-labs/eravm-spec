@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.lib.ZModTests</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.lib.ZModTests</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.lib.ZMod.html#"><span class="id" title="library">ZMod</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.lib.ZMod.html#"><span class="id" title="module">ZMod</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#"><span class="id" title="module">List</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#ListNotations"><span class="id" title="module">ListNotations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Let</span> <a id="test_rols" class="idref" href="#test_rols"><span class="id" title="definition">test_rols</span></a> <a id="seed:1" class="idref" href="#seed:1"><span class="id" title="binder">seed</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#map"><span class="id" title="definition">List.map</span></a> (<span class="id" title="keyword">fun</span> <a id="i:2" class="idref" href="#i:2"><span class="id" title="binder">i</span></a> ⇒ <a class="idref" href="EraVM.lib.ZMod.html#int_val"><span class="id" title="projection">int_val</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.lib.ZMod.html#rol"><span class="id" title="definition">rol</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.lib.ZMod.html#int_mod_of"><span class="id" title="definition">int_mod_of</span></a> 4 <a class="idref" href="EraVM.lib.ZModTests.html#seed:1"><span class="id" title="variable">seed</span></a>) (<a class="idref" href="EraVM.lib.ZMod.html#int_mod_of"><span class="id" title="definition">int_mod_of</span></a> <span class="id" title="var">_</span> <a class="idref" href="EraVM.lib.ZModTests.html#i:2"><span class="id" title="variable">i</span></a>) ) ).<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>: <a class="idref" href="EraVM.lib.ZModTests.html#test_rols"><span class="id" title="definition">test_rols</span></a> 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">[</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>2<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>3<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>4<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>5<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">]</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">[</span></a>2<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 4<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 8<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 1<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 2<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">]</span></a>.<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>: <a class="idref" href="EraVM.lib.ZModTests.html#test_rols"><span class="id" title="definition">test_rols</span></a> 3 <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">[</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>2<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>3<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>4<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a>5<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">]</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">[</span></a>6<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 12<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 9<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 3<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">;</span></a> 6<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Lists.List.html#e76c6291366b599375c28eba0aae94bb"><span class="id" title="notation">]</span></a>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>: (1027%<span class="id" title="var">Z</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.lib.ZMod.html#int_val"><span class="id" title="projection">int_val</span></a> <span class="id" title="var">_</span> ( <a class="idref" href="EraVM.lib.ZMod.html#mix_lower"><span class="id" title="definition">mix_lower</span></a> <span class="id" title="var">_</span> (<a class="idref" href="EraVM.lib.ZMod.html#int_mod_of"><span class="id" title="definition">int_mod_of</span></a> <span class="id" title="var">_</span> 1025) (<a class="idref" href="EraVM.lib.ZMod.html#int_mod_of"><span class="id" title="definition">int_mod_of</span></a> 8 3))).<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

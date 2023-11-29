@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.lib.PArith_ext</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.lib.PArith_ext</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#"><span class="id" title="library">BinNums</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#"><span class="id" title="library">BinInt</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="library">ZArith</span></a> <a class="idref" href="EraVM.lib.Arith_ext.html#"><span class="id" title="library">Arith_ext</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc"><ul>
+<li>Additional properties of positive numbers</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+
+<br/>
+</div>
+
+<div class="doc"><p>** Power</p>
+</div>
+<div class="code">
+<br/>
+<span class="id" title="keyword">Section</span> <a id="ModuloPowerOfTwo" class="idref" href="#ModuloPowerOfTwo"><span class="id" title="section">ModuloPowerOfTwo</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.lib.Arith_ext.html#"><span class="id" title="module">Arith_ext</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#"><span class="id" title="module">BinNums</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#"><span class="id" title="module">BinInt</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="module">ZArith</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.micromega.Lia.html#"><span class="id" title="module">Lia</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="mod_pow2" class="idref" href="#mod_pow2"><span class="id" title="definition">mod_pow2</span></a> (<a id="p:1" class="idref" href="#p:1"><span class="id" title="binder">p</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) {<span class="id" title="keyword">struct</span> <span class="id" title="var">n</span>} : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.lib.PArith_ext.html#n:2"><span class="id" title="variable">n</span></a>, <a class="idref" href="EraVM.lib.PArith_ext.html#p:1"><span class="id" title="variable">p</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#O"><span class="id" title="constructor">O</span></a>, <span class="id" title="var">_</span> ⇒ 0<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">m</span>, <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#xH"><span class="id" title="constructor">xH</span></a> ⇒ 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">m</span>, <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#xO"><span class="id" title="constructor">xO</span></a> <span class="id" title="var">tail</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.double"><span class="id" title="definition">Z.double</span></a> (<a class="idref" href="EraVM.lib.PArith_ext.html#mod_pow2:3"><span class="id" title="definition">mod_pow2</span></a> <span class="id" title="var">tail</span> <span class="id" title="var">m</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">m</span>, <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#xI"><span class="id" title="constructor">xI</span></a> <span class="id" title="var">tail</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#Z.succ_double"><span class="id" title="definition">Z.succ_double</span></a> (<a class="idref" href="EraVM.lib.PArith_ext.html#mod_pow2:3"><span class="id" title="definition">mod_pow2</span></a> <span class="id" title="var">tail</span> <span class="id" title="var">m</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="mod_pow2_ge_0" class="idref" href="#mod_pow2_ge_0"><span class="id" title="lemma">mod_pow2_ge_0</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a> <a id="n:7" class="idref" href="#n:7"><span class="id" title="binder">n</span></a>, <a class="idref" href="EraVM.lib.PArith_ext.html#mod_pow2"><span class="id" title="definition">mod_pow2</span></a> <a class="idref" href="EraVM.lib.PArith_ext.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="EraVM.lib.PArith_ext.html#n:7"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#b1f0780291abe9bd18804d2c9a5039d4"><span class="id" title="notation">≥</span></a> 0.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="mod_pow2_limit" class="idref" href="#mod_pow2_limit"><span class="id" title="lemma">mod_pow2_limit</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="p:8" class="idref" href="#p:8"><span class="id" title="binder">p</span></a> <a id="n:9" class="idref" href="#n:9"><span class="id" title="binder">n</span></a>, <a class="idref" href="EraVM.lib.PArith_ext.html#mod_pow2"><span class="id" title="definition">mod_pow2</span></a> <a class="idref" href="EraVM.lib.PArith_ext.html#p:8"><span class="id" title="variable">p</span></a> <a class="idref" href="EraVM.lib.PArith_ext.html#n:9"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.BinInt.html#::Z_scope:x_'<'_x"><span class="id" title="notation"><</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.ZArith.Zpower.html#two_power_nat"><span class="id" title="definition">two_power_nat</span></a> <a class="idref" href="EraVM.lib.PArith_ext.html#n:9"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Close</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.lib.PArith_ext.html#ModuloPowerOfTwo"><span class="id" title="section">ModuloPowerOfTwo</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
