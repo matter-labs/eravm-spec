@@ -79,12 +79,12 @@ End BinaryCoder.
 
 Section LayoutCoder.
 
-  Definition encode_layout: @encoder params_layout params :=
+ Definition encode_layout: @encoder params_layout params :=
 fun params =>
   match params with
   | mk_params (ForwardExistingFatPointer fptr) =>
       match FatPointerABI.encode_layout fptr with
-        | Some ptr_layout =>
+      | Some ptr_layout =>
             Some
               {|
                 raw_memory_forwarding_type_enum := FarCallForwardPageType.ForwardFatPointer;
@@ -115,9 +115,9 @@ fun params =>
           end
       end
   .
-
   Theorem layout_coding_revertible: revertible decode_layout encode_layout.
-    unfold revertible.
+Proof.
+  unfold revertible.
     unfold revertible, decode_layout, encode_layout, fwd_memory_adapter.
     move => [fwd_memory encoded].
     case_eq fwd_memory.
@@ -144,7 +144,8 @@ fun params =>
        repeat f_equal =>//=; by destruct s.
      }
     }
-  Qed.
+    Qed.
+
 
   Definition coder_layout := mk_coder decode_layout encode_layout layout_coding_revertible.
 

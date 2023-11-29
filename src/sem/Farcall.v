@@ -53,7 +53,7 @@ Import
 Import Addressing.Coercions.
 
 Local Coercion Z.b2z: bool >-> Z.
-
+Section FarCalls.
 (** # Far calls
 
 Far calls are calls to the code outside the current contract space.
@@ -701,3 +701,4 @@ Inductive step_farcall : instruction -> smallstep :=
     step_transient_only ts1 ts2 s1 s2 ->
     step_farcall (OpDelegateCall (Some pv_abi) (mk_pv __ dest) handler call_shard call_as_static) s1 s2
 .
+End FarCalls.

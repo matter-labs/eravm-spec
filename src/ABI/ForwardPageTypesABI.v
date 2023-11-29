@@ -18,8 +18,8 @@ Definition data_page_type_to_u8 (t:data_page_type) : u8 :=
 
 Definition span_of (fp: fat_ptr_layout) : option span :=
   if fp.(offset) == zero32
-  then None
-  else Some (mk_span fp.(start) fp.(length))
+  then Some (mk_span fp.(start) fp.(length))
+  else None
 .
 
 Definition fwd_memory_adapter (fwd_type: u8) (raw_fat_ptr_layout: fat_ptr_layout) : option MemoryManagement.fwd_memory:=
