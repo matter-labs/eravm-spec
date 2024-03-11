@@ -167,9 +167,24 @@ source:</p>
 <ul>
 <li><p><em>Concrete syntax example</em>. Use immediate <code>42</code>
 as a source:</p>
-<pre><code>add 42, r0, r3</code></pre></li>
+<pre><code>add 42, r0, r3</code></pre>
+<p>Note that negative imm operands may be supported by the assembler,
+for example:</p>
+<pre><code>add -42, r0, r3</code></pre></li>
 </ul></li>
 </ol>
+<p>However, the implementation will have to proceed as follows:</p>
+<ul>
+<li>put a negative immediate <code>-42</code> on a const page to an
+address <span class="math inline">C</span>, as a 2’s complement, 256-bit
+wide;</li>
+<li>using the <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#const_in"><span
+class="id" title="inductive">const_in</span></a></span> addessing mode,
+address the <span class="math inline">C</span>-th constant, as in the
+following pseudocode:</li>
+</ul>
+<pre><code>add code[C], r0, r3</code></pre>
 </div>
 <div class="code">
 <br/>

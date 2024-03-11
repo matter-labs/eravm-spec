@@ -432,7 +432,8 @@ class="id" title="section">VersionedHash</span></a></span> : used to
 fetch the contract code.</li>
 <li><span
 class="inlinecode"><a class="idref" href="#Decommitter"><span
-class="id" title="section">Decommitter</span></a></span></li>
+class="id" title="section">Decommitter</span></a></span> : fetches the
+contract code.</li>
 </ul></li>
 </ul>
 </div>
@@ -5849,9 +5850,24 @@ source:</p>
 <ul>
 <li><p><em>Concrete syntax example</em>. Use immediate <code>42</code>
 as a source:</p>
-<pre><code>add 42, r0, r3</code></pre></li>
+<pre><code>add 42, r0, r3</code></pre>
+<p>Note that negative imm operands may be supported by the assembler,
+for example:</p>
+<pre><code>add -42, r0, r3</code></pre></li>
 </ul></li>
 </ol>
+<p>However, the implementation will have to proceed as follows:</p>
+<ul>
+<li>put a negative immediate <code>-42</code> on a const page to an
+address <span class="math inline">C</span>, as a 2’s complement, 256-bit
+wide;</li>
+<li>using the <span
+class="inlinecode"><a class="idref" href="#const_in"><span
+class="id" title="inductive">const_in</span></a></span> addessing mode,
+address the <span class="math inline">C</span>-th constant, as in the
+following pseudocode:</li>
+</ul>
+<pre><code>add code[C], r0, r3</code></pre>
 </div>
 <div class="code">
 <br/>
@@ -6782,8 +6798,10 @@ class="id" title="definition">to_core</span></a></span>.</p>
 <p>The spec introduces the following layers of abstraction for the
 instruction set, from lowest level to the highest level:</p>
 <ol type="1">
-<li><p>Binary encoding (as [BITS 64] type instances). Binary encoded
-instructions, each instruction is 64-bit wide.</p>
+<li><p>Binary encoding (as <span class="inlinecode"><span class="id"
+title="definition">BITS</span></span> <span class="inlinecode">64</span>
+type instances). Binary encoded instructions, each instruction is 64-bit
+wide.</p>
 <p>The exact type for such instructions is <span
 class="inlinecode"><span class="id"
 title="definition">BITS</span></span> <span
@@ -7211,9 +7229,11 @@ specialized with a proper instance of <span
 class="inlinecode"><a class="idref" href="#descr"><span
 class="id" title="record">descr</span></a></span> record to describe an
 instruction at different stages of its execution.</p>
-<p>The schema [instruction] is parameterized with types of various
-instruction operands. Conventionally, their names reflect the following
-information:</p>
+<p>The schema <span
+class="inlinecode"><a class="idref" href="#instruction"><span
+class="id" title="inductive">instruction</span></a></span> is
+parameterized with types of various instruction operands.
+Conventionally, their names reflect the following information:</p>
 <ul>
 <li>the prefix is <code>src_</code> for source operands and
 <code>dest_</code> for output operands.</li>
@@ -12748,36 +12768,36 @@ class="inlinecode"><a class="idref" href="#OpFarCall"><span
 class="id" title="constructor">OpFarCall</span></a></span>
 <code>abi_params address handler is_static</code></p>
 <ul>
-<li><code>farcall        abi_reg, dest_addr</code></li>
-<li><code>farcall        abi_reg, dest_addr, handler</code></li>
-<li><code>farcall.static abi_reg, dest_addr</code></li>
-<li><code>farcall.static abi_reg, dest_addr, handler</code></li>
-<li><code>farcall.shard  abi_reg, dest_addr</code></li>
-<li><code>farcall.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call        abi_reg, dest_addr</code></li>
+<li><code>far_call        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.static abi_reg, dest_addr</code></li>
+<li><code>far_call.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="#OpDelegateCall"><span
 class="id" title="constructor">OpDelegateCall</span></a></span>
 abi_params address handler is_static`</p>
 <ul>
-<li><code>delegatecall        abi_reg, dest_addr</code></li>
-<li><code>delegatecall        abi_reg, dest_addr, handler</code></li>
-<li><code>delegatecall.static abi_reg, dest_addr</code></li>
-<li><code>delegatecall.static abi_reg, dest_addr, handler</code></li>
-<li><code>delegatecall.shard  abi_reg, dest_addr</code></li>
-<li><code>delegatecall.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate        abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.static abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="#OpMimicCall"><span
 class="id" title="constructor">OpMimicCall</span></a></span>
 <code>abi_params address handler is_static</code></p>
 <ul>
-<li><code>mimic        abi_reg, dest_addr</code></li>
-<li><code>mimic        abi_reg, dest_addr, handler</code></li>
-<li><code>mimic.static abi_reg, dest_addr</code></li>
-<li><code>mimic.static abi_reg, dest_addr, handler</code></li>
-<li><code>mimic.shard  abi_reg, dest_addr</code></li>
-<li><code>mimic.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic        abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic.static abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><strong>static</strong> modifier marks the new execution stack
 frame as ‘static’, preventing some instructions from being executed.
@@ -18714,8 +18734,11 @@ as one-bit numbers.</p>
 </div>
 
 <div class="doc"><ol start="2" type="1">
-<li>[encode_predicate] maps eight different predicates to their
-encodings as 3-bit binary numbers.</li>
+<li><span
+class="inlinecode"><a class="idref" href="#encode_predicate"><span
+class="id" title="definition">encode_predicate</span></a></span> maps
+eight different predicates to their encodings as 3-bit binary
+numbers.</li>
 </ol>
 </div>
 <div class="code">

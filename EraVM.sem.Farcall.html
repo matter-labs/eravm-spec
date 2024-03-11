@@ -350,36 +350,36 @@ class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><sp
 class="id" title="constructor">OpFarCall</span></a></span>
 <code>abi_params address handler is_static</code></p>
 <ul>
-<li><code>farcall        abi_reg, dest_addr</code></li>
-<li><code>farcall        abi_reg, dest_addr, handler</code></li>
-<li><code>farcall.static abi_reg, dest_addr</code></li>
-<li><code>farcall.static abi_reg, dest_addr, handler</code></li>
-<li><code>farcall.shard  abi_reg, dest_addr</code></li>
-<li><code>farcall.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call        abi_reg, dest_addr</code></li>
+<li><code>far_call        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.static abi_reg, dest_addr</code></li>
+<li><code>far_call.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
 class="id" title="constructor">OpDelegateCall</span></a></span>
 abi_params address handler is_static`</p>
 <ul>
-<li><code>delegatecall        abi_reg, dest_addr</code></li>
-<li><code>delegatecall        abi_reg, dest_addr, handler</code></li>
-<li><code>delegatecall.static abi_reg, dest_addr</code></li>
-<li><code>delegatecall.static abi_reg, dest_addr, handler</code></li>
-<li><code>delegatecall.shard  abi_reg, dest_addr</code></li>
-<li><code>delegatecall.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate        abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.static abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.delegate.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
 class="id" title="constructor">OpMimicCall</span></a></span>
 <code>abi_params address handler is_static</code></p>
 <ul>
-<li><code>mimic        abi_reg, dest_addr</code></li>
-<li><code>mimic        abi_reg, dest_addr, handler</code></li>
-<li><code>mimic.static abi_reg, dest_addr</code></li>
-<li><code>mimic.static abi_reg, dest_addr, handler</code></li>
-<li><code>mimic.shard  abi_reg, dest_addr</code></li>
-<li><code>mimic.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic        abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic.static abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.mimic.shard  abi_reg, dest_addr</code></li>
+<li><code>far_call.mimic.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><strong>static</strong> modifier marks the new execution stack
 frame as ‘static’, preventing some instructions from being executed.
