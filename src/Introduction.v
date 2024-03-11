@@ -135,5 +135,5 @@ instruction syntax and semantics, and some elements of system protocol.
   + [%Bootloader] : a system contract in charge of block construction.
   + [%Precompiles] : extensions of virtual machine.
   + [%VersionedHash] : used to fetch the contract code.
-  + [%Decommitter]
+  + [%Decommitter] : fetches the contract code.
  *)

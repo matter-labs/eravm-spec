@@ -227,30 +227,30 @@ A system call is a far call that satisfies the following conditions:
 ## Abstract and concrete syntax
 
 - [%OpFarCall] `abi_params address handler is_static `
-   + `farcall        abi_reg, dest_addr`
-   + `farcall        abi_reg, dest_addr, handler `
-   + `farcall.static abi_reg, dest_addr`
-   + `farcall.static abi_reg, dest_addr, handler`
-   + `farcall.shard  abi_reg, dest_addr`
-   + `farcall.shard  abi_reg, dest_addr, handler`
+   + `far_call        abi_reg, dest_addr`
+   + `far_call        abi_reg, dest_addr, handler `
+   + `far_call.static abi_reg, dest_addr`
+   + `far_call.static abi_reg, dest_addr, handler`
+   + `far_call.shard  abi_reg, dest_addr`
+   + `far_call.shard  abi_reg, dest_addr, handler`
 
 
 - [%OpDelegateCall] abi_params address handler is_static`
-   + `delegatecall        abi_reg, dest_addr`
-   + `delegatecall        abi_reg, dest_addr, handler`
-   + `delegatecall.static abi_reg, dest_addr`
-   + `delegatecall.static abi_reg, dest_addr, handler`
-   + `delegatecall.shard  abi_reg, dest_addr`
-   + `delegatecall.shard  abi_reg, dest_addr, handler`
+   + `far_call.delegate        abi_reg, dest_addr`
+   + `far_call.delegate        abi_reg, dest_addr, handler`
+   + `far_call.delegate.static abi_reg, dest_addr`
+   + `far_call.delegate.static abi_reg, dest_addr, handler`
+   + `far_call.delegate.shard  abi_reg, dest_addr`
+   + `far_call.delegate.shard  abi_reg, dest_addr, handler`
 
 
 - [%OpMimicCall] `abi_params address handler is_static`
-   + `mimic        abi_reg, dest_addr`
-   + `mimic        abi_reg, dest_addr, handler`
-   + `mimic.static abi_reg, dest_addr`
-   + `mimic.static abi_reg, dest_addr, handler`
-   + `mimic.shard  abi_reg, dest_addr`
-   + `mimic.shard  abi_reg, dest_addr, handler`
+   + `far_call.mimic        abi_reg, dest_addr`
+   + `far_call.mimic        abi_reg, dest_addr, handler`
+   + `far_call.mimic.static abi_reg, dest_addr`
+   + `far_call.mimic.static abi_reg, dest_addr, handler`
+   + `far_call.mimic.shard  abi_reg, dest_addr`
+   + `far_call.mimic.shard  abi_reg, dest_addr, handler`
 
 
 - **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.

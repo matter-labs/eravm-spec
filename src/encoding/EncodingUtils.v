@@ -81,7 +81,7 @@ Definition encode_swap(m: mod_swap) : Z :=
   end
 .
 
-(** 2. [encode_predicate] maps eight different predicates to their encodings as 3-bit
+(** 2. [%encode_predicate] maps eight different predicates to their encodings as 3-bit
   binary numbers.
 *)
 Definition encode_predicate (p:predicate) : BITS 3 :=

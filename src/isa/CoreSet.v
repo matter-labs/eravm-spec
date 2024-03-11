@@ -9,7 +9,7 @@ The meaning of "schema" here is that [%instruction] needs to be specialized with
 a proper instance of [%descr] record to describe an instruction at different
 stages of its execution.
 
-The schema [instruction] is parameterized with types of various instruction operands.
+The schema [%instruction] is parameterized with types of various instruction operands.
 Conventionally, their names reflect the following information:
 
 - the prefix is `src_` for source operands and `dest_` for output operands.

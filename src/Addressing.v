@@ -134,6 +134,21 @@ and memory locations.
      ```
      add 42, r0, r3
      ```
+
+     Note that negative imm operands may be supported by the assembler, for example:
+
+     ```
+     add -42, r0, r3
+     ```
+
+However, the implementation will have to proceed as follows:
+
+- put a negative immediate `-42` on a const page to an address $C$, as a 2's complement, 256-bit wide;
+- using the [%const_in] addessing mode, address the $C$-th constant, as in the following pseudocode:
+
+```
+add code[C], r0, r3
+```
    *)
 
   Inductive imm_in : Type := Imm (imm: u16).
