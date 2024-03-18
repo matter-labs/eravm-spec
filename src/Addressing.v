@@ -67,7 +67,7 @@ Some of them only support reading (indicated by "in"), or writing (indicated by 
 
 6. Stack page, relative to GPR and SP (in/out)
 
-   *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a
+   *Concrete syntax example*. Use `(r1+42)`-th [%word] relative to SP on the stack page as a
     source:
 
    ```
@@ -77,7 +77,7 @@ Some of them only support reading (indicated by "in"), or writing (indicated by 
    Note, that the following form is forbidden:
 
    ```
-   add stack-[r1+42], r0, r3
+   add stack+[r1+42], r0, r3
    ```
 
 
@@ -205,8 +205,8 @@ add code[C], r0, r3
 
    - Resolved to $\mathit{(SP - (reg + imm))\mod 2^{16}}$. See [%rslv_stack_rel].
    - Unlike [%RelSpPop], the direction of offset does not change depending on read/write.
-   - *Concrete syntax example*. Use `(r1+42)`-th [%word] on the stack page as a
-      source:
+   - *Concrete syntax example*. Use `(r1+42)`-th [%word] relative to SP on the
+      stack page as a source:
 
      ```
      add stack-[r1+42], r0, r3
@@ -215,7 +215,7 @@ add code[C], r0, r3
      Note, that the following form is forbidden:
 
      ```
-     add stack[r1+42], r0, r3
+     add stack+[r1+42], r0, r3
      ```
 
    *)
