@@ -53,7 +53,7 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   let inc := true in
   match ins with
   | Assembly.OpInvalid => OpInvalid
-  | Assembly.OpNoOp
+  | Assembly.OpNoOp  => OpNoOp SrcReg DstReg
   | Assembly.OpSpAdd _ _ => OpNoOp SrcReg DstSpRelativePush
   | Assembly.OpSpSub _ _ => OpNoOp SrcSpRelativePop DstReg
   | Assembly.OpJump dest => OpJump dest
@@ -169,7 +169,7 @@ Section AsmToMachConversion.
           => Some template
         | Assembly.OpContextSetContextU128 (Reg src0)
         | Assembly.OpContextSetErgsPerPubdataByte (Reg src0) => Some (template <| op_src0 := Some src0 |> )
-        | Assembly.OpSpAdd (Reg reg) (Imm ofs)
+        | Assembly.OpSpAdd (Reg reg) (Imm ofs) => Some (template <| op_dst0 := Some reg |> <| op_imm1 := Some ofs |> )
         | Assembly.OpSpSub (Reg reg) (Imm ofs) => Some (template <| op_src0 := Some reg |> <| op_imm0 := Some ofs |> )
         | Assembly.OpJump dest => Some (set_src0 dest template)
         | Assembly.OpAdd src0 (Reg src1) dst0 _
