@@ -83,16 +83,15 @@ Section AssemblyToCore.
     | Assembly.OpStoreInc ptr val mem inc_ptr => @OpStoreInc decoded ptr val mem inc_ptr
     | Assembly.OpLoadPointer ptr res  => @OpLoadPointer decoded  ptr res
     | Assembly.OpLoadPointerInc ptr res inc_ptr  => @OpLoadPointerInc decoded  ptr res inc_ptr
-    | Assembly.OpContextThis out  => @OpContextThis decoded  out
-    | Assembly.OpContextCaller out  => @OpContextCaller decoded  out
-    | Assembly.OpContextCodeAddress out  => @OpContextCodeAddress decoded  out
-    | Assembly.OpContextMeta out  => @OpContextMeta decoded  out
-    | Assembly.OpContextErgsLeft out  => @OpContextErgsLeft decoded  out
-    | Assembly.OpContextSp out  => @OpContextSp decoded  out
-    | Assembly.OpContextGetContextU128 out  => @OpContextGetContextU128 decoded  out
-    | Assembly.OpContextSetContextU128 in1  => @OpContextSetContextU128 decoded  in1
-    | Assembly.OpContextSetErgsPerPubdataByte in1  => @OpContextSetErgsPerPubdataByte decoded  in1
-    | Assembly.OpContextIncrementTxNumber  => @OpContextIncrementTxNumber decoded
+    | Assembly.OpContractThis out  => @OpContextThis decoded  out
+    | Assembly.OpContractCaller out  => @OpContextCaller decoded  out
+    | Assembly.OpContractCodeAddress out  => @OpContextCodeAddress decoded  out
+    | Assembly.OpVMMeta out  => @OpContextMeta decoded  out
+    | Assembly.OpVMErgsLeft out  => @OpContextErgsLeft decoded  out
+    | Assembly.OpVMSp out  => @OpContextSp decoded  out
+    | Assembly.OpGetCapturedContext out  => @OpContextGetContextU128 decoded  out
+    | Assembly.OpSetContextReg in1  => @OpContextSetContextU128 decoded  in1
+    | Assembly.OpIncrementTxNumber  => @OpContextIncrementTxNumber decoded
     | Assembly.OpSLoad in1 out  => @OpSLoad decoded  in1 out
     | Assembly.OpSStore in1 in2 =>
         @OpSStore decoded in1 in2
@@ -102,6 +101,15 @@ Section AssemblyToCore.
         @OpEvent decoded  in1 in2 is_first
     | Assembly.OpPrecompileCall in1 in2 out =>
         @OpPrecompileCall decoded  in1 in2 out
+  (* TODO: the following is not implemented yet *)
+    | Assembly.OpAuxMutating _ => OpNoOp
+    | Assembly.OpTransientWrite _ _ => OpNoOp
+    | Assembly.OpTransientRead _ _ => OpNoOp
+    | Assembly.OpDecommit _ _ _ => OpNoOp
+    | Assembly.OpStaticWrite _ _ => OpNoOp
+    | Assembly.OpStaticWriteInc _ _ _ => OpNoOp
+    | Assembly.OpStaticRead _ _  => OpNoOp
+    | Assembly.OpStaticReadInc _ _ _ => OpNoOp
     end.
 
 End AssemblyToCore.

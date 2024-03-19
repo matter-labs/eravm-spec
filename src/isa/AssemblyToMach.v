@@ -68,10 +68,10 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpRor src0 src1 dst swap sflags => OpRor src0 dst swap sflags
   | Assembly.OpMul src0 _ dst0 _ sflags => OpMul src0 dst0 sflags
   | Assembly.OpDiv src0 _ dst0 _ swap sflags => OpDiv src0 dst0 swap sflags
-  | Assembly.OpNearCall _ _ _ =>  OpCall
-  | Assembly.OpFarCall enc dest handler is_static is_shard_provided => OpFarcall is_static is_shard_provided
-  | Assembly.OpMimicCall _ _ _ is_static is_shard_provided => OpMimic is_static is_shard_provided
-  | Assembly.OpDelegateCall _ _ _ is_static is_shard_provided => OpDelegate is_static is_shard_provided
+  | Assembly.OpNearCall _ _ _ =>  OpNearCall
+  | Assembly.OpFarCall enc dest handler is_static is_shard_provided => OpFarCall is_static is_shard_provided
+  | Assembly.OpMimicCall _ _ _ is_static is_shard_provided => OpMimicCall is_static is_shard_provided
+  | Assembly.OpDelegateCall _ _ _ is_static is_shard_provided => OpDelegateCall is_static is_shard_provided
   | Assembly.OpNearRet => OpRet no_label
   | Assembly.OpNearRetTo _ => OpRet with_label
   | Assembly.OpFarRet _ => OpRet with_label
@@ -94,21 +94,29 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpStoreInc src0 _ AuxHeap _ => OpStoreAuxHeap src0 inc
   | Assembly.OpLoadPointer _ _ => OpLoadPtr no_inc
   | Assembly.OpLoadPointerInc _ _ _ => OpLoadPtr inc
-  | Assembly.OpContextThis _ => OpContextThis
-  | Assembly.OpContextCaller _ => OpContextCaller
-  | Assembly.OpContextCodeAddress _ => OpContextCodeAddress
-  | Assembly.OpContextMeta _ => OpContextMeta
-  | Assembly.OpContextErgsLeft _ => OpContextErgsLeft
-  | Assembly.OpContextSp _ => OpContextSp
-  | Assembly.OpContextGetContextU128 _ => OpContextGetContextU128
-  | Assembly.OpContextSetContextU128 _ => OpContextSetContextU128
-  | Assembly.OpContextSetErgsPerPubdataByte _ => OpContextSetErgsPerPubdataByte
-  | Assembly.OpContextIncrementTxNumber => OpContextIncrementTxNumber
-  | Assembly.OpSLoad _ _ => OpSload
-  | Assembly.OpSStore _ _ => OpSstore
-  | Assembly.OpPrecompileCall _ _ _ => OpLogPrecompile
-  | Assembly.OpEvent _ _ is_first => OpLogEvent is_first
-  | Assembly.OpToL1Message _ _ is_first => OpLogToL1 is_first
+  | Assembly.OpContractThis _ => OpContractThis
+  | Assembly.OpContractCaller _ => OpContractCaller
+  | Assembly.OpContractCodeAddress _ => OpContractCodeAddress
+  | Assembly.OpVMMeta _ => OpVMMeta
+  | Assembly.OpVMErgsLeft _ => OpVMErgsLeft
+  | Assembly.OpVMSp _ => OpVMSp
+  | Assembly.OpGetCapturedContext _ => OpGetCapturedContext
+  | Assembly.OpSetContextReg _ => OpSetContextReg
+  (*| Assembly.OpContextSetErgsPerPubdataByte _ => OpSetErgsPerPubdataByte*)
+  | Assembly.OpIncrementTxNumber => OpIncrementTxNumber
+  | Assembly.OpSLoad _ _ => OpSLoad
+  | Assembly.OpSStore _ _ => OpSStore
+  | Assembly.OpPrecompileCall _ _ _ => OpPrecompileCall
+  | Assembly.OpEvent _ _ is_first => OpEvent is_first
+  | Assembly.OpToL1Message _ _ is_first => OpToL1Message is_first
+  | Assembly.OpAuxMutating _ => OpAuxMutating
+  | Assembly.OpTransientWrite _ _ => OpTransientWrite
+  | Assembly.OpTransientRead _ _ => OpTransientRead
+  | Assembly.OpStaticWrite src0 _ => OpStaticWrite src0 no_inc
+  | Assembly.OpStaticWriteInc src0 _ _ => OpStaticWrite src0 inc
+  | Assembly.OpStaticRead src0 _ => OpStaticRead src0 no_inc
+  | Assembly.OpStaticReadInc src0 _ _ => OpStaticRead src0 inc
+  | Assembly.OpDecommit _ _ _ => OpDecommit
   end.
 
 #[local]
@@ -165,10 +173,9 @@ Section AsmToMachConversion.
         | Assembly.OpInvalid
         | Assembly.OpNoOp
         | Assembly.OpPanic
-        | Assembly.OpContextIncrementTxNumber
-          => Some template
-        | Assembly.OpContextSetContextU128 (Reg src0)
-        | Assembly.OpContextSetErgsPerPubdataByte (Reg src0) => Some (template <| op_src0 := Some src0 |> )
+        | Assembly.OpIncrementTxNumber => Some template
+        | Assembly.OpSetContextReg (Reg src0)
+          => Some (template <| op_src0 := Some src0 |> )
         | Assembly.OpSpAdd (Reg reg) (Imm ofs) => Some (template <| op_dst0 := Some reg |> <| op_imm1 := Some ofs |> )
         | Assembly.OpSpSub (Reg reg) (Imm ofs) => Some (template <| op_src0 := Some reg |> <| op_imm0 := Some ofs |> )
         | Assembly.OpJump dest => Some (set_src0 dest template)
@@ -212,18 +219,20 @@ Section AsmToMachConversion.
 
         | Assembly.OpSStore (Reg src0) (Reg src1)
         | Assembly.OpEvent (Reg src0) (Reg src1) _
+         | Assembly.OpTransientRead (Reg src0) (Reg src1)
+         | Assembly.OpTransientWrite (Reg src0) (Reg src1)
         | Assembly.OpToL1Message (Reg src0) (Reg src1) _  =>
             Some (template <| op_src0 := Some src0 |> <| op_src1 := Some src1 |>)
         | Assembly.OpSLoad (Reg src0) (Reg dst0) =>
             Some (template <| op_src0 := Some src0 |> <| op_dst0:= Some dst0|>)
 
-        | Assembly.OpContextThis (Reg dst0)
-        | Assembly.OpContextCaller (Reg dst0)
-        | Assembly.OpContextCodeAddress (Reg dst0)
-        | Assembly.OpContextMeta (Reg dst0)
-        | Assembly.OpContextErgsLeft (Reg dst0)
-        | Assembly.OpContextSp (Reg dst0)
-        | Assembly.OpContextGetContextU128 (Reg dst0) =>
+        | Assembly.OpContractThis (Reg dst0)
+        | Assembly.OpContractCaller (Reg dst0)
+        | Assembly.OpContractCodeAddress (Reg dst0)
+        | Assembly.OpVMMeta (Reg dst0)
+        | Assembly.OpVMErgsLeft (Reg dst0)
+        | Assembly.OpVMSp (Reg dst0)
+        | Assembly.OpGetCapturedContext (Reg dst0) =>
             Some (template <| op_dst0:= Some dst0|>)
 
         | Assembly.OpPrecompileCall (Reg src0) (Reg src1) (Reg dst0) =>
@@ -238,16 +247,29 @@ Section AsmToMachConversion.
                                                     <| op_imm0 := Some handler |> )
 
         | Assembly.OpLoad ptr (Reg res) _
-        | Assembly.OpStore ptr (Reg res) _ =>
+        | Assembly.OpStaticRead ptr (Reg res) =>
             Some (set_src0_special ptr (template <| op_dst0 := Some res|> ))
+
+        | Assembly.OpStore ptr (Reg val) _
+        | Assembly.OpStaticWrite ptr (Reg val) =>
+            Some (set_src0_special ptr (template <| op_src1 := Some val|> ))
+
         | Assembly.OpLoadPointer (Reg name) (Reg res) =>
             Some (template <| op_src0 := Some name |> <| op_dst0 := Some res|> )
-        | Assembly.OpLoadInc ptr (Reg res) _ (Reg inc_ptr)
-        | Assembly.OpStoreInc ptr (Reg res) _ (Reg inc_ptr) =>
+        | Assembly.OpLoadInc ptr (Reg res) _ (Reg inc_ptr) =>
+            Some (set_src0_special ptr template <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |> )
+        | Assembly.OpStaticReadInc ptr (Reg res) (Reg inc_ptr) =>
             Some (set_src0_special ptr (template <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>))
+        | Assembly.OpStoreInc ptr (Reg val) _ (Reg inc_ptr)
+        | Assembly.OpStaticWriteInc ptr (Reg val) (Reg inc_ptr) =>
+            Some (set_src0_special ptr (template <| op_src1 := Some val |> <| op_dst1 := Some inc_ptr |>))
 
         | Assembly.OpLoadPointerInc (Reg ptr) (Reg res) (Reg inc_ptr) =>
             Some (template <| op_src0 := Some ptr |> <| op_dst0 := Some res|> <| op_dst1 := Some inc_ptr |>)
+        | Assembly.OpDecommit (Reg src0) (Reg src1) (Reg dst0) =>
+            Some (template <| op_src0 := Some src0 |>  <| op_src1 := Some src1 |> <| op_dst1 := Some dst0 |>)
+        | Assembly.OpAuxMutating (Reg ptr) =>
+            Some (template <| op_src0 := Some ptr |> )
         end
     end.
 

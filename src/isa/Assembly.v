@@ -79,17 +79,19 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpLoadPointerInc  (ptr: in_reg)  (res: out_reg) (inc_ptr: out_reg)
 
 
-  | OpContextThis                  (out: out_reg)
-  | OpContextCaller                (out: out_reg)
-  | OpContextCodeAddress           (out: out_reg)
-  | OpContextMeta                  (out: out_reg)
-  | OpContextErgsLeft              (out: out_reg)
-  | OpContextSp                    (out: out_reg)
-  | OpContextGetContextU128        (out: out_reg)
-  | OpContextSetContextU128        (in1: in_reg)
-  | OpContextSetErgsPerPubdataByte (in1: in_reg)
-  | OpContextIncrementTxNumber
-
+  | OpContractThis                 (out: out_reg)
+  | OpContractCaller               (out: out_reg)
+  | OpContractCodeAddress          (out: out_reg)
+  | OpVMMeta                       (out: out_reg)
+  | OpVMErgsLeft                   (out: out_reg)
+  | OpVMSp                         (out: out_reg)
+  | OpGetCapturedContext           (out: out_reg)
+  | OpSetContextReg                (in1: in_reg)
+  (* Removed in VM 1.5.0
+| OpContextSetErgsPerPubdataByte (in1: in_reg)
+   *)
+  | OpIncrementTxNumber
+  | OpAuxMutating    (in1: in_reg)
 
   | OpSLoad          (in1: in_reg)                  (out: out_reg)
   | OpSStore         (in1: in_reg) (in2: in_reg)
@@ -98,6 +100,20 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
 
   | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool)
   | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
+  (* Since VM 1.5.0 *)
+  | OpTransientWrite (in1: in_reg) (in2: in_reg)
+  (* Since VM 1.5.0 *)
+  | OpTransientRead  (in1: in_reg)                   (out: out_reg)
+  (* Since VM 1.5.0 *)
+  | OpStaticRead     (in1: in_regimm)                (out: out_reg)
+  (* Since VM 1.5.0 *)
+  | OpStaticReadInc  (in1: in_regimm)                (out1: out_reg) (out2: out_reg)
+  (* Since VM 1.5.0 *)
+  | OpStaticWrite    (in1: in_regimm) (in2: in_reg)
+  (* Since VM 1.5.0 *)
+  | OpStaticWriteInc (in1: in_regimm) (in2: in_reg)  (out: out_reg)
+  (* Since VM 1.5.0 *)
+  | OpDecommit       (in1: in_reg)    (in2: in_reg)  (out: out_reg)
   .
 
 End AssemblyInstructionSet.

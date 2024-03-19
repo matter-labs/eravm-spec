@@ -102,6 +102,7 @@ The following definitions are used to derive the costs of instructions and other
 Local Coercion ergs_of : Z >-> ergs.
 (* end hide *)
 
+
 Definition VM_CYCLE_COST_IN_ERGS: Z := 4.
 Definition RAM_PERMUTATION_COST_IN_ERGS: Z := 1.
 Definition CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS: Z := 4.
@@ -124,12 +125,21 @@ Definition KECCAK256_CIRCUIT_COST_IN_ERGS: Z := 40.
 Definition SHA256_CIRCUIT_COST_IN_ERGS: Z := 7.
 Definition ECRECOVER_CIRCUIT_COST_IN_ERGS: Z := 1112.
 
+Definition MAX_TX_ERGS_LIMIT: Z := 80000000.
+
+Definition VM_INITIAL_FRAME_ERGS: Z := unsigned_max 32.
+
+Definition EVM_SIMULATOR_STIPEND: Z := 2^30.
+
+
+Definition ERGS_PER_CIRCUIT: Z := 80000.
+
+
 Definition INVALID_OPCODE_ERGS: Z := unsigned_max 32.
 
-Definition RICH_ADDRESSING_OPCODE_ERGS: Z
-  := VM_CYCLE_COST_IN_ERGS + 2 * RAM_PERMUTATION_COST_IN_ERGS.
-Definition AVERAGE_OPCODE_ERGS: Z
-  := VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS.
+Definition RICH_ADDRESSING_OPCODE_ERGS: Z :=
+    VM_CYCLE_COST_IN_ERGS + 2 * RAM_PERMUTATION_COST_IN_ERGS.
+Definition AVERAGE_OPCODE_ERGS: Z := VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS.
 
 
 
@@ -137,24 +147,98 @@ Definition STORAGE_READ_IO_PRICE: Z := 150.
 Definition STORAGE_WRITE_IO_PRICE: Z := 250.
 Definition EVENT_IO_PRICE: Z := 25.
 Definition L1_MESSAGE_IO_PRICE: Z := 100.
+
+
 Definition CALL_LIKE_ERGS_COST: Z := 20.
+
 Definition ERGS_PER_CODE_WORD_DECOMMITTMENT: Z := CODE_DECOMMITMENT_COST_PER_WORD_IN_ERGS.
 
 
-Definition DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD: Z := 64000.
-Definition MSG_VALUE_SIMULATOR_ADDITIVE_COST: Z := 11500 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
-Definition MSG_VALUE_SIMULATOR_MIN_USED_ERGS: Z := 8000 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
+Definition VM_MAX_STACK_DEPTH: Z := VM_INITIAL_FRAME_ERGS / CALL_LIKE_ERGS_COST + 80.
 
-Definition MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION: Z := Z.max
-                                                                    (MSG_VALUE_SIMULATOR_ADDITIVE_COST - MSG_VALUE_SIMULATOR_MIN_USED_ERGS + 1)
-                                                                    (2300 + 1).
-Definition MIN_STORAGE_WRITE_COST: Z := Z.max
-                                         MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION
-                                         STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS.
+Definition INITIAL_FRAME_SUCCESSFUL_EXIT_PC: Z := 0.
+Definition INITIAL_FRAME_FORMAL_EH_LOCATION: Z := unsigned_max 16.
 
+Definition SYSTEM_CONTRACTS_OFFSET_ADDRESS: Z := 2 ^ 15.
+
+Definition KECCAK256_ROUND_FUNCTION_PRECOMPILE_ADDRESS: Z := SYSTEM_CONTRACTS_OFFSET_ADDRESS + 0x10.
+Definition SHA256_ROUND_FUNCTION_PRECOMPILE_ADDRESS: Z := 0x02.
+Definition ECRECOVER_INNER_FUNCTION_PRECOMPILE_ADDRESS: Z := 0x01.
+Definition SECP256R1_VERIFY_PRECOMPILE_ADDRESS: Z := 0x100.
+
+Definition MAX_PUBDATA_COST_PER_QUERY: Z := 65.
 Definition INITIAL_STORAGE_WRITE_PUBDATA_BYTES: Z := 64.
 Definition REPEATED_STORAGE_WRITE_PUBDATA_BYTES: Z := 40.
-Definition L1_MESSAGE_PUBDATA_BYTES: Z := (1 + 1 + 2 + 20 + 32 + 32).
+Definition L1_MESSAGE_PUBDATA_BYTES: Z := 1 + 1 + 2 + 20 + 32 + 32.
+
+
+
+Definition MAX_PUBDATA_PER_BLOCK: Z := 110000.
+
+Definition STORAGE_AUX_BYTE: u8 := fromZ 0.
+Definition EVENT_AUX_BYTE: u8 := fromZ 1.
+Definition L1_MESSAGE_AUX_BYTE: u8 := fromZ 2.
+Definition PRECOMPILE_AUX_BYTE: u8 := fromZ 3.
+Definition TRANSIENT_STORAGE_AUX_BYTE: u8 := fromZ 4.
+
+
+Definition BOOTLOADER_FORMAL_ADDRESS_LOW: Z := SYSTEM_CONTRACTS_OFFSET_ADDRESS + 0x01.
+Definition DEPLOYER_SYSTEM_CONTRACT_ADDRESS_LOW: Z := SYSTEM_CONTRACTS_OFFSET_ADDRESS + 0x02.
+
+
+Definition ADDRESS_UNRESTRICTED_SPACE: u64 := fromZ (2^16).
+
+Definition ADDRESS_ECRECOVER: u16 := fromZ 0x0001.
+Definition ADDRESS_SHA256: u16 := fromZ 0x0002.
+Definition ADDRESS_RIPEMD160: u16 := fromZ 0x0003.
+Definition ADDRESS_IDENTITY: u16 := fromZ 0x0004.
+
+Definition ADDRESS_BOOTLOADER: u16 := fromZ 0x8001.
+Definition ADDRESS_ACCOUNT_CODE_STORAGE: u16 := fromZ 0x8002.
+Definition ADDRESS_NONCE_HOLDER: u16 := fromZ 0x8003.
+Definition ADDRESS_KNOWN_CODES_STORAGE: u16 := fromZ 0x8004.
+Definition ADDRESS_IMMUTABLE_SIMULATOR: u16 := fromZ 0x8005.
+Definition ADDRESS_CONTRACT_DEPLOYER: u16 := fromZ 0x8006.
+Definition ADDRESS_FORCE_DEPLOYER: u16 := fromZ 0x8007.
+Definition ADDRESS_L1_MESSENGER: u16 := fromZ 0x8008.
+Definition ADDRESS_MSG_VALUE: u16 := fromZ 0x8009.
+Definition ADDRESS_ETH_TOKEN: u16 := fromZ 0x800A.
+Definition ADDRESS_SYSTEM_CONTEXT: u16 := fromZ 0x800B.
+Definition ADDRESS_BOOTLOADER_UTILITIES: u16 := fromZ 0x800C.
+Definition ADDRESS_EVENT_WRITER: u16 := fromZ 0x800D.
+Definition ADDRESS_KECCAK256: u16 := fromZ 0x8010.
+
+Definition BOOTLOADER_MAX_MEMORY: Z := unsigned_max 32.
+
+Definition NEW_FRAME_MEMORY_STIPEND: Z := 2^12.
+
+
+Definition NEW_KERNEL_FRAME_MEMORY_STIPEND: Z := 2^21.
+
+Definition INTERNAL_ERGS_TO_VISIBLE_ERGS_CONVERSION_CONSTANT: Z := 1.
+
+
+
+Definition MAX_AUTOMATICALLY_SUPPORTED_MSG_VALUE_BYTECODE: Z := 100000.
+Definition DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD: Z :=
+    ERGS_PER_CODE_WORD_DECOMMITTMENT * MAX_AUTOMATICALLY_SUPPORTED_MSG_VALUE_BYTECODE / 32.
+
+
+Definition MSG_VALUE_SIMULATOR_ADDITIVE_COST: Z :=
+    14500 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
+
+
+Definition MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION: Z := 2300 + 1.
+
+
+Definition MIN_STORAGE_WRITE_COST: Z := Z.max MIN_STORAGE_WRITE_PRICE_FOR_REENTRANCY_PROTECTION STORAGE_WRITE_HASHER_MIN_COST_IN_ERGS.
+
+Definition STORAGE_ACCESS_COLD_READ_COST: Z := 2000.
+Definition STORAGE_ACCESS_COLD_WRITE_COST: Z := Z.max MIN_STORAGE_WRITE_COST 5500.
+
+
+Definition MSG_VALUE_SIMULATOR_MIN_USED_ERGS: Z := 8000 + DECOMMITMENT_MSG_VALUE_SIMULATOR_OVERHEAD.
+
 
 Definition growth_cost (diff:mem_address) : ergs := diff.
 End Ergs.
@@ -192,11 +276,11 @@ grow heap; far calls also may induce code
      | OpFarCall _ _ _ _ _
      | OpDelegateCall _ _ _ _ _
      | OpMimicCall _ _ _ _ _ => 2 * VM_CYCLE_COST_IN_ERGS
-                             + RAM_PERMUTATION_COST_IN_ERGS
-                             + STORAGE_READ_IO_PRICE
-                             + CALL_LIKE_ERGS_COST
-                             + STORAGE_SORTER_COST_IN_ERGS
-                             + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
+                               + RAM_PERMUTATION_COST_IN_ERGS
+                               + STORAGE_READ_IO_PRICE
+                               + CALL_LIKE_ERGS_COST
+                               + STORAGE_SORTER_COST_IN_ERGS
+                               + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
 
      | OpNearRet | OpNearRetTo _ | OpNearRevert | OpNearRevertTo _ | OpNearPanicTo _
      | OpFarRet _ | OpFarRevert _
@@ -209,51 +293,67 @@ grow heap; far calls also may induce code
      |
        OpStore _ _ _
      | OpStoreInc _ _ _ _
+     | OpStaticWrite _ _
+     | OpStaticWriteInc _ _ _
        => 2 * VM_CYCLE_COST_IN_ERGS + 5 * RAM_PERMUTATION_COST_IN_ERGS
 
      | OpLoad _ _ _
      | OpLoadInc _ _ _ _
      | OpLoadPointer _ _
      | OpLoadPointerInc _ _ _
+     | OpStaticRead _ _
+     | OpStaticReadInc _ _ _
        => VM_CYCLE_COST_IN_ERGS + 3 * RAM_PERMUTATION_COST_IN_ERGS
 
-     | OpContextThis _
-     | OpContextCaller _
-     | OpContextCodeAddress _
-     | OpContextMeta _
-     | OpContextErgsLeft _
-     | OpContextSp _
-     | OpContextGetContextU128 _
-     | OpContextSetContextU128 _
-     | OpContextSetErgsPerPubdataByte _
-     | OpContextIncrementTxNumber => AVERAGE_OPCODE_ERGS
-     | OpSLoad _ _=> STORAGE_READ_IO_PRICE
-                 + VM_CYCLE_COST_IN_ERGS
-                 + RAM_PERMUTATION_COST_IN_ERGS
-                 + LOG_DEMUXER_COST_IN_ERGS
-                 + STORAGE_SORTER_COST_IN_ERGS
-     | OpSStore _ _ =>
-                Z.max MIN_STORAGE_WRITE_COST (
-                    STORAGE_WRITE_IO_PRICE
-                    + 2 * VM_CYCLE_COST_IN_ERGS
+     | OpContractThis _
+     | OpContractCaller _
+     | OpContractCodeAddress _
+     | OpVMMeta _
+     | OpVMErgsLeft _
+     | OpVMSp _
+     | OpGetCapturedContext _
+     | OpSetContextReg _
+     | OpAuxMutating _
+     | OpIncrementTxNumber
+       => AVERAGE_OPCODE_ERGS
+
+     | OpSLoad _ _=> VM_CYCLE_COST_IN_ERGS
+                    + RAM_PERMUTATION_COST_IN_ERGS
+                    + LOG_DEMUXER_COST_IN_ERGS
+                    + STORAGE_SORTER_COST_IN_ERGS
+                    + STORAGE_ACCESS_COLD_READ_COST
+     | OpSStore _ _ => VM_CYCLE_COST_IN_ERGS
                     + RAM_PERMUTATION_COST_IN_ERGS
                     + 2 * LOG_DEMUXER_COST_IN_ERGS
-                    + 2 * STORAGE_SORTER_COST_IN_ERGS)
-     | OpToL1Message _ _ _ =>
-                let intrinsic_cost := L1_MESSAGE_IO_PRICE
-                    + 2 * VM_CYCLE_COST_IN_ERGS
+                    + 2 * STORAGE_SORTER_COST_IN_ERGS
+                    + STORAGE_ACCESS_COLD_WRITE_COST
+
+     | OpToL1Message _ _ _ => L1_MESSAGE_IO_PRICE
+                    + VM_CYCLE_COST_IN_ERGS
                     + RAM_PERMUTATION_COST_IN_ERGS
                     + 2 * LOG_DEMUXER_COST_IN_ERGS
-                    + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS in
-                Z.max intrinsic_cost L1_MESSAGE_MIN_COST_IN_ERGS
+                    + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
      | OpEvent _ _ _ => EVENT_IO_PRICE
-                     + 2 * VM_CYCLE_COST_IN_ERGS
-                     + RAM_PERMUTATION_COST_IN_ERGS
-                     + 2 * LOG_DEMUXER_COST_IN_ERGS
-                     + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
-     | OpPrecompileCall _ _ _ =>
+                    + VM_CYCLE_COST_IN_ERGS
+                    + RAM_PERMUTATION_COST_IN_ERGS
+                    + 2 * LOG_DEMUXER_COST_IN_ERGS
+                    + 2 * EVENTS_OR_L1_MESSAGES_SORTER_COST_IN_ERGS
+
+     | OpPrecompileCall _ _ _
+     | OpDecommit _ _ _ =>
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
+     | OpTransientRead _ _ =>
+         VM_CYCLE_COST_IN_ERGS
+         + RAM_PERMUTATION_COST_IN_ERGS
+         + LOG_DEMUXER_COST_IN_ERGS
+         + STORAGE_SORTER_COST_IN_ERGS
+     | OpTransientWrite _ _ =>
+         VM_CYCLE_COST_IN_ERGS
+         + RAM_PERMUTATION_COST_IN_ERGS
+         + 2 * LOG_DEMUXER_COST_IN_ERGS
+         + 2 * STORAGE_SORTER_COST_IN_ERGS
      end)%Z.
+
 
 (** Implementation note: Coq allows partially evaluating [%base_cost] to get the absolute erg costs for each instruction:
 
@@ -268,12 +368,6 @@ Current costs are:
 | FarCall
 | MimicCall
 | DelegateCall => 182
-| Store
-| StoreInc => 13
-| Load
-| LoadInc
-| LoadPointer
-| LoadPointerInc => 7
 | NearRet
 | NearRetTo
 | FarRet
@@ -282,20 +376,32 @@ Current costs are:
 | FarRevert
 | NearPanicTo
 | Panic
-| ContextThis
-| ContextCaller
-| ContextCodeAddress
-| ContextMeta
-| ContextErgsLeft
-| ContextSp
-| ContextGetContextU128
-| ContextSetContextU128
-| ContextSetErgsPerPubdataByte
-| ContextIncrementTxNumber => 5
-| SLoad => 158
-| SStore => 3501
-| ToL1Message => 156250
-| Event => 38
+| ContractThis
+| ContractCaller
+| ContractCodeAddress
+| VMMeta
+| VMErgsLeft
+| VMSp
+| GetCapturedContext
+| SetContextReg
+| IncrementTxNumber
+| AuxMutating => 5
+| SLoad => 2008
+| SStore => 5511
+| Event => 34
+| ToL1Message => 109
+| TransientWrite => 11
+| TransientRead => 8
+| Load
+| LoadInc
+| LoadPointer
+| LoadPointerInc
+| StaticRead
+| StaticReadInc => 7
+| Store
+| StoreInc
+| StaticWrite
+| StaticWriteInc => 13
 | <otherwise> => 6
 ```
  *)
