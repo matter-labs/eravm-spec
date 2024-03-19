@@ -47,7 +47,7 @@ Store word in current storage by key.
       ts2 = ts1 <| gs_callstack := new_cs |> ->
       pay (sstore_cost cs) cs new_cs ->
 
-      step_sstore (OpSLoad (mk_pv __ key) (IntValue write_value))
+      step_sstore (OpSStore (mk_pv __ key) (IntValue write_value))
                   {|
                     gs_transient := ts1;
                     gs_global    := gs;
