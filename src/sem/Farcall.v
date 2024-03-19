@@ -227,20 +227,14 @@ A system call is a far call that satisfies the following conditions:
 ## Abstract and concrete syntax
 
 - [%OpFarCall] `abi_params address handler is_static `
-   + `far_call        abi_reg, dest_addr`
    + `far_call        abi_reg, dest_addr, handler `
-   + `far_call.static abi_reg, dest_addr`
    + `far_call.static abi_reg, dest_addr, handler`
-   + `far_call.shard  abi_reg, dest_addr`
    + `far_call.shard  abi_reg, dest_addr, handler`
 
 
 - [%OpDelegateCall] abi_params address handler is_static`
-   + `far_call.delegate        abi_reg, dest_addr`
    + `far_call.delegate        abi_reg, dest_addr, handler`
-   + `far_call.delegate.static abi_reg, dest_addr`
    + `far_call.delegate.static abi_reg, dest_addr, handler`
-   + `far_call.delegate.shard  abi_reg, dest_addr`
    + `far_call.delegate.shard  abi_reg, dest_addr, handler`
 
 
