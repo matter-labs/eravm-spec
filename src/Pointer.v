@@ -176,7 +176,7 @@ These four components are enough to unambiguously identify a **[%slice]** of a d
     (** ## Usage
 
 - Fat pointers are used to pass read-only spans of [%data_page]s between contracts.
-- Fat pointers are created from spans by [%OpFarCall]/[%OpMimicCall]/[%OpDelegateCall] or through [%OpFarRet]/[%OpFarRevert].
+- Fat pointers are created from spans by [%OpFarCall]/[%OpMimicCall]/[%OpDelegateCall] or through [%OpRet]/[%OpRevert].
 
    - Far calls accept a serialized instance of [%FarCall.params] in a register.
      If it contains a span in [%fwd_memory], then when the contract starts executing, [%r1] is assigned the fat pointer obtained from the slice.
@@ -185,7 +185,7 @@ These four components are enough to unambiguously identify a **[%slice]** of a d
 - An existing fat pointer is passed by using [%ForwardFatPointer].
 
 
-Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDelegateCall]) or far returns ([%OpFarRet], [%OpFarRevert]).
+Pointers may be created only by far calls ([%OpFarCall], [%OpMimicCall], [%OpDelegateCall]) or far returns ([%OpRet], [%OpRevert]).
 
      **)
 

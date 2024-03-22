@@ -8,9 +8,18 @@ Section NearRevertDefinition.
   Inductive step_nearrevert: @instruction bound -> smallstep :=
   (** # NearRevert (return with recoverable error)
 
+The NearRevert and FarRevert share the same syntax, but their runtime semantic is
+different:
+
+- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
+  selected (see [%FarRetDefinition]);
+- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
+  selected (see [%NearRetDefinition]).
+
+
 ## Abstract Syntax
 
-[%OpNearRevert]
+[%OpRevert]
 
 ## Syntax
 
@@ -34,7 +43,7 @@ Section NearRevertDefinition.
 6. Proceed with executing $E$.
    *)
   | step_NearRevert:
-    forall cf caller_stack new_caller new_cs _eh _sp _pc _ergs saved ctx gs new_gs pages,
+    forall cf caller_stack new_caller new_cs _eh _sp _pc _ergs saved ctx gs new_gs pages _ignore_arg,
       `(
           let cs := InternalCall (mk_cf _eh _sp _pc _ergs saved) caller_stack in
           let handler := active_exception_handler cs in
@@ -42,7 +51,7 @@ Section NearRevertDefinition.
           ergs_return_caller_and_drop cs new_caller ->
           rollback saved gs new_gs ->
           new_cs = pc_set handler new_caller ->
-          step_nearrevert OpNearRevert
+          step_nearrevert (OpRevert _ignore_arg)
                           {|
                             gs_transient := {|
                                              gs_flags        := __;

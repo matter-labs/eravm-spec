@@ -69,13 +69,10 @@ Section AssemblyToCore.
         @OpMimicCall decoded enc dest handler is_static is_shard_provided
     | Assembly.OpDelegateCall enc dest (Imm handler) is_static is_shard_provided =>
         @OpDelegateCall decoded enc dest handler is_static is_shard_provided
-    | Assembly.OpNearRet => OpNearRet
     | Assembly.OpNearRetTo (Imm dest) => OpNearRetTo dest
-
-    | Assembly.OpFarRet args  => @OpFarRet decoded  args
-    | Assembly.OpNearRevert  => @OpNearRevert decoded
+    | Assembly.OpRet args  => @OpRet decoded  args
     | Assembly.OpNearRevertTo (Imm dest) => @OpNearRevertTo decoded dest
-    | Assembly.OpFarRevert args  => @OpFarRevert decoded  args
+    | Assembly.OpRevert args  => @OpRevert decoded  args
     | Assembly.OpNearPanicTo (Imm label) => @OpNearPanicTo decoded label
     | Assembly.OpPanic  => @OpPanic decoded
     | Assembly.OpLoad ptr res mem  => @OpLoad decoded  ptr res mem

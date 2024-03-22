@@ -74,18 +74,19 @@ instruction syntax and semantics, and some elements of system protocol.
    + Control flow
       * **`Nop`** : [%NopDefinition] : do nothing.
       * **`Jump`** : [%JumpDefinition] : jump to code (conditional jumps are implemented through [%Predication]).
-      * **`NearCall`** : [%NearCallDefinition] : call a function in the same contract.
-      * **`NearRet`** : [%NearRetDefinition] : normal return from near call to the call site, return unspend ergs.
-      * **`NearRevert`** : [%NearRevertDefinition] : return from near call due to a recoverable error, return unspend ergs, roll back storage/events, execute exception handler.
 
-      * **`NearRetTo`** : [%NearRetToDefinition] : Like `NearRet` but returns to explicit label.
+      * **`NearCall`** : [%NearCallDefinition] : call a function in the same contract.
+      * **`Ret` (from near call)** : [%NearRetDefinition] : when used after near call, normal return to the call location, also returning unspent ergs.
+      * **`Revert` (from near call)** : [%NearRevertDefinition] : when used after near call, return from near call due to a recoverable error, return unspend ergs, roll back storage/events, execute exception handler.
+
+      * **`NearRetTo`** : [%NearRetToDefinition] : Like `Ret` but returns to explicit label.
       * **`NearRevertTo`** : [%NearRevertToDefinition] : like `NearRevert` but executes code at label instead of exception handler.
 
       * **`Panic`** : [%PanicDefinition] : trigger panic.
       * **`NearPanicTo`** : [%NearPanicToDefinition] : trigger panic and return to label.
       * **`Farcall`** : [%FarcallDefinition] : call a contract
-      * **`FarRet`** : [%FarRetDefinition] : return from farcall.
-      * **`FarRevert`** : [%FarRevertDefinition] : like `FarRet` but roll back storage/events and execute exception handler.
+      * **`Ret` (from far call)** : [%FarRetDefinition] : when used after far call, normal return to the call location, also returning unspent ergs.
+      * **`Revert` (from far call)** : [%FarRevertDefinition] : when used after far call, recover (from an error), return unspend ergs, roll back storage/events, execute exception handler.
 
    + Operations with heaps
 

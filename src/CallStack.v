@@ -144,7 +144,7 @@ As the transaction is executed, call stack changes as follows:
 
 - [%OpNearCall] pushes an [%InternalCall] frame to callstack.
 - [%OpFarCall], [%OpDelegateCall], or [%OpMimicCall] push an [%ExternalCall] frame to callstack.
-- [%OpNearRet], [%OpNearRetTo], [%OpNearRevert], [%OpNearRevertTo], [%OpPanic], [%OpFarRet], [%OpFarRevert] pop a frame from callstack.
+- [%OpNearRetTo], [%OpRevert], [%OpRevertTo], [%OpPanic], [%OpRet] pop a frame from callstack.
 
 Attempting to have more than [%CALLSTACK_LIMIT] elements in callstack will force the VM into panic.
 
