@@ -56,7 +56,7 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpNoOp  => OpNoOp SrcReg DstReg
   | Assembly.OpSpAdd _ _ => OpNoOp SrcReg DstSpRelativePush
   | Assembly.OpSpSub _ _ => OpNoOp SrcSpRelativePop DstReg
-  | Assembly.OpJump dest => OpJump dest
+  | Assembly.OpJump dest _ret_addr => OpJump dest
   | Assembly.OpAnd src0 _ out sflags => OpAnd src0 out sflags
   | Assembly.OpOr src0 _ out sflags => OpOr src0 out sflags
   | Assembly.OpXor src0 _ out sflags => OpXor src0 out sflags
@@ -99,7 +99,7 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpContractCodeAddress _ => OpContractCodeAddress
   | Assembly.OpVMMeta _ => OpVMMeta
   | Assembly.OpVMErgsLeft _ => OpVMErgsLeft
-  | Assembly.OpVMSp _ => OpVMSp
+  | Assembly.OpVMSP _ => OpVMSp
   | Assembly.OpGetCapturedContext _ => OpGetCapturedContext
   | Assembly.OpSetContextReg _ => OpSetContextReg
   (*| Assembly.OpContextSetErgsPerPubdataByte _ => OpSetErgsPerPubdataByte*)
@@ -110,8 +110,8 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpEvent _ _ is_first => OpEvent is_first
   | Assembly.OpToL1Message _ _ is_first => OpToL1Message is_first
   | Assembly.OpAuxMutating _ => OpAuxMutating
-  | Assembly.OpTransientWrite _ _ => OpTransientWrite
-  | Assembly.OpTransientRead _ _ => OpTransientRead
+  | Assembly.OpTransientStore _ _ => OpTransientStore
+  | Assembly.OpTransientLoad _ _ => OpTransientLoad
   | Assembly.OpStaticWrite src0 _ => OpStaticWrite src0 no_inc
   | Assembly.OpStaticWriteInc src0 _ _ => OpStaticWrite src0 inc
   | Assembly.OpStaticRead src0 _ => OpStaticRead src0 no_inc
@@ -178,7 +178,7 @@ Section AsmToMachConversion.
           => Some (template <| op_src0 := Some src0 |> )
         | Assembly.OpSpAdd (Reg reg) (Imm ofs) => Some (template <| op_dst0 := Some reg |> <| op_imm1 := Some ofs |> )
         | Assembly.OpSpSub (Reg reg) (Imm ofs) => Some (template <| op_src0 := Some reg |> <| op_imm0 := Some ofs |> )
-        | Assembly.OpJump dest => Some (set_src0 dest template)
+        | Assembly.OpJump dest ret_addr => Some (set_src0 dest (set_dst0 ret_addr template))
         | Assembly.OpAdd src0 (Reg src1) dst0 _
         | Assembly.OpOr src0 (Reg src1) dst0 _
         | Assembly.OpXor src0 (Reg src1) dst0 _
@@ -195,8 +195,7 @@ Section AsmToMachConversion.
           => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>)))
         | Assembly.OpMul src0 (Reg src1) dst0 (Reg dst1) _
         | Assembly.OpDiv src0 (Reg src1) dst0 (Reg dst1) _ _
-          => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |>
-                                                                         <| op_dst1 := Some dst1 |>)))
+          => Some (set_src0 src0 (set_dst0 dst0 (template <| op_src1 := Some src1 |> <| op_dst1 := Some dst1 |>)))
 
         | Assembly.OpNearCall (Reg arg) (Imm dest) (Imm handler) =>
             Some ({|
@@ -219,11 +218,11 @@ Section AsmToMachConversion.
 
         | Assembly.OpSStore (Reg src0) (Reg src1)
         | Assembly.OpEvent (Reg src0) (Reg src1) _
-         | Assembly.OpTransientRead (Reg src0) (Reg src1)
-         | Assembly.OpTransientWrite (Reg src0) (Reg src1)
+         | Assembly.OpTransientStore (Reg src0) (Reg src1)
         | Assembly.OpToL1Message (Reg src0) (Reg src1) _  =>
             Some (template <| op_src0 := Some src0 |> <| op_src1 := Some src1 |>)
-        | Assembly.OpSLoad (Reg src0) (Reg dst0) =>
+        | Assembly.OpSLoad (Reg src0) (Reg dst0)
+        | Assembly.OpTransientLoad (Reg src0) (Reg dst0) =>
             Some (template <| op_src0 := Some src0 |> <| op_dst0:= Some dst0|>)
 
         | Assembly.OpContractThis (Reg dst0)
@@ -231,7 +230,7 @@ Section AsmToMachConversion.
         | Assembly.OpContractCodeAddress (Reg dst0)
         | Assembly.OpVMMeta (Reg dst0)
         | Assembly.OpVMErgsLeft (Reg dst0)
-        | Assembly.OpVMSp (Reg dst0)
+        | Assembly.OpVMSP (Reg dst0)
         | Assembly.OpGetCapturedContext (Reg dst0) =>
             Some (template <| op_dst0:= Some dst0|>)
 

@@ -14,7 +14,7 @@ Section XorDefinition.
 
 ## Abstract Syntax
 
-  [%OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)  (flags:mod_set_flags)]
+[%OpXor (in1: in_any) (in2: in_reg)  (out1: out_any)  (flags:mod_set_flags)]
 
 ## Syntax
 

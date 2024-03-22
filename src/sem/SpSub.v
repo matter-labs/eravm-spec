@@ -8,9 +8,17 @@ Section SpSubDefinition.
   (** # SpSub
 ## Abstract Syntax
 
-[%OpSpSub       (in1: in_reg) (ofs: imm_in)]
+[%OpSpSub (in1: in_reg) (ofs: imm_in)]
 
 ## Syntax
+
+```
+decsp reg+imm
+decsp reg
+decsp imm
+```
+
+## Legacy Syntax
 
 ```
 nop stack-=[reg+ofs]
@@ -18,12 +26,12 @@ nop stack-=[reg+ofs]
 
 ## Summary
 
-Subtract `(in1 + ofs)` from SP.
+Subtract `(reg + imm)` from SP.
 
 ## Semantic
 
  - Advances PC
- - $\mathit{SP_{new} := SP - (in_1 + ofs)}$, but only if there was no overflow.
+ - $\mathit{SP_{new} := SP - (reg + imm)}$, but only if there was no overflow.
 
 ## Affected parts of VM state
 

@@ -60,8 +60,8 @@ Definition encode_opcode (op:mach_opcode) : Z :=
 | OpStoreAuxHeap src inc => 1081 + 10 * src + inc
 | OpLoadPtr inc => 1083 + inc
 | OpDecommit => 1093
-| OpTransientRead => 1094
-| OpTransientWrite => 1095
+| OpTransientLoad => 1094
+| OpTransientStore => 1095
 | OpStaticRead src inc => 1096 + 2 * src + inc
 | OpStaticWrite src inc => 1100 + 2 * src + inc
   end

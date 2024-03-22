@@ -10,7 +10,16 @@ Section SpAddDefinition.
 
 [%OpSpAdd       (in1: in_reg) (ofs: imm_in)]
 
+
 ## Syntax
+
+```
+incsp reg+imm
+incsp reg
+incsp imm
+```
+
+## Legacy Syntax
 
 ```
 nop r0, r0, stack+=[reg+ofs]
@@ -18,12 +27,12 @@ nop r0, r0, stack+=[reg+ofs]
 
 ## Summary
 
-Add `(in1 + ofs)` to SP.
+Add `(reg + imm)` to SP.
 
 ## Semantic
 
  - Advances PC
- - $\mathit{SP_{new} := SP + (in_1 + ofs)}$, but only if there was no overflow.
+ - $\mathit{SP_{new} := SP + (reg + imm)}$, but only if there was no overflow.
 
 ## Affected parts of VM state
 

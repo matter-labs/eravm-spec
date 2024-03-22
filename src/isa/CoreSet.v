@@ -66,7 +66,7 @@ For additional versatility, the definitions may bind both the decoded values and
   | OpSpAdd       (in1: src_pv) (ofs: stack_address)  (* encoded as NoOp with $out_1$ *)
   | OpSpSub       (in1: src_pv) (ofs: stack_address) (* encoded as NoOp with $in_1$ *)
 
-  | OpJump        (dest: src_pv)
+  | OpJump        (dest: src_pv) (out1: dest_pv)
   | OpAnd         (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (flags:mod_set_flags)
   | OpOr          (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (flags:mod_set_flags)
   | OpXor         (in1: src_pv) (in2: src_pv)  (out1: dest_pv) (flags:mod_set_flags)
@@ -111,16 +111,20 @@ For additional versatility, the definitions may bind both the decoded values and
   | OpLoadPointerInc  (ptr: src_fat_ptr)  (res: dest_pv) (inc_ptr: dest_fat_ptr)
 
 
-  | OpContextThis                                   (out: dest_pv)
-  | OpContextCaller                                 (out: dest_pv)
-  | OpContextCodeAddress                            (out: dest_pv)
-  | OpContextMeta                                   (out: dest_meta_params)
-  | OpContextErgsLeft                               (out: dest_pv)
-  | OpContextSp                                     (out: dest_pv)
-  | OpContextGetContextU128                         (out: dest_pv)
-  | OpContextSetContextU128        (in1: src_pv)
-  | OpContextSetErgsPerPubdataByte (in1: src_pv)
-  | OpContextIncrementTxNumber
+  | OpContractThis        (out: dest_pv)
+  | OpContractCaller      (out: dest_pv)
+  | OpContractCodeAddress (out: dest_pv)
+
+  | OpVMMeta              (out: dest_meta_params)
+  | OpVMErgsLeft          (out: dest_pv)
+  | OpVMSP                (out: dest_pv)
+
+  | OpGetCapturedContext  (out: dest_pv)
+  | OpSetContextReg       (in1: src_pv)
+  (* Removed in VM 1.5.0
+| OpContextSetErgsPerPubdataByte (in1: src_pv)
+   *)
+  | OpIncrementTxNumber
 
 
   | OpSLoad          (in1: src_pv)                  (out: dest_pv)
@@ -128,6 +132,22 @@ For additional versatility, the definitions may bind both the decoded values and
   | OpToL1Message    (in1: src_pv) (in2: src_pv)                   (is_first: bool)
   | OpEvent          (in1: src_pv) (in2: src_pv)                   (is_first: bool)
   | OpPrecompileCall (in1: src_precompile_params) (ergs:src_pv)    (out: dest_pv)
+
+  | OpTransientStore (in1: src_pv) (in2: src_pv)
+  (* Since VM 1.5.0 *)
+  | OpTransientLoad  (in1: src_pv) (out: dest_pv)
+  (* Since VM 1.5.0 *)
+  | OpStaticRead     (in1: src_heap_ptr) (out: dest_pv)
+  (* Since VM 1.5.0 *)
+  | OpStaticReadInc  (in1: src_heap_ptr) (out1: dest_pv) (out2: dest_heap_ptr)
+  (* Since VM 1.5.0 *)
+  | OpStaticWrite    (in1: src_heap_ptr) (in2: src_pv)
+  (* Since VM 1.5.0 *)
+  | OpStaticWriteInc (in1: src_heap_ptr) (in2: src_pv)  (out: dest_heap_ptr)
+  (* Since VM 1.5.0 *)
+  |  OpDecommit       (in1: src_pv)  (in2: src_pv)  (out: dest_pv)
+  (* Since VM 1.5.0 *)
+  | OpAuxMutating     (in1: src_pv)
   .
 
 
@@ -202,7 +222,8 @@ Section InstructionMapper.
                  )
   |sim_jump: `(
                  mf_src_pv s0 s1 i1 i1' ->
-                 ins_srelate s0 s1 (OpJump i1) (OpJump i1')
+                 mf_dest_pv s0 s1 o1 o1' ->
+                 ins_srelate s0 s1 (OpJump i1 o1) (OpJump i1' o1')
                )
   |sim_and: `(
                 mf_src_pv s0 s1 i1 i1' ->
@@ -369,34 +390,31 @@ Section InstructionMapper.
      )
   |sim_OpContextThis: `(
                           mf_dest_pv s0 s1 o1 o1' ->
-                          ins_srelate s0 s1 (OpContextThis o1) (OpContextThis o1'))
-  |sim_OpContextCaller: `(
+                          ins_srelate s0 s1 (OpContractThis o1) (OpContractThis o1'))
+  |sim_OpContractCaller: `(
                             mf_dest_pv s0 s1 o1 o1' ->
-                            ins_srelate s0 s1 (OpContextCaller o1) (OpContextCaller o1'))
-  |sim_OpContextCodeAddress: `(
+                            ins_srelate s0 s1 (OpContractCaller o1) (OpContractCaller o1'))
+  |sim_OpContractCodeAddress: `(
                                  mf_dest_pv s0 s1 o1 o1' ->
-                                 ins_srelate s0 s1 (OpContextCodeAddress o1) (OpContextCodeAddress o1'))
+                                 ins_srelate s0 s1 (OpContractCodeAddress o1) (OpContractCodeAddress o1'))
   |sim_OpContextMeta: `(
                           mf_dest_meta_params s0 s1 o1 o1' ->
-                          ins_srelate s0 s1 (OpContextMeta o1) (OpContextMeta o1'))
-  |sim_OpContextErgsLeft: `(
+                          ins_srelate s0 s1 (OpVMMeta o1) (OpVMMeta o1'))
+  |sim_OpVMErgsLeft: `(
                               mf_dest_pv s0 s1 o1 o1' ->
-                              ins_srelate s0 s1 (OpContextErgsLeft o1) (OpContextErgsLeft o1'))
-  |sim_OpContextSp: `(
+                              ins_srelate s0 s1 (OpVMErgsLeft o1) (OpVMErgsLeft o1'))
+  |sim_OpVMSp: `(
                         mf_dest_pv s0 s1 o1 o1' ->
-                        ins_srelate s0 s1 (OpContextSp o1) (OpContextSp o1'))
-  |sim_OpContextGetContextU128: `(
+                        ins_srelate s0 s1 (OpVMSP o1) (OpVMSP o1'))
+  |sim_OpVMGetVMU128: `(
                                     mf_dest_pv s0 s1 o1 o1' ->
-                                    ins_srelate s0 s1 (OpContextGetContextU128 o1) (OpContextGetContextU128 o1'))
+                                    ins_srelate s0 s1 (OpGetCapturedContext o1) (OpGetCapturedContext o1'))
   |sim_OpContextSetContextU128: `(
                                     mf_src_pv s0 s1 i1 i1' ->
-                                    ins_srelate s0 s1 (OpContextSetContextU128 i1) (OpContextSetContextU128 i1'))
-  |sim_OpContextSetErgsPerPubdataByte: `(
-                                           mf_src_pv s0 s1 i1 i1' ->
-                                           ins_srelate s0 s1 (OpContextSetErgsPerPubdataByte i1) (OpContextSetErgsPerPubdataByte i1'))
+                                    ins_srelate s0 s1 (OpSetContextReg i1) (OpSetContextReg i1'))
   |sim_OpContextIncrementTxNumber: `(
                                        mf_dest_pv s0 s1 o1 o1' ->
-                                       ins_srelate s0 s1 (OpContextIncrementTxNumber ) (OpContextIncrementTxNumber ))
+                                       ins_srelate s0 s1 (OpIncrementTxNumber ) (OpIncrementTxNumber ))
   |sim_OpSLoad: `(
                     mf_src_pv s0 s1 i1 i1' ->
                     mf_dest_pv s1 s2 o1 o1' ->
@@ -418,6 +436,44 @@ Section InstructionMapper.
                              mf_src_pv s1 s2 i2 i2' ->
                              mf_dest_pv s2 s3 o1 o1' ->
                              ins_srelate s0 s3 (OpPrecompileCall i1 i2 o1) (OpPrecompileCall i1' i2' o1'))
+  |sim_OpDecommit: `(
+                             mf_src_pv s0 s1 i1 i1' ->
+                             mf_src_pv s1 s2 i2 i2' ->
+                             mf_dest_pv s2 s3 o1 o1' ->
+                             ins_srelate s0 s3 (OpDecommit i1 i2 o1) (OpDecommit i1' i2' o1'))
+  |sim_OpTransientLoad: `(
+                    mf_src_pv s0 s1 i1 i1' ->
+                    mf_dest_pv s1 s2 o1 o1' ->
+                    ins_srelate s0 s2 (OpTransientLoad i1 o1) (OpTransientLoad i1' o1'))
+  |sim_OpTransientStore: `(
+                     mf_src_pv s0 s1 i1 i1' ->
+                     mf_src_pv s1 s2 i2 i2' ->
+                     ins_srelate s0 s2 (OpTransientStore i1 i2) (OpTransientStore i1' i2'))
+
+  |sim_static_store:`(
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_src_pv s1 s2 i2 i2' ->
+         mf_dest_pv s2 s3 o1 o1' ->
+         ins_srelate s0 s3 (OpStaticWrite i1 i2 ) (OpStaticWrite i1' i2')
+     )
+  |sim_static_store_inc:`(
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_src_pv s1 s2 i2 i2' ->
+         mf_dest_heap_ptr s2 s3 o1 o1' ->
+         ins_srelate s0 s3 (OpStaticWriteInc i1 i2 o1) (OpStaticWriteInc i1' i2' o1')
+     )
+
+  |sim_static_load:`(
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_dest_pv s1 s2 o1 o1' ->
+         ins_srelate s0 s2 (OpStaticRead i1 o1) (OpStaticRead i1' o1')
+     )
+  |sim_static_load_inc:`(
+         mf_src_heap_ptr s0 s1 i1 i1' ->
+         mf_dest_pv s1 s2 o1 o1' ->
+         mf_dest_heap_ptr s2 s3 o2 o2' ->
+         ins_srelate s0 s3 (OpStaticReadInc i1 o1 o2) (OpStaticReadInc i1' o1' o2')
+     )
   .
 
   Generalizable No Variables.

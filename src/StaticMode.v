@@ -55,12 +55,13 @@ forbidden in static mode. *)
   Context (forbidden := true) (allowed := false) {descr:descr}.
   Definition forbidden_static (ins:@instruction descr) : bool :=
     match ins with
-    | OpContextSetContextU128 _
-    | OpContextSetErgsPerPubdataByte _
-    | OpContextIncrementTxNumber
+    | OpSetContextReg _
+    | OpIncrementTxNumber
     | OpSStore _ _
+    | OpTransientStore _ _
     | OpEvent _ _ _
     | OpToL1Message _ _ _
+    | OpAuxMutating _
       => forbidden
     | _ => allowed
     end.

@@ -18,7 +18,7 @@ Section AssemblyToCore.
     | Assembly.OpNoOp => OpNoOp
     | Assembly.OpSpAdd in1 (Imm ofs) => @OpSpAdd decoded in1 ofs
     | Assembly.OpSpSub in1 (Imm ofs) => @OpSpSub decoded in1 ofs
-    | Assembly.OpJump dest => @OpJump decoded dest
+    | Assembly.OpJump dest ret_addr => @OpJump decoded dest ret_addr
     | Assembly.OpAnd in1 in2 out1 flags =>
         @OpAnd decoded in1 in2 out1 flags
     | Assembly.OpOr in1 in2 out1 flags =>
@@ -83,15 +83,15 @@ Section AssemblyToCore.
     | Assembly.OpStoreInc ptr val mem inc_ptr => @OpStoreInc decoded ptr val mem inc_ptr
     | Assembly.OpLoadPointer ptr res  => @OpLoadPointer decoded  ptr res
     | Assembly.OpLoadPointerInc ptr res inc_ptr  => @OpLoadPointerInc decoded  ptr res inc_ptr
-    | Assembly.OpContractThis out  => @OpContextThis decoded  out
-    | Assembly.OpContractCaller out  => @OpContextCaller decoded  out
-    | Assembly.OpContractCodeAddress out  => @OpContextCodeAddress decoded  out
-    | Assembly.OpVMMeta out  => @OpContextMeta decoded  out
-    | Assembly.OpVMErgsLeft out  => @OpContextErgsLeft decoded  out
-    | Assembly.OpVMSp out  => @OpContextSp decoded  out
-    | Assembly.OpGetCapturedContext out  => @OpContextGetContextU128 decoded  out
-    | Assembly.OpSetContextReg in1  => @OpContextSetContextU128 decoded  in1
-    | Assembly.OpIncrementTxNumber  => @OpContextIncrementTxNumber decoded
+    | Assembly.OpContractThis out  => @OpContractThis decoded  out
+    | Assembly.OpContractCaller out  => @OpContractCaller decoded  out
+    | Assembly.OpContractCodeAddress out  => @OpContractCodeAddress decoded  out
+    | Assembly.OpVMMeta out  => @OpVMMeta decoded  out
+    | Assembly.OpVMErgsLeft out  => @OpVMErgsLeft decoded  out
+    | Assembly.OpVMSP out  => @OpVMSP decoded  out
+    | Assembly.OpGetCapturedContext out  => @OpGetCapturedContext decoded  out
+    | Assembly.OpSetContextReg in1  => @OpSetContextReg decoded  in1
+    | Assembly.OpIncrementTxNumber  => @OpIncrementTxNumber decoded
     | Assembly.OpSLoad in1 out  => @OpSLoad decoded  in1 out
     | Assembly.OpSStore in1 in2 =>
         @OpSStore decoded in1 in2
@@ -102,14 +102,14 @@ Section AssemblyToCore.
     | Assembly.OpPrecompileCall in1 in2 out =>
         @OpPrecompileCall decoded  in1 in2 out
   (* TODO: the following is not implemented yet *)
-    | Assembly.OpAuxMutating _ => OpNoOp
-    | Assembly.OpTransientWrite _ _ => OpNoOp
-    | Assembly.OpTransientRead _ _ => OpNoOp
-    | Assembly.OpDecommit _ _ _ => OpNoOp
-    | Assembly.OpStaticWrite _ _ => OpNoOp
-    | Assembly.OpStaticWriteInc _ _ _ => OpNoOp
-    | Assembly.OpStaticRead _ _  => OpNoOp
-    | Assembly.OpStaticReadInc _ _ _ => OpNoOp
+    | Assembly.OpAuxMutating in1 => @OpAuxMutating decoded in1
+    | Assembly.OpTransientStore in1 in2 => @OpTransientStore decoded in1 in2
+    | Assembly.OpTransientLoad in1 out1 => @OpTransientLoad decoded in1 out1
+    | Assembly.OpDecommit in1 in2 out1 => @OpDecommit decoded in1 in2 out1
+    | Assembly.OpStaticWrite in1 in2  => @OpStaticWrite decoded in1 in2
+    | Assembly.OpStaticWriteInc in1 in2 out1 => @OpStaticWriteInc decoded in1 in2 out1
+    | Assembly.OpStaticRead in1 out1 => @OpStaticRead decoded in1 out1
+    | Assembly.OpStaticReadInc in1 out1 out2 => @OpStaticReadInc decoded in1 out1 out2
     end.
 
 End AssemblyToCore.

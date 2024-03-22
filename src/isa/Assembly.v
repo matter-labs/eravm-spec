@@ -26,6 +26,9 @@ The encoding layout is formalized by [%mach_instruction] type, which is then
 serialized to binary by [%encode_mach_instruction].
 
 The function [%base_cost] defines the basic costs of each instruction in **[%ergs]**.
+
+Note: in future (past VM 1.5) the output operand for [%OpJump] may gain full
+addressing mode, i.e. its type will be [%out_any].
    *)
 
   Inductive asm_instruction: Type :=
@@ -33,7 +36,7 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpNoOp
   | OpSpAdd       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with out_1 in address mode [%Addressing.RelSpPush]*)
   | OpSpSub       (in1: in_reg) (ofs: imm_in)  (* encoded as NoOp with in_1  in address mode [%Addressing.RelSpPop] *)
-  | OpJump        (dest: in_any)
+  | OpJump        (dest: in_any) (ret_addr: out_reg)
   | OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpOr          (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
   | OpXor         (in1: in_any) (in2: in_reg)  (out1: out_any)                  (flags:mod_set_flags)
@@ -84,7 +87,7 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpContractCodeAddress          (out: out_reg)
   | OpVMMeta                       (out: out_reg)
   | OpVMErgsLeft                   (out: out_reg)
-  | OpVMSp                         (out: out_reg)
+  | OpVMSP                         (out: out_reg)
   | OpGetCapturedContext           (out: out_reg)
   | OpSetContextReg                (in1: in_reg)
   (* Removed in VM 1.5.0
@@ -101,9 +104,9 @@ The function [%base_cost] defines the basic costs of each instruction in **[%erg
   | OpEvent          (in1: in_reg) (in2: in_reg)                   (is_first: bool)
   | OpToL1Message    (in1: in_reg) (in2: in_reg)                   (is_first: bool)
   (* Since VM 1.5.0 *)
-  | OpTransientWrite (in1: in_reg) (in2: in_reg)
+  | OpTransientStore (in1: in_reg) (in2: in_reg)
   (* Since VM 1.5.0 *)
-  | OpTransientRead  (in1: in_reg)                   (out: out_reg)
+  | OpTransientLoad  (in1: in_reg)                   (out: out_reg)
   (* Since VM 1.5.0 *)
   | OpStaticRead     (in1: in_regimm)                (out: out_reg)
   (* Since VM 1.5.0 *)

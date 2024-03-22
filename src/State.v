@@ -33,7 +33,9 @@ Definition page_has_id := @page_has_id code_page const_page data_page stack_page
 EraVM employs a [%state] that comprises the following components:
 
 1. The [%global_state] contains:
-  - current price of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
+
+  - before 1.5:  current price of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
+  - since 1.5: of publishing one byte of **pubdata** to L1 [%gs_current_ergs_per_pubdata_byte].
   - transaction number in the current block [%gs_tx_number_in_block]
   - decommitter [%gs_contracts]
   - a revertable part [%state_checkpoint]. It houses the **depot** state, embodying

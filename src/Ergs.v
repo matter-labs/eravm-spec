@@ -258,7 +258,7 @@ grow heap; far calls also may induce code
     (match ins with
      | OpInvalid => INVALID_OPCODE_ERGS
      | OpNoOp | OpSpAdd _ _ | OpSpSub _ _ => RICH_ADDRESSING_OPCODE_ERGS
-     | OpJump _ => RICH_ADDRESSING_OPCODE_ERGS
+     | OpJump _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpAnd _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpOr _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
      | OpXor _ _ _ _ => RICH_ADDRESSING_OPCODE_ERGS
@@ -310,7 +310,7 @@ grow heap; far calls also may induce code
      | OpContractCodeAddress _
      | OpVMMeta _
      | OpVMErgsLeft _
-     | OpVMSp _
+     | OpVMSP _
      | OpGetCapturedContext _
      | OpSetContextReg _
      | OpAuxMutating _
@@ -342,12 +342,12 @@ grow heap; far calls also may induce code
      | OpPrecompileCall _ _ _
      | OpDecommit _ _ _ =>
          VM_CYCLE_COST_IN_ERGS + RAM_PERMUTATION_COST_IN_ERGS + LOG_DEMUXER_COST_IN_ERGS
-     | OpTransientRead _ _ =>
+     | OpTransientLoad _ _ =>
          VM_CYCLE_COST_IN_ERGS
          + RAM_PERMUTATION_COST_IN_ERGS
          + LOG_DEMUXER_COST_IN_ERGS
          + STORAGE_SORTER_COST_IN_ERGS
-     | OpTransientWrite _ _ =>
+     | OpTransientStore _ _ =>
          VM_CYCLE_COST_IN_ERGS
          + RAM_PERMUTATION_COST_IN_ERGS
          + 2 * LOG_DEMUXER_COST_IN_ERGS

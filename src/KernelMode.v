@@ -24,7 +24,7 @@ Current mode is determined by the address of the currently executed contract $C$
   Definition addr_is_kernel (addr:contract_address) : bool :=
     addr < KERNEL_MODE_MAXADDR_LIMIT.
 
-(** Current contract's address can be obtained from the active external frame in [%callstack].
+  (** Current contract's address can be obtained from the active external frame in [%callstack].
 Topmost external frame (active frame) is obtained through [%active_extframe], it contains the current contract's address in its field [%ecf_this_address].
 
 The list of instructions requiring kernel mode is encoded by the
@@ -33,12 +33,15 @@ definition [%requires_kernel]. If [%requires_kernel ins == true], the instructio
   Definition requires_kernel (ins: @instruction descr) : bool :=
     match ins with
     | OpMimicCall _ _ _ _ _
-    | OpContextSetContextU128 _
-    | OpContextSetErgsPerPubdataByte _
-    | OpContextIncrementTxNumber
+    | OpSetContextReg _
+    | OpAuxMutating _
+    | OpIncrementTxNumber
     | OpEvent _ _ _
     | OpToL1Message _ _ _
     | OpPrecompileCall _ _ _
+    | OpDecommit _ _ _
+    | OpStaticRead _ _
+    | OpStaticWrite _ _
       => true
     | _ => false
     end.

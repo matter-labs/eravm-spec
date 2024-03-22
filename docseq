@@ -89,12 +89,18 @@ doc/EraVM.sem.PtrPack.html
 doc/EraVM.sem.SStore.html
 doc/EraVM.sem.SLoad.html
 
+doc/EraVM.sem.TransientLoad.html
+doc/EraVM.sem.TransientStore.html
+
+
 doc/EraVM.sem.OpEvent.html
 doc/EraVM.sem.ToL1.html
 doc/EraVM.sem.PrecompileCall.html
+doc/EraVM.sem.Decommit.html
 
+doc/EraVM.sem.Contract.html
+doc/EraVM.sem.VM.html
 doc/EraVM.sem.Context.html
-
 
 doc/EraVM.Coder.html
 doc/EraVM.ABI.html

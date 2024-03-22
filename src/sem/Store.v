@@ -11,7 +11,7 @@ Section StoreDefinition.
 
 ## Abstract Syntax
 
-[% OpStore    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (swap: mod_swap)]
+[% OpStore    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)]
 
 ## Syntax
 
@@ -84,6 +84,7 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 
 - GPRs, because `out` only resolves to a register.
 - TransientMemory page
+
 
 ## Usage
 

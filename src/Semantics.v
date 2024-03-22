@@ -13,11 +13,16 @@ Require Import
   sem.FarRet
   sem.FarRevert
   sem.Farcall
+  sem.IncrementTx
   sem.Jump
   sem.Load
   sem.LoadInc
   sem.LoadPtr
   sem.LoadPtrInc
+  sem.StaticRead
+  sem.StaticReadInc
+  sem.StaticWrite
+  sem.StaticWriteInc
   sem.SpAdd
   sem.SpSub
   sem.Mul
@@ -40,12 +45,16 @@ Require Import
   sem.Ror
   sem.SLoad
   sem.SStore
+  sem.TransientLoad
+  sem.TransientStore
   sem.Shl
   sem.Shr
   sem.Store
   sem.StoreInc
   sem.Sub
   sem.ToL1
+  sem.Contract
+  sem.VM
   sem.Xor
   sem.StepPanic
 .
@@ -99,48 +108,56 @@ Section SmallStep.
   predicates for various [%asm_instruction]s. *)
   Definition smallsteps : list (@instruction bound -> smallstep) :=
   [
-                                        step_nop            ;
-  fun i => step_transient (tstep_flags     step_add          i);
-  fun i => step_transient (tstep_flags     step_sub          i);
-  fun i => step_transient (tstep_flags     step_and          i);
+                                        step_nop                  ;
+  fun i => step_transient (tstep_flags     step_add                i);
+  fun i => step_transient (tstep_flags     step_sub                i);
+  fun i => step_transient (tstep_flags     step_and                i);
                                         step_context;
-  fun i => step_transient (tstep_flags     step_mul          i);
-  fun i => step_transient (tstep_flags     step_div          i);
-  fun i => step_transient (                step_farret       i);
-                                        step_farrevert      ;
-                                        step_farcall        ;
+  fun i => step_transient (tstep_flags     step_mul                i);
+  fun i => step_transient (tstep_flags     step_div                i);
+  fun i => step_transient (                step_farret             i);
+                                        step_farrevert            ;
+                                        step_farcall              ;
+
                                         step_jump;
-  fun i => step_transient (                step_load         i);
-  fun i => step_transient (                step_load_inc     i);
-  fun i => step_transient (                step_load_ptr     i);
-  fun i => step_transient (                step_load_ptr_inc i);
-  fun i => step_transient (tstep_flags     step_mul          i);
-  fun i => step_callstack (                step_sp_add       i);
-  fun i => step_callstack (                step_sp_sub       i);
-                                        step_nearcall       ;
-                                        step_panicto        ;
-  fun i => step_transient (                step_nearret      i);
-  fun i => step_transient (                step_nearretto    i);
-                                        step_nearrevert     ;
-                                        step_nearrevertto   ;
-                                        step_event          ;
-  fun i => step_transient (tstep_flags     step_or           i);
-                                        step_oppanic        ;
-                                        step_precompile     ;
-                                        step_ptradd         ;
-                                        step_ptrsub         ;
-                                        step_ptrshrink      ;
-                                        step_ptrpack        ;
-  fun i => step_transient (tstep_flags     step_rol          i);
-  fun i => step_transient (tstep_flags     step_ror          i);
-                                        step_sload          ;
-                                        step_sstore         ;
-  fun i => step_transient (tstep_flags     step_shl          i);
-  fun i => step_transient (tstep_flags     step_shr          i);
-  fun i => step_transient (                step_store        i);
-  fun i => step_transient (                step_storeinc     i);
-                                        step_tol1           ;
-  fun i => step_transient (tstep_flags     step_xor          i)
+  fun i => step_transient (                step_load               i);
+  fun i => step_transient (                step_load_inc           i);
+  fun i => step_transient (                step_load_ptr           i);
+  fun i => step_transient (                step_load_ptr_inc       i);
+  fun i => step_transient (                step_static_read        i);
+  fun i => step_transient (                step_static_read_inc    i);
+  fun i => step_transient (tstep_flags     step_mul                i);
+  fun i => step_callstack (                step_sp_add             i);
+  fun i => step_callstack (                step_sp_sub             i);
+                                        step_nearcall             ;
+                                        step_panicto              ;
+  fun i => step_transient (                step_nearret            i);
+  fun i => step_transient (                step_nearretto          i);
+                                        step_nearrevert           ;
+                                        step_nearrevertto         ;
+                                        step_event                ;
+  fun i => step_transient (tstep_flags     step_or                 i);
+                                        step_oppanic              ;
+                                        step_precompile           ;
+                                        step_ptradd               ;
+                                        step_ptrsub               ;
+                                        step_ptrshrink            ;
+                                        step_ptrpack              ;
+  fun i => step_transient (tstep_flags     step_rol                i);
+  fun i => step_transient (tstep_flags     step_ror                i);
+                                        step_sload                ;
+                                        step_sstore               ;
+                                        step_tload                ;
+                                        step_tstore               ;
+  fun i => step_transient (tstep_flags     step_shl                i);
+  fun i => step_transient (tstep_flags     step_shr                i);
+  fun i => step_transient (                step_store              i);
+  fun i => step_transient (                step_storeinc           i);
+  fun i => step_transient (                step_static_write       i);
+  fun i => step_transient (                step_static_write_inc    i);
+                                        step_tol1                 ;
+  fun i => step_transient (tstep_flags     step_xor                i);
+                                        step_increment_tx
 
   ].
 

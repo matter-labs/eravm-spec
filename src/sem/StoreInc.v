@@ -12,7 +12,7 @@ Section StoreIncDefinition.
 
 ## Abstract Syntax
 
-[% OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg) (swap: mod_swap)]
+[% OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg)]
 
 ## Syntax
 

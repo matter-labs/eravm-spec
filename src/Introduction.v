@@ -96,6 +96,13 @@ instruction syntax and semantics, and some elements of system protocol.
       * **`Store`** : [%StoreDefinition] : store word to heap by an offset.
       * **`StoreInc`** : [%StoreIncDefinition] : like `Store`, additionally return offset+32.
 
+   + Operations with static memory page (unique "heap"-like unbound page, kernel-only)
+
+      * **`StaticRead`** : [%StaticReadDefinition] : load word from heap by a fat pointer.
+      * **`StaticReadInc`** : [%StaticReadIncDefinition] : like `Load`, additionally return offset+32.
+      * **`StaticWrite`** : [%StaticWriteDefinition] : store word to heap by an offset.
+      * **`StaticWriteInc`** : [%StaticWriteIncDefinition] : like `Store`, additionally return offset+32.
+
    + Operations with pointers
 
       * **`PtrAdd`** : [%PtrAddDefinition] : increment pointer.
@@ -107,12 +114,17 @@ instruction syntax and semantics, and some elements of system protocol.
       * **`SStore`** : [%SStoreDefinition] : store value at a key in storage of the current contract.
       * **`SLoad`** : [%SLoadDefinition] : load value by key from storage of the current contract.
 
+   + Operations with transient storage (resets after each transaction)
+      * **`TransientStore`** : [%TransientStoreDefinition] : store value at a key in transient storage of the current contract.
+      * **`TransientLoad`** : [%TransientLoadDefinition] : load value by key from transient storage of the current contract.
+
    + Events and precompiles
       * **`OpEvent`** : [%OpEventDefinition] : emit an event.
       * **`ToL1`** : [%ToL1Definition] : emit a message to L1.
       * **`PrecompileCall`** : [%PrecompileCallDefinition] : call an extension of VM specific to currently executing system contract.
-
-      * **`Context`** : [%ContextDefinition] : access some parts of VM state such as currently executed contract or stack pointer.
+      * **`Context`** : [%ContextDefinition] : access the context register and context captured value (used to emulate `msg.value`).
+      * **`Contract`** : [%ContractDefinition] : access associated contract addresses (current, caller, or code)
+      * **`VM`** : [%VMDefinition] : access some parts of VM execution state such as stack pointer.
 
 - **ABI**  (memory layouts of compound data structures serialized to 256-bit words.)
 
