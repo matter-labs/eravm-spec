@@ -56,14 +56,16 @@ addressing mode, i.e. its type will be [%out_any].
   | OpMimicCall   (enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
   | OpDelegateCall(enc: in_reg) (dest: in_reg) (handler: imm_in) (is_static:bool) (is_shard_provided: bool)
 
-  | OpNearRet
   | OpNearRetTo   (dest: imm_in)
-  | OpFarRet      (args: in_reg)
 
-  | OpNearRevert
-  | OpNearRevertTo(dest: imm_in)
-  | OpFarRevert   (args: in_reg)
-  | OpNearPanicTo (dest: imm_in)
+  (* FarRet (args: reg) and NearRet are merged *)
+  | OpRet          (args: in_reg)
+
+  | OpNearRevertTo (dest: imm_in)
+
+  (* FarRevert (args: reg) and NearRevert are merged *)
+  | OpRevert       (args: in_reg)
+  | OpNearPanicTo  (dest: imm_in)
   | OpPanic
 
   | OpPtrAdd      (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)

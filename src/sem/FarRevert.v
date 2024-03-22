@@ -43,9 +43,17 @@ Section FarRevertDefinition.
   Inductive step_farrevert: instruction -> smallstep :=
   (** # Far revert (return from recoverable error, not panic/normal return)
 
+The NearRevert and FarRevert share the same syntax, but their runtime semantic is
+different:
+
+- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
+  selected (see [%FarRetDefinition]);
+- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
+  selected (see [%NearRetDefinition]).
+
 ## Abstract Syntax
 
-[%OpFarRevert (args: in_reg)]
+[%OpRevert (args: in_reg)]
 
 ## Syntax
 
@@ -82,7 +90,7 @@ near calls.
       Some ptr_enc = encode_fat_ptr_word zero128 (NotNullPtr out_ptr) ->
       new_regs = reserve (regs_state_zero <| r1 := PtrValue ptr_enc |> )->
 
-      step_farrevert (OpFarRevert (Some (mk_pv _tag (FarRetABI.mk_params params))))
+      step_farrevert (OpRevert (Some (mk_pv _tag (FarRetABI.mk_params params))))
                      {|
                        gs_transient := {|
                                         gs_flags        := ___2 ;
@@ -128,7 +136,7 @@ near calls.
       Some ptr_enc = encode_fat_ptr_word zero128 (NotNullPtr out_ptr) ->
       new_regs = (reserve regs_state_zero) <| r1 := PtrValue ptr_enc |> ->
       rollback cf.(cf_saved_checkpoint) gs gs' ->
-      step_farrevert (OpFarRevert (Some (PtrValue (FarRetABI.mk_params params))))
+      step_farrevert (OpRevert (Some (PtrValue (FarRetABI.mk_params params))))
                      {|
                        gs_transient := {|
                                         gs_flags        := ___2;
@@ -196,7 +204,7 @@ Use `panic` for irrecoverable errors.
     step_panic
       RetABIExistingFatPointerWithoutTag
       s1 s2 ->
-    step_farrevert (OpFarRevert (Some (IntValue params))) s1 s2
+    step_farrevert (OpRevert (Some (IntValue params))) s1 s2
 
 (** 2. Attempt to return a pointer created before the current callframe.
 It is forbidden to pass a pointer to a contract in a far call and return it back.
@@ -221,7 +229,7 @@ In other words, this is a situation where:
     step_panic
       RetABIReturnsPointerCreatedByCaller
       s1 s2 ->
-    step_farrevert (OpFarRevert (Some (PtrValue params))) s1 s2
+    step_farrevert (OpRevert (Some (PtrValue params))) s1 s2
 (** 3. Attempt to return a malformed pointer. *)
   | step_RevertExt_ForwardFatPointer_returning_malformed_pointer:
   forall cf caller_stack (in_ptr: fat_ptr) params (s1 s2:state) ,
@@ -234,7 +242,7 @@ In other words, this is a situation where:
     step_panic
       FatPointerMalformed
       s1 s2 ->
-    step_farrevert (OpFarRevert (Some (PtrValue params))) s1 s2
+    step_farrevert (OpRevert (Some (PtrValue params))) s1 s2
 (** 4. Attempt to return a new pointer but unable to pay for memory growth. *)
 | step_RevertExt_heapvar_growth_unaffordable:
   forall cf caller_stack heap_type hspan params (s1 s2:state),
@@ -245,6 +253,6 @@ In other words, this is a situation where:
     step_panic
       FatPointerCreationUnaffordable
       s1 s2 ->
-    step_farrevert (OpFarRevert (Some (IntValue params))) s1 s2.
+    step_farrevert (OpRevert (Some (IntValue params))) s1 s2.
 
 End FarRevertDefinition.

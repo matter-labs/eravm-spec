@@ -85,14 +85,12 @@ For additional versatility, the definitions may bind both the decoded values and
   | OpMimicCall   (enc: src_farcall_params) (dest: src_pv) (handler: code_address) (is_static:bool) (is_shard_provided: bool)
   | OpDelegateCall(enc: src_farcall_params) (dest: src_pv) (handler: code_address) (is_static:bool) (is_shard_provided: bool)
 
-  | OpNearRet
-  | OpNearRetTo     (label: code_address)
-  | OpFarRet        (args: src_ret_params)
+  | OpNearRetTo   (label: code_address)
+  | OpRet         (args: src_ret_params)
 
-  | OpNearRevert
-  | OpNearRevertTo  (label: code_address)
-  | OpFarRevert     (args: src_ret_params)
-  | OpNearPanicTo   (label: code_address)
+  | OpNearRevertTo (label: code_address)
+  | OpRevert       (args: src_ret_params)
+  | OpNearPanicTo  (label: code_address)
   | OpPanic
 
   | OpPtrAdd      (in1: src_fat_ptr) (in2: src_pv)  (out: dest_fat_ptr)
@@ -340,19 +338,17 @@ Section InstructionMapper.
                            mf_src_pv s1 s2 i2 i2' ->
                            ins_srelate s0 s2(OpDelegateCall i1 i2 handler static shard) (OpDelegateCall i1' i2' handler static shard)
                        )
-  |sim_nearret: forall s, ins_srelate s s OpNearRet OpNearRet
-  |sim_nearrevert: forall s, ins_srelate s s OpNearRevert OpNearRevert
   |sim_nearpanic: forall s, ins_srelate s s OpPanic OpPanic
   |sim_nearretto: forall s l, ins_srelate s s (OpNearRetTo l) (OpNearRetTo l)
   |sim_nearrevertto: forall s l, ins_srelate s s (OpNearRevertTo l) (OpNearRevertTo l)
   |sim_nearpanicto: forall s l, ins_srelate s s (OpNearPanicTo l) (OpNearPanicTo l)
-  |sim_farret: `(
+  |sim_ret: `(
                    mf_src_ret_params s0 s1 i1 i1' ->
-                   ins_srelate s0 s1 (OpFarRet i1) (OpFarRet i1')
+                   ins_srelate s0 s1 (OpRet i1) (OpRet i1')
                  )
-  |sim_farrevert: `(
+  |sim_revert: `(
                       mf_src_ret_params s0 s1 i1 i1' ->
-                      ins_srelate s0 s1 (OpFarRevert i1) (OpFarRevert i1')
+                      ins_srelate s0 s1 (OpRevert i1) (OpRevert i1')
                     )
   |sim_load:`( forall type,
          mf_src_heap_ptr s0 s1 i1 i1' ->

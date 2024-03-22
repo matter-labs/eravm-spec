@@ -53,10 +53,9 @@ The following return instructions lead to returning remaining ergs to the caller
 
 - [%OpNearRet]
 - [%OpNearRetTo]
-- [%OpFarRet]
-- [%OpNearRevert]
-- [%OpNearRevertTo]
-- [%OpFarRevert]
+- [%OpRet]
+- [%OpRevert]
+- [%OpRevertTo]
 - [%OpNearPanicTo]
 
 
@@ -282,8 +281,8 @@ grow heap; far calls also may induce code
                                + STORAGE_SORTER_COST_IN_ERGS
                                + CODE_DECOMMITMENT_SORTER_COST_IN_ERGS
 
-     | OpNearRet | OpNearRetTo _ | OpNearRevert | OpNearRevertTo _ | OpNearPanicTo _
-     | OpFarRet _ | OpFarRevert _
+     | OpNearRetTo _ | OpNearRevertTo _ | OpNearPanicTo _
+     | OpRet _ | OpRevert _
      | OpPanic
        => AVERAGE_OPCODE_ERGS
      | OpPtrAdd _ _ _ _

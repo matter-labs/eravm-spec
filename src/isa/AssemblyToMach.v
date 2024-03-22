@@ -72,12 +72,10 @@ Definition opcode_of (ins: asm_instruction) : mach_opcode :=
   | Assembly.OpFarCall enc dest handler is_static is_shard_provided => OpFarCall is_static is_shard_provided
   | Assembly.OpMimicCall _ _ _ is_static is_shard_provided => OpMimicCall is_static is_shard_provided
   | Assembly.OpDelegateCall _ _ _ is_static is_shard_provided => OpDelegateCall is_static is_shard_provided
-  | Assembly.OpNearRet => OpRet no_label
+  | Assembly.OpRet _ => OpRet no_label
   | Assembly.OpNearRetTo _ => OpRet with_label
-  | Assembly.OpFarRet _ => OpRet with_label
-  | Assembly.OpNearRevert => OpRevert no_label
   | Assembly.OpNearRevertTo _ => OpRevert with_label
-  | Assembly.OpFarRevert _ => OpRevert no_label
+  | Assembly.OpRevert _ => OpRevert no_label
   | Assembly.OpNearPanicTo _ => OpPanic with_label
   | Assembly.OpPanic => OpPanic no_label
   | Assembly.OpPtrAdd src0 _ dst0 swap => OpPtrAdd src0 dst0 swap
@@ -208,13 +206,11 @@ Section AsmToMachConversion.
                   op_imm0 := Some dest;
                   op_imm1 := Some handler;
                 |})
-        | Assembly.OpNearRet
-        | Assembly.OpNearRevert => Some template
         | Assembly.OpNearRetTo (Imm dest)
         | Assembly.OpNearPanicTo (Imm dest)
         | Assembly.OpNearRevertTo (Imm dest) => Some (template <| op_imm0 := Some dest |>)
-        | Assembly.OpFarRet (Reg args)
-        | Assembly.OpFarRevert (Reg args) => Some (template <| op_src0 := Some args |>)
+        | Assembly.OpRet (Reg args)
+        | Assembly.OpRevert (Reg args) => Some (template <| op_src0 := Some args |>)
 
         | Assembly.OpSStore (Reg src0) (Reg src1)
         | Assembly.OpEvent (Reg src0) (Reg src1) _

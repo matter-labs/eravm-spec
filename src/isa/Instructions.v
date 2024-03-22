@@ -52,7 +52,7 @@ from lowest level to the highest level:
    [%AssemblyToCore].
 
    Additionally, the type [%instruction] describes the meaningful operand types
-   for instructions after decoding, e.g. [%OpFarRet] loads an operand from a
+   for instructions after decoding, e.g. [%OpRet] loads an operand from a
    register, but then deserializes it into a compound value. The types of
    such compound values are explicitly provided by [%bound] definition.
 
@@ -75,7 +75,7 @@ from lowest level to the highest level:
      is defined omitting not only loading and storing, but also
      serialization/deserialization details.
    - See [%OperandBinding] for the details of binding, e.g.
-     [%bind_farret_params] describes how [%OpFarRet]'s ABI parameters are
+     [%bind_farret_params] describes how [%OpRet]'s ABI parameters are
      deserialized.
 *)
 End InstructionSets.

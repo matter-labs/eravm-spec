@@ -109,7 +109,7 @@ The typical usage of the context value is as follows:
 1. Set the value of [%gs_context_u128] to $C$ by executing the instruction [%OpContextSetContextU128].
 2. Launch a contract using one of the far call instructions. This action pushes a new [%callstack_external] frame $F$ onto the [%gs_callstack]. The value of the $F$'s field [%ecf_context_u128_value] is equal to $C$. In addition, far calls reset [%gs_context_u128] to 0.
 3. Retrieve the context value by executing the instruction [%OpContextGetContextU128] to use it.
-4. On contract code completion, the [%gs_context_u128] is reset to zero by either [%OpFarRet], [%OpFarRevert], or [%OpPanic].
+4. On contract code completion, the [%gs_context_u128] is reset to zero by either [%OpRet], [%OpRevert], or [%OpPanic].
 
 Note that setting the context register [%gs_context_u128] is forbidden in [%StaticMode]. See [%forbidden_static].
 

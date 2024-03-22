@@ -7,9 +7,17 @@ Section NearRetDefinition.
   Inductive step_nearret: @instruction bound -> tsmallstep :=
   (** # NearRet (normal return, not panic/revert)
 
+The NearRet and FarRet share the same syntax, but their runtime semantic is
+different:
+
+- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
+  selected (see [%FarRetDefinition]);
+- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
+  selected (see [%NearRetDefinition]).
+
 ## Abstract Syntax
 
-[%OpNearRet]
+[%OpRet]
 
 ## Syntax
 
@@ -25,11 +33,11 @@ Section NearRetDefinition.
 3. Clear flags.
    *)
   | step_NearRet:
-    forall cf caller_stack new_caller pages,
+    forall cf caller_stack new_caller pages _ignore_arg,
       `(
           ergs_return_caller_and_drop (InternalCall cf caller_stack) new_caller ->
 
-          step_nearret OpNearRet {|
+          step_nearret (OpRet _ignore_arg) {|
                          gs_flags        := __;
                          gs_callstack    := InternalCall cf caller_stack;
 
