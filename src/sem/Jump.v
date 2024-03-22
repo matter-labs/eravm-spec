@@ -35,31 +35,32 @@ Note: Argument `destination` uses the full addressing mode [%in_any], therefore 
 ## Semantic
 
 - Fetch a new address from operand `destination`.
-- Save the old PC (return address) to `return_address`
+- Save the old PC (return address) to `return_address`. This happens after PC's increment, so this value equals is the addrees
 - Assign to current PC the fetched value truncated to [%code_address_bits] bits.
 
-FIXME semantic is obsolete
  *)
 | step_jump_apply:
-  forall (dest_val: word) (cs new_cs: callstack) tag1 tag2 ret_addr,
+  forall (dest_val: word) (cs new_cs: callstack) tag (ret_addr: code_address) (ret_addr_w: word),
 
     let dest_addr := low code_address_bits dest_val in
     new_cs = pc_set dest_addr cs ->
-
-    step_jump_aux (OpJump (mk_pv tag1 dest_val) (mk_pv tag2 ret_addr)) cs new_cs.
+     ret_addr = pc_get cs ->
+     ret_addr_w = widen word_bits ret_addr ->
+    step_jump_aux (OpJump (mk_pv tag dest_val) (IntValue ret_addr_w)) cs new_cs.
 
 (** ## Affected parts of VM state
 
 - execution stack: PC is overwritten with a new value.
+- registers: output register will hold PC value.
 
 ## Usage
 
 - Unconditional jumps
 
 - In EraVM, all instructions are predicated (see [%Predication.cond]), therefore in conjunction with a required
-  condition type [%jump] implements a conditional jump instruction.
+  condition type [%OpJump] implements a conditional jump instruction.
 
-- Currently, the compiler may emit jumps rather than [%OpNearCall]/[%OpNearRet]
+- Currently, the compiler may emit jumps rather than [%OpNearCall]/[%OpRet]
   and similar instructions when possible. It is cheaper, and most functions do
   not require to install a non-default [%cf_exception_handler_location], nor
   passing less than all available ergs.
