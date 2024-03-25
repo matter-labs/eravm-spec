@@ -5,33 +5,31 @@ Section TransientLoadDefinition.
   Generalizable Variable __.
 
   Inductive step_tload: instruction -> smallstep :=
-  (** # TransientLoad
+(**
+{{{!describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(abstract_name  = "OpTransientLoad", mnemonic = "ldt", in1= In.Reg, out1 = Out.Reg),
 
-[%OpTransientLoad (key: in_reg) (dest: out_reg)]
+legacy="`tload in1, out1`",
 
-## Syntax
+summary = """
+Access word in the transient storage of the active contract by key.
 
-- `ldt in1, out`
-
-## Legacy Syntax
-
-- `tload in1, out`
-
-## Summary
-
-Access word in current transient storage by key.
 Transient contract storage of all contracts resets when [%OpIncrementTxNumber] is called.
-
-## Semantic
-
+""",
+semantic = r"""
 1. Load word from current shard, current contract's transient storage by key `key`.
 
    Current contract is identified by the field [%ecf_this_address] of the active
    external frame.
 2. Store the value to `dest`.
-
+""",
+usage = """
+- Only [%OpTransientLoad] is capable of reading data from transient storage.
+- Much cheaper than storage for e.g. reentrancy locks.
+"""
+))
+}}}
    *)
 
   (* FIXME: semantic is incorrect *)
@@ -42,19 +40,5 @@ Transient contract storage of all contracts resets when [%OpIncrementTxNumber] i
       storage_read (gs_revertable s).(gs_depot) fqa_storage read_value ->
       step_tload (OpSLoad (mk_pv __ key)(IntValue read_value)) s s
   .
-(** ## Affected parts of VM state
 
-- execution stack: PC, as by any instruction;
-- GPRs, because `res` only resolves to a register.
-- transient storage of current contract.
-
-## Usage
-
-- Only [%TLoad] is capable of reading data from transient storage.
-
-## Similar instructions
-
-- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall],
-  [%OpTransientLoad], [%OpTransientStore] share the same opcode.
-*)
 End TransientLoadDefinition.

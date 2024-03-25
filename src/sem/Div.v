@@ -10,27 +10,17 @@ Section DivDefinition.
 
   Inductive step_div: instruction -> flags_tsmallstep :=
 
-  (**
-# Div
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=ins_arith("OpDiv", "div", hasOut2 = True),
 
-[%OpDiv         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg) (swap:mod_swap) (flags:mod_set_flags)]
-
-## Syntax
-
-- `div in1, in2, out1, out2`
-- `div.s in1, in2, out1, out2`, to set `swap` modifier.
-- `div! in1, in2, out1, out2`, to set `set flags` modifier.
-- `div.s! in1, in2, out1, out2`, to set both `swap` and `set flags` modifiers.
-
-## Summary
-
+summary = """
 Unsigned division of `in1` by `in2`. The quotient is returned in `out1`, the
 remainder is returned in `out2`.
+""",
 
-## Semantic
-
+semantic = r"""
 - If `in2` $\neq 0$:
      $$\begin{cases}out_1 := \frac{ op_1}{op_2} \\
 out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
@@ -47,8 +37,17 @@ out_{2} := \text{rem } op_1 \ op_2 \end{cases}$$
    - `LT_OF` is set.
    - `EQ` is set if $result_{low} = 0$.
    - `GT` is set if `LT_OF` and `EQ` are cleared.
+""",
 
-Reminder: flags are only set if `set_flags` modifier is set.
+usage = """
+- Arithmetic operations.
+""",
+
+similar = """
+- See [%OpMul].
+"""
+))
+}}}
    *)
   | step_Div_no_overflow:
     `(forall mod_sf old_flags new_flags w_quot w_rem quot rem (x y:Z) op1 op2,
@@ -76,22 +75,5 @@ Reminder: flags are only set if `set_flags` modifier is set.
 
           step_div (OpDiv (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue zero256) (IntValue zero256) mod_sf) old_flags new_flags
         )
-.  (**
-
-## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out1` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, by `out2` and `out1`, provided `out1` resolves to GPR.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
-Arithmetic operations.
-
-## Similar instructions
-
-- See [%OpMul].
-
- *)
+.
 End DivDefinition.

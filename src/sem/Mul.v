@@ -11,25 +11,17 @@ Section MulDefinition.
   Generalizable Variables tag.
 
   Inductive step_mul: instruction -> flags_tsmallstep :=
-(**
-# Mul
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=ins_arith("OpMul", "mul", hasOut2 = True),
 
-[%OpMul         (in1: in_any) (in2: in_reg)  (out1: out_any) (out2: out_reg)  (flags:mod_set_flags)]
-
-## Syntax
-
-- `mul in1, in2, out1, out2`
-- `mul! in1, in2, out1, out2`, to set `set flags` modifier.
-
-## Summary
-
+summary = """
 Unsigned multiplication of two numbers modulo $2^{512}$; the high and low 256
 bits of the result are returned in two separate operands.
+""",
 
-## Semantic
-
+semantic = r"""
 1. Compute result by unsigned multiplication of `in1` by `in2`.
 
    $$\begin{cases}result_{high} := \frac{ op_1 \times op_2}{2^{256}}\\
@@ -39,8 +31,16 @@ result_{low} := op_1 \times op_2 \mod 2^{256} \end{cases}$$
    - `LT_OF` is set if overflow occurs, i.e. $op_1 \times op_2 \geq 2^{256}$
    - `EQ` is set if $result_{low} = 0$.
    - `GT` is set if `LT_OF` and `EQ` are cleared.
+""",
 
-   Reminder: flags are only set if `set_flags` modifier is set.
+usage = """
+- Arithmetic operations.
+""",
+
+similar = """
+- See [%OpDiv].
+"""
+))}}}
  *)
   | step_Mul:
     forall mod_sf old_flags new_flags high low high256 low256 op1 op2,
@@ -57,21 +57,5 @@ result_{low} := op_1 \times op_2 \mod 2^{256} \end{cases}$$
 
           step_mul (OpMul (mk_pv tag1 op1) (mk_pv tag2 op2) (IntValue low256) (IntValue high256) mod_sf) old_flags new_flags
         ).
-
-  (** ## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out1` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, by `out2` and `out1`, provided `out1` resolves to GPR.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
-Arithmetic operations.
-
-## Similar instructions
-
-- See [%OpDiv].
-*)
   Generalizable No Variables.
 End MulDefinition.

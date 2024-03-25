@@ -8,45 +8,12 @@ Section AndDefinition.
   Generalizable Variables op tag.
 
   Inductive step_and: instruction -> flags_tsmallstep :=
-  (**
-# Bitwise AND
-
-## Abstract Syntax
-
-[%OpAnd         (in1: in_any) (in2: in_reg)  (out1: out_any)   (flags:mod_set_flags)]
-
-## Syntax
-
-- `and in1, in2, out`
-- `and! in1, in2, out`, to set `set flags` modifier.
-
-## Summary
-
-Bitwise AND of two 256-bit numbers.
-
-## Semantic
-
-- result is computed as a bitwise AND of two operands.
-- flags are computed as follows:
-   - `EQ` is set if $result = 0$.
-   - `OF_LT` and `GT` are cleared
-
-Reminder: flags are only set if `set_flags` modifier is set.
-
-## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
-- operations with bit masks
-
-## Similar instructions
-
-- `and`, `or` and `xor` are encoded as variants of the same [%mach_instruction].
+(** {{{!
+describe(descr_ins_generic_bitwise(
+abstract_name = "OpAnd",
+mnemonic = "and"
+))
+}}}
    *)
 
   | step_And:

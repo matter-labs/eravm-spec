@@ -9,23 +9,16 @@ Section AddDefinition.
 
   Generalizable Variables op tag.
   Inductive step_add: instruction -> flags_tsmallstep :=
-  (** # Add
+  (** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=ins_arith("OpAdd", "add"),
 
-[%OpAdd         (in1: in_any) (in2: in_reg)  (out1: out_any)  (flags:mod_set_flags)]
-
-## Syntax
-
-- `add in1, in2, out`
-- `add! in1, in2, out`, to set `set flags` modifier.
-
-## Summary
-
+summary = """
 Unsigned overflowing addition of two numbers modulo $2^{256}$.
+""",
 
-## Semantic
-
+semantic = r"""
 - result is computed by unsigned addition of two numbers with overflow modulo $2^{256}$.
 
    $$result := op_1 + op_2 \mod 2^{256}$$
@@ -34,25 +27,20 @@ Unsigned overflowing addition of two numbers modulo $2^{256}$.
    - `LT_OF` is set if overflow occurs, i.e. $op_1 + op_2 \geq 2^{256}$
    - `EQ` is set if $result = 0$.
    - `GT` is set if both `LT_OF` and `EQ` are cleared.
+""",
 
-Reminder: flags are only set if `set_flags` modifier is set.
-
-## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
+usage = """
 - Arithmetic operations.
-- There is no dedicated `mov` instruction, so `add` is used to copy values around. Copying A to B is implemented as `add A, r0, B`.
+- There is no dedicated `mov` instruction, so `add` is used to copy values
+  around. Copying A to B is implemented as `add A, r0, B`.
+""",
 
-## Similar instructions
-
-Flags are computed exactly as in `sub`, but the meaning of overflow is different for addition and subtraction.
-
+similar = """
+Flags are computed exactly as in `sub`, but the meaning of overflow is different
+for addition and subtraction.
+"""
+))
+}}}
    *)
   | step_Add:
     forall mod_sf old_flags new_flags result new_OF,

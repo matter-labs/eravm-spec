@@ -8,46 +8,12 @@ Section OrDefinition.
   Generalizable Variables op tag.
 
   Inductive step_or: instruction -> flags_tsmallstep :=
-  (**
-# Bitwise OR
-
-## Abstract Syntax
-
-[%OpOr (in1: in_any) (in2: in_reg) (out1: out_any) (flags:mod_set_flags)]
-
-## Syntax
-
-- `or in1, in2, out`
-- `or! in1, in2, out`, to set `set_flags` modifier.
-
-## Summary
-
-Bitwise OR of two 256-bit numbers.
-
-## Semantic
-
-- result is computed as a bitwise OR of two operands.
-- flags are computed as follows:
-   - `EQ` is set if $result = 0$.
-   - `OF_LT` and `GT` are cleared
-
-Reminder: flags are only set if `set_flags` modifier is set.
-
-## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-- flags, if `set_flags` modifier is set.
-
-## Usage
-
-- operations with bit masks
-
-## Similar instructions
-
-- `and`, `or` and `xor` are encoded as variants of the same [%mach_instruction].
-
+(** {{{!
+describe(descr_ins_generic_bitwise(
+abstract_name = "OpOr",
+mnemonic = "or"
+))
+}}}
    *)
   | step_Or:
     forall mod_sf old_flags new_flags result,

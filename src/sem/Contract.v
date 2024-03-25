@@ -6,46 +6,36 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Transien
   Addressing.Coercions PrimitiveValue SemanticCommon RecordSetNotations ABI.MetaParametersABI.
 
 Section ContractDefinitions.
-(** # ContractThis
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpContractThis", "this", out1=Out.Reg),
 
-[%OpContractThis (out: out_reg)]
-
-## Syntax
-
-```
+legacy = """```
 context.this out
 ```
+""",
 
-## Summary
-
+summary = """
 Retrieves the address of the currently executed contract.
+""",
 
-## Semantic
-
+semantic = r"""
 - Fetch the address of the currently executed contract
 from the active external frame.
 - Widen the address to [%word_bits], zero-extended, and write to register `out`.
+""",
 
-
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
-On [%OpDelegateCall] this address is preserved to be one of the caller.
+usage = """
+- On [%OpDelegateCall] this address is preserved to be one of the caller.
 See [%select_this_address].
+""",
 
-## Similar instructions
-
-See [%OpContractCaller], [%OpContractCodeAddress].
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
+similar = """
+- See [%OpContractCaller], [%OpContractCodeAddress].
+"""
+))
+}}}
  *)
 Inductive step_contract: instruction -> smallstep :=
 
@@ -57,93 +47,68 @@ Inductive step_contract: instruction -> smallstep :=
 
 
     step_contract (OpContractThis (IntValue this_addr_word)) s1 s2
-(** # ContractCaller
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpContractCaller", "par", out1=Out.Reg),
 
-[%OpContractCaller (out: out_reg)]
-
-## Syntax
-
-```
+legacy = """```
 context.caller out
 ```
-
-## Summary
-
+""",
+summary = """
 Retrieves the address of the contract which has called the currently executed contract.
+""",
 
-
-## Semantic
-
+semantic = """
 - Fetch the address of the currently executed contract from the active external frame.
 - Widen address is widened to [%word_bits], zero-extended, and written to register `out`.
+""",
 
-
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
+usage = """
 On [%OpDelegateCall] this address is preserved to be the caller of the caller.
 See [%select_sender].
+""",
 
-## Similar instructions
-
-See [%OpContractThis], [%OpContractCodeAddress].
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
- *)
+similar = """
+- See [%OpContractThis], [%OpContractCodeAddress].
+"""
+))
+}}} *)
 | step_ContractCaller:
   forall sender_addr sender_addr_word (s1 s2:state),
     sender_addr = (active_extframe (gs_callstack s1)).(ecf_msg_sender) ->
     sender_addr_word = widen word_bits sender_addr ->
 
     step_contract (OpContractCaller (IntValue sender_addr_word)) s1 s2
-(** # ContractCodeAddress
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpContractCodeAddress", "code", out1=Out.Reg),
 
-[%OpContractCodeAddress (out: out_reg)]
-
-## Syntax
-
-```
+legacy = """```
 context.code_source out
 ```
-
-## Summary
-
+""",
+summary = """
 Retrieves the address of the contract code that is actually being executed.
+""",
 
-## Semantic
-
+semantic = r"""
 - Fetch the contract address of the currently executed code from the active external frame.
 - Widen the address to [%word_bits], zero-extended, and write to register `out`.
+""",
 
-
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
+usage = """
 - In the execution frame created by [%OpDelegateCall] this will be the address of the contract that was called by [%OpDelegateCall].
 - Necessary to implement Solidity’s `immutable` under [%OpDelegateCall].
+""",
 
-
-## Similar instructions
-
-See [%OpContractThis], [%OpContractCaller].
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
+similar = """
+- See [%OpContractThis], [%OpContractCaller].
+"""
+))
+}}}
  *)
 | step_ContractCodeAddress:
   forall code_addr code_addr_word (s1 s2:state),

@@ -8,98 +8,75 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Transien
 Section ContextDefinitions.
 
 Inductive step_context: instruction -> smallstep :=
-(** # ContextGetContextU128
+(**
 
+{{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
-
-[%OpGetCapturedContext (out: out_reg)]
-
-## Syntax
-
-```
-ldvl reg
-```
-
-## Legacy Syntax
-
-```
+ins=Instruction("OpGetCapturedContext", "ldvl", out1=Out.Reg),
+legacy = """```
 context.get_context_u128 out
 ```
+""",
 
-## Summary
-
+summary = """
 Retrieves current captured context value from the active external frame.
 
 Does not interact with the context register.
+""",
 
-## Semantic
-
+semantic = r"""
 - Fetch the current context value from the active external frame.
 - Widen the context value from 128 bits to [%word_bits], zero-extended, and write to `out`.
+""",
 
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
+usage = """
 - See [%gs_context_u128], [%ecf_context_u128_value].
+""",
 
-## Similar instructions
-
+similar = """
 - Farcalls capture context. See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall].
 - [%OpSetContextReg] to set context register, from where the value is captured by farcalls.
-
+"""
+))
+}}}
  *)
 | step_GetCapturedContext:
   forall wcontext (s1 s2: state),
     wcontext = widen word_bits (gs_context_u128 s1) ->
     step_context (OpGetCapturedContext (IntValue wcontext)) s1 s2
-(** # SetContextReg
+(**
+{{{!
+describe(InstructionDoc(
 
-- Only in kernel mode.
-- Forbidden in static calls.
+ins=Instruction("OpSetContextReg", "stvl", in1=In.Reg),
 
-## Abstract Syntax
-
-[%OpContextSetContextU128 (in: in_reg)]
-
-## Syntax
-
+legacy = """```
+context.set_context_u128 in
 ```
-stvl out
-```
+""",
 
-## Legacy Syntax
-
-```
-context.set_context_u128 out
-```
-
-## Summary
-
+summary = """
 Sets context register.
 
 Does not interact with the captured context value in the active external frame.
+""",
 
-## Semantic
-
+semantic = """
 - Fetch the value from `out` and narrow it to 128 bits.
 - Store the shrunk value in the context register [%gs_context_u128].
+""",
 
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
+usage = """
 - See [%gs_context_u128], [%ecf_context_u128_value].
+""",
 
-## Similar instructions
-
-- The `context` instruction family.
-- Farcalls capture context. See [%OpFarCall], [%OpMimicCall], [%OpDelegateCall].
+similar = f"""
+- Farcalls capture context. See {FARCALLS}.
+- [%OpGetCapturedContext] to retrieve a captured context value.
+"""
+))
+}}}
 
  *)
 | step_SetContextReg:

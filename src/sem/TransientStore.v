@@ -11,34 +11,37 @@ Section TransientStoreDefinition.
     ergs_of (pubdata * Z.of_nat bytes_in_word).
 
   Inductive step_tstore: instruction -> smallstep :=
-  (** # TransientStore
+  (** {{{! descr = InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(abstract_name  = "OpTransientStore", mnemonic = "stt", in1= In.Reg, in2 = In.Reg),
 
-[%OpTransientStore (in1: in_reg) (in2: in_reg)]
+legacy="`tstore in1, in2`",
 
-## Syntax
-
-- `stt in1, in2`
-
-## Legacy Syntax
-
-- `tstore in1, in2`
-
-## Summary
-
-Store word in current storage by key.
-
-## Semantic
-
-- Store word in current shard, and current contract's transient storage by key `key`.
-
+summary = """
+Store word in the transient storage of the active contract by key.
+""",
+semantic = r"""
+- Store word in current shard's, and current contract's transient storage by key `key`.
   Current contract is identified by the field [%ecf_this_address] of the active external frame.
-
 - Pay for transient storage write.
+""",
+
+usage = """
+- Only [%OpTransientStore] is capable to write data to storage.
+- [%OpTransientStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
+- Transient storage is reset after the transaction ends.
+""",
+
+)
+
+descr.affectedState += """
+- Transient depot of the current shard.
+"""
+
+describe(descr)
+}}}
 
    *)
-
   (* FIXME: semantic is incorrect *)
   | step_TransientStore:
     forall cs new_cs key new_depot write_value gs new_gs ts1 ts2 __ ,
@@ -62,29 +65,14 @@ Store word in current storage by key.
                     gs_transient := ts2;
                     gs_global    := new_gs;
                   |}
-(** ## Affected parts of VM state
-
-- execution stack:
-  + PC, as by any instruction;
-  + allocated ergs
-- GPRs, because `res` only resolves to a register.
-- Depot of current shard.
-
-## Usage
-
-- Only [%TransientStore] is capable to write data to storage.
-- [%TransientStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
-
-## Similar instructions
-
-- [%OpSLoad], [%OpTransientStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
+(**
 
 ## Panics
 
 1. Not enough ergs to pay for storage write.
  *)
 
-  (* FIXME: the semantic is  *)
+  (* FIXME: semantic *)
   | step_TransientStore_unaffordable:
     forall cs gs ts1 ts2 ___1 ___2,
 

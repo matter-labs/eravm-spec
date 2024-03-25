@@ -8,93 +8,64 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Transien
 Section VMDefinitions.
 
   Inductive step_vm: instruction -> smallstep :=
-  (** # VMErgsLeft
+  (** #
+{{{! describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(abstract_name  = "OpVMErgsLeft", mnemonic = "ergs",out1= Out.Reg),
 
-[%OpVMErgsLeft (out: out_reg)]
-
-## Syntax
-
+legacy = """
 ```
 context.ergs_left out
 ```
+""",
 
-## Summary
-
+summary = """
 Retrieves the number of ergs allocated for the current frame.
-
-
-## Semantic
-
+""",
+semantic = r"""
 - Fetch the currently allocated ergs from the topmost frame, external or internal.
   The `ergs` belonging to the parent frames are not counted.
 - Widen the ergs number to [%word_bits], zero-extended, and write to `out`.
+""",
 
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Usage
-
+usage = """
 - Check if the number of ergs is sufficient for an expensive task.
 - Should be used before [%OpPrecompileCall].
+""",
 
-
-## Similar instructions
-
-The `context` instruction family.
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
-   *)
+))
+}}}
+*)
   | step_VMErgsLeft:
     forall ergs_left_word (s1 s2:state),
       ergs_left_word = widen word_bits (ergs_remaining (gs_callstack s1)) ->
       step_vm (OpVMErgsLeft (IntValue ergs_left_word)) s1 s2
 
-  (** # VMSP
+  (** {{{! describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(abstract_name  = "OpVMSP", mnemonic = "sp", out1 = Out.Reg),
 
-[%OpVMSp (out: out_reg)]
-
-## Syntax
-
+legacy = """
 ```
 context.sp out
 ```
+""",
 
-## Summary
-
-Retrieves current stack pointer.
-
-
-## Semantic
-
-- Fetch the current SP from the topmost frame, external or internal.
+summary = """
+Retrieves current stack pointer value.
+""",
+semantic = r"""
+- Fetch the current SP from the topmost frame, external or internal. It points past the topmost element of the stack.
 - Widen the SP value to [%word_bits], zero-extended, and write to `out`.
+""",
 
-## Affected parts of VM state
+usage = """
+""",
 
-- registers : `out` register is modified.
-
-## Usage
-
-- Check if the number of ergs is sufficient for an expensive task.
-- Should be used before [%OpPrecompileCall].
-
-
-## Similar instructions
-
-The `context` instruction family.
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
+similar = """
+"""
+))
+}}}
    *)
   | step_VMSP:
     forall sp_zero_padded (s1 s2 :state),
@@ -102,27 +73,22 @@ The `context` instruction family.
 
       step_vm (OpVMSP (IntValue sp_zero_padded)) s1 s2
 
-  (** # VMMeta
+  (**
+{{{! describe(InstructionDoc(
 
+ins=Instruction(abstract_name  = "OpVMMeta", mnemonic = "meta", out1= Out.Reg),
+
+legacy = """
+```
+context.meta  out
+```
+""",
+
+summary = """
 VM internal state introspection.
-
-## Abstract Syntax
-
-[%OpVMMeta (out: out_reg)]
-
-## Syntax
-
-```
-context.meta out
-```
-
-## Summary
-
-Fetches
-
-## Semantic
-
-- Stores the encoded value of [%MetaParametersABI] in `out`. They follow the structure:
+""",
+semantic = r"""
+- Stores the encoded value of [%MetaParametersABI] in `out`. The value is structured as follows:
 
 ```
 Record params := {
@@ -134,19 +100,11 @@ Record params := {
       code_shard_id: shard_id;
     }.
 ```
-
-## Affected parts of VM state
-
-- registers : `out` register is modified.
-
-## Similar instructions
-
-- The `context` instruction family.
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
+""",
+usage = """
+""",
+))
+}}}
    *)
   | step_VMMeta:
     forall params cs shards
