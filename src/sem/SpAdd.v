@@ -5,53 +5,32 @@ Import Arith Addressing CallStack Core isa.CoreSet TransientMemory Resolution St
 Section SpAddDefinition.
 
   Open Scope ZMod_scope.
-(** # SpAdd
-## Abstract Syntax
-
-[%OpSpAdd       (in1: in_reg) (ofs: imm_in)]
-
-
-## Syntax
-
-```
-incsp reg+imm
-incsp reg
-incsp imm
-```
-
-## Legacy Syntax
-
-```
-nop r0, r0, stack+=[reg+ofs]
-```
-
-## Summary
-
-Add `(reg + imm)` to SP.
-
-## Semantic
-
- - Advances PC
- - $\mathit{SP_{new} := SP + (reg + imm)}$, but only if there was no overflow.
-
-## Affected parts of VM state
-
- - execution stack : PC is increased; SP may be increased.
-
-## Usage
-
-Adjusting SP e.g. reserving space on stack.
-
-
-## Similar instructions
-
-[%OpSpSub] subtracts a value from SP.
-
-## Encoding
-
- - `NoOp`, `SpAdd`, `SpSub` are encoded as the same instruction.
-   *)
   Inductive step_sp_add : instruction -> callstack_smallstep :=
+(**{{{!
+describe(InstructionDoc(
+
+ins=Instruction(abstract_name = "OpSpAdd", mnemonic = "incsp", in1 = In.Reg, in2 = In.Imm),
+
+syntax_override = ["`incsp reg+imm`", "`incsp reg`", "`incsp imm`"],
+
+legacy = r"`nop r0, r0, stack+=[reg+imm]`",
+summary = " Add `(reg + imm)` to SP.",
+
+semantic = r"""
+$\mathit{SP_{new} := SP + (reg + imm)}$, but only if there was no overflow.
+""",
+
+usage = """
+- Adjusting SP e.g. reserving space on stack.
+""",
+
+similar = """
+- [%OpSpSub] subtracts a value from SP.
+- [%OpNoOp], [%OpSpAdd] and [%OpSpSub] are encoded as the same instruction.
+"""
+))
+}}}
+ *)
   | step_op_sp_add:
     forall (cs0 new_cs: callstack) (old_sp intermediate_sp new_sp ofs: stack_address) op __,
       sp_get cs0 = old_sp ->

@@ -8,23 +8,23 @@ Section LoadDefinition.
 
   Generalizable Variables cs flags regs mem.
   Inductive step_load: instruction -> tsmallstep :=
-  (** # Load
-## Abstract Syntax
+  (**
 
-[%OpLoad        (ptr: in_regimm) (res: out_reg) (mem:data_page_type)]
+{{{!
+describe(InstructionDoc(
 
-## Syntax
-
+ins=Instruction("OpLoad", "ldvl", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType]),
+legacy = """
 - `uma.heap_read in1, out` aliased as `ld.1 in1, out`
 - `uma.aux_heap_read in1, out` aliased as `ld.2 in1, out`
+""",
 
-## Summary
-
+summary = """
 Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 active heap variant.
+""",
 
-## Semantic
-
+semantic = r"""
 1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure reading 32 consecutive bytes is possible; for that, check if
@@ -36,6 +36,29 @@ active heap variant.
    contain all of it.
 4. Read 32 consecutive bytes as a Big Endian 256-bit word from $\mathit{addr}$
    in the heap variant, store result to `res`.
+""",
+
+usage = """
+- Only [%OpLoad] and [%OpLoadInc] are capable of reading data from heap variants.
+- One of few instructions that accept only reg or imm operand but do not have
+  full addressing mode, therefore can't e.g. address stack. The full list is:
+  [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
+  [%OpLoadPointerInc].
+""",
+
+similar = """
+""",
+
+affectedState = """
+- execution stack:
+  + ergs allocated for the current function/contract instance, if the heap
+    variant has to be grown;
+  + heap variant bounds, if heap variant has to be grown.
+"""
+))
+}}}
+
+
 *)
   | step_Load:
     forall new_cs heap_variant ctx result mem selected_page bound addr high224,
@@ -70,29 +93,7 @@ active heap variant.
           gs_status       := NoPanic;
          |}
         )
-(** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + ergs allocated for the current function/contract instance, if the heap
-    variant has to be grown;
-  + heap variant bounds, if heap variant has to be grown.
-
-- registers, because `res` only resolves to a register.
-
-## Usage
-
-- Only [%OpLoad] and [%OpLoadInc] are capable of reading data from heap variants.
-- One of few instructions that accept only reg or imm operand but do not have
-  full addressing mode, therefore can't e.g. address stack. The full list is:
-  [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
-  [%OpLoadPointerInc].
-
-## Similar instructions
-
-- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
-  [%OpLoadPointerInc] are variants of the same [%mach_instruction].
+(**
 
 ## Panics
 

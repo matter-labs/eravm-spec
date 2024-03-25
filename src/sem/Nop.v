@@ -3,32 +3,24 @@ Require SemanticCommon.
 Import Core isa.CoreSet State SemanticCommon.
 
 Section NoOpDefinition.
-(** # Nop
-## Abstract Syntax
+(** {{{!
+describe(InstructionDoc(
 
-[%OpNoOp]
-
-## Syntax
-
-```
-nop
-```
-
-## Summary
-
+ins=Instruction(abstract_name = "OpNoOp", mnemonic = "nop"),
+summary = """
 Do nothing.
+""",
 
-## Affected parts of VM state
+semantic = r"""
+Do nothing.
+""",
 
- - execution stack : PC is increased.
-
-## Similar instructions
-
-[%OpSpAdd], [%OpSpSub] and [%OpNoOp] are translated to [%mach_instruction] with the same [%mach_opcode]. See [%asm_to_mach].
-
-## Encoding
-
- - `NoOp`, `SpAdd`, `SpSub` are encoded as the same instruction.
+similar = """
+ - [%OpNoOp], [%OpSpAdd], [%OpSpSub] are encoded as the same instruction.
+""",
+usage = ""
+))
+}}}
    *)
   Inductive step_nop: @instruction bound -> smallstep :=
   | step_NoOp:
