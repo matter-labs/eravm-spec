@@ -1,27 +1,31 @@
 
+RETS = ", ".join(map(lambda s: f"[%Op{s}]", ["Ret", "NearPanicTo", "NearRevertTo", "NearRetTo"]))
 FARCALLS = ", ".join(map(lambda s: f"[%Op{s}Call]", ["Far", "Mimic", "Delegate"]))
 BITWISE = ", ".join(map(lambda s: f"[%Op{s}]", ["Shr", "Shl", "Rol", "Ror", "And", "Or", "Xor"]))
 CALLS = "[%OpNearCall], " + FARCALLS
 INSNS_WORKING_WITH_HEAPS = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc]"
+PTR_MANIPULATION = ", ".join(["[%OpPtrAdd]", "[%OpPtrSub]", "[%OpPtrShrink]", "[%OpPtrPack]"])
+
+INSNS_USE_REGIMM = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc], [%OpStaticReadInc], [%OpStaticRead], [%OpStaticWrite], [%OpStaticWriteInc]"
 
 
-ARITH = Instruction(
-   modifiers = [Modifier.Swap, Modifier.SetFlags],
-   in1 = In.Any,
-   in2 = In.Reg,
-   out1 = Out.Any,
-   out2 = None
-)
-
+USES_REGIMM = r"""
+- One of few instructions that accept only reg or imm operand but do not have
+  full addressing mode, therefore can't e.g. address stack. The full list is:
+  {INSNS_USE_REGIMM}.
+"""
 
 
 def ins_arith(abstract_name: str, mnemonic:str, hasOut2 = False):
-   result = copy(ARITH)
-   result.mnemonic = mnemonic
-   result.abstract_name = abstract_name
-   if hasOut2:
-      result.out2 = Out.Reg
-   return result
+   return Instruction(
+      mnemonic = mnemonic,
+      abstract_name = abstract_name,
+      modifiers = [Modifier.Swap, Modifier.SetFlags],
+      in1 = In.Any,
+      in2 = In.Reg,
+      out1 = Out.Any,
+      out2 = Out.Reg if hasOut2 else None
+   )
 
 def ins_affected_args(in1:Optional[In], out1: Optional[Out],hasSetFlags = False)->str:
    result =  """"""
@@ -113,8 +117,9 @@ def describe(descr:InstructionDoc):
    sec_similar = f"## Related instructions\n\n{descr.similar} " if descr.similar else ""
    sec_syntax_content = bullets(syntax(ins) if not descr.syntax_override else descr.syntax_override)
    return f"""
-# {ins.abstract_name}
+# {ins.abstract_name} {descr.add_to_title}
 
+{descr.preamble}
 ## Abstract Syntax
 
 {sec_abstract_syntax_content}
