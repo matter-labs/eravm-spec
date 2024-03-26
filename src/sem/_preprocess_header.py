@@ -5,6 +5,17 @@ BITWISE = ", ".join(map(lambda s: f"[%Op{s}]", ["Shr", "Shl", "Rol", "Ror", "And
 CALLS = "[%OpNearCall], " + FARCALLS
 INSNS_WORKING_WITH_HEAPS = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc]"
 PTR_MANIPULATION = ", ".join(["[%OpPtrAdd]", "[%OpPtrSub]", "[%OpPtrShrink]", "[%OpPtrPack]"])
+
+INSNS_USE_REGIMM = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc], [%OpStaticReadInc], [%OpStaticRead], [%OpStaticWrite], [%OpStaticWriteInc]"
+
+
+USES_REGIMM = r"""
+- One of few instructions that accept only reg or imm operand but do not have
+  full addressing mode, therefore can't e.g. address stack. The full list is:
+  {INSNS_USE_REGIMM}.
+"""
+
+
 ARITH = Instruction(
    modifiers = [Modifier.Swap, Modifier.SetFlags],
    in1 = In.Any,

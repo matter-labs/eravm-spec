@@ -5,30 +5,36 @@ Import ssreflect ssrfun ssrbool ssreflect.eqtype ssreflect.tuple.
 
 Section EventDefinition.
   Inductive step_event: instruction -> smallstep :=
-  (**
-# Event
+(** {{{!
+describe(InstructionDoc(
+ins=Instruction(
+"OpEvent",
+"log",
+in1 = In.Reg,
+in2 = In.Reg,
+modifiers = [Modifier.IsFirst],
+kernelOnly = True,
+notStatic = True),
 
-## Abstract Syntax
+syntax_override = [],
+legacy = [
+"`log.event in1, in2` aliased as `event in1, in2`",
+"`log.event.first in1, in2` aliased as `event.i in1, in2`",
+],
 
-[%OpEvent (in1: in_reg) (in2: in_reg) (is_first: bool)]
-
-## Syntax
-
-- `log.event in1, in2` aliased as `event in1, in2`
-- `log.event.first in1, in2` aliased as `event.i in1, in2`
-
-## Summary
-
+summary = """
 Emit an event with provided key and value. See [%event] for more details on
 events system.
-
-## Semantic
-
+""",
+usage = "",
+semantic = r"""
 1. Fetch key and value from `in1` and `in2`.
 2. If `is_first` is `true`, mark the event as the first in a chain of events.
 3. Emit event.
-
-   *)
+""",
+affectedState = "- Event queue."
+))
+}}} *)
   | step_Event:
     forall xs is_first _tag1 _tag2
       key value gs new_gs,
@@ -54,19 +60,4 @@ events system.
                    gs_global       := new_gs;
                    gs_transient    := xs;
                  |}.
-(**
-## Affected parts of VM state
-
-- Event queue.
-
-## Usage
-
-TODO
-
-
-## Similar instructions
-
-- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] are variants of the same [%mach_instruction].
-
- *)
 End EventDefinition.

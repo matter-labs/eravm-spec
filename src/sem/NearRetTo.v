@@ -5,26 +5,43 @@ Import Common Flags CallStack isa.CoreSet State SemanticCommon.
 Section NearRetToDefinition.
   Generalizable Variables __ regs pages ctx.
   Inductive step_nearretto: @instruction bound -> tsmallstep :=
-  (** # NearRetTo (normal return to label, not panic/revert)
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins = Instruction("OpRet", "retl", imm1="label"),
+legacy = "`ret.ok` aliased as `ret`",
+preamble= r"""
+This instruction is used to return from both far and near calls.
 
-- [%OpNearRetTo (label: code_address)]
+- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
+  selected (see [%FarRetDefinition]);
+- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
+  selected (see [%NearRetDefinition]).
+""",
+summary = """
+A normal return from a **near** call. Will pop up current callframe, give back
+unspent ergs and continue execution from an explicitly provided label.
+""",
 
-## Syntax
-
-- `ret label`
-
-  A normal return from a **near** call. Will pop up current callframe, give back unspent ergs and
-  continue execution from an explicitly provided label.
-
-## Semantic
-
+semantic = r"""
 1. Pass all ergs from the current frame to the parent frame.
 2. Drop current frame.
 3. Clear flags
 4. Set PC to the label value.
-   *)
+""",
+affectedState = """
+- Flags are cleared.
+- Execution stack:
+  + Current frame is dropped.
+  + Caller frame:
+    * Unspent ergs are given back to caller (but memory growth is paid first).
+    * program counter is assigned the label.
+""",
+usage = "A combination of a normal return and jump.",
+similar = f"See {RETS}."
+))
+}}} *)
+
   | step_NearRetTo:
     forall cf caller_stack new_caller label,
       `(
@@ -52,18 +69,5 @@ Section NearRetToDefinition.
                          |}
         )
   .
-  (** ## Affected parts of VM state
-
-- Flags are cleared.
-- Execution stack:
-  + Current frame is dropped.
-  + Caller frame:
-    * Unspent ergs are given back to caller (but memory growth is paid first).
-    * program counter is assigned the label.
-
-## Usage
-
-A combination of return and jump.
-   *)
   Generalizable No Variables.
 End NearRetToDefinition.

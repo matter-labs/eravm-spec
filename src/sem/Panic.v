@@ -3,38 +3,31 @@ Require SemanticCommon VMPanic StepPanic.
 Import isa.CoreSet SemanticCommon VMPanic StepPanic.
 
 Inductive step_oppanic: @instruction bound -> smallstep :=
-(** # Panic (irrecoverable error, not normal return/not return from recoverable error)
+  (** {{{!
+describe(InstructionDoc(
+ins=Instruction(
+"OpPanic",
+"panic",
+kernelOnly = False,
+notStatic = False),
+add_to_title = "(irrecoverable error, not normal return/not return from recoverable error)",
+legacy = " `ret.panic` aliased as `panic`",
+preamble = None,
 
+summary = """
 Return from a function/contract signaling an error; execute exception handler,
-burn all ergs in current frame, set OF flag, return nothing, perform [%rollback].
-See [%Panics].
+return unspent ergs to the parent, set OF flag, return nothing, perform
+[%rollback].
+""",
 
-## Abstract Syntax
-
-[%OpPanic]
-
-## Syntax
-
-`ret.panic` aliased as `panic`
-
+semantic = r"""
 An abnormal return from a **near** call. Will drop current callframe, burn
 all ergs and pass control to the current exception handler, setting OF flag.
 
-Additionally, restore storage and event queues to the state
+Additionally, restore storage, transient storage, and event queues to the state
 before external call.
-
-## Semantic
-
-Trigger panic with a reason [%TriggeredExplicitly]. See [%Panics].
-
- *)
-| step_trigger_panic:
-  forall s s',
-    step_panic TriggeredExplicitly s s' ->
-    step_oppanic OpPanic s s'.
-
-(** ## Affected parts of VM state
-
+""",
+affectedState = r"""
 - Flags are cleared, then OF is set.
 - Context register is zeroed (only returns from far calls).
 - Registers are cleared (only returns from far calls).
@@ -46,14 +39,18 @@ Trigger panic with a reason [%TriggeredExplicitly]. See [%Panics].
       external calls ignore label, even if it is explicitly provided.
     * Unspent ergs are given back to caller (but memory growth is paid first).
 - Storage changes are reverted.
-
-## Usage
-
+""",
+usage = """
 - Abnormal returns from near/far calls when an irrecoverable error has happened.
-  Use `revert` for recoverable errors.
+  Use [%OpRevert] for recoverable errors.
+""",
+similar = f"See {RETS}."
+))
+}}}
+*)
 
-## Similar instructions
+| step_trigger_panic:
+  forall s s',
+    step_panic TriggeredExplicitly s s' ->
+    step_oppanic OpPanic s s'.
 
-- `ret` returns to the caller instead of executing an exception handler, and does not burn ergs.
-- `revert` acts similar to `panic` but does not burn ergs, returns data to the caller, and does not set an overflow flag.
- *)

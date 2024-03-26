@@ -7,26 +7,22 @@ Section StoreIncDefinition.
  Open Scope ZMod_scope.
 
  Inductive step_storeinc: instruction -> tsmallstep :=
-(**
-# StoreInc
+   (** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpStore", "stm", in1 = In.RegImm, in2 = In.Reg, out1 = Out.Reg, modifiers = [Modifier.DataPageType]),
+legacy = [
+"`uma.inc.heap_write in1, in2` aliased as `st.1.inc in1, out`",
+"`uma.inc.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`"]
+,
+summary = """
+Decode the heap address from `in1`, store 32 consecutive bytes to the specified
+active heap variant.
 
-[% OpStoreInc    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type) (inc_ptr: out_reg)]
+Additionally, store a pointer to the next word to `out1` register.
+""",
 
-## Syntax
-
-- `uma.inc.heap_write in1, in2` aliased as `st.1.inc in1, out`
-- `uma.inc.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`
-
-
-## Summary
-
-Decode the heap address from `in1`, load 32 consecutive bytes from the specified active heap variant.
-Additionally, store a pointer to the next word to `inc_ptr` register.
-
-## Semantic
-
+semantic = r"""
 1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
@@ -39,7 +35,23 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
    $\mathit{addr}$ in the heap variant.
 5. Store an encoded [%heap_ptr] $\mathit{addr+32}$ to the next 32-byte
    word in the heap variant in `inc_ptr`.
-*)
+""",
+
+usage = """
+""",
+
+similar = f"""
+- Only [%OpStore] and [%OpStoreInc] are capable of reading data from heap variants.
+- {USES_REGIMM}
+""",
+
+affectedState = """
+- execution stack:
+  + allocated ergs if the heap variant has to be grown;
+  + heap bounds, if heap variant has to be grown.
+"""
+))
+}}} *)
   | step_StoreInc:
     forall hptr flags new_cs heap_variant value new_mem selected_page bound modified_page cs regs mem ___1 addr hptr_mod ctx high224,
 
@@ -80,26 +92,7 @@ Additionally, store a pointer to the next word to `inc_ptr` register.
              gs_context_u128 := ctx;
              gs_status       := NoPanic;
            |}
-(** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + allocated ergs if the heap variant has to be grown;
-  + heap variant bounds, if heap variant has to be grown.
-
-- GPRs, because `res` and `inc_ptr` only resolve to registers.
-
-## Usage
-
-- Only [%OpStore] and [%OpStoreInc] are capable of writing to heap variant.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
-
-## Similar instructions
-
-- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
-
-## Panics
+(** ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)

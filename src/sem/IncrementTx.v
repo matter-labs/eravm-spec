@@ -6,53 +6,29 @@ Import ABI Bool Coder Core Common Predication Ergs CallStack TransientMemory Mem
 Section IncrementTxDefinition.
 
 Inductive step_increment_tx: @instruction bound -> smallstep :=
-(** # ContextIncrementTxNumber
+  (** {{{!
+describe(InstructionDoc(
 
-- Kernel only.
-- Forbidden in static context.
+ins=Instruction("OpIncrementTxNumber", "inctx", kernelOnly = True, notStatic = True ),
+legacy = " `context.inc_tx_num`",
 
-## Abstract Syntax
-
-[%OpIncrementTxNumber]
-
-## Syntax
-
-```
-inctx
-```
-
-## Legacy Syntax
-
-```
-context.inc_tx_num out
-```
-
-## Summary
-
+summary = """
 - Reset all transient storage.
 - Increment the tx number counter in [%gs_tx_number_in_block].
+""",
 
-## Semantic
-
+semantic = r"""
 TODO
+""",
 
-## Affected parts of VM state
-
+usage = """ Utility in system contracts. """,
+affectedState = """
 - Tx counter.
 - Transient storages.
+""",
 
-## Usage
-
-Utility in system contracts.
-
-## Similar instructions
-
-- The `context` instruction family.
-
-## Encoding
-
-- A variant of `context` [%mach_instruction].
-
+))
+}}}
  *)
 (* FIXME: clear transient storage *)
 | step_IncrementTx:

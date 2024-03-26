@@ -41,33 +41,26 @@ Section FarRetDefinition.
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
 
   Inductive step_farret: instruction -> tsmallstep :=
-(** # Far return (normal return, not panic/revert)
-
-The NearRet and FarRet share the same syntax, but their runtime semantic is
-different:
+(** {{{!
+ins = Instruction("OpRet", "ret", in1 = In.RegImm)
+descr = InstructionDoc(
+ins=ins,
+add_to_title = "(case of far return)",
+syntax_override=[ syntax(ins), r"`ret`, an alias to `ret r1`. Argument is ignored for near reverts."],
+preamble= r""""This instruction is used to return from both far and near calls.
 
 - if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
   selected (see [%FarRetDefinition]);
 - if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
   selected (see [%NearRetDefinition]).
+""",
+summary = """
+A normal return from a **far** call. Will pop up current callframe, return
+unspent ergs to the caller, and continue execution from the saved return
+address (from where the call had taken place). The register `args`
+describes a span of memory passed to the external caller. """,
 
-## Abstract Syntax
-
-[%OpRet (args: in_reg)]
-
-## Syntax
-
-`ret in1`
-
-  A normal return from a **far** call. Will pop up current callframe, return
-  unspent ergs to the caller, and continue execution from the saved return
-  address (from where the call had taken place). The register `args`
-  describes a span of memory passed to the external caller.
-
-  The assembler expands `ret` to `ret r1`; `r1` is ignored by returns from near calls.
-
-## Semantic
-
+semantic = r"""
 1. Fetch the value from register `args` and decode the value of type [%fwd_memory]:
 
    ```
@@ -112,6 +105,28 @@ different:
    All other registers are zeroed. Registers [%r2], [%r3], and [%r4] are
    reserved and may gain a special meaning in newer versions of EraVM.
 6. Clear context register.
+""",
+affectedState = r"""
+- Execution stack:
+  + Current frame is dropped.
+  + Caller frame:
+    * Unspent ergs are given back to caller (but memory growth is paid first).
+- Flags are cleared.
+- Context register is zeroed (only returns from far calls).
+- Registers are cleared (only returns from far calls).
+""",
+usage = """
+Normal returns from functions (and contracts).
+""",
+similar= """
+- [%OpRevert] executes the current frame's exception handler instead of returning
+  to the caller.
+- [%OpPanic] executes the current frame's exception handler instead of returning to
+  the caller, and sets overflow flag.
+"""
+)
+describe(descr)
+}}}
 *)
 | step_RetExt_heapvar:
   forall pages cf caller_stack cs1 new_caller new_regs ___1 ___2 ___3 out_ptr heap_type hspan params s1 s2 status enc_ptr,
@@ -182,26 +197,7 @@ different:
                           gs_status       := status;
                           |} s1 s2 ->
     step_farret (OpRet (Some (PtrValue params))) s1 s2
-(** ## Affected parts of VM state
-
-- Flags are cleared.
-- Context register is zeroed (only returns from far calls).
-- Registers are cleared (only returns from far calls).
-- Execution stack:
-  + Current frame is dropped.
-  + Caller frame:
-    * Unspent ergs are given back to caller (but memory growth is paid first).
-
-## Usage
-
-## Similar instructions
-
-- `revert` executes the current frame's exception handler instead of returning
-  to the caller.
-- `panic` executes the current frame's exception handler instead of returning to
-  the caller, and sets overflow flag.
-
-## Panics
+(** ## Panics
 
 1. Attempt to forward an existing fat pointer, but the value holding [%RetABI] is not tagged as a pointer.
 *)
