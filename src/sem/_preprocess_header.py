@@ -1,10 +1,10 @@
 
+RETS = ", ".join(map(lambda s: f"[%Op{s}]", ["Ret", "NearPanicTo", "NearRevertTo", "NearRetTo"]))
 FARCALLS = ", ".join(map(lambda s: f"[%Op{s}Call]", ["Far", "Mimic", "Delegate"]))
 BITWISE = ", ".join(map(lambda s: f"[%Op{s}]", ["Shr", "Shl", "Rol", "Ror", "And", "Or", "Xor"]))
 CALLS = "[%OpNearCall], " + FARCALLS
 INSNS_WORKING_WITH_HEAPS = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc]"
-
-
+PTR_MANIPULATION = ", ".join(["[%OpPtrAdd]", "[%OpPtrSub]", "[%OpPtrShrink]", "[%OpPtrPack]"])
 ARITH = Instruction(
    modifiers = [Modifier.Swap, Modifier.SetFlags],
    in1 = In.Any,
@@ -113,8 +113,9 @@ def describe(descr:InstructionDoc):
    sec_similar = f"## Related instructions\n\n{descr.similar} " if descr.similar else ""
    sec_syntax_content = bullets(syntax(ins) if not descr.syntax_override else descr.syntax_override)
    return f"""
-# {ins.abstract_name}
+# {ins.abstract_name} {descr.add_to_title}
 
+{descr.preamble}
 ## Abstract Syntax
 
 {sec_abstract_syntax_content}
