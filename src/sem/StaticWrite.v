@@ -7,31 +7,33 @@ Section StaticWriteDefinition.
 
   Inductive step_static_write: instruction -> tsmallstep :=
 
-    (** # StaticWrite
+    (** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpStaticWrite", "stst", in1 = In.RegImm, in2 = In.Reg, kernelOnly = True),
+legacy = """""",
 
-[%OpStaticWrite (ptr: in_regimm) (val: in_reg)]
+summary = """
+Decode the value of type [%heap_ptr] from `in1`, write 32 consecutive bytes from `in2` to the static memory page.
+""",
 
-
-## Syntax
-
-`stst in1, in2`
-
-## Legacy Syntax
-
-None
-
-
-## Summary
-
+semantic = r"""
 TODO
+""",
 
-## Semantic
+usage = """
+""",
 
-FIXME
+similar = f"""
+- Only [%OpStaticWrite] and [%OpStaticWriteInc] are capable of writing data to the static memory page.
+- {USES_REGIMM}
+""",
 
-*)
+affectedState = """
+- static memory page
+"""
+))
+}}} *)
   | step_StaticWrite:
     forall high224 result flags new_cs value new_mem selected_page bound modified_page cs regs mem addr ctx,
 
@@ -64,26 +66,7 @@ FIXME
              gs_status       := NoPanic;
            |}
 
-(** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + allocated ergs if the heap variant has to be grown;
-  + static memory page
-
-- GPRs, because `out` only resolves to a register.
-- TransientMemory page
-
-## Usage
-
-TODO
-
-## Similar instructions
-
-TODO
-
-## Panics
+(** ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)

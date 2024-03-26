@@ -7,33 +7,36 @@ Section StaticWriteIncDefinition.
  Open Scope ZMod_scope.
 
  Inductive step_static_write_inc: instruction -> tsmallstep :=
-(**
-# StaticWriteInc
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpStaticWrite", "ststi", in1 = In.RegImm, in2 = In.Reg, out1 = Out.Reg, kernelOnly = True),
+legacy = """""",
 
-[%OpStaticWriteInc (ptr: in_regimm) (val: in_reg) (inc_ptr: out_reg)]
+summary = """
+Decode the value of type [%heap_ptr] from `in1`, write 32 consecutive bytes from `in2` to the static memory page.
 
+Additionally, write an incremented [%heap_ptr] value to `out1`.
+""",
 
-## Syntax
-
-`ststi`
-
-## Legacy Syntax
-
-None
-
-
-## Summary
-
-Kernel-only.
-
+semantic = r"""
 TODO
+""",
 
-## Semantic
+usage = """
+""",
 
-FIXME
-*)
+similar = f"""
+- Only [%OpStaticWrite] and [%OpStaticWriteInc] are capable of writing data to the static memory page.
+- {USES_REGIMM}
+""",
+
+affectedState = """
+- static memory page
+"""
+))
+}}} *)
+
   | step_StaticWriteInc:
     forall hptr flags new_cs heap_variant value new_mem selected_page bound modified_page cs regs mem ___1 addr hptr_mod ctx high224,
 
@@ -74,26 +77,7 @@ FIXME
              gs_context_u128 := ctx;
              gs_status       := NoPanic;
            |}
-(** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + allocated ergs if the heap variant has to be grown;
-  + heap variant bounds, if heap variant has to be grown.
-
-- GPRs, because `res` and `inc_ptr` only resolve to registers.
-
-## Usage
-
-- Only [%OpStaticWrite] and [%OpStaticWriteInc] are capable of writing to heap variant.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStaticWrite], [%OpStaticWriteInc], [%OpLoadPointer], [%OpLoadPointerInc].
-
-## Similar instructions
-
-- [%OpLoad], [%OpLoadInc], [%OpStaticWrite], [%OpStaticWriteInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
-
-## Panics
+(** ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
  *)

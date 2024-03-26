@@ -5,8 +5,7 @@ Section SLoadDefinition.
   Generalizable Variable __.
 
   Inductive step_sload: instruction -> smallstep :=
-(**
-{{{!describe(InstructionDoc(
+(** {{{!describe(InstructionDoc(
 
 ins=Instruction(abstract_name  = "OpSLoad", mnemonic = "lds", in1= In.Reg, out1 = Out.Reg),
 

@@ -7,26 +7,30 @@ Section PtrShrinkDefinition.
   Open Scope ZMod_scope.
 
   Inductive step_ptrshrink: instruction -> smallstep :=
-  (** # PtrShrink
+  (** {{{!
+ describe(InstructionDoc(
 
+ins=Instruction(
+"OpPtrShrink",
+"shrnk",
+in1 = In.Reg,
+in2 = In.Reg,
+out1=Out.Reg,
+modifiers=[Modifier.Swap],
+kernelOnly = False,
+notStatic = False),
+
+legacy = ["`ptr.shrink in1, in2, out`", "`ptr.shrink.s in1, in2, out`, for setting the swap modifier."] ,
+preamble = r"""
 **Attention**: **shrinking** and **narrowing** far pointers are different. See
   [%fat_ptr_shrink] and [%fat_ptr_narrow].
+""",
 
-## Abstract Syntax
-
-[%OpPtrShrink   (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
-
-## Syntax
-
-- `ptr.shrink in1, in2, ou1`
-- `ptr.shrink.s in1, in2, ou1`
-
-## Summary
-
+summary = r"""
 **Shrink** the fat pointer, decreasing its length.
+""",
 
-## Semantic
-
+semantic = r"""
 1. Fetch input operands, swap them if `swap` modifier is set. Now operands are $\mathit{op_1}$ and $\mathit{op_2}$.
 2. Ensure the $\mathit{op_1}$ is tagged as a pointer, and $\mathit{op_2}$ is not tagged as a pointer. Otherwise panic.
 3. Decode fat pointer $\mathit{ptr_{in}}$ from $\mathit{op_1}$
@@ -41,7 +45,16 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{length := length - diff}$$
 6. Store the result, tagged as a pointer, to `out`:
 
 $$result := \mathit{op_1}\{255\dots128\} \#\# \texttt{encode}(\mathit{ptr_{out}})$$
-   *)
+""",
+affectedState = "",
+usage = r"""
+- Instead of copying a fragment of a memory region defined by a fat pointer to
+  pass it to some other contract, we may shrink the pointer and cheaply pass a
+  sub-fragment to another contract without copying.
+""",
+similar = f"See {PTR_MANIPULATION}."
+))
+}}} *)
 
   | step_PtrShrink :
     forall  s high128 ptr_in ptr_out delta ,
@@ -55,33 +68,7 @@ $$result := \mathit{op_1}\{255\dots128\} \#\# \texttt{encode}(\mathit{ptr_{out}}
                         (IntValue delta)
                         (Some (PtrValue (high128, NotNullPtr ptr_out))))
         s s
-(** ## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-
-
-- Flags are unaffected
-
-## Usage
-
-- Manipulating fat pointers to pass slices of memory between functions.
-
-## Similar instructions
-
-- Takes part in a group of pointer manipulating instructions:
-   - [%OpPtrAdd]
-   - [%OpPtrSub]
-   - [%OpPtrShrink]
-   - [%OpPtrPack]
-
-
-## Encoding
-
-Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
-
-## Panics
+(** ## Panics
 
 1. First argument is not a pointer (after accounting for `swap`).
  *)

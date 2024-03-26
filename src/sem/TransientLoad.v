@@ -5,8 +5,7 @@ Section TransientLoadDefinition.
   Generalizable Variable __.
 
   Inductive step_tload: instruction -> smallstep :=
-(**
-{{{!describe(InstructionDoc(
+(** {{{!describe(InstructionDoc(
 
 ins=Instruction(abstract_name  = "OpTransientLoad", mnemonic = "ldt", in1= In.Reg, out1 = Out.Reg),
 

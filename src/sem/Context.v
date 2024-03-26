@@ -8,9 +8,7 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Transien
 Section ContextDefinitions.
 
 Inductive step_context: instruction -> smallstep :=
-(**
-
-{{{!
+(** {{{!
 describe(InstructionDoc(
 
 ins=Instruction("OpGetCapturedContext", "ldvl", out1=Out.Reg),
@@ -45,11 +43,10 @@ similar = """
   forall wcontext (s1 s2: state),
     wcontext = widen word_bits (gs_context_u128 s1) ->
     step_context (OpGetCapturedContext (IntValue wcontext)) s1 s2
-(**
-{{{!
+(** {{{!
 describe(InstructionDoc(
 
-ins=Instruction("OpSetContextReg", "stvl", in1=In.Reg),
+ins=Instruction("OpSetContextReg", "stvl", in1=In.Reg, kernelOnly = True, notStatic = True),
 
 legacy = """```
 context.set_context_u128 in

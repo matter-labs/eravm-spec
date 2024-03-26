@@ -7,32 +7,35 @@ Section StaticReadIncDefinition.
   Open Scope ZMod_scope.
   Generalizable Variables cs flags regs mem.
   Inductive step_static_read_inc : instruction -> tsmallstep :=
-  (** # StaticReadInc
 
-## Abstract Syntax
+    (** {{{!
+describe(InstructionDoc(
 
-[%OpStaticReadInc (ptr: in_regimm) (res: out_reg) (inc_ptr: out_reg)]
+ins=Instruction("OpStaticReadInc", "ldsti", in1 = In.RegImm, out1=Out.Reg, out2=Out.Reg, kernelOnly = True),
+legacy = """""",
 
-## Syntax
+summary = """
+Decode the value of [%heap_ptr] type from `in1`, load 32 consecutive bytes from static memory page.
 
-`ldsti in1, out1, out2`
+Additionally, increment this pointer by 32 and write it to `out2`.
+""",
 
-## Legacy Syntax
-
-None
-
-
-## Summary
-
-Kernel-only.
-
+semantic = r"""
 TODO
+""",
+usage = """
+""",
 
-## Semantic
+similar = f"""
+- Only [%OpStaticRead] and [%OpStaticReadInc] are capable of reading data from the static memory page.
+- {USES_REGIMM}
+""",
 
-FIXME incorrect semantic
-
-   *)
+affectedState = """
+- static memory page
+"""
+))
+}}} *)
   | step_StaticReadInc:
     forall result new_regs selected_page high224 ptr_inc bound new_cs addr ctx,
       `(
@@ -50,19 +53,7 @@ FIXME incorrect semantic
             (mk_transient_state flags regs mem cs0 ctx NoPanic)
             (mk_transient_state flags new_regs mem new_cs ctx NoPanic)
         )
-  (** ## Affected parts of VM state
-
-TODO
-
-## Usage
-
-TODO
-
-## Similar instructions
-
-TODO
-
-## Panics
+  (** ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
    *)

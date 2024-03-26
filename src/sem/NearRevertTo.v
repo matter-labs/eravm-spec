@@ -5,30 +5,40 @@ Import Common Flags CallStack GPR TransientMemory isa.CoreSet State SemanticComm
 Section NearRevert.
   Generalizable Variables regs pages __.
   Inductive step_nearrevertto: @instruction bound -> smallstep :=
-  (** # NearRevertTo (return with recoverable error)
+(** {{{!
+describe(InstructionDoc(
+ins=Instruction("OpNearRevertTo", "revl", imm1="label"),
 
-## Abstract Syntax
+legacy = """`ret.revert label` aliased as `revert label`""",
 
-[%OpNearRevertTo]
+summary = """
+An erroneous return from a **near** call to a specified label. Will revert all
+changes in [%global_state] produced in the current frame, pop up current
+frame, give back unspent ergs, and proceed to execute exception handler.
 
-## Syntax
+The assembler expands `revert label` to `revert r1, label`, but `r1` is
+ignored by returns from near calls.
+""",
 
-`ret.revert label` aliased as `revert label`
-
-  An erroneous return from a **near** call to a specified label. Will revert all
-  changes in [%global_state] produced in the current frame, pop up current
-  frame, give back unspent ergs, and proceed to execute exception handler.
-
-  The assembler expands `revert label` to `revert r1, label`, but `r1` is
-  ignored by returns from near calls.
-
-## Semantic
-
+semantic = r"""
 1. Perform a [%rollback].
 2. Pass all ergs from the topmost frame to the parent frame.
 3. Drop topmost frame.
 4. Clear flags
 5. Proceed with executing [%label], i.e. replace program counter with the label's value.
+""",
+affectedState = """
+- Flags are cleared.
+- Execution stack:
+  + Current frame is dropped.
+  + Caller frame:
+    * Unspent ergs are given back to caller (but memory growth is paid first).
+    * Program counter is overwritten with the label.
+""",
+usage = """ Return from a recoverable error, fail-safe. """,
+similar = f"""See {RETS}"""
+))
+}}}
    *)
   | step_NearRevert:
     forall cf caller_stack new_caller _eh _sp _pc _ergs saved ctx label gs new_gs pages,
@@ -65,17 +75,4 @@ Section NearRevert.
                             |}
         )
   .
-(** ## Affected parts of VM state
-
-- Flags are cleared.
-- Execution stack:
-  + Current frame is dropped.
-  + Caller frame:
-    * Unspent ergs are given back to caller (but memory growth is paid first).
-    * Program counter is overwritten with the exception handler address of the dead frame.
-
-## Usage
-
-Return from a recoverable error, fail-safe.
- *)
 End NearRevert.

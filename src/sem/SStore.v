@@ -11,7 +11,8 @@ Section SStoreDefinition.
     ergs_of (pubdata * Z.of_nat bytes_in_word).
 
   Inductive step_sstore: instruction -> smallstep :=
-  (** {{{! descr = InstructionDoc(
+  (** {{{!
+describe(InstructionDoc(
 
 ins=Instruction(abstract_name  = "OpTransientStore", mnemonic = "stt", in1= In.Reg, in2 = In.Reg),
 
@@ -31,14 +32,10 @@ usage = """
 - [%OpTransientStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
 - Transient storage is reset after the transaction ends.
 """,
-
-)
-
-descr.affectedState += """
+affectedState = """
 - Depot of the current shard.
 """
-
-describe(descr)
+))
 }}}
 
    *)

@@ -6,50 +6,39 @@ Import Common Core TransientMemory isa.CoreSet State
 Section PtrPackDefinition.
   Open Scope ZMod_scope.
   Inductive step_ptrpack : instruction -> smallstep :=
-  (** # PtrPack
+  (**
 
-## Abstract Syntax
+{{{!
+describe(InstructionDoc(
 
-[%OpPtrPack (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
+ins=Instruction(
+"OpPtrPack",
+"pack",
+in1 = In.Reg,
+in2 = In.Reg,
+out1=Out.Reg,
+modifiers=[Modifier.Swap],
+kernelOnly = False,
+notStatic = False),
 
-## Syntax
+legacy = ["`ptr.pack in1, in2, out`", "`ptr.pack.s in1, in2, out`, for setting the swap modifier."] ,
+preamble = None,
 
-- `ptr.pack in1, in2, ou1`
-- `ptr.pack.s in1, in2, ou1`
-
-## Summary
-
+summary = r"""
 Concatenates the lower 128 bit of `in1` and the higher 128 bits of `in2`, writes result to `out`.
 `in1` should hold a [%fat_ptr].
+""",
 
-See Usage.
-
-## Semantic
-
+semantic = r"""
 1. Fetch input operands, swap them if `swap` modifier is set. Now operands are $\mathit{op_1}$ and $\mathit{op_2}$.
 2. Ensure the $\mathit{op_1}$ is tagged as a pointer, and $\mathit{op_2}$ is not tagged as a pointer. Otherwise panic.
 3. Ensure that the lower 128 bits of $\mathit{op}_2$ are zero. Otherwise panic.
 4. Store the result, tagged as a pointer, to `out`:
 
 $$result := \mathit{op_2}\{255\dots128\} \#\# \mathit{op_1}\{128\dots 0\}$$
-   *)
-
-  | step_PtrPack :
-    forall op1_high128 ptr (op2:word) (s:state) encoded result,
-      low 128 op2 = zero128 ->
-      Some encoded = encode_fat_ptr ptr ->
-      result = (@high 128 128 op2) ## encoded ->
-      step_ptrpack (@OpPtrPack bound (Some (PtrValue (op1_high128, ptr))) (IntValue op2) (IntValue result)) s s
-(** ## Affected parts of VM state
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-
-
-- Flags are unaffected
-
-## Usage
-
+""",
+affectedState = "",
+usage = r"""
 - fat pointer in $in_1$ spans across bits $in_1{0\dots127}$, and the bits
   $in_1{128\dots255}$ are therefore available to put other data.
   This is used by for memory forwarding to far calls when we need to forward an existing fat pointer.
@@ -83,20 +72,18 @@ $$result := \mathit{op_2}\{255\dots128\} \#\# \mathit{op_1}\{128\dots 0\}$$
     [%FarCallABI] in A{128...255}.
   - invoke [%OpPtrPack P A B]. Now `B` stores an encoded instance of
     [%FarCallABI] and can be passed to one of far call instructions.
+""",
+similar = f"See {PTR_MANIPULATION}."
+))
+}}} *)
 
-## Similar instructions
-
-- Takes part in a group of pointer manipulating instructions:
-   - [%OpPtrAdd]
-   - [%OpPtrSub]
-   - [%OpPtrShrink]
-   - [%OpPtrPack]
-
-## Encoding
-
-Instructions [%OpPtrAdd], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
-
-## Panics
+  | step_PtrPack :
+    forall op1_high128 ptr (op2:word) (s:state) encoded result,
+      low 128 op2 = zero128 ->
+      Some encoded = encode_fat_ptr ptr ->
+      result = (@high 128 128 op2) ## encoded ->
+      step_ptrpack (@OpPtrPack bound (Some (PtrValue (op1_high128, ptr))) (IntValue op2) (IntValue result)) s s
+(** ## Panics
 
 1. First argument is not a pointer (after accounting for `swap`).
  *)

@@ -8,16 +8,12 @@ Import Addressing ABI Bool Coder Core Common Predication Ergs CallStack Transien
 Section VMDefinitions.
 
   Inductive step_vm: instruction -> smallstep :=
-  (** #
+  (**
 {{{! describe(InstructionDoc(
 
 ins=Instruction(abstract_name  = "OpVMErgsLeft", mnemonic = "ergs",out1= Out.Reg),
 
-legacy = """
-```
-context.ergs_left out
-```
-""",
+legacy = "`context.ergs_left out`",
 
 summary = """
 Retrieves the number of ergs allocated for the current frame.
@@ -45,11 +41,7 @@ usage = """
 
 ins=Instruction(abstract_name  = "OpVMSP", mnemonic = "sp", out1 = Out.Reg),
 
-legacy = """
-```
-context.sp out
-```
-""",
+legacy = "`context.sp out`",
 
 summary = """
 Retrieves current stack pointer value.
@@ -73,8 +65,7 @@ similar = """
 
       step_vm (OpVMSP (IntValue sp_zero_padded)) s1 s2
 
-  (**
-{{{! describe(InstructionDoc(
+  (** {{{! describe(InstructionDoc(
 
 ins=Instruction(abstract_name  = "OpVMMeta", mnemonic = "meta", out1= Out.Reg),
 

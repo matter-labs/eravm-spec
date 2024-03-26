@@ -15,6 +15,15 @@ USES_REGIMM = r"""
   {INSNS_USE_REGIMM}.
 """
 
+INSNS_USE_REGIMM = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc], [%OpStaticReadInc], [%OpStaticRead], [%OpStaticWrite], [%OpStaticWriteInc]"
+
+
+USES_REGIMM = r"""
+- One of few instructions that accept only reg or imm operand but do not have
+  full addressing mode, therefore can't e.g. address stack. The full list is:
+  {INSNS_USE_REGIMM}.
+"""
+
 
 def ins_arith(abstract_name: str, mnemonic:str, hasOut2 = False):
    return Instruction(

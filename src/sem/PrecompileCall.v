@@ -8,24 +8,29 @@ Import Addressing ABI Bool Common Coder Predication Ergs CallStack Event Transie
 Section PrecompileCallDefinition.
   Open Scope ZMod_scope.
   Import ssreflect.tuple ssreflect.eqtype.
-  (** # PrecompileCall
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(
+"",
+"",
+in1 = In.Reg,
+in2 = In.Reg,
+out1=Out.Reg,
+kernelOnly = True,
+notStatic = False),
 
-[%OpPrecompileCall (in1: in_reg) (in2: in_reg) (dst:out_reg)]
+legacy = " `log.precompile in1, in2, out1`",
+preamble = None,
 
-## Syntax
-
-- `log.precompile in1, in2, out1`
-
-## Summary
+summary = """
 
 A precompile call is a call to an extension of a virtual machine. The extension
 operates differently depending on the currently executing contract's address.
 Only system contracts may have precompiles.
+""",
 
-## Semantic
-
+semantic = r"""
 Attempt to pay the extra cost:
 
    $$\mathit{cost_{extra}} = \mathit{in}_2 \mod 2^{32}$$
@@ -35,7 +40,16 @@ Attempt to pay the extra cost:
   + execute the precompile logic associated to the currently executing contract.
     This will emit a special event.
   + set ${out}_1$ to one.
-   *)
+
+- If the cost is unaffordable, do not pay anything beyound [%base_cost] of this
+  instruciton. Set ${out}_1$ to zero.
+""",
+affectedState = "",
+usage = """ """,
+similar = ""
+))
+}}}
+*)
   Inductive step_precompile: instruction -> smallstep :=
   | step_PrecompileCall_affordable:
     forall flags pages cs regs result new_cs extra_ergs gs new_gs ctx ___1 new_xs params,
@@ -81,9 +95,6 @@ Attempt to pay the extra cost:
                         gs_transient    := new_xs;
                         gs_global       := new_gs;
                       |}
-  (** - If the cost is unaffordable, do not pay anything beyound [%base_cost] of
-this instruciton. Set ${out}_1$ to zero.
-   *)
   | step_PrecompileCall_unaffordable:
     forall flags pages cs regs extra_ergs ___1 ___2 s1 s2 result ctx,
       let cost := low ergs_bits extra_ergs in

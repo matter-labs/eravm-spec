@@ -15,25 +15,29 @@ Import spec.
 
 Section PtrSubDefinition.
   Open Scope ZMod_scope.
-  (** # PtrSub
+(** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction(
+"OpPtrSub",
+"subp",
+in1 = In.Reg,
+in2 = In.Reg,
+out1=Out.Reg,
+modifiers=[Modifier.Swap],
+kernelOnly = False,
+notStatic = False),
 
-[%OpPtrSub (in1: in_any) (in2: in_reg)  (out: out_any) (swap:mod_swap)]
+legacy = ["`ptr.sub in1, in2, out`", "`ptr.sub.s in1, in2, out`"] ,
+preamble = None,
 
-## Syntax
-
-- `ptr.sub in1, in2, out`
-- `ptr.sub.s in1, in2, out`
-
-## Summary
-
+summary = r"""
 Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`. Advances
 the fat pointer's offset by that number, and writes (`in2`{128...255} ||
 incremented pointer) to `out`.
+""",
 
-## Semantic
-
+semantic = r"""
 1. Fetch input operands, swap them if `swap` modifier is set. Now operands are
    $\mathit{op_1}$ and $\mathit{op_2}$.
 2. Ensure the $\mathit{op_1}$ is tagged as a pointer, and $\mathit{op_2}$ is not
@@ -53,6 +57,13 @@ $$\mathit{ptr_{out}} := \mathit{ptr_{in}} | _\mathit{offset := offset - diff}$$
 6. Store the result, tagged as a pointer, to `out`. The most significant 128 bits of result are taken from `op1`, the least significant bits hold an encoded pointer:
 
 $$result := \mathit{op_1}\{255\dots128\} \#\# \texttt{encode}(\mathit{ptr_{out}})$$
+""",
+affectedState = "",
+usage = """
+- Manipulating fat pointers to pass slices of memory between functions.""",
+similar = f"See {PTR_MANIPULATION}."
+))
+}}}
 
    *)
   Inductive step_ptrsub : instruction -> smallstep :=
@@ -68,34 +79,7 @@ $$result := \mathit{op_1}\{255\dots128\} \#\# \texttt{encode}(\mathit{ptr_{out}}
               (IntValue arg_delta)
               (Some (PtrValue (high128, NotNullPtr (mk_fat_ptr pid (mk_ptr span new_ofs))))))
         s s
-(** ## Affected parts of VM state
-
-- execution stack: PC, as by any instruction; SP, if `in1` uses `RelPop` addressing mode, or if `out` uses `RelPush` addressing mode.
-- Current stack memory page, if `out` resolves to it.
-- GPRs, if `out` resolves to a register.
-
-
-- Flags are unaffected
-
-## Usage
-
-- Manipulating fat pointers to pass slices of memory between functions.
-
-## Similar instructions
-
-- Takes part in a group of pointer manipulating instructions:
-   - [%OpPtrAdd]
-   - [%OpPtrSub]
-   - [%OpPtrShrink]
-   - [%OpPtrPack]
-
-- Instruction [%OpPtrSub] effectively performs the same actions but the offset is added, not subtracted.
-
-## Encoding
-
-Instructions [%OpPtrSub], [%OpPtrSub], [%OpPtrPack] and [%OpPtrShrink] are sharing an opcode.
-
-## Panics
+(** ## Panics
 
 1. First argument is not a pointer (after accounting for `swap`).
  *)

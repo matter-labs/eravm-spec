@@ -9,29 +9,35 @@ Import ssreflect.tuple ssreflect.eqtype.
 Section ToL1Definition.
 
   Open Scope ZMod_scope.
-  (** # ToL1Message
+  (** {{{!
+describe(InstructionDoc(
+ins=Instruction(
+"OpToL1",
+"logl1",
+in1 = In.Reg,
+in2 = In.Reg,
+modifiers = [Modifier.IsFirst],
+kernelOnly = True,
+notStatic = True),
 
-## Abstract Syntax
+legacy = [
+"`log.to_l1 in1, in2`",
+"`log.to_l1.first in1, in2`"
+],
 
-[%OpToL1Message (in1: in_reg) (in2: in_reg) (is_first: bool)]
-
-## Syntax
-
-- `log.to_l1 in1, in2` aliased as `event in1, in2`
-- `log.to_l1 event.first in1, in2` aliased as `event.i in1, in2`
-
-## Summary
-
+summary = """
 Emit a message to L1 with provided key and value. See [%event] for more details
 on events system.
-
-## Semantic
-
+""",
+usage = "Communicating with L1. ",
+semantic = r"""
 1. Fetch key and value from `key` and `value`.
 2. If `is_first` is `true`, mark the event as the first in a chain of events.
 3. Emit L1 message event.
-
-   *)
+""",
+affectedState = "- L1 Event queue."
+))
+}}} *)
   Inductive step_tol1: instruction -> smallstep :=
 
   | step_ToL1:
@@ -61,19 +67,4 @@ on events system.
              gs_global    := new_gs;
            |}
   .
-(**
-## Affected parts of VM state
-
-- Event queue.
-
-## Usage
-
-Communicating with L1.
-
-
-## Similar instructions
-
-- [%OpSLoad], [%OpSStore], [%OpEvent], [%OpToL1Message], [%OpPrecompileCall] share the same opcode.
-
- *)
 End ToL1Definition.

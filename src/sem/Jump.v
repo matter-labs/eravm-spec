@@ -16,7 +16,7 @@ ins=Instruction(abstract_name="OpJump", mnemonic="jmp", in1=In.Any, out1=Out.Reg
 descr = InstructionDoc(
 ins = ins,
 
-syntax_override =[ syntax(ins) , "`jmp in1`, alias for `jmp in1, r0`"],
+syntax_override =syntax(ins) + ["`jmp in1`, alias for `jmp in1, r0`"],
 summary = """
 Unconditional jump (becomes conditional through predication).
 

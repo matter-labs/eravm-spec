@@ -7,24 +7,19 @@ Section StoreDefinition.
 
   Inductive step_store: instruction -> tsmallstep :=
 
-    (** # Store
+    (** {{{!
+describe(InstructionDoc(
 
-## Abstract Syntax
+ins=Instruction("OpStore", "stm", in1 = In.RegImm, in2 = In.Reg, modifiers = [Modifier.DataPageType]),
+legacy = ["`uma.heap_write in1, in2` aliased as `st.1.inc in1, out`",
+"`uma.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`"]
+,
+summary = """
+Decode the heap address from `in1`, store 32 consecutive bytes to the specified
+active heap variant.
+""",
 
-[% OpStore    (ptr: in_regimm) (val: in_reg)  (mem:data_page_type)]
-
-## Syntax
-
-- `uma.heap_write in1, in2` aliased as `st.1.inc in1, out`
-- `uma.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`
-
-
-## Summary
-
-Decode the heap address from `in1`, load 32 consecutive bytes from the specified active heap variant.
-
-## Semantic
-
+semantic = r"""
 1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
 2. Ensure storing 32 consecutive bytes is possible; for that, check if $\mathit{addr < 2^{32}-32}$.
@@ -35,7 +30,24 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
    contain all of it.
 4. Store 32 consecutive bytes as a Big Endian 256-bit word from `val` to
    $\mathit{addr}$ in the heap variant.
-*)
+""",
+
+usage = """
+""",
+
+similar = f"""
+- Only [%OpStore] and [%OpStoreInc] are capable of reading data from heap variants.
+- {USES_REGIMM}
+""",
+
+affectedState = """
+- execution stack:
+  + allocated ergs if the heap variant has to be grown;
+  + heap bounds, if heap variant has to be grown.
+"""
+))
+}}}
+     *)
   | step_Store:
     forall high224 result flags new_cs heap_variant value new_mem selected_page bound modified_page cs regs mem addr ctx,
 
@@ -75,26 +87,6 @@ Decode the heap address from `in1`, load 32 consecutive bytes from the specified
            |}
 
 (** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + allocated ergs if the heap variant has to be grown;
-  + heap bounds, if heap variant has to be grown.
-
-- GPRs, because `out` only resolves to a register.
-- TransientMemory page
-
-
-## Usage
-
-- Only [%OpLoad] and [%OpLoadInc] are capable of reading data from heap variant.
-- One of few instructions that accept only reg or imm operand but do not have full addressing mode, therefore can't e.g. address stack. The full list is: [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc].
-
-## Similar instructions
-
-- [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc] are variants of the same instruction.
-
 ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].

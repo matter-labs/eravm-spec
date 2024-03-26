@@ -41,40 +41,61 @@ Section FarRevertDefinition.
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
 
   Inductive step_farrevert: instruction -> smallstep :=
-  (** # Far revert (return from recoverable error, not panic/normal return)
+  (**
+{{{!
+ins = Instruction("OpRevert", "revert", in1 = In.Reg)
+descr = InstructionDoc(
+ins=ins,
+add_to_title = "(case of far revert)",
+syntax_override=[ syntax(ins), r"`rev`, an alias to `rev r1`. Argument is ignored for near reverts."],
+preamble= r"""
+This instruction is used to return from both far and near calls in case of a recoverable error.
 
-The NearRevert and FarRevert share the same syntax, but their runtime semantic is
-different:
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
-  selected (see [%FarRetDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
-  selected (see [%NearRetDefinition]).
-
-## Abstract Syntax
-
-[%OpRevert (args: in_reg)]
-
-## Syntax
-
-`ret.revert in1` aliased as `revert in1`
-
+- if the topmost frame in callstack is [%ExternalCall], the FarRevert semantic is
+  selected (see [%FarRevertDefinition]);
+- if the topmost frame in callstack is [%InternalCall], the NearRevert semantic is
+  selected (see [%NearRevertDefinition]).
+""",
+summary = r"""
 An abnormal return from a far call. Will pop up current callframe, give back
-unspent ergs and execute a currently active exception handler. The register
-abi_reg describes a slice of memory passed to the external caller.
+unspent ergs and execute a currently active exception handler. The input register
+describes a slice of memory passed to the external caller.
+""",
 
+semantic = r"""
 Restores storage to the state before external call.
-
-The assembler expands `revert` to `revert r1`; `r1` is ignored by returns from
-near calls.
-
-## Semantic
-
 1. Let $E$ be the address of the [%active_exception_handler].
 2. Perform a [%rollback].
 3. Proceed with the same steps as [%OpFarRetABI] (see [%step_farret]).
 3. Set PC to $E$.
-   *)
+""",
+usage = """
+- Abnormal returns from near/far calls when a recoverable error happened.
+  Use `panic` for irrecoverable errors.
+""",
+similar= """
+- [%OpRet] returns to the caller instead of executing an exception handler.
+- [%OpPanic] acts similarly to [%OpRevert] but does not pass any data to the caller frame
+  and sets an overflow flag.
+"""
+)
+descr.affectedState += r"""
+- Execution stack:
+  + Current frame is dropped.
+  + Caller frame:
+    * if a label is explicitly provided, and current frame is internal (near
+      call), then caller's PC is overwritten with the label. Returns from
+      external calls ignore label, even if it is explicitly provided.
+    * Unspent ergs are given back to caller (but memory growth is paid first).
+- Storage changes are reverted.
+- Flags are cleared.
+- Context register is zeroed (only reverts from far calls).
+- Registers are cleared (only reverts from far calls).
+"""
+
+describe(descr)
+}}} *)
+
   | step_RevertExt_heapvar:
     forall gs gs' pages cf caller_stack cs1 cs2 new_caller new_regs params out_ptr heap_type hspan ___2 ___3 ___4 _tag ptr_enc,
       let cs0 := ExternalCall cf (Some caller_stack) in
@@ -164,34 +185,7 @@ near calls.
                        gs_global       := gs';
                      |}
 
-(** ## Affected parts of VM state
-
-- Flags are cleared.
-- Context register is zeroed (only returns from far calls).
-- Registers are cleared (only returns from far calls).
-- Execution stack:
-  + Current frame is dropped.
-  + Caller frame:
-    * if a label is explicitly provided, and current frame is internal (near
-      call), then caller's PC is overwritten with the label. Returns from
-      external calls ignore label, even if it is explicitly provided.
-    * Unspent ergs are given back to caller (but memory growth is paid first).
-- Storage changes are reverted.
-
-## Usage
-
-- Abnormal returns from near/far calls when a recoverable error happened.
-Use `panic` for irrecoverable errors.
-
-## Similar instructions
-
-- `ret` returns to the caller instead of executing an exception handler.
-- `panic` acts similar to `revert` but does not let pass any data to the caller
-  and sets an overflow flag, and burns ergs in current frame.
-
-
-
-## Panics
+(** ## Panics
 
 1. Attempt to forward an existing fat pointer, but the value holding [%RetABI] is not tagged as a pointer.
 *)

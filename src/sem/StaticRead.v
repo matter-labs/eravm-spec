@@ -8,29 +8,33 @@ Section StaticReadDefinition.
 
   Generalizable Variables cs flags regs mem.
   Inductive step_static_read: instruction -> tsmallstep :=
-  (** # StaticRead
-## Abstract Syntax
+  (** {{{!
+describe(InstructionDoc(
 
-[%OpStaticRead (ptr: in_regimm) (res: out_reg)]
+ins=Instruction("OpStaticRead", "ldst", in1 = In.RegImm, out1=Out.Reg, kernelOnly = True),
+legacy = """""",
 
-## Legacy Syntax
+summary = """
+Decode the value of [%heap_ptr] type from `in1`, load 32 consecutive bytes from static memory page.
+""",
 
-None.
-
-## Syntax
-
-`ldsti in1, out `
-
-## Summary
-
-Kernel-only.
-
+semantic = r"""
 TODO
+""",
 
-## Semantic
+usage = """
+- Only [%OpStaticRead] and [%OpStaticReadInc] are capable of reading data from static memory page.
+- {USES_REGIMM}
+""",
 
-FIXME semantic is incorrect.
-   *)
+similar = """
+""",
+
+affectedState = """
+- static memory page
+"""
+))
+}}} *)
   | step_StaticRead:
     forall new_cs ctx result mem selected_page bound addr high224,
       `(
@@ -62,25 +66,7 @@ FIXME semantic is incorrect.
                              gs_status       := NoPanic;
                            |}
         )
-  (** ## Affected parts of VM state
-
-- execution stack:
-
-  + PC, as by any instruction;
-  + ergs allocated for the current function/contract instance, if the heap
-    variant has to be grown;
-- static memory page
-- registers, because `res` only resolves to a register.
-
-## Usage
-
-TODO
-
-## Similar instructions
-
-TODO
-
-## Panics
+  (** ## Panics
 
 1. Accessing an address greater than [%MAX_OFFSET_TO_DEREF_LOW_U32].
    *)

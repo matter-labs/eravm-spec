@@ -8,9 +8,7 @@ Section LoadDefinition.
 
   Generalizable Variables cs flags regs mem.
   Inductive step_load: instruction -> tsmallstep :=
-  (**
-
-{{{!
+  (** {{{!
 describe(InstructionDoc(
 
 ins=Instruction("OpLoad", "ldvl", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType]),
@@ -38,12 +36,9 @@ semantic = r"""
    in the heap variant, store result to `res`.
 """,
 
-usage = """
+usage = f"""
 - Only [%OpLoad] and [%OpLoadInc] are capable of reading data from heap variants.
-- One of few instructions that accept only reg or imm operand but do not have
-  full addressing mode, therefore can't e.g. address stack. The full list is:
-  [%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer],
-  [%OpLoadPointerInc].
+- {USES_REGIMM}
 """,
 
 similar = """
