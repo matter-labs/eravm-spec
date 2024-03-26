@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-
 from typing import List
 import re
 import sys
 from pathlib import *
+import traceback
 
 from eravm_spec_lib import *
 
@@ -53,12 +52,17 @@ def process_file(file_name_in:str, file_name_out:str) -> None:
     if header:
         process_header(header);
 
-    modified_data = re.sub(
-        r'\{\{\{(.*?)\}\}\}',
-        lambda match: str(evaluate_multiline_string(match.group(1))),
-        data,
-        flags=re.DOTALL
-    )
+    try:
+        print(f"Preprocessing file {file_name_in}")
+        modified_data = re.sub(
+            r'\{\{\{(.*?)\}\}\}',
+            lambda match: str(evaluate_multiline_string(match.group(1))),
+            data,
+            flags=re.DOTALL
+        )
+    except:
+        print(f"Exception  while preprocessing file {file_name_in}")
+        traceback.print_exc()
     with open(file_name_out, 'w') as file:
         file.write(modified_data)
 
