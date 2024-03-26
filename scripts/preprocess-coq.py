@@ -3,6 +3,7 @@
 from typing import List
 import re
 import sys
+from pathlib import *
 
 from eravm_spec_lib import *
 
@@ -30,10 +31,27 @@ def evaluate_multiline_string(code:str):
             return evaluate_multiline_single_expr(code[1:].lstrip())
         else:
             return evaluate_multiline_return_last(code)
+def header_path(file_name:str) -> Optional[Path] :
+    HEADER_FILE_NAME = "_preprocess_header.py"
+    header_path = Path(file_name).parents[0] / HEADER_FILE_NAME
+    if header_path.exists():
+        return header_path
+    else:
+        return None
+
+def process_header(header_path:Path) -> None:
+    with open(header_path.as_posix(), 'r') as file:
+        data = file.read()
+        local_vars = {}
+        print(f"Processing header {header_path.as_posix()}")
+        exec(data, globals(), globals())
 
 def process_file(file_name_in:str, file_name_out:str) -> None:
     with open(file_name_in, 'r') as file:
         data = file.read()
+    header = header_path(file_name_in)
+    if header:
+        process_header(header);
 
     modified_data = re.sub(
         r'\{\{\{(.*?)\}\}\}',

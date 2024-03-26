@@ -71,12 +71,6 @@ def abstract_syntax(ins:Instruction):
       result += f" (out1: {ins.out1.coq()})"
    if ins.out2:
       result += f" (out2: {ins.out2.coq()})"
-   # if ins.swap():
-   #    result += " (swap: mod_swap)"
-
-   # if ins.setFlags():
-   #    result += " (set_flags: mod_set_flags)"
-
    for modifier in ins.modifiers:
         result += f" (_: {modifier.coq()})"
    return result
@@ -145,35 +139,6 @@ def ins_affected_args(in1:Optional[In], out1: Optional[Out],hasSetFlags = False)
 
 def ins_affected(ins:Instruction):
    return ins_affected_args(ins.in1, ins.out1, ins.setFlags())
-
-def summary_header(ins:Instruction ):
-   return ""
-
-def summary_footer(ins: Instruction ):
-   result = ""
-   if ins.kernelOnly :
-      result += "- Requires [%KernelMode]\n"
-   if ins.notStatic:
-      result += "- Forbidden in [%StaticMode]\n"
-   return result
-
-def semantic_header(ins: Instruction ):
-   result = ""
-   if ins.swap():
-      result += """**Note**: In the following description the operands are bound after
-taking [%mod_swap] modifier into account. \n"""
-   return result
-
-def semantic_footer(ins: Instruction):
-  result = ""
-  if ins.setFlags():
-     result += """Reminder: flags are affected only if [%mod_set_flags] is set.\n"""
-  return result
-
-def sec_semantic(content: str, ins:Instruction ):
-   return "## Semantic\n" + semantic_header(ins) + content + semantic_footer(ins)
-
-
 @dataclass
 class InstructionDoc():
    ins: Instruction
@@ -194,85 +159,3 @@ def bullets(ls):
    if len(ls) == 1:
       return ls[0]
    return "\n".join(map(lambda x: f"- {x}", ls))
-
-def describe(descr:InstructionDoc):
-   ins = descr.ins
-   sec_abstract_syntax_content = f"[%{abstract_syntax(ins)}]" if not descr.abstract_syntax else descr.abstract_syntax
-   sec_legacy_syntax = f"## Legacy syntax\n\n{descr.legacy}\n" if descr.legacy else ""
-   sec_similar = f"## Related instructions\n\n{descr.similar} " if descr.similar else ""
-   sec_syntax_content = bullets(syntax(ins) if not descr.syntax_override else descr.syntax_override)
-   return f"""
-# {ins.abstract_name}
-
-## Abstract Syntax
-
-{sec_abstract_syntax_content}
-
-
-## Syntax
-
-{sec_syntax_content}
-
-{sec_legacy_syntax}
-
-## Summary
-
-{summary_header(ins)}
-
-{descr.summary}
-
-{summary_footer(ins)}
-
-## Semantic
-
-{semantic_header(ins)}
-
-{descr.semantic}
-
-{semantic_footer(ins)}
-
-## Affected parts of the state
-
-{ins_affected(ins)}
-
-{descr.affectedState}
-
-## Usage
-
-{descr.usage}
-
-{sec_similar}
-"""
-
-
-
-
-def descr_ins_generic_bitwise(abstract_name: str, mnemonic:str, summary: Optional[str] = None, semantic: Optional[str] = None, usage : Optional[str] = None):
-   return InstructionDoc(
-      ins=ins_arith(abstract_name, mnemonic),
-
-      summary = f"""
-      Bitwise {mnemonic.upper()} of two 256-bit numbers.
-      """,
-
-      semantic = f"""
-      - $result$ is computed as a bitwise {mnemonic.upper()} of two operands.
-      - flags are computed as follows:
-         - `EQ` is set if $result = 0$.
-         - `OF_LT` and `GT` are cleared
-      """ if not semantic else semantic,
-
-      usage = """
-      - Operations with bit masks.
-      """ if not usage else usage,
-
-      similar = """
-      - See {BITWISE}.
-      """
-      )
-
-
-
-FARCALLS = ", ".join(map(lambda s: f"[%Op{s}Call]", ["Far", "Mimic", "Delegate"]))
-BITWISE = ", ".join(map(lambda s: f"[%Op{s}]", ["Shr", "Shl", "Rol", "Ror", "And", "Or", "Xor"]))
-CALLS = "[%OpNearCall], " + FARCALLS
