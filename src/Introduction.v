@@ -72,7 +72,7 @@ instruction syntax and semantics, and some elements of system protocol.
       * **`Ror`** : [%RorDefinition] : right circular shift.
 
    + Control flow
-      * **`Nop`** : [%NopDefinition] : do nothing.
+      * **`Nop`** : [%NoOpDefinition] : do nothing.
       * **`Jump`** : [%JumpDefinition] : jump to code (conditional jumps are implemented through [%Predication]).
 
       * **`NearCall`** : [%NearCallDefinition] : call a function in the same contract.

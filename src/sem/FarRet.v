@@ -47,7 +47,7 @@ descr = InstructionDoc(
 ins=ins,
 add_to_title = "(case of far return)",
 syntax_override=[ syntax(ins), r"`ret`, an alias to `ret r1`. Argument is ignored for near reverts."],
-preamble= r""""This instruction is used to return from both far and near calls.
+preamble= r"""This instruction is used to return from both far and near calls.
 
 - if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
   selected (see [%FarRetDefinition]);
