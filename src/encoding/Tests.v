@@ -35,6 +35,10 @@ Check (equals: "0000FFFF02000441" = encoded (OpLoad (RegImmI (Imm # 65535)) R2 A
 Check (equals: "0000000000000001" = encoded OpNoOp).
 Check (equals: "0000000000000000" = encoded OpInvalid).
 Check (equals: "0000000000000431" = encoded OpPanic).
+Check (equals: "0000000000000448" = encoded (OpStaticRead (RegImmR R0) R0)).
+Check (equals: "000000000000044C" = encoded (OpStaticWrite (RegImmR R0) R0)).
+Check (equals: "0000000000000449" = encoded (OpStaticReadInc (RegImmR R0) R0 R0)).
+Check (equals: "000000000000044D" = encoded (OpStaticWriteInc (RegImmR R0) R0 R0)).
 
 (* Require Import Extraction. *)
 
