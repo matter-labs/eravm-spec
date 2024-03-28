@@ -16,12 +16,25 @@ Import Addressing.Coercions.
 Import Assembly.
 Notation equals := eq_refl.
 Open Scope string.
-Definition sub in1 in2 out1 := (Ins _ (OpSub in1 in2 out1 NoSwap PreserveFlags) IfAlways).
-Check (equals: "000000000210004B" = Show.to_string (encode_asm (Ins _ (OpSub R0 R1 R2 NoSwap SetFlags) IfAlways))).
-Check (equals: "000000000210004A" = Show.to_string (encode_asm (Ins _ (OpSub R0 R1 R2 Swap PreserveFlags) IfAlways))).
-Check (equals: "0000000002100049" = Show.to_string (encode_asm (sub R0 R1 R2))).
-Check (equals: "0000000A02100089" = Show.to_string (encode_asm (sub (Imm (# 10)) R1 R2))).
-Check (equals: "0000000A02100079" = (Show.to_string (encode_asm (Ins _ (OpSub (Absolute R0 (# 10)) R1 R2 NoSwap PreserveFlags) IfAlways)))).
+Definition sub in1 in2 out1 := OpSub in1 in2 out1 NoSwap PreserveFlags.
+Notation str := Show.to_string.
+Notation encoded  := (fun ins => str (encode_asm (Ins _ ins IfAlways))).
+
+Check (equals: "000000000210004B" = encoded (OpSub R0 R1 R2 NoSwap SetFlags)).
+Check (equals: "000000000210004B" = encoded (OpSub R0 R1 R2 NoSwap SetFlags)).
+Check (equals: "000000000210004A" = encoded (OpSub R0 R1 R2 Swap PreserveFlags)).
+Check (equals: "0000000002100049" = encoded (sub R0 R1 R2)).
+Check (equals: "0000000A02100089" = encoded (sub (Imm (# 10)) R1 R2)).
+Check (equals: "0000000A02100079" = encoded (OpSub (Absolute R0 (# 10)) R1 R2 NoSwap PreserveFlags)).
+
+Import PageTypes.
+Check (equals: "0000000002010433" = encoded (OpLoad (RegImmR R1) R2 Heap)).
+Check (equals: "0000000002010437" = encoded (OpLoad (RegImmR R1) R2 AuxHeap)).
+Check (equals: "0000FFFF0200043D" = encoded (OpLoad (RegImmI (Imm # 65535)) R2 Heap)).
+Check (equals: "0000FFFF02000441" = encoded (OpLoad (RegImmI (Imm # 65535)) R2 AuxHeap)).
+Check (equals: "0000000000000001" = encoded OpNoOp).
+Check (equals: "0000000000000000" = encoded OpInvalid).
+Check (equals: "0000000000000431" = encoded OpPanic).
 
 (* Require Import Extraction. *)
 

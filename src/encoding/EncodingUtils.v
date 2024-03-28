@@ -54,7 +54,7 @@ Definition encode_src_mode (sm:src_mode) : Z :=
 Definition encode_src_special_mode (sm:src_special_mode) : Z :=
   match sm with
   | SrcSpecialReg => 0
-  | SrcSpecialImm => 10
+  | SrcSpecialImm => 1
   end
 .
 
