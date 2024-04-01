@@ -12599,11 +12599,11 @@ class="id" title="constructor">OpNearRetTo</span></a></span>.</p>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_nearretto" class="idref" href="#step_nearretto"><span class="id" title="inductive">step_nearretto</span></a>: @<a class="idref" href="#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
 </div>
 
-<div class="doc"><h1 id="opret">OpRet</h1>
+<div class="doc"><h1 id="opnearretto">OpNearRetTo</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="#OpRet"><span
-class="id" title="constructor">OpRet</span></a></span> <span
+class="inlinecode"><a class="idref" href="#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">label</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="#imm_in"><span
@@ -12611,7 +12611,7 @@ class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <p><code>retl label</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.ok</code> aliased as <code>ret</code></p>
+<p><code>ret.ok.to_label label</code></p>
 <h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>near</strong> call. Will pop up
 current callframe, give back unspent ergs and continue execution from an
