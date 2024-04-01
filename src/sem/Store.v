@@ -7,10 +7,11 @@ Section StoreDefinition.
 
   Inductive step_store: instruction -> tsmallstep :=
 
-    (** {{{!
-describe(InstructionDoc(
+    (** {{{
+ins = Instruction("OpStore", "stm", in1 = In.RegImm, in2 = In.Reg, modifiers = [Modifier.DataPageType])
 
-ins=Instruction("OpStore", "stm", in1 = In.RegImm, in2 = In.Reg, modifiers = [Modifier.DataPageType]),
+descr = InstructionDoc(
+ins=ins,
 legacy = ["`uma.heap_write in1, in2` aliased as `st.1.inc in1, out`",
 "`uma.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`"]
 ,
@@ -18,7 +19,7 @@ summary = """
 Decode the heap address from `in1`, store 32 consecutive bytes to the specified
 active heap variant.
 """,
-
+syntax_override = heap_var_op_syntax(ins),
 semantic = r"""
 1. Decode a [%heap_ptr] $\mathit{addr}$ from `ptr`.
 
@@ -45,7 +46,9 @@ affectedState = """
   + allocated ergs if the heap variant has to be grown;
   + heap bounds, if heap variant has to be grown.
 """
-))
+)
+
+describe(descr)
 }}}
      *)
   | step_Store:

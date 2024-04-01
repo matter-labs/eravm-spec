@@ -41,27 +41,19 @@ Section FarRevertDefinition.
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
 
   Inductive step_farrevert: instruction -> smallstep :=
-  (**
-{{{!
+  (** {{{
 ins = Instruction("OpRevert", "revert", in1 = In.Reg)
 descr = InstructionDoc(
 ins=ins,
 add_to_title = "(case of far revert)",
-syntax_override=[ syntax(ins), r"`rev`, an alias to `rev r1`. Argument is ignored for near reverts."],
-preamble= r"""
-This instruction is used to return from both far and near calls in case of a recoverable error.
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRevert semantic is
-  selected (see [%FarRevertDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRevert semantic is
-  selected (see [%NearRevertDefinition]).
-""",
+syntax_override=syntax(ins) + [r"`rev`, an alias to `rev r1`. Argument is ignored for near reverts."],
+preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near revert', 'NearRevertDefinition', 'far revert', 'FarRevertDefinition'),
 summary = r"""
 An abnormal return from a far call. Will pop up current callframe, give back
 unspent ergs and execute a currently active exception handler. The input register
 describes a slice of memory passed to the external caller.
 """,
-
+legacy="`ret.revert in1`",
 semantic = r"""
 Restores storage to the state before external call.
 1. Let $E$ be the address of the [%active_exception_handler].

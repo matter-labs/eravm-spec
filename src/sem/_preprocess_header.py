@@ -25,6 +25,24 @@ USES_REGIMM = r"""
 """
 
 
+def heap_var_op_syntax(ins):
+   return syntax(ins) + [
+f"`{ins.mnemonic}.h` to access heap (default)",
+f"`{ins.mnemonic}.ah` to access auxheap",
+f"`{ins.mnemonic}.st` to access static memory page"
+]
+
+def NEAR_FAR_RET_LIKE_PREAMBLE(near_descr, near_section, far_descr, far_section):
+   return f"""
+The {near_descr} and {far_descr} share the same syntax, but their runtime
+semantic is different:
+
+- if the topmost frame in callstack is [%ExternalCall], the {far_descr} semantic is
+  selected (see [%{far_section}]);
+- if the topmost frame in callstack is [%InternalCall], the {near_descr} semantic is
+  selected (see [%{near_section}]).
+"""
+
 def ins_arith(abstract_name: str, mnemonic:str, hasOut2 = False):
    return Instruction(
       mnemonic = mnemonic,
@@ -46,12 +64,12 @@ def ins_affected_args(in1:Optional[In], out1: Optional[Out],hasSetFlags = False)
 - GPRs, if `out` resolves to a register. """
 
    result += """
-- execution stack:
+- Execution stack:
    - PC, as by any instruction """
    if in1 == In.Any or out1 == Out.Any:
       result += """
-   - SP, if `in1` uses [%RelSPPop] addressing mode, or if `out1` uses
-     [%RelSPPush] addressing mode. """
+   - SP, if `in1` uses [%RelSpPop] addressing mode, or if `out1` uses
+     [%RelSpPush] addressing mode. """
    if out1 == Out.Any:
       result += """
 - Current stack memory page, if `out` resolves to it. """
@@ -70,23 +88,19 @@ def descr_ins_generic_bitwise(abstract_name: str, mnemonic:str, summary: Optiona
       ins=ins_arith(abstract_name, mnemonic),
 
       summary = f"""
-      Bitwise {mnemonic.upper()} of two 256-bit numbers.
+Bitwise {mnemonic.upper()} of two 256-bit numbers.
       """,
 
       semantic = f"""
-      - $result$ is computed as a bitwise {mnemonic.upper()} of two operands.
-      - flags are computed as follows:
-         - `EQ` is set if $result = 0$.
-         - `OF_LT` and `GT` are cleared
+- $result$ is computed as a bitwise {mnemonic.upper()} of two operands.
+- flags are computed as follows:
+   - `EQ` is set if $result = 0$.
+   - `OF_LT` and `GT` are cleared
       """ if not semantic else semantic,
 
-      usage = """
-      - Operations with bit masks.
-      """ if not usage else usage,
+      usage = "- Operations with bit masks." if not usage else usage,
 
-      similar = """
-      - See {BITWISE}.
-      """
+      similar = f"- See {BITWISE}."
       )
 
 
@@ -122,13 +136,14 @@ def sec_semantic(content: str, ins:Instruction ):
 def describe(descr:InstructionDoc):
    ins = descr.ins
    sec_abstract_syntax_content = f"[%{abstract_syntax(ins)}]" if not descr.abstract_syntax else descr.abstract_syntax
-   sec_legacy_syntax = f"## Legacy syntax\n\n{descr.legacy}\n" if descr.legacy else ""
+   sec_legacy_syntax = f"## Legacy syntax\n\n{bullets(descr.legacy)}\n" if descr.legacy else ""
    sec_similar = f"## Related instructions\n\n{descr.similar} " if descr.similar else ""
    sec_syntax_content = bullets(syntax(ins) if not descr.syntax_override else descr.syntax_override)
+   preamble_content = descr.preamble if descr.preamble else ""
    return f"""
 # {ins.abstract_name} {descr.add_to_title}
 
-{descr.preamble}
+{preamble_content}
 ## Abstract Syntax
 
 {sec_abstract_syntax_content}

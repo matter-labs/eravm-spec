@@ -8,16 +8,8 @@ Section NearRetToDefinition.
 (** {{{!
 describe(InstructionDoc(
 
-ins = Instruction("OpRet", "retl", imm1="label"),
-legacy = "`ret.ok` aliased as `ret`",
-preamble= r"""
-This instruction is used to return from both far and near calls.
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
-  selected (see [%FarRetDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
-  selected (see [%NearRetDefinition]).
-""",
+ins = Instruction("OpNearRetTo", "retl", imm1="label"),
+legacy = "`ret.ok.to_label label` ",
 summary = """
 A normal return from a **near** call. Will pop up current callframe, give back
 unspent ergs and continue execution from an explicitly provided label.

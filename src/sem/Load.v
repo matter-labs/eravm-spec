@@ -8,15 +8,16 @@ Section LoadDefinition.
 
   Generalizable Variables cs flags regs mem.
   Inductive step_load: instruction -> tsmallstep :=
-  (** {{{!
-describe(InstructionDoc(
-
-ins=Instruction("OpLoad", "ldvl", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType]),
+  (** {{{
+ins = Instruction("OpLoad", "ldvl", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType])
+descr = InstructionDoc(
+ins=ins,
 legacy = """
 - `uma.heap_read in1, out` aliased as `ld.1 in1, out`
 - `uma.aux_heap_read in1, out` aliased as `ld.2 in1, out`
 """,
 
+syntax_override = heap_var_op_syntax(ins),
 summary = """
 Decode the heap address from `in1`, load 32 consecutive bytes from the specified
 active heap variant.
@@ -50,7 +51,8 @@ affectedState = """
     variant has to be grown;
   + heap variant bounds, if heap variant has to be grown.
 """
-))
+)
+describe(descr)
 }}}
 
 

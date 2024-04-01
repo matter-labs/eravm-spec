@@ -8,22 +8,10 @@ Section NearRevertDefinition.
   Inductive step_nearrevert: @instruction bound -> smallstep :=
 (** {{{!
 describe(InstructionDoc(
-ins=Instruction(
-"OpNearRevert",
-"rev",
-in1 = In.Reg,
-),
+ins=Instruction("OpRevert", "rev", in1 = In.Reg),
 add_to_title = "(case of near revert)",
 legacy = "`ret.revert` aliased as `revert`",
-preamble = r"""
-The NearRevert and FarRevert share the same syntax, but their runtime semantic is
-different:
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
-  selected (see [%FarRetDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
-  selected (see [%NearRetDefinition]).
-""",
+preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near revert', 'NearRevertDefinition', 'far revert', 'FarRevertDefinition'),
 
 summary = """
 An erroneous return from a **near** call, executes an exception handler. Will

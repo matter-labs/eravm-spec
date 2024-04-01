@@ -41,19 +41,13 @@ Section FarRetDefinition.
    regs    <| r2 := reserved |> <| r3 := reserved |> <| r4 := reserved |>.
 
   Inductive step_farret: instruction -> tsmallstep :=
-(** {{{!
-ins = Instruction("OpRet", "ret", in1 = In.RegImm)
+(** {{{
+ins = Instruction("OpRet", "ret", in1 = In.Reg)
 descr = InstructionDoc(
 ins=ins,
 add_to_title = "(case of far return)",
-syntax_override=[ syntax(ins), r"`ret`, an alias to `ret r1`. Argument is ignored for near reverts."],
-preamble= r"""This instruction is used to return from both far and near calls.
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
-  selected (see [%FarRetDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
-  selected (see [%NearRetDefinition]).
-""",
+syntax_override=syntax(ins) + [r"`ret`, an alias to `ret r1`. Argument is ignored for near returns."],
+preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near return', 'NearRetDefinition', 'far return', 'FarRetDefinition'),
 summary = """
 A normal return from a **far** call. Will pop up current callframe, return
 unspent ergs to the caller, and continue execution from the saved return

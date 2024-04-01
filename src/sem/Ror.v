@@ -8,7 +8,7 @@ Section RorDefinition.
   (** {{{!
 describe(descr_ins_generic_bitwise(
 abstract_name = "OpRor",
-mnemonic = "Ror",
+mnemonic = "ror",
 summary = r"""
 Bitwise circular right shift of `in1` by the number of binary digits specified by the
 lowest byte of `in2`. New binary digits (most significant bits in `out`) are

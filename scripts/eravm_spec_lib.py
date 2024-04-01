@@ -81,6 +81,7 @@ def abstract_syntax(ins:Instruction):
 
 def syntax(ins:Instruction):
    args = []
+
    if ins.in1:
       args.append("in1")
 
@@ -93,18 +94,24 @@ def syntax(ins:Instruction):
    if ins.out2:
       args.append("out2")
 
+   if ins.imm1:
+      args.append(ins.imm1)
+
+   if ins.imm2:
+      args.append(ins.imm2)
+
    args_str = ", ".join(args)
 
-   result = [f"- `{ins.mnemonic} {args_str}`\n"]
+   result = [f"`{ins.mnemonic} {args_str}`\n"]
 
    if ins.setFlags():
-      result.append(f"`{ins.mnemonic}! {args_str}`\n     - to set [%mod_set_flags] modifier\n")
+      result.append(f"`{ins.mnemonic}! {args_str}`\t to set [%mod_set_flags] modifier\n")
 
    if ins.swap():
-      result.append(f"`{ins.mnemonic}.s {args_str}`\n    - to set [%mod_swap] modifier\n")
+      result.append(f"`{ins.mnemonic}.s {args_str}`\t to set [%mod_swap] modifier\n")
 
    if ins.setFlags() and ins.swap():
-      result.append(f"`{ins.mnemonic}.s! {args_str}`\n   - to set both [%mod_set_flags] and [%mod_swap] modifier\n")
+      result.append(f"`{ins.mnemonic}.s! {args_str}`\t to set both [%mod_set_flags] and [%mod_swap] modifier\n")
 
    return result
 @dataclass
@@ -128,4 +135,5 @@ def bullets(ls):
       return ""
    if len(ls) == 1:
       return ls[0]
+   ls[0] = f"- {ls[0]}"
    return "\n- ".join(ls)

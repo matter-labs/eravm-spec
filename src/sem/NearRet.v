@@ -12,24 +12,12 @@ ins=Instruction(
 "Ret",
 "ret",
 in1 = In.Reg,
-in2 = In.Reg,
-out1=Out.Reg,
-imm1="label",
-imm2="label",
 kernelOnly = False,
 notStatic = False),
 
-syntax_override = [],
 legacy = "`ret.ok` aliased as `ret`",
 
-preamble= r"""
-This instruction is used to return from both far and near calls.
-
-- if the topmost frame in callstack is [%ExternalCall], the FarRet semantic is
-  selected (see [%FarRetDefinition]);
-- if the topmost frame in callstack is [%InternalCall], the NearRet semantic is
-  selected (see [%NearRetDefinition]).
-""",
+preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near return', 'NearRetDefinition', 'far return', 'FarRetDefinition'),
 summary = """
 A normal return from a **near** call. Will pop up current callframe, give back unspent ergs and
 continue execution from the saved return address (from where the call had taken place).

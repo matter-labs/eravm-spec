@@ -19,7 +19,6 @@ kernelOnly = False,
 notStatic = False),
 
 legacy = ["`ptr.add in1, in2, out`", "`ptr.add.s in1, in2, out`"] ,
-preamble = None,
 
 summary = r"""
 Takes a fat pointer from `in1` and a 32-bit unsigned number from `in2`. Advances

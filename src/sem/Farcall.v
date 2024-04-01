@@ -66,11 +66,10 @@ This section describes three instructions to perform far calls:
 These instructions differ in the way they construct new frame.
 
 The far call instructions have rich semantics; their full effect on the
-VM state is described through the following main predicates:
+VM state is described through the following machinery:
 
-- [%Semantics.step]
+- [%SmallStep]
 - [%step]
-- [%fetch_operands]
 - [%farcall]
 
 If you know about fetching operands for instructions and the instruction fetching described in [%Semantics.step], start investigating farcalls from the [%farcall] predicate.
@@ -226,11 +225,38 @@ A system call is a far call that satisfies the following conditions:
 
 ## Abstract and concrete syntax
 
+- [%OpFarCall (abi_params: in_reg) (dest_address:in_reg) (handler:imm_in) (is_static:bool) (is_shard:bool)]
+   + `callf          abi_reg, dest_addr, handler `
+   + `callf.st       abi_reg, dest_addr, handler`
+   + `callf.sh       abi_reg, dest_addr, handler`
+   + `callf.{st,sh}  abi_reg, dest_addr, handler`
+
+
+- [%OpDelegateCall (abi_params: in_reg) (dest_address:in_reg) (handler:imm_in) (is_static:bool) (is_shard:bool)]
+   + `calld          abi_reg, dest_addr, handler `
+   + `calld.st       abi_reg, dest_addr, handler`
+   + `calld.sh       abi_reg, dest_addr, handler`
+   + `calld.{st,sh}  abi_reg, dest_addr, handler`
+
+- [%OpMimicCall (abi_params: in_reg) (dest_address:in_reg) (handler:imm_in) (is_static:bool) (is_shard:bool)]
+   + `callm          abi_reg, dest_addr, handler `
+   + `callm.st       abi_reg, dest_addr, handler`
+   + `callm.sh       abi_reg, dest_addr, handler`
+   + `callm.{st,sh}  abi_reg, dest_addr, handler`
+
+- **static** (`st`) modifier marks the new execution stack frame as 'static',
+    preventing some instructions from being executed.
+  Calls from a static calls are automatically marked static.
+
+- **shard** (`sh`) modifier allows calling code from other shards. The shard ID
+    will be taken from `abi_reg`.
+
+## Legacy syntax
+
 - [%OpFarCall] `abi_params address handler is_static `
    + `far_call        abi_reg, dest_addr, handler `
    + `far_call.static abi_reg, dest_addr, handler`
    + `far_call.shard  abi_reg, dest_addr, handler`
-
 
 - [%OpDelegateCall] abi_params address handler is_static`
    + `far_call.delegate        abi_reg, dest_addr, handler`
@@ -246,11 +272,6 @@ A system call is a far call that satisfies the following conditions:
    + `far_call.mimic.shard  abi_reg, dest_addr`
    + `far_call.mimic.shard  abi_reg, dest_addr, handler`
 
-
-- **static** modifier marks the new execution stack frame as 'static', preventing some instructions from being executed.
-  Calls from a static calls are automatically marked static.
-
-- **shard** modifier allows calling code from other shards. The shard ID will be taken from `abi_reg`.
 
 ## Semantic
 
@@ -318,13 +339,13 @@ A system call is a far call that satisfies the following conditions:
 
    - Effect of a non-system call:
      + All registers are cleared.
-     + Register `R1` is assigned a fat pointer to forward data to the far call.
+     + Register `r1` is assigned a fat pointer to forward data to the far call.
        See [%paid_forward].
 
    - Effect of a system call:
-     + Register `R1` is assigned a fat pointer to forward data to the far call.
+     + Register `r1` is assigned a fat pointer to forward data to the far call.
        See [%paid_forward].
-     + Register `R2` is assigned a bit-value:
+     + Register `r2` is assigned a bit-value:
        - bit 1 indicates "this is a system call"
        - bit 0 indicates "this is a constructor call"
      + Registers `r3`, `r4`, ..., `r15` are reserved; their pointer tags are
@@ -572,11 +593,6 @@ FarCallABI.shard_id     := abi_shard;
 ## Comparison with near calls
 
 - Far calls can not accept more than [%max_passable] ergs, while near calls may accept all available ergs.
-- Abnormal returns from far calls through [%OpPanic] or [%OpRevert] roll back all
-storage changes that occured during the contract execution.
-
-This includes exceptional situations when an error occured and the current
-instruction is masked as [%OpPanic].
 
 
 ## Usage

@@ -7,16 +7,18 @@ Section StoreIncDefinition.
  Open Scope ZMod_scope.
 
  Inductive step_storeinc: instruction -> tsmallstep :=
-   (** {{{!
-describe(InstructionDoc(
-
-ins=Instruction("OpStore", "stm", in1 = In.RegImm, in2 = In.Reg, out1 = Out.Reg, modifiers = [Modifier.DataPageType]),
+   (** {{{
+ins = Instruction("OpStoreInc", "stmi", in1 = In.RegImm, in2 = In.Reg, out1 = Out.Reg, modifiers = [Modifier.DataPageType])
+descr = InstructionDoc(
+ins = ins,
 legacy = [
 "`uma.inc.heap_write in1, in2` aliased as `st.1.inc in1, out`",
 "`uma.inc.aux_heap_write in1, in2` aliased as `st.2.inc in1, out`"]
 ,
-summary = """
-Decode the heap address from `in1`, store 32 consecutive bytes to the specified
+
+syntax_override = heap_var_op_syntax(ins),
+
+summary = """Decode the heap address from `in1`, store 32 consecutive bytes to the specified
 active heap variant.
 
 Additionally, store a pointer to the next word to `out1` register.
@@ -50,8 +52,10 @@ affectedState = """
   + allocated ergs if the heap variant has to be grown;
   + heap bounds, if heap variant has to be grown.
 """
-))
-}}} *)
+)
+describe(descr)
+}}}
+    *)
   | step_StoreInc:
     forall hptr flags new_cs heap_variant value new_mem selected_page bound modified_page cs regs mem ___1 addr hptr_mod ctx high224,
 

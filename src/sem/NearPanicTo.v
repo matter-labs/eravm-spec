@@ -15,9 +15,6 @@ summary = r"""
 An erroneous return from a **near** call to a specified label. Will revert all
 changes in [%global_state] produced in the current frame, drop the current
 frame, give back unspent ergs, and proceed to execute exception handler.
-
-The assembler expands `panic label` to `panic r1, label`, but `r1` is
-ignored by returns from near calls.
 """,
 
 semantic = r"""

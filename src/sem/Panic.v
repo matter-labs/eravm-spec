@@ -7,12 +7,11 @@ Inductive step_oppanic: @instruction bound -> smallstep :=
 describe(InstructionDoc(
 ins=Instruction(
 "OpPanic",
-"panic",
+"pnc",
 kernelOnly = False,
 notStatic = False),
 add_to_title = "(irrecoverable error, not normal return/not return from recoverable error)",
 legacy = " `ret.panic` aliased as `panic`",
-preamble = None,
 
 summary = """
 Return from a function/contract signaling an error; execute exception handler,
@@ -21,7 +20,7 @@ return unspent ergs to the parent, set OF flag, return nothing, perform
 """,
 
 semantic = r"""
-An abnormal return from a **near** call. Will drop current callframe, burn
+An abnormal return from a near or far call. Will drop current callframe, burn
 all ergs and pass control to the current exception handler, setting OF flag.
 
 Additionally, restore storage, transient storage, and event queues to the state
