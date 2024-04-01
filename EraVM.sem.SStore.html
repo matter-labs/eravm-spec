@@ -57,11 +57,11 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_sstore" class="idref" href="#step_sstore"><span class="id" title="inductive">step_sstore</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
 &nbsp;&nbsp;</div>
 
-<div class="doc"><h1 id="sstore">SStore</h1>
+<div class="doc"><h1 id="optransientstore">OpTransientStore</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
-class="id" title="constructor">OpSStore</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
+class="id" title="constructor">OpTransientStore</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
@@ -71,22 +71,51 @@ class="inlinecode">(<span class="id" title="var">in2</span>:</span>
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<ul>
-<li><code>log.swrite in1, in2</code> aliased as
-<code>sstore in1, in2</code></li>
-</ul>
+<p><code>stt in1, in2</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>log.swrite in1, in2</code> aliased as
+<code>sstore in1, in2</code></p>
 <h2 id="summary">Summary</h2>
-<p>Store word in current storage by key.</p>
+<p>Store word in the storage of the active contract by key.</p>
 <h2 id="semantic">Semantic</h2>
 <ul>
-<li><p>Store word in current shard, and current contract’s storage by
-key <code>key</code>.</p>
-<p>Current contract is identified by the field <span
+<li>Store word in current shard’s, and current contract’s storage by key
+<code>key</code>. Current contract is identified by the field <span
 class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_this_address"><span
 class="id" title="projection">ecf_this_address</span></a></span> of the
-active external frame.</p></li>
-<li><p>Pay for storage write.</p></li>
+active external frame.</li>
+<li>Pay for transient storage write.</li>
 </ul>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Depot of the current shard.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Only <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
+class="id" title="constructor">OpTransientStore</span></a></span> is
+capable to write data to storage.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
+class="id" title="constructor">OpTransientStore</span></a></span> is
+rolled back if the current frame ended by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span> or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span>.</li>
+<li>Transient storage is reset after the transaction ends.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
 </div>
 <div class="code">
 <br/>
@@ -103,7 +132,7 @@ active external frame.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.SStore.html#ts2:13"><span class="id" title="variable">ts2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.sem.SStore.html#ts1:12"><span class="id" title="variable">ts1</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <span class="id" title="notation">:=</span> <a class="idref" href="EraVM.sem.SStore.html#new_cs:6"><span class="id" title="variable">new_cs</span></a> <span class="id" title="notation">|></span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.CallStack.html#pay"><span class="id" title="inductive">pay</span></a> (<a class="idref" href="EraVM.sem.SStore.html#sstore_cost"><span class="id" title="definition">sstore_cost</span></a> <a class="idref" href="EraVM.sem.SStore.html#cs:5"><span class="id" title="variable">cs</span></a>) <a class="idref" href="EraVM.sem.SStore.html#cs:5"><span class="id" title="variable">cs</span></a> <a class="idref" href="EraVM.sem.SStore.html#new_cs:6"><span class="id" title="variable">new_cs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.SStore.html#step_sstore:3"><span class="id" title="inductive">step_sstore</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpSLoad"><span class="id" title="constructor">OpSLoad</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.SStore.html#__:14"><span class="id" title="variable">__</span></a> <a class="idref" href="EraVM.sem.SStore.html#key:7"><span class="id" title="variable">key</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.SStore.html#write_value:9"><span class="id" title="variable">write_value</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.SStore.html#step_sstore:3"><span class="id" title="inductive">step_sstore</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpSStore"><span class="id" title="constructor">OpSStore</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.SStore.html#__:14"><span class="id" title="variable">__</span></a> <a class="idref" href="EraVM.sem.SStore.html#key:7"><span class="id" title="variable">key</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.SStore.html#write_value:9"><span class="id" title="variable">write_value</span></a>))<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> := <a class="idref" href="EraVM.sem.SStore.html#ts1:12"><span class="id" title="variable">ts1</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>    := <a class="idref" href="EraVM.sem.SStore.html#gs:10"><span class="id" title="variable">gs</span></a>;<br/>
@@ -112,47 +141,10 @@ active external frame.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> := <a class="idref" href="EraVM.sem.SStore.html#ts2:13"><span class="id" title="variable">ts2</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>    := <a class="idref" href="EraVM.sem.SStore.html#new_gs:11"><span class="id" title="variable">new_gs</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+<br/>
 </div>
 
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>execution stack:
-<ul>
-<li>PC, as by any instruction;</li>
-<li>allocated ergs</li>
-</ul></li>
-<li>GPRs, because <code>res</code> only resolves to a register.</li>
-<li>Depot of current shard.</li>
-</ul>
-<h2 id="usage">Usage</h2>
-<ul>
-<li>Only <span class="inlinecode"><span class="id"
-title="library">SStore</span></span> is capable to write data to
-storage.</li>
-<li><span class="inlinecode"><span class="id"
-title="library">SStore</span></span> is rolled back if the current frame
-ended by <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
-class="id" title="constructor">OpPanic</span></a></span> or <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
-class="id" title="constructor">OpRevert</span></a></span>.</li>
-</ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSLoad"><span
-class="id" title="constructor">OpSLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
-class="id" title="constructor">OpSStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
-class="id" title="constructor">OpEvent</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
-class="id" title="constructor">OpToL1Message</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
-class="id" title="constructor">OpPrecompileCall</span></a></span> share
-the same opcode.</li>
-</ul>
-<h2 id="panics">Panics</h2>
+<div class="doc"><h2 id="panics">Panics</h2>
 <ol type="1">
 <li>Not enough ergs to pay for storage write.</li>
 </ol>

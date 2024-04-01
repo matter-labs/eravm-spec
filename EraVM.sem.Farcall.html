@@ -118,15 +118,14 @@ only in kernel mode)</li>
 </ul>
 <p>These instructions differ in the way they construct new frame.</p>
 <p>The far call instructions have rich semantics; their full effect on
-the VM state is described through the following main predicates:</p>
+the VM state is described through the following machinery:</p>
 <ul>
-<li><span class="inlinecode"><span class="id"
-title="var">Semantics.step</span></span></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.Semantics.html#SmallStep"><span
+class="id" title="section">SmallStep</span></a></span></li>
 <li><span
 class="inlinecode"><a class="idref" href="EraVM.Semantics.html#step"><span
 class="id" title="inductive">step</span></a></span></li>
-<li><span class="inlinecode"><span class="id"
-title="var">fetch_operands</span></span></li>
 <li><span
 class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#farcall"><span
 class="id" title="inductive">farcall</span></a></span></li>
@@ -176,7 +175,7 @@ exclusive can be used as a scratch space.</p></li>
 <div class="doc"><ol start="2" type="1">
 <li><p>Initial heap and auxheap pages bound.</p>
 <p>The heap and auxheap pages start with <span
-class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#NEW_FRAME_MEMORY_STIPEND"><span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#NEW_FRAME_MEMORY_STIPEND"><span
 class="id" title="definition">NEW_FRAME_MEMORY_STIPEND</span></a></span>
 bound. Growing them beyond this bound costs ergs.</p></li>
 </ol>
@@ -226,7 +225,7 @@ same page).</li>
 </ul>
 <p>The initial bounds for the new heap and auxheap pages are set to
 <span
-class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#NEW_FRAME_MEMORY_STIPEND"><span
+class="inlinecode"><a class="idref" href="EraVM.Ergs.html#NEW_FRAME_MEMORY_STIPEND"><span
 class="id"
 title="definition">NEW_FRAME_MEMORY_STIPEND</span></a></span>.</p>
 </div>
@@ -347,32 +346,111 @@ usual rules apply.</p></li>
 <ul>
 <li><p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
-class="id" title="constructor">OpFarCall</span></a></span>
-<code>abi_params address handler is_static</code></p>
+class="id" title="constructor">OpFarCall</span></a></span> <span
+class="inlinecode">(<span class="id"
+title="var">abi_params</span>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">dest_address</span>:<a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">handler</span>:<a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_static</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_shard</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span></p>
 <ul>
-<li><code>far_call        abi_reg, dest_addr</code></li>
-<li><code>far_call        abi_reg, dest_addr, handler</code></li>
-<li><code>far_call.static abi_reg, dest_addr</code></li>
-<li><code>far_call.static abi_reg, dest_addr, handler</code></li>
-<li><code>far_call.shard  abi_reg, dest_addr</code></li>
-<li><code>far_call.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>callf          abi_reg, dest_addr, handler</code></li>
+<li><code>callf.st       abi_reg, dest_addr, handler</code></li>
+<li><code>callf.sh       abi_reg, dest_addr, handler</code></li>
+<li><code>callf.{st,sh}  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
-class="id" title="constructor">OpDelegateCall</span></a></span>
-abi_params address handler is_static`</p>
+class="id" title="constructor">OpDelegateCall</span></a></span> <span
+class="inlinecode">(<span class="id"
+title="var">abi_params</span>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">dest_address</span>:<a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">handler</span>:<a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_static</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_shard</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span></p>
 <ul>
-<li><code>far_call.delegate        abi_reg, dest_addr</code></li>
-<li><code>far_call.delegate        abi_reg, dest_addr, handler</code></li>
-<li><code>far_call.delegate.static abi_reg, dest_addr</code></li>
-<li><code>far_call.delegate.static abi_reg, dest_addr, handler</code></li>
-<li><code>far_call.delegate.shard  abi_reg, dest_addr</code></li>
-<li><code>far_call.delegate.shard  abi_reg, dest_addr, handler</code></li>
+<li><code>calld          abi_reg, dest_addr, handler</code></li>
+<li><code>calld.st       abi_reg, dest_addr, handler</code></li>
+<li><code>calld.sh       abi_reg, dest_addr, handler</code></li>
+<li><code>calld.{st,sh}  abi_reg, dest_addr, handler</code></li>
 </ul></li>
 <li><p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
+class="id" title="constructor">OpMimicCall</span></a></span> <span
+class="inlinecode">(<span class="id"
+title="var">abi_params</span>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">dest_address</span>:<a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">handler</span>:<a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_static</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span> <span
+class="inlinecode">(<span class="id"
+title="var">is_shard</span>:<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
+class="id" title="inductive">bool</span></a>)</span></p>
+<ul>
+<li><code>callm          abi_reg, dest_addr, handler</code></li>
+<li><code>callm.st       abi_reg, dest_addr, handler</code></li>
+<li><code>callm.sh       abi_reg, dest_addr, handler</code></li>
+<li><code>callm.{st,sh}  abi_reg, dest_addr, handler</code></li>
+</ul></li>
+<li><p><strong>static</strong> (<code>st</code>) modifier marks the new
+execution stack frame as ‘static’, preventing some instructions from
+being executed. Calls from a static calls are automatically marked
+static.</p></li>
+<li><p><strong>shard</strong> (<code>sh</code>) modifier allows calling
+code from other shards. The shard ID will be taken from
+<code>abi_reg</code>.</p></li>
+</ul>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarCall"><span
+class="id" title="constructor">OpFarCall</span></a></span>
+<code>abi_params address handler is_static</code>
+<ul>
+<li><code>far_call        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.shard  abi_reg, dest_addr, handler</code></li>
+</ul></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDelegateCall"><span
+class="id" title="constructor">OpDelegateCall</span></a></span>
+abi_params address handler is_static`
+<ul>
+<li><code>far_call.delegate        abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.static abi_reg, dest_addr, handler</code></li>
+<li><code>far_call.delegate.shard  abi_reg, dest_addr, handler</code></li>
+</ul></li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpMimicCall"><span
 class="id" title="constructor">OpMimicCall</span></a></span>
-<code>abi_params address handler is_static</code></p>
+<code>abi_params address handler is_static</code>
 <ul>
 <li><code>far_call.mimic        abi_reg, dest_addr</code></li>
 <li><code>far_call.mimic        abi_reg, dest_addr, handler</code></li>
@@ -381,11 +459,6 @@ class="id" title="constructor">OpMimicCall</span></a></span>
 <li><code>far_call.mimic.shard  abi_reg, dest_addr</code></li>
 <li><code>far_call.mimic.shard  abi_reg, dest_addr, handler</code></li>
 </ul></li>
-<li><p><strong>static</strong> modifier marks the new execution stack
-frame as ‘static’, preventing some instructions from being executed.
-Calls from a static calls are automatically marked static.</p></li>
-<li><p><strong>shard</strong> modifier allows calling code from other
-shards. The shard ID will be taken from <code>abi_reg</code>.</p></li>
 </ul>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
@@ -507,16 +580,16 @@ class="id" title="definition">regs_effect</span></a></span>):</p>
 <li>Effect of a non-system call:
 <ul>
 <li>All registers are cleared.</li>
-<li>Register <code>R1</code> is assigned a fat pointer to forward data
+<li>Register <code>r1</code> is assigned a fat pointer to forward data
 to the far call. See <span class="inlinecode"><span class="id"
 title="var">paid_forward</span></span>.</li>
 </ul></li>
 <li>Effect of a system call:
 <ul>
-<li>Register <code>R1</code> is assigned a fat pointer to forward data
+<li>Register <code>r1</code> is assigned a fat pointer to forward data
 to the far call. See <span class="inlinecode"><span class="id"
 title="var">paid_forward</span></span>.</li>
-<li>Register <code>R2</code> is assigned a bit-value:
+<li>Register <code>r2</code> is assigned a bit-value:
 <ul>
 <li>bit 1 indicates “this is a system call”</li>
 <li>bit 0 indicates “this is a constructor call”</li>
@@ -819,17 +892,7 @@ class="id" title="inductive">farcall</span></a></span>).</li>
 class="inlinecode"><a class="idref" href="EraVM.sem.Farcall.html#max_passable"><span
 class="id" title="definition">max_passable</span></a></span> ergs, while
 near calls may accept all available ergs.</li>
-<li>Abnormal returns from far calls through <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
-class="id" title="constructor">OpPanic</span></a></span> or <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
-class="id" title="constructor">OpRevert</span></a></span> roll back all
-storage changes that occured during the contract execution.</li>
 </ul>
-<p>This includes exceptional situations when an error occured and the
-current instruction is masked as <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
-class="id" title="constructor">OpPanic</span></a></span>.</p>
 <h2 id="usage">Usage</h2>
 <ul>
 <li>Calling other contracts</li>

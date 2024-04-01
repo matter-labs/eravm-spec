@@ -50,29 +50,37 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variables</span> <span class="id" title="var">cs</span> <span class="id" title="var">flags</span> <span class="id" title="var">regs</span> <span class="id" title="var">mem</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_load_inc" class="idref" href="#step_load_inc"><span class="id" title="inductive">step_load_inc</span></a> : <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
-&nbsp;&nbsp;</div>
+</div>
 
-<div class="doc"><h1 id="loadinc">LoadInc</h1>
+<div class="doc"><h1 id="oploadinc">OpLoadInc</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
 class="id" title="constructor">OpLoadInc</span></a></span> <span
-class="inlinecode">(<span class="id" title="var">ptr</span>:</span>
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_regimm"><span
 class="id" title="inductive">in_regimm</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">res</span>:</span>
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
 class="id" title="definition">out_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id"
-title="var">mem</span>:<a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span
-class="id" title="inductive">data_page_type</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">inc_ptr</span>:</span>
+class="inlinecode">(<span class="id" title="var">out2</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
-class="id" title="definition">out_reg</span></a>)</span></p>
+class="id" title="definition">out_reg</span></a>)</span> <span
+class="inlinecode">(<a class="idref" href="EraVM.memory.Pages.html#page_type"><span
+class="id" title="inductive">page_type</span></a>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page_type"><span
+class="id" title="inductive">data_page_type</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<ul>
+<li><p><code>ldvli in1, out1, out2</code></p></li>
+<li><p><code>ldvli.h</code> to access heap (default)</p></li>
+<li><p><code>ldvli.ah</code> to access auxheap</p></li>
+<li><p><code>ldvli.st</code> to access static memory page</p></li>
+</ul>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
 <li><code>uma.inc.heap_read in1, out1, out2</code> aliased as
 <code>ld.1.inc in1, out1, out2</code></li>
@@ -107,6 +115,43 @@ class="id" title="record">heap_ptr</span></a></span> <span
 class="math inline">\mathit{addr+32}</span> to the next 32-byte word in
 the heap variant in <code>inc_ptr</code>.</p></li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>execution stack:
+<ul>
+<li>ergs allocated for the current function/contract instance, if the
+heap variant has to be grown;</li>
+<li>heap variant bounds, if heap variant has to be grown.</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Only <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span> are capable
+of reading data from heap variants.</li>
+<li></li>
+<li>One of few instructions that accept only reg or imm operand but do
+not have full addressing mode, therefore can’t e.g. address stack. The
+full list is: {INSNS_USE_REGIMM}.</li>
+</ul>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>.</p>
 </div>
 <div class="code">
 <br/>
@@ -129,61 +174,10 @@ the heap variant in <code>inc_ptr</code>.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.State.html#mk_transient_state"><span class="id" title="constructor">mk_transient_state</span></a> <span class="id" title="var">flags</span> <span class="id" title="var">regs</span> <span class="id" title="var">mem</span> <span class="id" title="var">cs0</span> <a class="idref" href="EraVM.sem.LoadInc.html#ctx:12"><span class="id" title="variable">ctx</span></a> <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.State.html#mk_transient_state"><span class="id" title="constructor">mk_transient_state</span></a> <span class="id" title="var">flags</span> <a class="idref" href="EraVM.sem.LoadInc.html#new_regs:5"><span class="id" title="variable">new_regs</span></a> <span class="id" title="var">mem</span> <a class="idref" href="EraVM.sem.LoadInc.html#new_cs:10"><span class="id" title="variable">new_cs</span></a> <a class="idref" href="EraVM.sem.LoadInc.html#ctx:12"><span class="id" title="variable">ctx</span></a> <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+<br/>
 </div>
 
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li><p>execution stack:</p>
-<ul>
-<li>PC, as by any instruction;</li>
-<li>allocated ergs if the heap variant has to be grown;</li>
-<li>heap variant bounds, if heap variant has to be grown.</li>
-</ul></li>
-<li><p>GPRs, because <code>res</code> and <code>inc_ptr</code> only
-resolve to registers.</p></li>
-</ul>
-<h2 id="usage">Usage</h2>
-<ul>
-<li>Only <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
-class="id" title="constructor">OpLoad</span></a></span> and <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
-class="id" title="constructor">OpLoadInc</span></a></span> are capable
-of reading from heap variantheap.</li>
-<li>One of few instructions that accept only reg or imm operand but do
-not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
-class="id" title="constructor">OpLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
-class="id" title="constructor">OpLoadInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
-class="id" title="constructor">OpStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
-class="id" title="constructor">OpStoreInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
-class="id" title="constructor">OpLoadPointer</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
-class="id" title="constructor">OpLoadPointerInc</span></a></span>.</li>
-</ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
-class="id" title="constructor">OpLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
-class="id" title="constructor">OpLoadInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
-class="id" title="constructor">OpStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
-class="id" title="constructor">OpStoreInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
-class="id" title="constructor">OpLoadPointer</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
-class="id" title="constructor">OpLoadPointerInc</span></a></span> are
-variants of the same instruction.</li>
-</ul>
-<h2 id="panics">Panics</h2>
+<div class="doc"><h2 id="panics">Panics</h2>
 <ol type="1">
 <li>Accessing an address greater than <span
 class="inlinecode"><a class="idref" href="EraVM.sem.SemanticCommon.html#MAX_OFFSET_TO_DEREF_LOW_U32"><span

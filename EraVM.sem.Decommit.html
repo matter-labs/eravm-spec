@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.Decommit</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.Decommit</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#"><span class="id" title="module">Bool</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.GPR.html#"><span class="id" title="module">GPR</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.MemoryOps.html#"><span class="id" title="module">MemoryOps</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <span class="id" title="module">RecordSetNotations</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="DecommitDefinition" class="idref" href="#DecommitDefinition"><span class="id" title="section">DecommitDefinition</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_decommit" class="idref" href="#step_decommit"><span class="id" title="inductive">step_decommit</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#decoded"><span class="id" title="definition">decoded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+</div>
+
+<div class="doc"><h1 id="opdecommit">OpDecommit</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpDecommit"><span
+class="id" title="constructor">OpDecommit</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">in2</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>dcmt in1, in2, out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>decommit in1, in2, out1</code></p>
+<h2 id="summary">Summary</h2>
+<p>Decommit code into memory.</p>
+<ul>
+<li>Requires <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span></li>
+</ul>
+<h2 id="semantic">Semantic</h2>
+<p>FIXME</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Read data from a read-only slice returned from a far call, or passed
+to a far call.</li>
+<li>One of few instructions that accept only reg or imm operand but do
+not have full addressing mode, therefore can’t e.g. address stack. The
+full list is: <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;FIXME:&nbsp;no&nbsp;semantic&nbsp;yet&nbsp;*)</span><br/>
+| <a id="step_decommit_apply" class="idref" href="#step_decommit_apply"><span class="id" title="constructor">step_decommit_apply</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="src0:3" class="idref" href="#src0:3"><span class="id" title="binder">src0</span></a> <a id="src1:4" class="idref" href="#src1:4"><span class="id" title="binder">src1</span></a> <a id="dst0:5" class="idref" href="#dst0:5"><span class="id" title="binder">dst0</span></a> (<a id="s:6" class="idref" href="#s:6"><span class="id" title="binder">s</span></a>: <a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>),<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Decommit.html#step_decommit:1"><span class="id" title="inductive">step_decommit</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpDecommit"><span class="id" title="constructor">OpDecommit</span></a> <a class="idref" href="EraVM.sem.Decommit.html#src0:3"><span class="id" title="variable">src0</span></a> <a class="idref" href="EraVM.sem.Decommit.html#src1:4"><span class="id" title="variable">src1</span></a> <a class="idref" href="EraVM.sem.Decommit.html#dst0:5"><span class="id" title="variable">dst0</span></a>) <a class="idref" href="EraVM.sem.Decommit.html#s:6"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Decommit.html#s:6"><span class="id" title="variable">s</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.Decommit.html#DecommitDefinition"><span class="id" title="section">DecommitDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

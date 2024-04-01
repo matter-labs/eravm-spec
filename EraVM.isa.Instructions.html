@@ -142,10 +142,10 @@ class="id" title="section">AssemblyToCore</span></a></span>.</p>
 class="inlinecode"><a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span
 class="id" title="inductive">instruction</span></a></span> describes the
 meaningful operand types for instructions after decoding, e.g. <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
-class="id" title="constructor">OpFarRet</span></a></span> loads an
-operand from a register, but then deserializes it into a compound value.
-The types of such compound values are explicitly provided by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span> loads an operand
+from a register, but then deserializes it into a compound value. The
+types of such compound values are explicitly provided by <span
 class="inlinecode"><a class="idref" href="EraVM.Binding.html#bound"><span
 class="id" title="definition">bound</span></a></span> definition.</p>
 <p>The type <span
@@ -182,12 +182,10 @@ class="inlinecode"><a class="idref" href="EraVM.sem.Add.html#step_add"><span
 class="id" title="inductive">step_add</span></a></span> for an example
 of how instruction-specific semantic is defined omitting loading and
 storing details.</li>
-<li>See <span
-class="inlinecode"><a class="idref" href="EraVM.sem.Context.html#step_ContextMeta"><span
-class="id" title="constructor">step_ContextMeta</span></a></span> for an
-example of how instruction-specific semantic is defined omitting not
-only loading and storing, but also serialization/deserialization
-details.</li>
+<li>See <span class="inlinecode"><span class="id"
+title="var">step_ContextMeta</span></span> for an example of how
+instruction-specific semantic is defined omitting not only loading and
+storing, but also serialization/deserialization details.</li>
 <li>See <span
 class="inlinecode"><a class="idref" href="EraVM.Binding.html#OperandBinding"><span
 class="id" title="section">OperandBinding</span></a></span> for the
@@ -195,9 +193,9 @@ details of binding, e.g. <span
 class="inlinecode"><a class="idref" href="EraVM.Binding.html#bind_farret_params"><span
 class="id" title="inductive">bind_farret_params</span></a></span>
 describes how <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
-class="id" title="constructor">OpFarRet</span></a></span>’s ABI
-parameters are deserialized.</li>
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>’s ABI parameters
+are deserialized.</li>
 </ul></li>
 </ol>
 </div>

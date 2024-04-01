@@ -48,9 +48,9 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">operations</span> <span class="id" title="module">operations.BitsNotations</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_shl" class="idref" href="#step_shl"><span class="id" title="inductive">step_shl</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#flags_tsmallstep"><span class="id" title="definition">flags_tsmallstep</span></a> :=<br/>
 <br/>
-&nbsp;&nbsp;</div>
+</div>
 
-<div class="doc"><h1 id="shl">Shl</h1>
+<div class="doc"><h1 id="opshl">OpShl</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpShl"><span
@@ -63,36 +63,45 @@ class="inlinecode">(<span class="id" title="var">in2</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">out</span>:</span>
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_any"><span
 class="id" title="inductive">out_any</span></a>)</span> <span
-class="inlinecode">(<span class="id"
-title="var">swap</span>:<a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="inlinecode">(<span class="id" title="var">swap</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
 class="id" title="inductive">mod_swap</span></a>)</span> <span
-class="inlinecode">(<span class="id"
-title="var">flags</span>:<a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="inlinecode">(<span class="id" title="var">sf</span>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
 class="id" title="inductive">mod_set_flags</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><code>shl in1, in2, out</code></li>
-<li><code>shl.s in1, in2, out</code>, to set <code>swap</code>
-modifier.</li>
-<li><code>shl! in1, in2, out</code>, to set <code>set flags</code>
-modifier.</li>
-<li><code>shl.s! in1, in2, out</code>, to set both <code>swap</code> and
-<code>set flags</code> modifiers.</li>
+<li><p><code>shl in1, in2, out1</code></p></li>
+<li><p><code>shl! in1, in2, out1</code> to set <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="id" title="inductive">mod_set_flags</span></a></span>
+modifier</p></li>
+<li><p><code>shl.s in1, in2, out1</code> to set <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a></span>
+modifier</p></li>
+<li><p><code>shl.s! in1, in2, out1</code> to set both <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="id" title="inductive">mod_set_flags</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a></span>
+modifier</p></li>
 </ul>
 <h2 id="summary">Summary</h2>
-<p>Bitwise left shift of <code>in1</code> by the number of binary digits
-specified by the lowest byte of <code>in2</code>. New binary digits
-(least significant bits in <code>out</code>) are zeros.</p>
+<p>Bitwise SHL of two 256-bit numbers.</p>
 <h2 id="semantic">Semantic</h2>
-<p>Follows the scheme described in <span class="inlinecode"><span
-class="id"
-title="var">binop_state_bitwise_effect_spec</span></span>.</p>
+<p><strong>Note</strong>: In the following description the operands are
+bound after taking <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
+class="id" title="inductive">mod_swap</span></a></span> modifier into
+account.</p>
 <ul>
-<li>result is computed as <code>in1 &lt;&lt; (in2 mod 256)</code></li>
+<li><code>result = in1 &lt;&lt; (in2 mod 256)</code></li>
 <li>flags are computed as follows:
 <ul>
 <li><code>EQ</code> is set if <span class="math inline">result =
@@ -100,8 +109,49 @@ title="var">binop_state_bitwise_effect_spec</span></span>.</p>
 <li>other flags are reset</li>
 </ul></li>
 </ul>
-<p>Reminder: flags are only set if <code>set_flags</code> modifier is
-set.</p>
+<p>Reminder: flags are affected only if <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
+class="id" title="inductive">mod_set_flags</span></a></span> is set.</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, if <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+<li>SP, if <code>in1</code> uses <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPop"><span
+class="id" title="constructor">RelSpPop</span></a></span> addressing
+mode, or if <code>out1</code> uses <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#RelSpPush"><span
+class="id" title="constructor">RelSpPush</span></a></span> addressing
+mode.</li>
+</ul></li>
+<li>Current stack memory page, if <code>out</code> resolves to it.</li>
+<li>Flags, if <code>set_flags</code> modifier is set.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Operations with bit masks.</li>
+<li>Fast arithmetic.</li>
+</ul>
+<h2 id="related-instructions">Related instructions</h2>
+<ul>
+<li>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpShr"><span
+class="id" title="constructor">OpShr</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpShl"><span
+class="id" title="constructor">OpShl</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRol"><span
+class="id" title="constructor">OpRol</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRor"><span
+class="id" title="constructor">OpRor</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpAnd"><span
+class="id" title="constructor">OpAnd</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpOr"><span
+class="id" title="constructor">OpOr</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpXor"><span
+class="id" title="constructor">OpXor</span></a></span>.</li>
+</ul>
 </div>
 <div class="code">
 <br/>
@@ -111,30 +161,6 @@ set.</p>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Shl.html#result:4"><span class="id" title="variable">result</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">shlBn</span> <a class="idref" href="EraVM.sem.Shl.html#op:5"><span class="id" title="variable">op</span></a> <a class="idref" href="EraVM.sem.Shl.html#shift:6"><span class="id" title="variable">shift</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Shl.html#step_shl:1"><span class="id" title="inductive">step_shl</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpShl"><span class="id" title="constructor">OpShl</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <span class="id" title="var">tag1</span> <a class="idref" href="EraVM.sem.Shl.html#op:5"><span class="id" title="variable">op</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <span class="id" title="var">tag2</span> <a class="idref" href="EraVM.sem.Shl.html#w_shift:7"><span class="id" title="variable">w_shift</span></a>) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.Shl.html#result:4"><span class="id" title="variable">result</span></a>) <a class="idref" href="EraVM.sem.Shl.html#mod_sf:3"><span class="id" title="variable">mod_sf</span></a>) <a class="idref" href="EraVM.sem.Shl.html#old_flags:8"><span class="id" title="variable">old_flags</span></a> <a class="idref" href="EraVM.sem.Shl.html#new_flags:9"><span class="id" title="variable">new_flags</span></a>)<br/>
 &nbsp;&nbsp;.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>execution stack: PC, as by any instruction; SP, if <code>in1</code>
-uses <code>RelPop</code> addressing mode, or if <code>out</code> uses
-<code>RelPush</code> addressing mode.</li>
-<li>Current stack memory page, if <code>out</code> resolves to it.</li>
-<li>GPRs, if <code>out</code> resolves to a register.</li>
-<li>flags, if <code>set_flags</code> modifier is set.</li>
-</ul>
-<h2 id="usage">Usage</h2>
-<ul>
-<li>Operations with bit masks.</li>
-<li>Fast arithmetic.</li>
-</ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><code>shl</code>, <code>shr</code>, <code>rol</code> and
-<code>ror</code> are encoded as variants of the same instruction.</li>
-</ul>
-</div>
-<div class="code">
-<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.Shl.html#ShlDefinition"><span class="id" title="section">ShlDefinition</span></a>.<br/>
 </div>
 </div>

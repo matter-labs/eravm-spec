@@ -47,39 +47,35 @@
 <span class="id" title="keyword">Section</span> <a id="NoOpDefinition" class="idref" href="#NoOpDefinition"><span class="id" title="section">NoOpDefinition</span></a>.<br/>
 </div>
 
-<div class="doc"><h1 id="nop">Nop</h1>
+<div class="doc"><h1 id="opnoop">OpNoOp</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
 class="id" title="constructor">OpNoOp</span></a></span></p>
 <h2 id="syntax">Syntax</h2>
-<pre><code>nop</code></pre>
+<p><code>nop</code></p>
 <h2 id="summary">Summary</h2>
 <p>Do nothing.</p>
-<h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<h2 id="semantic">Semantic</h2>
+<p>Do nothing.</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
 <ul>
-<li>execution stack : PC is increased.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
 </ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<p><span
+<h2 id="usage">Usage</h2>
+<h2 id="related-instructions">Related instructions</h2>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
+class="id" title="constructor">OpNoOp</span></a></span>, <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpAdd"><span
 class="id" title="constructor">OpSpAdd</span></a></span>, <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span
-class="id" title="constructor">OpSpSub</span></a></span> and <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
-class="id" title="constructor">OpNoOp</span></a></span> are translated
-to <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
-class="id" title="record">mach_instruction</span></a></span> with the
-same <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_opcode"><span
-class="id" title="inductive">mach_opcode</span></a></span>. See <span
-class="inlinecode"><a class="idref" href="EraVM.isa.AssemblyToMach.html#asm_to_mach"><span
-class="id" title="definition">asm_to_mach</span></a></span>.</p>
-<h2 id="encoding">Encoding</h2>
-<ul>
-<li><code>NoOp</code>, <code>SpAdd</code>, <code>SpSub</code> are
-encoded as the same instruction.</li>
+class="id" title="constructor">OpSpSub</span></a></span> are encoded as
+the same instruction.</li>
 </ul>
 </div>
 <div class="code">

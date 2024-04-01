@@ -45,50 +45,38 @@
 
 <br/>
 <span class="id" title="keyword">Inductive</span> <a id="step_oppanic" class="idref" href="#step_oppanic"><span class="id" title="inductive">step_oppanic</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
-</div>
+&nbsp;&nbsp;</div>
 
 <div class="doc"><h1
-id="panic-irrecoverable-error-not-normal-returnnot-return-from-recoverable-error">Panic
+id="oppanic-irrecoverable-error-not-normal-returnnot-return-from-recoverable-error">OpPanic
 (irrecoverable error, not normal return/not return from recoverable
 error)</h1>
-<p>Return from a function/contract signaling an error; execute exception
-handler, burn all ergs in current frame, set OF flag, return nothing,
-perform <span
-class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
-class="id" title="inductive">rollback</span></a></span>. See <span
-class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#Panics"><span
-class="id" title="section">Panics</span></a></span>.</p>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
 class="id" title="constructor">OpPanic</span></a></span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>pnc</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <p><code>ret.panic</code> aliased as <code>panic</code></p>
-<p>An abnormal return from a <strong>near</strong> call. Will drop
-current callframe, burn all ergs and pass control to the current
-exception handler, setting OF flag.</p>
-<p>Additionally, restore storage and event queues to the state before
-external call.</p>
+<h2 id="summary">Summary</h2>
+<p>Return from a function/contract signaling an error; execute exception
+handler, return unspent ergs to the parent, set OF flag, return nothing,
+perform <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#rollback"><span
+class="id" title="inductive">rollback</span></a></span>.</p>
 <h2 id="semantic">Semantic</h2>
-<p>Trigger panic with a reason <span
-class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span
-class="id" title="constructor">TriggeredExplicitly</span></a></span>.
-See <span
-class="inlinecode"><a class="idref" href="EraVM.VMPanic.html#Panics"><span
-class="id" title="section">Panics</span></a></span>.</p>
-</div>
-<div class="code">
-<br/>
-| <a id="step_trigger_panic" class="idref" href="#step_trigger_panic"><span class="id" title="constructor">step_trigger_panic</span></a>:<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> <a id="s':4" class="idref" href="#s':4"><span class="id" title="binder">s'</span></a>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Panic.html#step_oppanic:1"><span class="id" title="inductive">step_oppanic</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpPanic"><span class="id" title="constructor">OpPanic</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a>.<br/>
-
-<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<p>An abnormal return from a near or far call. Will drop current
+callframe, burn all ergs and pass control to the current exception
+handler, setting OF flag.</p>
+<p>Additionally, restore storage, transient storage, and event queues to
+the state before external call.</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
 <ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
 <li>Flags are cleared, then OF is set.</li>
 <li>Context register is zeroed (only returns from far calls).</li>
 <li>Registers are cleared (only returns from far calls).</li>
@@ -110,18 +98,30 @@ first).</li>
 <h2 id="usage">Usage</h2>
 <ul>
 <li>Abnormal returns from near/far calls when an irrecoverable error has
-happened. Use <code>revert</code> for recoverable errors.</li>
+happened. Use <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span> for
+recoverable errors.</li>
 </ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><code>ret</code> returns to the caller instead of executing an
-exception handler, and does not burn ergs.</li>
-<li><code>revert</code> acts similar to <code>panic</code> but does not
-burn ergs, returns data to the caller, and does not set an overflow
-flag.</li>
-</ul>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span
+class="id" title="constructor">OpNearRevertTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span>.</p>
 </div>
 <div class="code">
+<br/>
+<br/>
+| <a id="step_trigger_panic" class="idref" href="#step_trigger_panic"><span class="id" title="constructor">step_trigger_panic</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> <a id="s':4" class="idref" href="#s':4"><span class="id" title="binder">s'</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.Panic.html#step_oppanic:1"><span class="id" title="inductive">step_oppanic</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpPanic"><span class="id" title="constructor">OpPanic</span></a> <a class="idref" href="EraVM.sem.Panic.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.Panic.html#s':4"><span class="id" title="variable">s'</span></a>.<br/>
+
 <br/>
 </div>
 </div>

@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.VM</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.VM</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">RecordUpdate</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">RecordSet</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Addressing.html#"><span class="id" title="module">Addressing</span></a> <a class="idref" href="EraVM.ABI.html#"><span class="id" title="module">ABI</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#"><span class="id" title="module">Bool</span></a> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.MemoryOps.html#"><span class="id" title="module">MemoryOps</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.Addressing.html#Coercions"><span class="id" title="module">Addressing.Coercions</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <span class="id" title="module">RecordSetNotations</span> <a class="idref" href="EraVM.ABI.MetaParametersABI.html#"><span class="id" title="module">ABI.MetaParametersABI</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="VMDefinitions" class="idref" href="#VMDefinitions"><span class="id" title="section">VMDefinitions</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_vm" class="idref" href="#step_vm"><span class="id" title="inductive">step_vm</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="opvmergsleft">OpVMErgsLeft</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpVMErgsLeft"><span
+class="id" title="constructor">OpVMErgsLeft</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>ergs out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>context.ergs_left out</code></p>
+<h2 id="summary">Summary</h2>
+<p>Retrieves the number of ergs allocated for the current frame.</p>
+<h2 id="semantic">Semantic</h2>
+<ul>
+<li>Fetch the currently allocated ergs from the topmost frame, external
+or internal. The <code>ergs</code> belonging to the parent frames are
+not counted.</li>
+<li>Widen the ergs number to <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word_bits"><span
+class="id" title="definition">word_bits</span></a></span>,
+zero-extended, and write to <code>out</code>.</li>
+</ul>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Check if the number of ergs is sufficient for an expensive
+task.</li>
+<li>Should be used before <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
+class="id" title="constructor">OpPrecompileCall</span></a></span>.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_VMErgsLeft" class="idref" href="#step_VMErgsLeft"><span class="id" title="constructor">step_VMErgsLeft</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="ergs_left_word:3" class="idref" href="#ergs_left_word:3"><span class="id" title="binder">ergs_left_word</span></a> (<a id="s1:4" class="idref" href="#s1:4"><span class="id" title="binder">s1</span></a> <a id="s2:5" class="idref" href="#s2:5"><span class="id" title="binder">s2</span></a>:<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#ergs_left_word:3"><span class="id" title="variable">ergs_left_word</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Arith.html#widen"><span class="id" title="definition">widen</span></a> <a class="idref" href="EraVM.Core.html#word_bits"><span class="id" title="definition">word_bits</span></a> (<a class="idref" href="EraVM.CallStack.html#ergs_remaining"><span class="id" title="definition">ergs_remaining</span></a> (<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <a class="idref" href="EraVM.sem.VM.html#s1:4"><span class="id" title="variable">s1</span></a>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#step_vm:1"><span class="id" title="inductive">step_vm</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpVMErgsLeft"><span class="id" title="constructor">OpVMErgsLeft</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.VM.html#ergs_left_word:3"><span class="id" title="variable">ergs_left_word</span></a>)) <a class="idref" href="EraVM.sem.VM.html#s1:4"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.VM.html#s2:5"><span class="id" title="variable">s2</span></a><br/>
+<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="opvmsp">OpVMSP</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpVMSP"><span
+class="id" title="constructor">OpVMSP</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>sp out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>context.sp out</code></p>
+<h2 id="summary">Summary</h2>
+<p>Retrieves current stack pointer value.</p>
+<h2 id="semantic">Semantic</h2>
+<ul>
+<li>Fetch the current SP from the topmost frame, external or internal.
+It points past the topmost element of the stack.</li>
+<li>Widen the SP value to <span
+class="inlinecode"><a class="idref" href="EraVM.Core.html#word_bits"><span
+class="id" title="definition">word_bits</span></a></span>,
+zero-extended, and write to <code>out</code>.</li>
+</ul>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<h2 id="related-instructions">Related instructions</h2>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_VMSP" class="idref" href="#step_VMSP"><span class="id" title="constructor">step_VMSP</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="sp_zero_padded:6" class="idref" href="#sp_zero_padded:6"><span class="id" title="binder">sp_zero_padded</span></a> (<a id="s1:7" class="idref" href="#s1:7"><span class="id" title="binder">s1</span></a> <a id="s2:8" class="idref" href="#s2:8"><span class="id" title="binder">s2</span></a> :<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#sp_zero_padded:6"><span class="id" title="variable">sp_zero_padded</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.Arith.html#widen"><span class="id" title="definition">widen</span></a> <a class="idref" href="EraVM.Core.html#word_bits"><span class="id" title="definition">word_bits</span></a> (<a class="idref" href="EraVM.CallStack.html#sp_get"><span class="id" title="definition">sp_get</span></a> (<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <a class="idref" href="EraVM.sem.VM.html#s1:7"><span class="id" title="variable">s1</span></a>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#step_vm:1"><span class="id" title="inductive">step_vm</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpVMSP"><span class="id" title="constructor">OpVMSP</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.VM.html#sp_zero_padded:6"><span class="id" title="variable">sp_zero_padded</span></a>)) <a class="idref" href="EraVM.sem.VM.html#s1:7"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.VM.html#s2:8"><span class="id" title="variable">s2</span></a><br/>
+<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="opvmmeta">OpVMMeta</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpVMMeta"><span
+class="id" title="constructor">OpVMMeta</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>meta out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<pre><code>context.meta  out</code></pre>
+<h2 id="summary">Summary</h2>
+<p>VM internal state introspection.</p>
+<h2 id="semantic">Semantic</h2>
+<ul>
+<li>Stores the encoded value of <span
+class="inlinecode"><a class="idref" href="EraVM.ABI.MetaParametersABI.html#MetaParametersABI"><span
+class="id" title="section">MetaParametersABI</span></a></span> in
+<code>out</code>. The value is structured as follows:</li>
+</ul>
+<pre><code>Record params := {
+      ergs_per_pubdata_byte: ergs;
+      heap_size: mem_address;
+      aux_heap_size: mem_address;
+      this_shard_id: shard_id;
+      caller_shard_id: shard_id;
+      code_shard_id: shard_id;
+    }.</code></pre>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_VMMeta" class="idref" href="#step_VMMeta"><span class="id" title="constructor">step_VMMeta</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="params:9" class="idref" href="#params:9"><span class="id" title="binder">params</span></a> <a id="cs:10" class="idref" href="#cs:10"><span class="id" title="binder">cs</span></a> <a id="shards:11" class="idref" href="#shards:11"><span class="id" title="binder">shards</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="s1:12" class="idref" href="#s1:12"><span class="id" title="binder">s1</span></a> <a id="s2:13" class="idref" href="#s2:13"><span class="id" title="binder">s2</span></a>: <a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#cs:10"><span class="id" title="variable">cs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <a class="idref" href="EraVM.sem.VM.html#s1:12"><span class="id" title="variable">s1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#shards:11"><span class="id" title="variable">shards</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> (<a class="idref" href="EraVM.CallStack.html#active_extframe"><span class="id" title="definition">active_extframe</span></a> <a class="idref" href="EraVM.sem.VM.html#cs:10"><span class="id" title="variable">cs</span></a>).(<a class="idref" href="EraVM.CallStack.html#ecf_shards"><span class="id" title="projection">ecf_shards</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#params:9"><span class="id" title="variable">params</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">{|</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#ergs_per_pubdata_byte"><span class="id" title="projection">ergs_per_pubdata_byte</span></a> := <a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span class="id" title="projection">gs_current_ergs_per_pubdata_byte</span></a> <a class="idref" href="EraVM.sem.VM.html#s1:12"><span class="id" title="variable">s1</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#heap_size"><span class="id" title="projection">heap_size</span></a> := <a class="idref" href="EraVM.CallStack.html#heap_bound"><span class="id" title="definition">heap_bound</span></a> <a class="idref" href="EraVM.sem.VM.html#cs:10"><span class="id" title="variable">cs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#aux_heap_size"><span class="id" title="projection">aux_heap_size</span></a> := <a class="idref" href="EraVM.CallStack.html#auxheap_bound"><span class="id" title="definition">auxheap_bound</span></a> <a class="idref" href="EraVM.sem.VM.html#cs:10"><span class="id" title="variable">cs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#this_shard_id"><span class="id" title="projection">this_shard_id</span></a> := <a class="idref" href="EraVM.CallStack.html#shard_this"><span class="id" title="projection">shard_this</span></a> <a class="idref" href="EraVM.sem.VM.html#shards:11"><span class="id" title="variable">shards</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#caller_shard_id"><span class="id" title="projection">caller_shard_id</span></a> := <a class="idref" href="EraVM.CallStack.html#shard_caller"><span class="id" title="projection">shard_caller</span></a> <a class="idref" href="EraVM.sem.VM.html#shards:11"><span class="id" title="variable">shards</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.ABI.MetaParametersABI.html#code_shard_id"><span class="id" title="projection">code_shard_id</span></a> := <a class="idref" href="EraVM.CallStack.html#shard_code"><span class="id" title="projection">shard_code</span></a> <a class="idref" href="EraVM.sem.VM.html#shards:11"><span class="id" title="variable">shards</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">|}</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.VM.html#step_vm:1"><span class="id" title="inductive">step_vm</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpVMMeta"><span class="id" title="constructor">OpVMMeta</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.VM.html#params:9"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.VM.html#s1:12"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.VM.html#s2:13"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.VM.html#VMDefinitions"><span class="id" title="section">VMDefinitions</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

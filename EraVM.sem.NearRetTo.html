@@ -47,27 +47,25 @@
 <span class="id" title="keyword">Section</span> <a id="NearRetToDefinition" class="idref" href="#NearRetToDefinition"><span class="id" title="section">NearRetToDefinition</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variables</span> <span class="id" title="var">__</span> <span class="id" title="var">regs</span> <span class="id" title="var">pages</span> <span class="id" title="var">ctx</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_nearretto" class="idref" href="#step_nearretto"><span class="id" title="inductive">step_nearretto</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
-&nbsp;&nbsp;</div>
+</div>
 
-<div class="doc"><h1 id="nearretto-normal-return-to-label-not-panicrevert">NearRetTo
-(normal return to label, not panic/revert)</h1>
+<div class="doc"><h1 id="opret">OpRet</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
-class="id" title="constructor">OpNearRetTo</span></a></span> <span
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">label</span>:</span>
 <span
-class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#code_address"><span
-class="id" title="definition">code_address</span></a>)</span></li>
-</ul>
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<ul>
-<li><p><code>ret label</code></p>
+<p><code>retl label</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>ret.ok</code> aliased as <code>ret</code></p>
+<h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>near</strong> call. Will pop up
 current callframe, give back unspent ergs and continue execution from an
-explicitly provided label.</p></li>
-</ul>
+explicitly provided label.</p>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
 <li>Pass all ergs from the current frame to the parent frame.</li>
@@ -75,8 +73,39 @@ explicitly provided label.</p></li>
 <li>Clear flags</li>
 <li>Set PC to the label value.</li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Flags are cleared.</li>
+<li>Execution stack:
+<ul>
+<li>Current frame is dropped.</li>
+<li>Caller frame:
+<ul>
+<li>Unspent ergs are given back to caller (but memory growth is paid
+first).</li>
+<li>program counter is assigned the label.</li>
+</ul></li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>A combination of a normal return and jump.</p>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span
+class="id" title="constructor">OpNearRevertTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span>.</p>
 </div>
 <div class="code">
+<br/>
 <br/>
 &nbsp;&nbsp;| <a id="step_NearRetTo" class="idref" href="#step_NearRetTo"><span class="id" title="constructor">step_NearRetTo</span></a>:<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="cf:3" class="idref" href="#cf:3"><span class="id" title="binder">cf</span></a> <a id="caller_stack:4" class="idref" href="#caller_stack:4"><span class="id" title="binder">caller_stack</span></a> <a id="new_caller:5" class="idref" href="#new_caller:5"><span class="id" title="binder">new_caller</span></a> <a id="label:6" class="idref" href="#label:6"><span class="id" title="binder">label</span></a>,<br/>
@@ -105,27 +134,6 @@ explicitly provided label.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
 &nbsp;&nbsp;.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>Flags are cleared.</li>
-<li>Execution stack:
-<ul>
-<li>Current frame is dropped.</li>
-<li>Caller frame:
-<ul>
-<li>Unspent ergs are given back to caller (but memory growth is paid
-first).</li>
-<li>program counter is assigned the label.</li>
-</ul></li>
-</ul></li>
-</ul>
-<h2 id="usage">Usage</h2>
-<p>A combination of return and jump.</p>
-</div>
-<div class="code">
-<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Generalizable No Variables</span>.<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.NearRetTo.html#NearRetToDefinition"><span class="id" title="section">NearRetToDefinition</span></a>.<br/>
 </div>

@@ -157,7 +157,7 @@ class="id" title="definition">encode_opcode</span></a></span>.</li>
 <span class="id" title="keyword">Definition</span> <a id="encode_src_special_mode" class="idref" href="#encode_src_special_mode"><span class="id" title="definition">encode_src_special_mode</span></a> (<a id="sm:3" class="idref" href="#sm:3"><span class="id" title="binder">sm</span></a>:<a class="idref" href="EraVM.isa.GeneratedMachISA.html#src_special_mode"><span class="id" title="inductive">src_special_mode</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="EraVM.encoding.EncodingUtils.html#sm:3"><span class="id" title="variable">sm</span></a> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpecialReg"><span class="id" title="constructor">SrcSpecialReg</span></a> ⇒ 0<br/>
-&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpecialImm"><span class="id" title="constructor">SrcSpecialImm</span></a> ⇒ 10<br/>
+&nbsp;&nbsp;| <a class="idref" href="EraVM.isa.GeneratedMachISA.html#SrcSpecialImm"><span class="id" title="constructor">SrcSpecialImm</span></a> ⇒ 1<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 .<br/>
 

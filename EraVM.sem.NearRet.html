@@ -47,16 +47,40 @@
 <span class="id" title="keyword">Section</span> <a id="NearRetDefinition" class="idref" href="#NearRetDefinition"><span class="id" title="section">NearRetDefinition</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variables</span> <span class="id" title="var">__</span> <span class="id" title="var">regs</span> <span class="id" title="var">pages</span> <span class="id" title="var">ctx</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_nearret" class="idref" href="#step_nearret"><span class="id" title="inductive">step_nearret</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
-&nbsp;&nbsp;</div>
+</div>
 
-<div class="doc"><h1 id="nearret-normal-return-not-panicrevert">NearRet (normal return,
-not panic/revert)</h1>
+<div class="doc"><h1 id="ret">Ret</h1>
+<p>The near return and far return share the same syntax, but their
+runtime semantic is different:</p>
+<ul>
+<li>if the topmost frame in callstack is <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ExternalCall"><span
+class="id" title="constructor">ExternalCall</span></a></span>, the far
+return semantic is selected (see <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#FarRetDefinition"><span
+class="id" title="section">FarRetDefinition</span></a></span>);</li>
+<li>if the topmost frame in callstack is <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span>, the near
+return semantic is selected (see <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearRet.html#NearRetDefinition"><span
+class="id" title="section">NearRetDefinition</span></a></span>).</li>
+</ul>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
-<p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRet"><span
-class="id" title="constructor">OpNearRet</span></a></span></p>
+<p><span class="inlinecode"><span class="id"
+title="var">Ret</span></span> <span class="inlinecode">(<span class="id"
+title="var">in1</span>:</span> <span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">label</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>ret in1, label</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <p><code>ret.ok</code> aliased as <code>ret</code></p>
+<h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>near</strong> call. Will pop up
 current callframe, give back unspent ergs and continue execution from
 the saved return address (from where the call had taken place).</p>
@@ -66,15 +90,44 @@ the saved return address (from where the call had taken place).</p>
 <li>Drop current frame.</li>
 <li>Clear flags.</li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Execution stack:
+<ul>
+<li>Current frame is dropped.</li>
+<li>Caller frame:
+<ul>
+<li>Unspent ergs are given back to caller (but memory growth is paid
+first).</li>
+</ul></li>
+</ul></li>
+<li>Flags are cleared.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>Normal return from functions.</p>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span
+class="id" title="constructor">OpNearRevertTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span>.</p>
 </div>
 <div class="code">
 <br/>
 &nbsp;&nbsp;| <a id="step_NearRet" class="idref" href="#step_NearRet"><span class="id" title="constructor">step_NearRet</span></a>:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="cf:3" class="idref" href="#cf:3"><span class="id" title="binder">cf</span></a> <a id="caller_stack:4" class="idref" href="#caller_stack:4"><span class="id" title="binder">caller_stack</span></a> <a id="new_caller:5" class="idref" href="#new_caller:5"><span class="id" title="binder">new_caller</span></a> <a id="pages:6" class="idref" href="#pages:6"><span class="id" title="binder">pages</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="cf:3" class="idref" href="#cf:3"><span class="id" title="binder">cf</span></a> <a id="caller_stack:4" class="idref" href="#caller_stack:4"><span class="id" title="binder">caller_stack</span></a> <a id="new_caller:5" class="idref" href="#new_caller:5"><span class="id" title="binder">new_caller</span></a> <a id="pages:6" class="idref" href="#pages:6"><span class="id" title="binder">pages</span></a> <a id="_ignore_arg:7" class="idref" href="#_ignore_arg:7"><span class="id" title="binder">_ignore_arg</span></a>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.CallStack.html#ergs_return_caller_and_drop"><span class="id" title="inductive">ergs_return_caller_and_drop</span></a> (<a class="idref" href="EraVM.CallStack.html#InternalCall"><span class="id" title="constructor">InternalCall</span></a> <a class="idref" href="EraVM.sem.NearRet.html#cf:3"><span class="id" title="variable">cf</span></a> <a class="idref" href="EraVM.sem.NearRet.html#caller_stack:4"><span class="id" title="variable">caller_stack</span></a>) <a class="idref" href="EraVM.sem.NearRet.html#new_caller:5"><span class="id" title="variable">new_caller</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearRet.html#step_nearret:1"><span class="id" title="inductive">step_nearret</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpNearRet"><span class="id" title="constructor">OpNearRet</span></a> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearRet.html#step_nearret:1"><span class="id" title="inductive">step_nearret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> <a class="idref" href="EraVM.sem.NearRet.html#_ignore_arg:7"><span class="id" title="variable">_ignore_arg</span></a>) {|<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_flags"><span class="id" title="projection">gs_flags</span></a>        := <span class="id" title="var">__</span>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a>    := <a class="idref" href="EraVM.CallStack.html#InternalCall"><span class="id" title="constructor">InternalCall</span></a> <a class="idref" href="EraVM.sem.NearRet.html#cf:3"><span class="id" title="variable">cf</span></a> <a class="idref" href="EraVM.sem.NearRet.html#caller_stack:4"><span class="id" title="variable">caller_stack</span></a>;<br/>
 <br/>
@@ -96,26 +149,6 @@ the saved return address (from where the call had taken place).</p>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
 &nbsp;&nbsp;.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>Flags are cleared.</li>
-<li>Execution stack:
-<ul>
-<li>Current frame is dropped.</li>
-<li>Caller frame:
-<ul>
-<li>Unspent ergs are given back to caller (but memory growth is paid
-first).</li>
-</ul></li>
-</ul></li>
-</ul>
-<h2 id="usage">Usage</h2>
-<p>Normal return from functions.</p>
-</div>
-<div class="code">
-<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Generalizable No Variables</span>.<br/>

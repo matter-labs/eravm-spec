@@ -55,13 +55,11 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
 </div>
 
-<div class="doc"><h1 id="tol1message">ToL1Message</h1>
+<div class="doc"><h1 id="optol1">OpToL1</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
-<p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
-class="id" title="constructor">OpToL1Message</span></a></span> <span
-class="inlinecode">(<span class="id" title="var">in1</span>:</span>
-<span
+<p><span class="inlinecode"><span class="id"
+title="var">OpToL1</span></span> <span class="inlinecode">(<span
+class="id" title="var">in1</span>:</span> <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span> <span
 class="inlinecode">(<span class="id" title="var">in2</span>:</span>
@@ -73,17 +71,25 @@ class="inlinecode">(<span class="id" title="var">is_first</span>:</span>
 class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
 class="id" title="inductive">bool</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>logl1 in1, in2</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
-<li><code>log.to_l1 in1, in2</code> aliased as
-<code>event in1, in2</code></li>
-<li><code>log.to_l1 event.first in1, in2</code> aliased as
-<code>event.i in1, in2</code></li>
+<li><code>log.to_l1 in1, in2</code></li>
+<li><code>log.to_l1.first in1, in2</code></li>
 </ul>
 <h2 id="summary">Summary</h2>
 <p>Emit a message to L1 with provided key and value. See <span
 class="inlinecode"><a class="idref" href="EraVM.Event.html#event"><span
 class="id" title="record">event</span></a></span> for more details on
 events system.</p>
+<ul>
+<li>Requires <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span></li>
+<li>Forbidden in <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span></li>
+</ul>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
 <li>Fetch key and value from <code>key</code> and
@@ -92,6 +98,16 @@ events system.</p>
 first in a chain of events.</li>
 <li>Emit L1 message event.</li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>L1 Event queue.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>Communicating with L1.</p>
 </div>
 <div class="code">
 <br/>
@@ -124,32 +140,6 @@ first in a chain of events.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>    := <a class="idref" href="EraVM.sem.ToL1.html#new_gs:9"><span class="id" title="variable">new_gs</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
 &nbsp;&nbsp;.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>Event queue.</li>
-</ul>
-<h2 id="usage">Usage</h2>
-<p>Communicating with L1.</p>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSLoad"><span
-class="id" title="constructor">OpSLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
-class="id" title="constructor">OpSStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
-class="id" title="constructor">OpEvent</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
-class="id" title="constructor">OpToL1Message</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
-class="id" title="constructor">OpPrecompileCall</span></a></span> share
-the same opcode.</li>
-</ul>
-</div>
-<div class="code">
-<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.ToL1.html#ToL1Definition"><span class="id" title="section">ToL1Definition</span></a>.<br/>
 </div>
 </div>

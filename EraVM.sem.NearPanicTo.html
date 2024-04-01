@@ -49,23 +49,26 @@
 <span class="id" title="keyword">Inductive</span> <a id="step_panicto" class="idref" href="#step_panicto"><span class="id" title="inductive">step_panicto</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
 </div>
 
-<div class="doc"><h1 id="nearpanic-abnormal-return-not-returnrevert">NearPanic (abnormal
-return, not return/revert)</h1>
+<div class="doc"><h1 id="opnearpanicto">OpNearPanicTo</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
-class="id" title="constructor">OpNearPanicTo</span></a></span></p>
+class="id" title="constructor">OpNearPanicTo</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">label</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
+class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>pncl label</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <p><code>ret.panic label</code> aliased as <code>panic label</code></p>
+<h2 id="summary">Summary</h2>
 <p>An erroneous return from a <strong>near</strong> call to a specified
 label. Will revert all changes in <span
 class="inlinecode"><a class="idref" href="EraVM.State.html#global_state"><span
 class="id" title="record">global_state</span></a></span> produced in the
 current frame, drop the current frame, give back unspent ergs, and
 proceed to execute exception handler.</p>
-<p>The assembler expands <code>panic label</code> to
-<code>panic r1, label</code>, but <code>r1</code> is ignored by returns
-from near calls.</p>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
 <li>Perform a <span
@@ -80,20 +83,12 @@ flags.</li>
 title="var">label</span></span>, i.e. replace program counter with the
 label’s value.</li>
 </ol>
-</div>
-<div class="code">
-<br/>
-| <a id="step_NearPanic" class="idref" href="#step_NearPanic"><span class="id" title="constructor">step_NearPanic</span></a>:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="label:3" class="idref" href="#label:3"><span class="id" title="binder">label</span></a> <a id="s1:4" class="idref" href="#s1:4"><span class="id" title="binder">s1</span></a> <a id="s2:5" class="idref" href="#s2:5"><span class="id" title="binder">s2</span></a> <a id="s3:6" class="idref" href="#s3:6"><span class="id" title="binder">s3</span></a>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s1:4"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s2:5"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearPanicTo.html#s3:6"><span class="id" title="variable">s3</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s2:5"><span class="id" title="variable">s2</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> <span class="id" title="notation">::=</span> <span class="id" title="keyword">fun</span> <a id="ts:7" class="idref" href="#ts:7"><span class="id" title="binder">ts</span></a> ⇒ <a class="idref" href="EraVM.sem.NearPanicTo.html#ts:7"><span class="id" title="variable">ts</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <span class="id" title="notation">::=</span> <a class="idref" href="EraVM.CallStack.html#pc_set"><span class="id" title="definition">pc_set</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#label:3"><span class="id" title="variable">label</span></a>  <span class="id" title="notation">|></span> <span class="id" title="notation">|></span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearPanicTo.html#step_panicto:1"><span class="id" title="inductive">step_panicto</span></a> (@<a class="idref" href="EraVM.isa.CoreSet.html#OpNearPanicTo"><span class="id" title="constructor">OpNearPanicTo</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#label:3"><span class="id" title="variable">label</span></a>) <a class="idref" href="EraVM.sem.NearPanicTo.html#s1:4"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s3:6"><span class="id" title="variable">s3</span></a><br/>
-.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
 <ul>
-<li>Flags are cleared.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
 <li>Execution stack:
 <ul>
 <li>Current frame is dropped.</li>
@@ -108,9 +103,25 @@ the dead frame.</li>
 </ul>
 <h2 id="usage">Usage</h2>
 <p>Return from an irrecoverable error, fail-fast.</p>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearPanicTo"><span
+class="id" title="constructor">OpNearPanicTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRevertTo"><span
+class="id" title="constructor">OpNearRevertTo</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNearRetTo"><span
+class="id" title="constructor">OpNearRetTo</span></a></span>.</p>
 </div>
 <div class="code">
 <br/>
+| <a id="step_NearPanic" class="idref" href="#step_NearPanic"><span class="id" title="constructor">step_NearPanic</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="label:3" class="idref" href="#label:3"><span class="id" title="binder">label</span></a> <a id="s1:4" class="idref" href="#s1:4"><span class="id" title="binder">s1</span></a> <a id="s2:5" class="idref" href="#s2:5"><span class="id" title="binder">s2</span></a> <a id="s3:6" class="idref" href="#s3:6"><span class="id" title="binder">s3</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#TriggeredExplicitly"><span class="id" title="constructor">TriggeredExplicitly</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s1:4"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s2:5"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearPanicTo.html#s3:6"><span class="id" title="variable">s3</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s2:5"><span class="id" title="variable">s2</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a> <span class="id" title="notation">::=</span> <span class="id" title="keyword">fun</span> <a id="ts:7" class="idref" href="#ts:7"><span class="id" title="binder">ts</span></a> ⇒ <a class="idref" href="EraVM.sem.NearPanicTo.html#ts:7"><span class="id" title="variable">ts</span></a> <span class="id" title="notation"><|</span> <a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <span class="id" title="notation">::=</span> <a class="idref" href="EraVM.CallStack.html#pc_set"><span class="id" title="definition">pc_set</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#label:3"><span class="id" title="variable">label</span></a>  <span class="id" title="notation">|></span> <span class="id" title="notation">|></span> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.NearPanicTo.html#step_panicto:1"><span class="id" title="inductive">step_panicto</span></a> (@<a class="idref" href="EraVM.isa.CoreSet.html#OpNearPanicTo"><span class="id" title="constructor">OpNearPanicTo</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#label:3"><span class="id" title="variable">label</span></a>) <a class="idref" href="EraVM.sem.NearPanicTo.html#s1:4"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.NearPanicTo.html#s3:6"><span class="id" title="variable">s3</span></a><br/>
+.<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.NearPanicTo.html#NearPanicToDefinition"><span class="id" title="section">NearPanicToDefinition</span></a>.<br/>
 </div>
 </div>

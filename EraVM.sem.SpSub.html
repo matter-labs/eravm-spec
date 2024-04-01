@@ -50,7 +50,7 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
 </div>
 
-<div class="doc"><h1 id="spsub">SpSub</h1>
+<div class="doc"><h1 id="opspsub">OpSpSub</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span
@@ -59,35 +59,48 @@ class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">ofs</span>:</span>
+class="inlinecode">(<span class="id" title="var">in2</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#imm_in"><span
 class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<pre><code>nop stack-=[reg+ofs]</code></pre>
-<h2 id="summary">Summary</h2>
-<p>Subtract <code>(in1 + ofs)</code> from SP.</p>
-<h2 id="semantic">Semantic</h2>
 <ul>
-<li>Advances PC</li>
-<li><span class="math inline">\mathit{SP_{new} := SP - (in_1 +
-ofs)}</span>, but only if there was no overflow.</li>
+<li><code>decsp reg+imm</code></li>
+<li><code>decsp reg</code></li>
+<li><code>decsp imm</code></li>
 </ul>
-<h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>nop stack-=[reg+imm]</code></p>
+<h2 id="summary">Summary</h2>
+<p>Subtract <code>(reg + imm)</code> from SP.</p>
+<h2 id="semantic">Semantic</h2>
+<p><span class="math inline">\mathit{SP_{new} := SP - (reg +
+imm)}</span>, but only if there was no overflow.</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
 <ul>
-<li>execution stack : PC is increased; SP may be decreased.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
 </ul>
 <h2 id="usage">Usage</h2>
-<p>Adjusting SP e.g. deallocating space on stack.</p>
-<h2 id="similar-instructions">Similar instructions</h2>
-<p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span
-class="id" title="constructor">OpSpSub</span></a></span> subtracts value
-from SP.</p>
-<h2 id="encoding">Encoding</h2>
 <ul>
-<li><code>NoOp</code>, <code>SpAdd</code>, <code>SpSub</code> are
-encoded as the same instruction.</li>
+<li>Adjusting SP e.g. deallocating space on stack.</li>
+</ul>
+<h2 id="related-instructions">Related instructions</h2>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpAdd"><span
+class="id" title="constructor">OpSpAdd</span></a></span> increases
+SP.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpNoOp"><span
+class="id" title="constructor">OpNoOp</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpAdd"><span
+class="id" title="constructor">OpSpAdd</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSpSub"><span
+class="id" title="constructor">OpSpSub</span></a></span> are encoded as
+the same instruction.</li>
 </ul>
 </div>
 <div class="code">

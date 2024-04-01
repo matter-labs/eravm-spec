@@ -88,25 +88,43 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_farret" class="idref" href="#step_farret"><span class="id" title="inductive">step_farret</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
 </div>
 
-<div class="doc"><h1 id="far-return-normal-return-not-panicrevert">Far return (normal
-return, not panic/revert)</h1>
+<div class="doc"><h1 id="opret-case-of-far-return">OpRet (case of far return)</h1>
+<p>The near return and far return share the same syntax, but their
+runtime semantic is different:</p>
+<ul>
+<li>if the topmost frame in callstack is <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ExternalCall"><span
+class="id" title="constructor">ExternalCall</span></a></span>, the far
+return semantic is selected (see <span
+class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#FarRetDefinition"><span
+class="id" title="section">FarRetDefinition</span></a></span>);</li>
+<li>if the topmost frame in callstack is <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#InternalCall"><span
+class="id" title="constructor">InternalCall</span></a></span>, the near
+return semantic is selected (see <span
+class="inlinecode"><a class="idref" href="EraVM.sem.NearRet.html#NearRetDefinition"><span
+class="id" title="section">NearRetDefinition</span></a></span>).</li>
+</ul>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
-class="id" title="constructor">OpFarRet</span></a></span> <span
-class="inlinecode">(<span class="id" title="var">args</span>:</span>
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<p><code>ret in1</code></p>
+<ul>
+<li><p><code>ret in1</code></p></li>
+<li><p><code>ret</code>, an alias to <code>ret r1</code>. Argument is
+ignored for near returns.</p></li>
+</ul>
+<h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>far</strong> call. Will pop up current
 callframe, return unspent ergs to the caller, and continue execution
 from the saved return address (from where the call had taken place). The
 register <code>args</code> describes a span of memory passed to the
 external caller.</p>
-<p>The assembler expands <code>ret</code> to <code>ret r1</code>;
-<code>r1</code> is ignored by returns from near calls.</p>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
 <li><p>Fetch the value from register <code>args</code> and decode the
@@ -218,6 +236,40 @@ class="id" title="projection">r4</span></a></span> are reserved and may
 gain a special meaning in newer versions of EraVM.</p></li>
 <li><p>Clear context register.</p></li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Execution stack:
+<ul>
+<li>Current frame is dropped.</li>
+<li>Caller frame:
+<ul>
+<li>Unspent ergs are given back to caller (but memory growth is paid
+first).</li>
+</ul></li>
+</ul></li>
+<li>Flags are cleared.</li>
+<li>Context register is zeroed (only returns from far calls).</li>
+<li>Registers are cleared (only returns from far calls).</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>Normal returns from functions (and contracts).</p>
+<h2 id="related-instructions">Related instructions</h2>
+<ul>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span> executes the
+current frame’s exception handler instead of returning to the
+caller.</li>
+<li><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
+class="id" title="constructor">OpPanic</span></a></span> executes the
+current frame’s exception handler instead of returning to the caller,
+and sets overflow flag.</li>
+</ul>
 </div>
 <div class="code">
 <br/>
@@ -251,7 +303,7 @@ gain a special meaning in newer versions of EraVM.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.sem.FarRet.html#pages:4"><span class="id" title="variable">pages</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.sem.FarRet.html#status:19"><span class="id" title="variable">status</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <a class="idref" href="EraVM.sem.FarRet.html#s1:17"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:18"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:16"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:17"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:18"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:16"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:17"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:18"><span class="id" title="variable">s2</span></a><br/>
 <br/>
 &nbsp;&nbsp;| <a id="step_RetExt_ForwardFatPointer" class="idref" href="#step_RetExt_ForwardFatPointer"><span class="id" title="constructor">step_RetExt_ForwardFatPointer</span></a>:<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="pages:22" class="idref" href="#pages:22"><span class="id" title="binder">pages</span></a> <a id="cf:23" class="idref" href="#cf:23"><span class="id" title="binder">cf</span></a> <a id="caller_stack:24" class="idref" href="#caller_stack:24"><span class="id" title="binder">caller_stack</span></a> <a id="cs1:25" class="idref" href="#cs1:25"><span class="id" title="binder">cs1</span></a> <a id="new_caller:26" class="idref" href="#new_caller:26"><span class="id" title="binder">new_caller</span></a> <a id="new_regs:27" class="idref" href="#new_regs:27"><span class="id" title="binder">new_regs</span></a> <a id="___1:28" class="idref" href="#___1:28"><span class="id" title="binder">___1</span></a> <a id="___2:29" class="idref" href="#___2:29"><span class="id" title="binder">___2</span></a> <a id="___3:30" class="idref" href="#___3:30"><span class="id" title="binder">___3</span></a> <a id="in_ptr:31" class="idref" href="#in_ptr:31"><span class="id" title="binder">in_ptr</span></a> <a id="out_ptr:32" class="idref" href="#out_ptr:32"><span class="id" title="binder">out_ptr</span></a> <a id="page:33" class="idref" href="#page:33"><span class="id" title="binder">page</span></a> <a id="params:34" class="idref" href="#params:34"><span class="id" title="binder">params</span></a> <a id="s1:35" class="idref" href="#s1:35"><span class="id" title="binder">s1</span></a> <a id="s2:36" class="idref" href="#s2:36"><span class="id" title="binder">s2</span></a> <a id="status:37" class="idref" href="#status:37"><span class="id" title="binder">status</span></a> <a id="enc_ptr:38" class="idref" href="#enc_ptr:38"><span class="id" title="binder">enc_ptr</span></a>,<br/>
@@ -289,33 +341,10 @@ gain a special meaning in newer versions of EraVM.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_pages"><span class="id" title="projection">gs_pages</span></a>        := <a class="idref" href="EraVM.sem.FarRet.html#pages:22"><span class="id" title="variable">pages</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_status"><span class="id" title="projection">gs_status</span></a>       := <a class="idref" href="EraVM.sem.FarRet.html#status:37"><span class="id" title="variable">status</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <a class="idref" href="EraVM.sem.FarRet.html#s1:35"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:36"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:34"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:35"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:36"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:34"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:35"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:36"><span class="id" title="variable">s2</span></a><br/>
 </div>
 
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>Flags are cleared.</li>
-<li>Context register is zeroed (only returns from far calls).</li>
-<li>Registers are cleared (only returns from far calls).</li>
-<li>Execution stack:
-<ul>
-<li>Current frame is dropped.</li>
-<li>Caller frame:
-<ul>
-<li>Unspent ergs are given back to caller (but memory growth is paid
-first).</li>
-</ul></li>
-</ul></li>
-</ul>
-<h2 id="usage">Usage</h2>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><code>revert</code> executes the current frame’s exception handler
-instead of returning to the caller.</li>
-<li><code>panic</code> executes the current frame’s exception handler
-instead of returning to the caller, and sets overflow flag.</li>
-</ul>
-<h2 id="panics">Panics</h2>
+<div class="doc"><h2 id="panics">Panics</h2>
 <ol type="1">
 <li>Attempt to forward an existing fat pointer, but the value holding
 <span class="inlinecode"><span class="id"
@@ -333,7 +362,7 @@ title="var">RetABI</span></span> is not tagged as a pointer.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.VMPanic.html#RetABIExistingFatPointerWithoutTag"><span class="id" title="constructor">RetABIExistingFatPointerWithoutTag</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#s1:45"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:46"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#___2:44"><span class="id" title="variable">___2</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:45"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:46"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.FarRet.html#___2:44"><span class="id" title="variable">___2</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:45"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:46"><span class="id" title="variable">s2</span></a><br/>
 <br/>
 </div>
 
@@ -375,7 +404,7 @@ modification of returndata.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.VMPanic.html#RetABIReturnsPointerCreatedByCaller"><span class="id" title="constructor">RetABIReturnsPointerCreatedByCaller</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#s1:53"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:54"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:55"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:52"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:53"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:54"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:55"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:52"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:53"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:54"><span class="id" title="variable">s2</span></a><br/>
 </div>
 
 <div class="doc"><ol start="3" type="1">
@@ -395,7 +424,7 @@ modification of returndata.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.VMPanic.html#FatPointerMalformed"><span class="id" title="constructor">FatPointerMalformed</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#s1:62"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:63"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:59"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:61"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:62"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:63"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:59"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:61"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:62"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:63"><span class="id" title="variable">s2</span></a><br/>
 </div>
 
 <div class="doc"><ol start="4" type="1">
@@ -414,7 +443,7 @@ growth.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.VMPanic.html#FatPointerCreationUnaffordable"><span class="id" title="constructor">FatPointerCreationUnaffordable</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#s1:71"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:72"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpFarRet"><span class="id" title="constructor">OpFarRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:67"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:70"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:71"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:72"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.FarRet.html#step_farret:2"><span class="id" title="inductive">step_farret</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpRet"><span class="id" title="constructor">OpRet</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.FarRet.html#_tag:67"><span class="id" title="variable">_tag</span></a> <a class="idref" href="EraVM.sem.FarRet.html#params:70"><span class="id" title="variable">params</span></a>))) <a class="idref" href="EraVM.sem.FarRet.html#s1:71"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.FarRet.html#s2:72"><span class="id" title="variable">s2</span></a><br/>
 &nbsp;&nbsp;.<br/>
 
 <br/>

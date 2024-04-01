@@ -47,9 +47,9 @@
 <br/>
 <span class="id" title="keyword">Section</span> <a id="EventDefinition" class="idref" href="#EventDefinition"><span class="id" title="section">EventDefinition</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_event" class="idref" href="#step_event"><span class="id" title="inductive">step_event</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
-&nbsp;&nbsp;</div>
+</div>
 
-<div class="doc"><h1 id="event">Event</h1>
+<div class="doc"><h1 id="opevent">OpEvent</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
@@ -67,6 +67,8 @@ class="inlinecode">(<span class="id" title="var">is_first</span>:</span>
 class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#bool"><span
 class="id" title="inductive">bool</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>log in1, in2</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
 <li><code>log.event in1, in2</code> aliased as
 <code>event in1, in2</code></li>
@@ -78,6 +80,14 @@ class="id" title="inductive">bool</span></a>)</span></p>
 class="inlinecode"><a class="idref" href="EraVM.Event.html#event"><span
 class="id" title="record">event</span></a></span> for more details on
 events system.</p>
+<ul>
+<li>Requires <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span></li>
+<li>Forbidden in <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span></li>
+</ul>
 <h2 id="semantic">Semantic</h2>
 <ol type="1">
 <li>Fetch key and value from <code>in1</code> and <code>in2</code>.</li>
@@ -85,6 +95,15 @@ events system.</p>
 first in a chain of events.</li>
 <li>Emit event.</li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Event queue.</li>
+</ul>
+<h2 id="usage">Usage</h2>
 </div>
 <div class="code">
 <br/>
@@ -113,33 +132,6 @@ first in a chain of events.</li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.sem.OpEvent.html#new_gs:10"><span class="id" title="variable">new_gs</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a>    := <a class="idref" href="EraVM.sem.OpEvent.html#xs:3"><span class="id" title="variable">xs</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
-</div>
-
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>Event queue.</li>
-</ul>
-<h2 id="usage-todo">Usage TODO</h2>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSLoad"><span
-class="id" title="constructor">OpSLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
-class="id" title="constructor">OpSStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpEvent"><span
-class="id" title="constructor">OpEvent</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpToL1Message"><span
-class="id" title="constructor">OpToL1Message</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPrecompileCall"><span
-class="id" title="constructor">OpPrecompileCall</span></a></span> are
-variants of the same <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#mach_instruction"><span
-class="id" title="record">mach_instruction</span></a></span>.</li>
-</ul>
-</div>
-<div class="code">
-<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.OpEvent.html#EventDefinition"><span class="id" title="section">EventDefinition</span></a>.<br/>
 </div>
 </div>

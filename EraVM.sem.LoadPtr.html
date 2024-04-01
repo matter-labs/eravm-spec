@@ -52,20 +52,22 @@
 <br/>
 &nbsp;</div>
 
-<div class="doc"><h1 id="loadpointer">LoadPointer</h1>
+<div class="doc"><h1 id="oploadptr">OpLoadPtr</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
-class="id" title="constructor">OpLoadPointer</span></a></span> <span
-class="inlinecode">(<span class="id" title="var">ptr</span>:</span>
+class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpLoadPtr"><span
+class="id" title="constructor">OpLoadPtr</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
-class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
-class="id" title="definition">in_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">res</span>:</span>
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_regimm"><span
+class="id" title="inductive">in_regimm</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
 class="id" title="definition">out_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
+<p><code>ldp in1, out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
 <li><code>uma.fat_ptr_read in1, out</code> aliased as
 <code>ld in1, out</code></li>
@@ -100,6 +102,31 @@ memory fairly (addresses 2, 3, 4) and 29 zero bytes coming from
 attempted reads past <code>fp_start + fp_length</code> bound.</p></li>
 <li><p>Store the word to <code>res</code>.</p></li>
 </ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>execution stack:
+<ul>
+<li>ergs allocated for the current function/contract instance, if the
+heap variant has to be grown;</li>
+<li>heap variant bounds, if heap variant has to be grown.</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Read data from a read-only slice returned from a far call, or passed
+to a far call.</li>
+<li>One of few instructions that accept only reg or imm operand but do
+not have full addressing mode, therefore can’t e.g. address stack. The
+full list is: {INSNS_USE_REGIMM}.</li>
+</ul>
+<h2 id="related-instructions">Related instructions</h2>
+<p>See <span class="inlinecode"><span class="id"
+title="var">OpLoadPtrInc</span></span>.</p>
 </div>
 <div class="code">
 <br/>
@@ -118,49 +145,7 @@ attempted reads past <code>fp_start + fp_length</code> bound.</p></li>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.State.html#mk_transient_state"><span class="id" title="constructor">mk_transient_state</span></a> <a class="idref" href="EraVM.sem.LoadPtr.html#_flags:4"><span class="id" title="variable">_flags</span></a> <a class="idref" href="EraVM.sem.LoadPtr.html#_regs:5"><span class="id" title="variable">_regs</span></a> <a class="idref" href="EraVM.sem.LoadPtr.html#mem:6"><span class="id" title="variable">mem</span></a> <a class="idref" href="EraVM.sem.LoadPtr.html#_cs:7"><span class="id" title="variable">_cs</span></a> <a class="idref" href="EraVM.sem.LoadPtr.html#_ctx:8"><span class="id" title="variable">_ctx</span></a> <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>)<br/>
 </div>
 
-<div class="doc"><h2 id="affected-parts-of-vm-state">Affected parts of VM state</h2>
-<ul>
-<li>execution stack: PC, as by any instruction;</li>
-<li>GPRs, because <code>res</code> only resolves to a register.</li>
-</ul>
-<h2 id="usage">Usage</h2>
-<ul>
-<li>Read data from a read-only slice returned from a far call, or passed
-to a far call.</li>
-<li>One of few instructions that accept only reg or imm operand but do
-not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
-class="id" title="constructor">OpLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
-class="id" title="constructor">OpLoadInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
-class="id" title="constructor">OpStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
-class="id" title="constructor">OpStoreInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
-class="id" title="constructor">OpLoadPointer</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
-class="id" title="constructor">OpLoadPointerInc</span></a></span>.</li>
-</ul>
-<h2 id="similar-instructions">Similar instructions</h2>
-<ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
-class="id" title="constructor">OpLoad</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
-class="id" title="constructor">OpLoadInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
-class="id" title="constructor">OpStore</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
-class="id" title="constructor">OpStoreInc</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
-class="id" title="constructor">OpLoadPointer</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
-class="id" title="constructor">OpLoadPointerInc</span></a></span> are
-variants of the same instruction.</li>
-</ul>
-<h2 id="panics">Panics</h2>
+<div class="doc"><h2 id="panics">Panics</h2>
 <ol type="1">
 <li>Argument is not a tagged pointer.</li>
 </ol>

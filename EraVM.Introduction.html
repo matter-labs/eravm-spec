@@ -243,8 +243,9 @@ circular shift.</li>
 <li><p>Control flow</p>
 <ul>
 <li><p><strong><code>Nop</code></strong> : <span
-class="inlinecode"><span class="id"
-title="var">NopDefinition</span></span> : do nothing.</p></li>
+class="inlinecode"><a class="idref" href="EraVM.sem.Nop.html#NoOpDefinition"><span
+class="id" title="section">NoOpDefinition</span></a></span> : do
+nothing.</p></li>
 <li><p><strong><code>Jump</code></strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.Jump.html#JumpDefinition"><span
 class="id" title="section">JumpDefinition</span></a></span> : jump to
@@ -255,19 +256,21 @@ class="id" title="section">Predication</span></a></span>).</p></li>
 class="inlinecode"><a class="idref" href="EraVM.sem.NearCall.html#NearCallDefinition"><span
 class="id" title="section">NearCallDefinition</span></a></span> : call a
 function in the same contract.</p></li>
-<li><p><strong><code>NearRet</code></strong> : <span
+<li><p><strong><code>Ret</code> (from near call)</strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.NearRet.html#NearRetDefinition"><span
-class="id" title="section">NearRetDefinition</span></a></span> : normal
-return from near call to the call site, return unspend ergs.</p></li>
-<li><p><strong><code>NearRevert</code></strong> : <span
+class="id" title="section">NearRetDefinition</span></a></span> : when
+used after near call, normal return to the call location, also returning
+unspent ergs.</p></li>
+<li><p><strong><code>Revert</code> (from near call)</strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.NearRevert.html#NearRevertDefinition"><span
-class="id" title="section">NearRevertDefinition</span></a></span> :
-return from near call due to a recoverable error, return unspend ergs,
-roll back storage/events, execute exception handler.</p></li>
+class="id" title="section">NearRevertDefinition</span></a></span> : when
+used after near call, return from near call due to a recoverable error,
+return unspend ergs, roll back storage/events, execute exception
+handler.</p></li>
 <li><p><strong><code>NearRetTo</code></strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.NearRetTo.html#NearRetToDefinition"><span
 class="id" title="section">NearRetToDefinition</span></a></span> : Like
-<code>NearRet</code> but returns to explicit label.</p></li>
+<code>Ret</code> but returns to explicit label.</p></li>
 <li><p><strong><code>NearRevertTo</code></strong> : <span
 class="inlinecode"><span class="id"
 title="var">NearRevertToDefinition</span></span> : like
@@ -283,15 +286,16 @@ trigger panic and return to label.</p></li>
 <li><p><strong><code>Farcall</code></strong> : <span
 class="inlinecode"><span class="id"
 title="var">FarcallDefinition</span></span> : call a contract</p></li>
-<li><p><strong><code>FarRet</code></strong> : <span
+<li><p><strong><code>Ret</code> (from far call)</strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.FarRet.html#FarRetDefinition"><span
-class="id" title="section">FarRetDefinition</span></a></span> : return
-from farcall.</p></li>
-<li><p><strong><code>FarRevert</code></strong> : <span
+class="id" title="section">FarRetDefinition</span></a></span> : when
+used after far call, normal return to the call location, also returning
+unspent ergs.</p></li>
+<li><p><strong><code>Revert</code> (from far call)</strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.FarRevert.html#FarRevertDefinition"><span
-class="id" title="section">FarRevertDefinition</span></a></span> : like
-<code>FarRet</code> but roll back storage/events and execute exception
-handler.</p></li>
+class="id" title="section">FarRevertDefinition</span></a></span> : when
+used after far call, recover (from an error), return unspend ergs, roll
+back storage/events, execute exception handler.</p></li>
 </ul></li>
 <li><p>Operations with heaps</p>
 <ul>
@@ -319,6 +323,26 @@ word to heap by an offset.</li>
 class="inlinecode"><a class="idref" href="EraVM.sem.StoreInc.html#StoreIncDefinition"><span
 class="id" title="section">StoreIncDefinition</span></a></span> : like
 <code>Store</code>, additionally return offset+32.</li>
+</ul></li>
+<li><p>Operations with static memory page (unique “heap”-like unbound
+page, kernel-only)</p>
+<ul>
+<li><strong><code>StaticRead</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.StaticRead.html#StaticReadDefinition"><span
+class="id" title="section">StaticReadDefinition</span></a></span> : load
+word from heap by a fat pointer.</li>
+<li><strong><code>StaticReadInc</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.StaticReadInc.html#StaticReadIncDefinition"><span
+class="id" title="section">StaticReadIncDefinition</span></a></span> :
+like <code>Load</code>, additionally return offset+32.</li>
+<li><strong><code>StaticWrite</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.StaticWrite.html#StaticWriteDefinition"><span
+class="id" title="section">StaticWriteDefinition</span></a></span> :
+store word to heap by an offset.</li>
+<li><strong><code>StaticWriteInc</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.StaticWriteInc.html#StaticWriteIncDefinition"><span
+class="id" title="section">StaticWriteIncDefinition</span></a></span> :
+like <code>Store</code>, additionally return offset+32.</li>
 </ul></li>
 <li><p>Operations with pointers</p>
 <ul>
@@ -350,24 +374,44 @@ class="inlinecode"><a class="idref" href="EraVM.sem.SLoad.html#SLoadDefinition">
 class="id" title="section">SLoadDefinition</span></a></span> : load
 value by key from storage of the current contract.</li>
 </ul></li>
+<li><p>Operations with transient storage (resets after each
+transaction)</p>
+<ul>
+<li><strong><code>TransientStore</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.TransientStore.html#TransientStoreDefinition"><span
+class="id" title="section">TransientStoreDefinition</span></a></span> :
+store value at a key in transient storage of the current contract.</li>
+<li><strong><code>TransientLoad</code></strong> : <span
+class="inlinecode"><a class="idref" href="EraVM.sem.TransientLoad.html#TransientLoadDefinition"><span
+class="id" title="section">TransientLoadDefinition</span></a></span> :
+load value by key from transient storage of the current contract.</li>
+</ul></li>
 <li><p>Events and precompiles</p>
 <ul>
-<li><p><strong><code>OpEvent</code></strong> : <span
+<li><strong><code>OpEvent</code></strong> : <span
 class="inlinecode"><span class="id"
-title="var">OpEventDefinition</span></span> : emit an event.</p></li>
-<li><p><strong><code>ToL1</code></strong> : <span
+title="var">OpEventDefinition</span></span> : emit an event.</li>
+<li><strong><code>ToL1</code></strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.ToL1.html#ToL1Definition"><span
 class="id" title="section">ToL1Definition</span></a></span> : emit a
-message to L1.</p></li>
-<li><p><strong><code>PrecompileCall</code></strong> : <span
+message to L1.</li>
+<li><strong><code>PrecompileCall</code></strong> : <span
 class="inlinecode"><a class="idref" href="EraVM.sem.PrecompileCall.html#PrecompileCallDefinition"><span
 class="id" title="section">PrecompileCallDefinition</span></a></span> :
 call an extension of VM specific to currently executing system
-contract.</p></li>
-<li><p><strong><code>Context</code></strong> : <span
+contract.</li>
+<li><strong><code>Context</code></strong> : <span
 class="inlinecode"><span class="id"
-title="var">ContextDefinition</span></span> : access some parts of VM
-state such as currently executed contract or stack pointer.</p></li>
+title="var">ContextDefinition</span></span> : access the context
+register and context captured value (used to emulate
+<code>msg.value</code>).</li>
+<li><strong><code>Contract</code></strong> : <span
+class="inlinecode"><span class="id"
+title="var">ContractDefinition</span></span> : access associated
+contract addresses (current, caller, or code)</li>
+<li><strong><code>VM</code></strong> : <span class="inlinecode"><span
+class="id" title="var">VMDefinition</span></span> : access some parts of
+VM execution state such as stack pointer.</li>
 </ul></li>
 </ul></li>
 <li><p><strong>ABI</strong> (memory layouts of compound data structures

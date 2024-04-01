@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.IncrementTx</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.IncrementTx</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.ABI.html#"><span class="id" title="module">ABI</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Bool.Bool.html#"><span class="id" title="module">Bool</span></a> <a class="idref" href="EraVM.Coder.html#"><span class="id" title="module">Coder</span></a> <a class="idref" href="EraVM.Core.html#"><span class="id" title="module">Core</span></a> <a class="idref" href="EraVM.Common.html#"><span class="id" title="module">Common</span></a> <a class="idref" href="EraVM.Predication.html#"><span class="id" title="module">Predication</span></a> <a class="idref" href="EraVM.Ergs.html#"><span class="id" title="module">Ergs</span></a> <a class="idref" href="EraVM.CallStack.html#"><span class="id" title="module">CallStack</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.MemoryOps.html#"><span class="id" title="module">MemoryOps</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="EraVM.Addressing.html#Coercions"><span class="id" title="module">Addressing.Coercions</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="IncrementTxDefinition" class="idref" href="#IncrementTxDefinition"><span class="id" title="section">IncrementTxDefinition</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="step_increment_tx" class="idref" href="#step_increment_tx"><span class="id" title="inductive">step_increment_tx</span></a>: @<a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="EraVM.Binding.html#bound"><span class="id" title="definition">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="opincrementtxnumber">OpIncrementTxNumber</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpIncrementTxNumber"><span
+class="id" title="constructor">OpIncrementTxNumber</span></a></span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>inctx</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>context.inc_tx_num</code></p>
+<h2 id="summary">Summary</h2>
+<ul>
+<li><p>Reset all transient storage.</p></li>
+<li><p>Increment the tx number counter in <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_tx_number_in_block"><span
+class="id"
+title="projection">gs_tx_number_in_block</span></a></span>.</p></li>
+<li><p>Requires <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span></p></li>
+<li><p>Forbidden in <span
+class="inlinecode"><a class="idref" href="EraVM.StaticMode.html#StaticMode"><span
+class="id" title="section">StaticMode</span></a></span></p></li>
+</ul>
+<h2 id="semantic">Semantic</h2>
+<p>TODO</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>Tx counter.</li>
+<li>Transient storages.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<p>Utility in system contracts.</p>
+</div>
+<div class="code">
+<br/>
+<span class="comment">(*&nbsp;FIXME:&nbsp;clear&nbsp;transient&nbsp;storage&nbsp;*)</span><br/>
+| <a id="step_IncrementTx" class="idref" href="#step_IncrementTx"><span class="id" title="constructor">step_IncrementTx</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="transient:3" class="idref" href="#transient:3"><span class="id" title="binder">transient</span></a> <a id="gs:4" class="idref" href="#gs:4"><span class="id" title="binder">gs</span></a> <a id="new_gs:5" class="idref" href="#new_gs:5"><span class="id" title="binder">new_gs</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#global_state_increment_tx"><span class="id" title="inductive">global_state_increment_tx</span></a> <a class="idref" href="EraVM.State.html#tx_inc"><span class="id" title="inductive">tx_inc</span></a> <a class="idref" href="EraVM.sem.IncrementTx.html#gs:4"><span class="id" title="variable">gs</span></a> <a class="idref" href="EraVM.sem.IncrementTx.html#new_gs:5"><span class="id" title="variable">new_gs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.IncrementTx.html#step_increment_tx:1"><span class="id" title="inductive">step_increment_tx</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#OpIncrementTxNumber"><span class="id" title="constructor">OpIncrementTxNumber</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a>    := <a class="idref" href="EraVM.sem.IncrementTx.html#transient:3"><span class="id" title="variable">transient</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.sem.IncrementTx.html#gs:4"><span class="id" title="variable">gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_transient"><span class="id" title="projection">gs_transient</span></a>    := <a class="idref" href="EraVM.sem.IncrementTx.html#transient:3"><span class="id" title="variable">transient</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.State.html#gs_global"><span class="id" title="projection">gs_global</span></a>       := <a class="idref" href="EraVM.sem.IncrementTx.html#new_gs:5"><span class="id" title="variable">new_gs</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}<br/>
+.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.IncrementTx.html#IncrementTxDefinition"><span class="id" title="section">IncrementTxDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

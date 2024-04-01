@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.TransientLoad</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.TransientLoad</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a>.<br/>
+<span class="id" title="keyword">Import</span>  <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.TransientMemory.html#"><span class="id" title="module">TransientMemory</span></a> <a class="idref" href="EraVM.memory.Depot.html#"><span class="id" title="module">memory.Depot</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="TransientLoadDefinition" class="idref" href="#TransientLoadDefinition"><span class="id" title="section">TransientLoadDefinition</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variable</span> <span class="id" title="var">__</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_tload" class="idref" href="#step_tload"><span class="id" title="inductive">step_tload</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
+</div>
+
+<div class="doc"><h1 id="optransientload">OpTransientLoad</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientLoad"><span
+class="id" title="constructor">OpTransientLoad</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>ldt in1, out1</code></p>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<p><code>tload in1, out1</code></p>
+<h2 id="summary">Summary</h2>
+<p>Access word in the transient storage of the active contract by
+key.</p>
+<p>Transient contract storage of all contracts resets when <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpIncrementTxNumber"><span
+class="id" title="constructor">OpIncrementTxNumber</span></a></span> is
+called.</p>
+<h2 id="semantic">Semantic</h2>
+<ol type="1">
+<li><p>Load word from current shard, current contract’s transient
+storage by key <code>key</code>.</p>
+<p>Current contract is identified by the field <span
+class="inlinecode"><a class="idref" href="EraVM.CallStack.html#ecf_this_address"><span
+class="id" title="projection">ecf_this_address</span></a></span> of the
+active external frame.</p></li>
+<li><p>Store the value to <code>dest</code>.</p></li>
+</ol>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ul>
+<li>Only <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientLoad"><span
+class="id" title="constructor">OpTransientLoad</span></a></span> is
+capable of reading data from transient storage.</li>
+<li>Much cheaper than storage for e.g. reentrancy locks.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;FIXME:&nbsp;semantic&nbsp;is&nbsp;incorrect&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <a id="step_TLoad" class="idref" href="#step_TLoad"><span class="id" title="constructor">step_TLoad</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="read_value:3" class="idref" href="#read_value:3"><span class="id" title="binder">read_value</span></a> <a id="key:4" class="idref" href="#key:4"><span class="id" title="binder">key</span></a> (<a id="s:5" class="idref" href="#s:5"><span class="id" title="binder">s</span></a>:<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>) <a id="__:6" class="idref" href="#__:6"><span class="id" title="binder">__</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="fqa_storage:7" class="idref" href="#fqa_storage:7"><span class="id" title="binder">fqa_storage</span></a> := <a class="idref" href="EraVM.memory.Depot.html#mk_fqa_key"><span class="id" title="constructor">mk_fqa_key</span></a> (<a class="idref" href="EraVM.sem.SemanticCommon.html#current_storage_fqa"><span class="id" title="definition">current_storage_fqa</span></a> (<a class="idref" href="EraVM.State.html#gs_callstack"><span class="id" title="projection">gs_callstack</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#s:5"><span class="id" title="variable">s</span></a>)) <a class="idref" href="EraVM.sem.TransientLoad.html#key:4"><span class="id" title="variable">key</span></a> <span class="id" title="tactic">in</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.memory.Depot.html#storage_read"><span class="id" title="inductive">storage_read</span></a> (<a class="idref" href="EraVM.State.html#gs_revertable"><span class="id" title="projection">gs_revertable</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#s:5"><span class="id" title="variable">s</span></a>).(<a class="idref" href="EraVM.State.html#gs_depot"><span class="id" title="projection">gs_depot</span></a>) <a class="idref" href="EraVM.sem.TransientLoad.html#fqa_storage:7"><span class="id" title="variable">fqa_storage</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#read_value:3"><span class="id" title="variable">read_value</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.TransientLoad.html#step_tload:1"><span class="id" title="inductive">step_tload</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpSLoad"><span class="id" title="constructor">OpSLoad</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#mk_pv"><span class="id" title="constructor">mk_pv</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#__:6"><span class="id" title="variable">__</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#key:4"><span class="id" title="variable">key</span></a>)(<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#read_value:3"><span class="id" title="variable">read_value</span></a>)) <a class="idref" href="EraVM.sem.TransientLoad.html#s:5"><span class="id" title="variable">s</span></a> <a class="idref" href="EraVM.sem.TransientLoad.html#s:5"><span class="id" title="variable">s</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.TransientLoad.html#TransientLoadDefinition"><span class="id" title="section">TransientLoadDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

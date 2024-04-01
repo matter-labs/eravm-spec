@@ -109,11 +109,11 @@ add stack=[r1+42], r0, r3</code></pre></li>
 <li><p>Stack page, relative to GPR and SP (in/out)</p>
 <p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th <span
 class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
-class="id" title="definition">word</span></a></span> on the stack page
-as a source:</p>
+class="id" title="definition">word</span></a></span> relative to SP on
+the stack page as a source:</p>
 <pre><code>add stack-[r1+42], r0, r3</code></pre>
 <p>Note, that the following form is forbidden:</p>
-<pre><code>add stack-[r1+42], r0, r3</code></pre></li>
+<pre><code>add stack+[r1+42], r0, r3</code></pre></li>
 <li><p>Stack page, relative to GPR and SP, with decreasing SP (in)</p>
 <p><em>Concrete syntax example</em>. Use <code>SP-(r1+42)</code>-th
 <span
@@ -288,11 +288,11 @@ of offset does not change depending on read/write.</p></li>
 <li><p><em>Concrete syntax example</em>. Use <code>(r1+42)</code>-th
 <span
 class="inlinecode"><a class="idref" href="EraVM.Core.html#word"><span
-class="id" title="definition">word</span></a></span> on the stack page
-as a source:</p>
+class="id" title="definition">word</span></a></span> relative to SP on
+the stack page as a source:</p>
 <pre><code>add stack-[r1+42], r0, r3</code></pre>
 <p>Note, that the following form is forbidden:</p>
-<pre><code>add stack[r1+42], r0, r3</code></pre></li>
+<pre><code>add stack+[r1+42], r0, r3</code></pre></li>
 </ul></li>
 </ol>
 </div>

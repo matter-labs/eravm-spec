@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>EraVM.sem.StaticReadInc</title>
+
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library EraVM.sem.StaticReadInc</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="library">SemanticCommon</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="library">MemoryManagement</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="EraVM.Arith.html#"><span class="id" title="module">Arith</span></a> <a class="idref" href="EraVM.MemoryOps.html#"><span class="id" title="module">MemoryOps</span></a> <a class="idref" href="EraVM.MemoryManagement.html#"><span class="id" title="module">MemoryManagement</span></a> <a class="idref" href="EraVM.isa.CoreSet.html#"><span class="id" title="module">isa.CoreSet</span></a> <a class="idref" href="EraVM.Pointer.html#"><span class="id" title="module">Pointer</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#"><span class="id" title="module">SemanticCommon</span></a> <a class="idref" href="EraVM.PrimitiveValue.html#"><span class="id" title="module">PrimitiveValue</span></a> <a class="idref" href="EraVM.State.html#"><span class="id" title="module">State</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="StaticReadIncDefinition" class="idref" href="#StaticReadIncDefinition"><span class="id" title="section">StaticReadIncDefinition</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ZMod_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Generalizable Variables</span> <span class="id" title="var">cs</span> <span class="id" title="var">flags</span> <span class="id" title="var">regs</span> <span class="id" title="var">mem</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_static_read_inc" class="idref" href="#step_static_read_inc"><span class="id" title="inductive">step_static_read_inc</span></a> : <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#tsmallstep"><span class="id" title="definition">tsmallstep</span></a> :=<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc"><h1 id="opstaticreadinc">OpStaticReadInc</h1>
+<h2 id="abstract-syntax">Abstract Syntax</h2>
+<p><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_regimm"><span
+class="id" title="inductive">in_regimm</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out1</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span> <span
+class="inlinecode">(<span class="id" title="var">out2</span>:</span>
+<span
+class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
+class="id" title="definition">out_reg</span></a>)</span></p>
+<h2 id="syntax">Syntax</h2>
+<p><code>ldsti in1, out1, out2</code></p>
+<h2 id="summary">Summary</h2>
+<p>Decode the value of <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#heap_ptr"><span
+class="id" title="record">heap_ptr</span></a></span> type from
+<code>in1</code>, load 32 consecutive bytes from static memory page.</p>
+<p>Additionally, increment this pointer by 32 and write it to
+<code>out2</code>.</p>
+<ul>
+<li>Requires <span
+class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
+class="id" title="section">KernelMode</span></a></span></li>
+</ul>
+<h2 id="semantic">Semantic</h2>
+<p>TODO</p>
+<h2 id="affected-parts-of-the-state">Affected parts of the state</h2>
+<ul>
+<li>GPRs, because <code>out</code> resolves to a register.</li>
+<li>Execution stack:
+<ul>
+<li>PC, as by any instruction</li>
+</ul></li>
+<li>static memory page</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<h2 id="related-instructions">Related instructions</h2>
+<ul>
+<li>Only <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span> and <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span> are
+capable of reading data from the static memory page.</li>
+<li></li>
+<li>One of few instructions that accept only reg or imm operand but do
+not have full addressing mode, therefore can’t e.g. address stack. The
+full list is: {INSNS_USE_REGIMM}.</li>
+</ul>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_StaticReadInc" class="idref" href="#step_StaticReadInc"><span class="id" title="constructor">step_StaticReadInc</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="result:3" class="idref" href="#result:3"><span class="id" title="binder">result</span></a> <a id="new_regs:4" class="idref" href="#new_regs:4"><span class="id" title="binder">new_regs</span></a> <a id="selected_page:5" class="idref" href="#selected_page:5"><span class="id" title="binder">selected_page</span></a> <a id="high224:6" class="idref" href="#high224:6"><span class="id" title="binder">high224</span></a> <a id="ptr_inc:7" class="idref" href="#ptr_inc:7"><span class="id" title="binder">ptr_inc</span></a> <a id="bound:8" class="idref" href="#bound:8"><span class="id" title="binder">bound</span></a> <a id="new_cs:9" class="idref" href="#new_cs:9"><span class="id" title="binder">new_cs</span></a> <a id="addr:10" class="idref" href="#addr:10"><span class="id" title="binder">addr</span></a> <a id="ctx:11" class="idref" href="#ctx:11"><span class="id" title="binder">ctx</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="hptr:12" class="idref" href="#hptr:12"><span class="id" title="binder">hptr</span></a> := <a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#addr:10"><span class="id" title="variable">addr</span></a> <span class="id" title="tactic">in</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#addr:10"><span class="id" title="variable">addr</span></a> <a class="idref" href="EraVM.Arith.html#14c765d8614826944bc2b2afe356aa2c"><span class="id" title="notation">≤</span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#MAX_OFFSET_TO_DEREF_LOW_U32"><span class="id" title="definition">MAX_OFFSET_TO_DEREF_LOW_U32</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.MemoryOps.html#mb_load_result"><span class="id" title="inductive">mb_load_result</span></a> <a class="idref" href="EraVM.MemoryOps.html#BigEndian"><span class="id" title="constructor">BigEndian</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#selected_page:5"><span class="id" title="variable">selected_page</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#addr:10"><span class="id" title="variable">addr</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#result:3"><span class="id" title="variable">result</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#word_upper_bound"><span class="id" title="inductive">word_upper_bound</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#hptr:12"><span class="id" title="variable">hptr</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#bound:8"><span class="id" title="variable">bound</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#hp_inc"><span class="id" title="inductive">hp_inc</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#hptr:12"><span class="id" title="variable">hptr</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#ptr_inc:7"><span class="id" title="variable">ptr_inc</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#step_static_read_inc:1"><span class="id" title="inductive">step_static_read_inc</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpStaticReadInc"><span class="id" title="constructor">OpStaticReadInc</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.StaticReadInc.html#high224:6"><span class="id" title="variable">high224</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#hptr:12"><span class="id" title="variable">hptr</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#result:3"><span class="id" title="variable">result</span></a>) (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.StaticReadInc.html#high224:6"><span class="id" title="variable">high224</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#ptr_inc:7"><span class="id" title="variable">ptr_inc</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.State.html#mk_transient_state"><span class="id" title="constructor">mk_transient_state</span></a> <span class="id" title="var">flags</span> <span class="id" title="var">regs</span> <span class="id" title="var">mem</span> <span class="id" title="var">cs0</span> <a class="idref" href="EraVM.sem.StaticReadInc.html#ctx:11"><span class="id" title="variable">ctx</span></a> <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="EraVM.State.html#mk_transient_state"><span class="id" title="constructor">mk_transient_state</span></a> <span class="id" title="var">flags</span> <a class="idref" href="EraVM.sem.StaticReadInc.html#new_regs:4"><span class="id" title="variable">new_regs</span></a> <span class="id" title="var">mem</span> <a class="idref" href="EraVM.sem.StaticReadInc.html#new_cs:9"><span class="id" title="variable">new_cs</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#ctx:11"><span class="id" title="variable">ctx</span></a> <a class="idref" href="EraVM.VMPanic.html#NoPanic"><span class="id" title="constructor">NoPanic</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><h2 id="panics">Panics</h2>
+<ol type="1">
+<li>Accessing an address greater than <span
+class="inlinecode"><a class="idref" href="EraVM.sem.SemanticCommon.html#MAX_OFFSET_TO_DEREF_LOW_U32"><span
+class="id"
+title="definition">MAX_OFFSET_TO_DEREF_LOW_U32</span></a></span>.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_StaticRead_offset_too_large" class="idref" href="#step_StaticRead_offset_too_large"><span class="id" title="constructor">step_StaticRead_offset_too_large</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="___:17" class="idref" href="#___:17"><span class="id" title="binder">___</span></a> <a id="____:18" class="idref" href="#____:18"><span class="id" title="binder">____</span></a> <a id="addr:19" class="idref" href="#addr:19"><span class="id" title="binder">addr</span></a> <a id="s1:20" class="idref" href="#s1:20"><span class="id" title="binder">s1</span></a> <a id="s2:21" class="idref" href="#s2:21"><span class="id" title="binder">s2</span></a> <a id="high224:22" class="idref" href="#high224:22"><span class="id" title="binder">high224</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#addr:19"><span class="id" title="variable">addr</span></a> <a class="idref" href="EraVM.Arith.html#::ZMod_scope:x_'>'_x"><span class="id" title="notation">></span></a> <a class="idref" href="EraVM.sem.SemanticCommon.html#MAX_OFFSET_TO_DEREF_LOW_U32"><span class="id" title="definition">MAX_OFFSET_TO_DEREF_LOW_U32</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#HeapPtrOffsetTooLarge"><span class="id" title="constructor">HeapPtrOffsetTooLarge</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:20"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:21"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#step_static_read_inc:1"><span class="id" title="inductive">step_static_read_inc</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpStaticReadInc"><span class="id" title="constructor">OpStaticReadInc</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.StaticReadInc.html#high224:22"><span class="id" title="variable">high224</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.Pointer.html#mk_hptr"><span class="id" title="constructor">mk_hptr</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#addr:19"><span class="id" title="variable">addr</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)) <a class="idref" href="EraVM.sem.StaticReadInc.html#___:17"><span class="id" title="variable">___</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#____:18"><span class="id" title="variable">____</span></a>) <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:20"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:21"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ol start="2" type="1">
+<li>Passed <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#fat_ptr"><span
+class="id" title="record">fat_ptr</span></a></span> instead of <span
+class="inlinecode"><a class="idref" href="EraVM.Pointer.html#heap_ptr"><span
+class="id" title="record">heap_ptr</span></a></span>.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_StaticRead_expects_intvalue" class="idref" href="#step_StaticRead_expects_intvalue"><span class="id" title="constructor">step_StaticRead_expects_intvalue</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="s1:23" class="idref" href="#s1:23"><span class="id" title="binder">s1</span></a> <a id="s2:24" class="idref" href="#s2:24"><span class="id" title="binder">s2</span></a> <a id="___:25" class="idref" href="#___:25"><span class="id" title="binder">___</span></a> <a id="____:26" class="idref" href="#____:26"><span class="id" title="binder">____</span></a> <a id="_____:27" class="idref" href="#_____:27"><span class="id" title="binder">_____</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#ExpectedHeapPointer"><span class="id" title="constructor">ExpectedHeapPointer</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:23"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:24"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#step_static_read_inc:1"><span class="id" title="inductive">step_static_read_inc</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpStaticReadInc"><span class="id" title="constructor">OpStaticReadInc</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#PtrValue"><span class="id" title="abbreviation">PtrValue</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#___:25"><span class="id" title="variable">___</span></a>)) <a class="idref" href="EraVM.sem.StaticReadInc.html#____:26"><span class="id" title="variable">____</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#_____:27"><span class="id" title="variable">_____</span></a>) <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:23"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:24"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><ol start="3" type="1">
+<li>Incremented pointer overflows.</li>
+</ol>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;| <a id="step_StaticReadInc_inc_overflow" class="idref" href="#step_StaticReadInc_inc_overflow"><span class="id" title="constructor">step_StaticReadInc_inc_overflow</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="s1:28" class="idref" href="#s1:28"><span class="id" title="binder">s1</span></a> <a id="s2:29" class="idref" href="#s2:29"><span class="id" title="binder">s2</span></a>:<a class="idref" href="EraVM.State.html#state"><span class="id" title="record">state</span></a>) <a id="result:30" class="idref" href="#result:30"><span class="id" title="binder">result</span></a> <a id="hptr:31" class="idref" href="#hptr:31"><span class="id" title="binder">hptr</span></a> <a id="___:32" class="idref" href="#___:32"><span class="id" title="binder">___</span></a> <a id="high224:33" class="idref" href="#high224:33"><span class="id" title="binder">high224</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.Pointer.html#hp_inc_OF"><span class="id" title="definition">hp_inc_OF</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#hptr:31"><span class="id" title="variable">hptr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StepPanic.html#step_panic"><span class="id" title="inductive">step_panic</span></a> <a class="idref" href="EraVM.VMPanic.html#HeapPtrIncOverflow"><span class="id" title="constructor">HeapPtrIncOverflow</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:28"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:29"><span class="id" title="variable">s2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="EraVM.sem.StaticReadInc.html#step_static_read_inc:1"><span class="id" title="inductive">step_static_read_inc</span></a> (<a class="idref" href="EraVM.isa.CoreSet.html#OpStaticReadInc"><span class="id" title="constructor">OpStaticReadInc</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="EraVM.sem.StaticReadInc.html#high224:33"><span class="id" title="variable">high224</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#hptr:31"><span class="id" title="variable">hptr</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)) (<a class="idref" href="EraVM.PrimitiveValue.html#IntValue"><span class="id" title="abbreviation">IntValue</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#result:30"><span class="id" title="variable">result</span></a>) <a class="idref" href="EraVM.sem.StaticReadInc.html#___:32"><span class="id" title="variable">___</span></a>) <a class="idref" href="EraVM.sem.StaticReadInc.html#s1:28"><span class="id" title="variable">s1</span></a> <a class="idref" href="EraVM.sem.StaticReadInc.html#s2:29"><span class="id" title="variable">s2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc"><p>Working with static memory page never leads to memory growth.</p>
+</div>
+<div class="code">
+<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="EraVM.sem.StaticReadInc.html#StaticReadIncDefinition"><span class="id" title="section">StaticReadIncDefinition</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

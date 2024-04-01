@@ -85,8 +85,13 @@ class="inlinecode"><a class="idref" href="EraVM.State.html#global_state"><span
 class="id" title="record">global_state</span></a></span> contains:</li>
 </ol>
 <ul>
-<li><p>current price of publishing one byte of <strong>pubdata</strong>
-to L1 <span
+<li><p>before 1.5: current price of publishing one byte of
+<strong>pubdata</strong> to L1 <span
+class="inlinecode"><a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span
+class="id"
+title="projection">gs_current_ergs_per_pubdata_byte</span></a></span>.</p></li>
+<li><p>since 1.5: of publishing one byte of <strong>pubdata</strong> to
+L1 <span
 class="inlinecode"><a class="idref" href="EraVM.State.html#gs_current_ergs_per_pubdata_byte"><span
 class="id"
 title="projection">gs_current_ergs_per_pubdata_byte</span></a></span>.</p></li>
@@ -237,9 +242,8 @@ moment of a far call.</p>
 class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
 class="id" title="projection">gs_context_u128</span></a></span> to <span
 class="math inline">C</span> by executing the instruction <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetContextU128"><span
-class="id"
-title="constructor">OpContextSetContextU128</span></a></span>.</li>
+class="inlinecode"><span class="id"
+title="var">OpContextSetContextU128</span></span>.</li>
 <li>Launch a contract using one of the far call instructions. This
 action pushes a new <span
 class="inlinecode"><a class="idref" href="EraVM.CallStack.html#callstack_external"><span
@@ -256,17 +260,16 @@ class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><spa
 class="id" title="projection">gs_context_u128</span></a></span> to
 0.</li>
 <li>Retrieve the context value by executing the instruction <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextGetContextU128"><span
-class="id" title="constructor">OpContextGetContextU128</span></a></span>
-to use it.</li>
+class="inlinecode"><span class="id"
+title="var">OpContextGetContextU128</span></span> to use it.</li>
 <li>On contract code completion, the <span
 class="inlinecode"><a class="idref" href="EraVM.State.html#gs_context_u128"><span
 class="id" title="projection">gs_context_u128</span></a></span> is reset
 to zero by either <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRet"><span
-class="id" title="constructor">OpFarRet</span></a></span>, <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpFarRevert"><span
-class="id" title="constructor">OpFarRevert</span></a></span>, or <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRet"><span
+class="id" title="constructor">OpRet</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
+class="id" title="constructor">OpRevert</span></a></span>, or <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
 class="id" title="constructor">OpPanic</span></a></span>.</li>
 </ol>

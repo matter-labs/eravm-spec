@@ -223,10 +223,8 @@ title="definition">KERNEL_MODE_MAXADDR_LIMIT</span></a></span> contracts
 are marked as <strong>system contracts</strong>. EraVM executes them in
 kernel mode, allowing an access to a richer instruction set, containing
 instructions potentially harmful to the global state e.g. <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
-class="id"
-title="constructor">OpContextIncrementTxNumber</span></a></span>. See
-<span
+class="inlinecode"><span class="id"
+title="var">OpContextIncrementTxNumber</span></span>. See <span
 class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
 class="id" title="section">KernelMode</span></a></span>.</p>
 <ol start="2" type="1">
@@ -292,14 +290,14 @@ most recent snapshot, skipping this transaction.</p>
 ways of invoking it.</p></li>
 <li><p>Revert is triggered by the contract code explicitly by executing
 <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
 class="id" title="constructor">OpRevert</span></a></span>. EraVM saves
 its persistent state to <span
 class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span
 class="id" title="record">state_checkpoint</span></a></span> on every
 near or far call. If the contract code identifies a recoverable error,
 it may execute <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
 class="id" title="constructor">OpRevert</span></a></span>. Then EraVM
 rolls the storage and event queues back to the last <span
 class="inlinecode"><a class="idref" href="EraVM.State.html#state_checkpoint"><span

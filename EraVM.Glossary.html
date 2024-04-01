@@ -136,41 +136,26 @@ class="id" title="definition">const_page</span></a></span>.</li>
 <li><strong>Context instructions</strong> – instructions implemented as
 variants of <code>context</code> machine instruction:
 <ul>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextCaller"><span
-class="id" title="constructor">OpContextCaller</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextCodeAddress"><span
-class="id"
-title="constructor">OpContextCodeAddress</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextErgsLeft"><span
-class="id" title="constructor">OpContextErgsLeft</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextGetContextU128"><span
-class="id"
-title="constructor">OpContextGetContextU128</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
-class="id"
-title="constructor">OpContextIncrementTxNumber</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextMeta"><span
-class="id" title="constructor">OpContextMeta</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetContextU128"><span
-class="id"
-title="constructor">OpContextSetContextU128</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSetErgsPerPubdataByte"><span
-class="id"
-title="constructor">OpContextSetErgsPerPubdataByte</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextSp"><span
-class="id" title="constructor">OpContextSp</span></a></span></li>
-<li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextThis"><span
-class="id" title="constructor">OpContextThis</span></a></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextCaller</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextCodeAddress</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextErgsLeft</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextGetContextU128</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextIncrementTxNumber</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextMeta</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextSetContextU128</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextSetErgsPerPubdataByte</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextSp</span></span></li>
+<li><span class="inlinecode"><span class="id"
+title="var">OpContextThis</span></span></li>
 </ul></li>
 <li><strong>Running instance of a contract, or a function</strong> – a
 set of memory pages, call stack frames, and other resources associated
@@ -384,10 +369,8 @@ title="var">instruction_predicated</span></span>.</li>
 <li><strong>Kernel mode</strong> – a mode of execution for system
 contracts opening access to full instruction set, containing
 instructions potentially harmful to the global state e.g. <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpContextIncrementTxNumber"><span
-class="id"
-title="constructor">OpContextIncrementTxNumber</span></a></span>. See
-<span
+class="inlinecode"><span class="id"
+title="var">OpContextIncrementTxNumber</span></span>. See <span
 class="inlinecode"><a class="idref" href="EraVM.KernelMode.html#KernelMode"><span
 class="id" title="section">KernelMode</span></a></span>.</li>
 <li><strong>Key</strong> – a 256-bit address of a cell in storage.</li>
@@ -399,7 +382,7 @@ executing <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
 class="id" title="constructor">OpPanic</span></a></span>.</li>
 <li><strong>Revert</strong> – execution of <span
-class="inlinecode"><a class="idref" href="EraVM.isa.GeneratedMachISA.html#OpRevert"><span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
 class="id" title="constructor">OpRevert</span></a></span>, usually as a
 consequence of recoverable error.</li>
 <li><strong>Malformed transaction</strong> – a transaction rejected by
