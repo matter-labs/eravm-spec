@@ -75,7 +75,11 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <p><code>ret in1</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.ok</code> aliased as <code>ret</code></p>
+<ul>
+<li><code>ret in1</code></li>
+<li><code>ret</code> is an alias for <code>ret r1``ret.ok in1</code>
+aliased as <code>ret in1</code></li>
+</ul>
 <h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>near</strong> call. Will pop up
 current callframe, give back unspent ergs and continue execution from

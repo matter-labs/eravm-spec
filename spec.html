@@ -12252,7 +12252,11 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <p><code>ret in1</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.ok</code> aliased as <code>ret</code></p>
+<ul>
+<li><code>ret in1</code></li>
+<li><code>ret</code> is an alias for <code>ret r1``ret.ok in1</code>
+aliased as <code>ret in1</code></li>
+</ul>
 <h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>near</strong> call. Will pop up
 current callframe, give back unspent ergs and continue execution from
@@ -12383,7 +12387,8 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <p><code>rev in1</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.revert</code> aliased as <code>revert</code></p>
+<p><code>revert</code> is an alias for
+<code>revert r1``ret.revert in1</code></p>
 <h2 id="summary">Summary</h2>
 <p>An erroneous return from a <strong>near</strong> call, executes an
 exception handler. Will revert all changes in <span
@@ -14187,6 +14192,12 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 <li><p><code>ret</code>, an alias to <code>ret r1</code>. Argument is
 ignored for near returns.</p></li>
 </ul>
+<h2 id="legacy-syntax">Legacy syntax</h2>
+<ul>
+<li><code>ret in1</code></li>
+<li><code>ret</code> is an alias for <code>ret r1``ret.ok in1</code>
+aliased as <code>ret in1</code></li>
+</ul>
 <h2 id="summary">Summary</h2>
 <p>A normal return from a <strong>far</strong> call. Will pop up current
 callframe, return unspent ergs to the caller, and continue execution
@@ -14613,7 +14624,8 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 ignored for near reverts.</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.revert in1</code></p>
+<p><code>revert</code> is an alias for
+<code>revert r1``ret.revert in1</code></p>
 <h2 id="summary">Summary</h2>
 <p>An abnormal return from a far call. Will pop up current callframe,
 give back unspent ergs and execute a currently active exception handler.

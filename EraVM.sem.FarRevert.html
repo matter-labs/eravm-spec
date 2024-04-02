@@ -120,7 +120,8 @@ class="id" title="definition">in_reg</span></a>)</span></p>
 ignored for near reverts.</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>ret.revert in1</code></p>
+<p><code>revert</code> is an alias for
+<code>revert r1``ret.revert in1</code></p>
 <h2 id="summary">Summary</h2>
 <p>An abnormal return from a far call. Will pop up current callframe,
 give back unspent ergs and execute a currently active exception handler.
