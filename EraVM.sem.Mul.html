@@ -79,10 +79,6 @@ class="inlinecode">(<span class="id" title="var">out2</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#out_reg"><span
 class="id" title="definition">out_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">swap</span>:</span>
-<span
-class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
-class="id" title="inductive">mod_swap</span></a>)</span> <span
 class="inlinecode">(<span class="id" title="var">sf</span>:</span> <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
 class="id" title="inductive">mod_set_flags</span></a>)</span></p>
@@ -93,27 +89,12 @@ class="id" title="inductive">mod_set_flags</span></a>)</span></p>
 class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
 class="id" title="inductive">mod_set_flags</span></a></span>
 modifier</p></li>
-<li><p><code>mul.s in1, in2, out1, out2</code> to set <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
-class="id" title="inductive">mod_swap</span></a></span>
-modifier</p></li>
-<li><p><code>mul.s! in1, in2, out1, out2</code> to set both <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_set_flags"><span
-class="id" title="inductive">mod_set_flags</span></a></span> and <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
-class="id" title="inductive">mod_swap</span></a></span>
-modifier</p></li>
 </ul>
 <h2 id="summary">Summary</h2>
 <p>Unsigned multiplication of two numbers modulo <span
 class="math inline">2^{512}</span>; the high and low 256 bits of the
 result are returned in two separate operands.</p>
 <h2 id="semantic">Semantic</h2>
-<p><strong>Note</strong>: In the following description the operands are
-bound after taking <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Modifiers.html#mod_swap"><span
-class="id" title="inductive">mod_swap</span></a></span> modifier into
-account.</p>
 <ol type="1">
 <li><p>Compute result by unsigned multiplication of <code>in1</code> by
 <code>in2</code>.</p>
