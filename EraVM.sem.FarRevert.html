@@ -115,13 +115,15 @@ class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><p><code>revert in1</code></p></li>
+<li><p><code>rev in1</code></p></li>
 <li><p><code>rev</code>, an alias to <code>rev r1</code>. Argument is
 ignored for near reverts.</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
-<p><code>revert</code> is an alias for
-<code>revert r1``ret.revert in1</code></p>
+<ul>
+<li><code>revert</code> is an alias for <code>revert r1</code></li>
+<li><code>ret.revert in1</code></li>
+</ul>
 <h2 id="summary">Summary</h2>
 <p>An abnormal return from a far call. Will pop up current callframe,
 give back unspent ergs and execute a currently active exception handler.
