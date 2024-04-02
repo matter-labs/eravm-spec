@@ -11,7 +11,8 @@ Section AndDefinition.
 (** {{{!
 describe(descr_ins_generic_bitwise(
 abstract_name = "OpAnd",
-mnemonic = "and"
+mnemonic = "and",
+commutes=True
 ))
 }}}
    *)

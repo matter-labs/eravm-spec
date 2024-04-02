@@ -14,7 +14,7 @@ Section MulDefinition.
 (** {{{!
 describe(InstructionDoc(
 
-ins=ins_arith("OpMul", "mul", hasOut2 = True),
+ins=ins_arith("OpMul", "mul", hasOut2 = True, commutes=True),
 
 summary = """
 Unsigned multiplication of two numbers modulo $2^{512}$; the high and low 256

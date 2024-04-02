@@ -12,7 +12,7 @@ Section AddDefinition.
   (** {{{!
 describe(InstructionDoc(
 
-ins=ins_arith("OpAdd", "add"),
+ins=ins_arith("OpAdd", "add", commutes = True),
 
 summary = """
 Unsigned overflowing addition of two numbers modulo $2^{256}$.

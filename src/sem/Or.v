@@ -11,7 +11,8 @@ Section OrDefinition.
 (** {{{!
 describe(descr_ins_generic_bitwise(
 abstract_name = "OpOr",
-mnemonic = "or"
+mnemonic = "or",
+commutes=True
 ))
 }}}
    *)

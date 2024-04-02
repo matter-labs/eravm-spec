@@ -11,7 +11,8 @@ Section XorDefinition.
     (** {{{!
 describe(descr_ins_generic_bitwise(
 abstract_name = "OpXor",
-mnemonic = "xor"
+mnemonic = "xor",
+commutes=True
 ))
 }}}
    *)

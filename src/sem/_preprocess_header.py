@@ -43,11 +43,11 @@ semantic is different:
   selected (see [%{near_section}]).
 """
 
-def ins_arith(abstract_name: str, mnemonic:str, hasOut2 = False):
+def ins_arith(abstract_name: str, mnemonic:str, hasOut2 = False, commutes=False):
    return Instruction(
       mnemonic = mnemonic,
       abstract_name = abstract_name,
-      modifiers = [Modifier.Swap, Modifier.SetFlags],
+      modifiers = ([Modifier.Swap] if not commutes else []) + [Modifier.SetFlags],
       in1 = In.Any,
       in2 = In.Reg,
       out1 = Out.Any,
@@ -83,9 +83,9 @@ def ins_affected(ins:Instruction):
    return ins_affected_args(ins.in1, ins.out1, ins.setFlags())
 
 
-def descr_ins_generic_bitwise(abstract_name: str, mnemonic:str, summary: Optional[str] = None, semantic: Optional[str] = None, usage : Optional[str] = None):
+def descr_ins_generic_bitwise(abstract_name: str, mnemonic:str, commutes=False, summary: Optional[str] = None, semantic: Optional[str] = None, usage : Optional[str] = None):
    return InstructionDoc(
-      ins=ins_arith(abstract_name, mnemonic),
+      ins=ins_arith(abstract_name, mnemonic, commutes=commutes),
 
       summary = f"""
 Bitwise {mnemonic.upper()} of two 256-bit numbers.
