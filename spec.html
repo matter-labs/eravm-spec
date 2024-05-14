@@ -11991,10 +11991,6 @@ class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span> <span
-class="inlinecode">(<span class="id" title="var">in2</span>:</span>
-<span
-class="inlinecode"><a class="idref" href="#in_reg"><span
-class="id" title="definition">in_reg</span></a>)</span> <span
 class="inlinecode">(<span class="id" title="var">dest</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="#imm_in"><span
@@ -12005,10 +12001,8 @@ class="inlinecode"><a class="idref" href="#imm_in"><span
 class="id" title="inductive">imm_in</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><ul>
 <li><code>call abi_reg, callee_address, exception_handler</code> as a
 fully expanded form.</li>
-</ul></li>
 <li><code>call abi_reg, callee_address</code>
 <ul>
 <li>The assembler expands this variation to
@@ -14926,8 +14920,8 @@ class="inlinecode"><a class="idref" href="#OpLoadPtr"><span
 class="id" title="constructor">OpLoadPtr</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
-class="inlinecode"><a class="idref" href="#in_regimm"><span
-class="id" title="inductive">in_regimm</span></a>)</span> <span
+class="inlinecode"><a class="idref" href="#in_reg"><span
+class="id" title="definition">in_reg</span></a>)</span> <span
 class="inlinecode">(<span class="id" title="var">out1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="#out_reg"><span
@@ -14989,7 +14983,27 @@ heap variant has to be grown;</li>
 to a far call.</li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 <h2 id="related-instructions">Related instructions</h2>
 <p>See <span class="inlinecode"><span class="id"
@@ -15133,7 +15147,27 @@ to a far call.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 <h2 id="related-instructions">Related instructions</h2>
 <p>See <span class="inlinecode"><span class="id"
@@ -15235,10 +15269,10 @@ class="inlinecode"><a class="idref" href="#data_page_type"><span
 class="id" title="inductive">data_page_type</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><p><code>ldvl in1, out1</code></p></li>
-<li><p><code>ldvl.h</code> to access heap (default)</p></li>
-<li><p><code>ldvl.ah</code> to access auxheap</p></li>
-<li><p><code>ldvl.st</code> to access static memory page</p></li>
+<li><p><code>ldm in1, out1</code></p></li>
+<li><p><code>ldm.h</code> to access heap (default)</p></li>
+<li><p><code>ldm.ah</code> to access auxheap</p></li>
+<li><p><code>ldm.st</code> to access static memory page</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
@@ -15294,7 +15328,27 @@ of reading data from heap variants.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 <h2 id="related-instructions">Related instructions</h2>
 </div>
@@ -15442,10 +15496,10 @@ class="inlinecode"><a class="idref" href="#data_page_type"><span
 class="id" title="inductive">data_page_type</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><p><code>ldvli in1, out1, out2</code></p></li>
-<li><p><code>ldvli.h</code> to access heap (default)</p></li>
-<li><p><code>ldvli.ah</code> to access auxheap</p></li>
-<li><p><code>ldvli.st</code> to access static memory page</p></li>
+<li><p><code>ldmi in1, out1, out2</code></p></li>
+<li><p><code>ldmi.h</code> to access heap (default)</p></li>
+<li><p><code>ldmi.ah</code> to access auxheap</p></li>
+<li><p><code>ldmi.st</code> to access static memory page</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
@@ -15507,7 +15561,27 @@ of reading data from heap variants.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 <h2 id="related-instructions">Related instructions</h2>
 <p>See <span
@@ -15721,7 +15795,27 @@ of reading data from heap variants.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 </div>
 <div class="code">
@@ -15934,7 +16028,27 @@ of reading data from heap variants.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 </div>
 <div class="code">
@@ -16934,11 +17048,11 @@ for <code>swap</code>).</li>
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_sstore" class="idref" href="#step_sstore"><span class="id" title="inductive">step_sstore</span></a>: <a class="idref" href="#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
 &nbsp;&nbsp;</div>
 
-<div class="doc"><h1 id="optransientstore">OpTransientStore</h1>
+<div class="doc"><h1 id="opsstore">OpSStore</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> <span
+class="inlinecode"><a class="idref" href="#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="#in_reg"><span
@@ -16948,7 +17062,7 @@ class="inlinecode">(<span class="id" title="var">in2</span>:</span>
 class="inlinecode"><a class="idref" href="#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<p><code>stt in1, in2</code></p>
+<p><code>sts in1, in2</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
 <p><code>log.swrite in1, in2</code> aliased as
 <code>sstore in1, in2</code></p>
@@ -16974,18 +17088,17 @@ active external frame.</li>
 <h2 id="usage">Usage</h2>
 <ul>
 <li>Only <span
-class="inlinecode"><a class="idref" href="#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> is
-capable to write data to storage.</li>
+class="inlinecode"><a class="idref" href="#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> is capable to
+write data to storage.</li>
 <li><span
-class="inlinecode"><a class="idref" href="#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> is
-rolled back if the current frame ended by <span
+class="inlinecode"><a class="idref" href="#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> is rolled back
+if the current frame ended by <span
 class="inlinecode"><a class="idref" href="#OpPanic"><span
 class="id" title="constructor">OpPanic</span></a></span> or <span
 class="inlinecode"><a class="idref" href="#OpRevert"><span
 class="id" title="constructor">OpRevert</span></a></span>.</li>
-<li>Transient storage is reset after the transaction ends.</li>
 </ul>
 </div>
 <div class="code">
@@ -17115,7 +17228,7 @@ active external frame.</p></li>
 <li>Only <span
 class="inlinecode"><a class="idref" href="#OpSLoad"><span
 class="id" title="constructor">OpSLoad</span></a></span> is capable of
-reading data from transient storage.</li>
+reading data from storage.</li>
 </ul>
 </div>
 <div class="code">
@@ -17621,11 +17734,13 @@ first in a chain of events.</li>
 &nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">ssreflect.tuple</span> <span class="id" title="module">ssreflect.eqtype</span>.<br/>
 </div>
 
-<div class="doc"><h1 id="opprecompile">OpPrecompile</h1>
+<div class="doc"><h1 id="opprecompilecall">OpPrecompileCall</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
-<p><span class="inlinecode"><span class="id"
-title="var">OpPrecompile</span></span> <span class="inlinecode">(<span
-class="id" title="var">in1</span>:</span> <span
+<p><span
+class="inlinecode"><a class="idref" href="#OpPrecompileCall"><span
+class="id" title="constructor">OpPrecompileCall</span></a></span> <span
+class="inlinecode">(<span class="id" title="var">in1</span>:</span>
+<span
 class="inlinecode"><a class="idref" href="#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span> <span
 class="inlinecode">(<span class="id" title="var">in2</span>:</span>

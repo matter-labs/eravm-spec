@@ -57,11 +57,11 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="step_sstore" class="idref" href="#step_sstore"><span class="id" title="inductive">step_sstore</span></a>: <a class="idref" href="EraVM.isa.CoreSet.html#instruction"><span class="id" title="inductive">instruction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.18+alpha/stdlib//Coq.Init.Logic.html#::type_scope:x_'->'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="EraVM.Steps.html#smallstep"><span class="id" title="definition">smallstep</span></a> :=<br/>
 &nbsp;&nbsp;</div>
 
-<div class="doc"><h1 id="optransientstore">OpTransientStore</h1>
+<div class="doc"><h1 id="opsstore">OpSStore</h1>
 <h2 id="abstract-syntax">Abstract Syntax</h2>
 <p><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> <span
 class="inlinecode">(<span class="id" title="var">in1</span>:</span>
 <span
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
@@ -71,7 +71,7 @@ class="inlinecode">(<span class="id" title="var">in2</span>:</span>
 class="inlinecode"><a class="idref" href="EraVM.Addressing.html#in_reg"><span
 class="id" title="definition">in_reg</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
-<p><code>stt in1, in2</code></p>
+<p><code>sts in1, in2</code></p>
 <h2 id="legacy-syntax">Legacy syntax</h2>
 <p><code>log.swrite in1, in2</code> aliased as
 <code>sstore in1, in2</code></p>
@@ -97,18 +97,17 @@ active external frame.</li>
 <h2 id="usage">Usage</h2>
 <ul>
 <li>Only <span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> is
-capable to write data to storage.</li>
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> is capable to
+write data to storage.</li>
 <li><span
-class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpTransientStore"><span
-class="id" title="constructor">OpTransientStore</span></a></span> is
-rolled back if the current frame ended by <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpSStore"><span
+class="id" title="constructor">OpSStore</span></a></span> is rolled back
+if the current frame ended by <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpPanic"><span
 class="id" title="constructor">OpPanic</span></a></span> or <span
 class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpRevert"><span
 class="id" title="constructor">OpRevert</span></a></span>.</li>
-<li>Transient storage is reset after the transaction ends.</li>
 </ul>
 </div>
 <div class="code">

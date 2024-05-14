@@ -73,10 +73,10 @@ class="inlinecode"><a class="idref" href="EraVM.memory.PageTypes.html#data_page_
 class="id" title="inductive">data_page_type</span></a>)</span></p>
 <h2 id="syntax">Syntax</h2>
 <ul>
-<li><p><code>ldvl in1, out1</code></p></li>
-<li><p><code>ldvl.h</code> to access heap (default)</p></li>
-<li><p><code>ldvl.ah</code> to access auxheap</p></li>
-<li><p><code>ldvl.st</code> to access static memory page</p></li>
+<li><p><code>ldm in1, out1</code></p></li>
+<li><p><code>ldm.h</code> to access heap (default)</p></li>
+<li><p><code>ldm.ah</code> to access auxheap</p></li>
+<li><p><code>ldm.st</code> to access static memory page</p></li>
 </ul>
 <h2 id="legacy-syntax">Legacy syntax</h2>
 <ul>
@@ -132,7 +132,27 @@ of reading data from heap variants.</li>
 <li></li>
 <li>One of few instructions that accept only reg or imm operand but do
 not have full addressing mode, therefore can’t e.g. address stack. The
-full list is: {INSNS_USE_REGIMM}.</li>
+full list is: <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoad"><span
+class="id" title="constructor">OpLoad</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadInc"><span
+class="id" title="constructor">OpLoadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStore"><span
+class="id" title="constructor">OpStore</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStoreInc"><span
+class="id" title="constructor">OpStoreInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointer"><span
+class="id" title="constructor">OpLoadPointer</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpLoadPointerInc"><span
+class="id" title="constructor">OpLoadPointerInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticReadInc"><span
+class="id" title="constructor">OpStaticReadInc</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticRead"><span
+class="id" title="constructor">OpStaticRead</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticWrite"><span
+class="id" title="constructor">OpStaticWrite</span></a></span>, <span
+class="inlinecode"><a class="idref" href="EraVM.isa.Assembly.html#OpStaticWriteInc"><span
+class="id" title="constructor">OpStaticWriteInc</span></a></span>.</li>
 </ul>
 <h2 id="related-instructions">Related instructions</h2>
 </div>
