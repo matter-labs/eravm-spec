@@ -9,21 +9,22 @@ PTR_MANIPULATION = ", ".join(["[%OpPtrAdd]", "[%OpPtrSub]", "[%OpPtrShrink]", "[
 INSNS_USE_REGIMM = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc], [%OpStaticReadInc], [%OpStaticRead], [%OpStaticWrite], [%OpStaticWriteInc]"
 
 
-USES_REGIMM = r"""
+USES_REGIMM = f"""
 - One of few instructions that accept only reg or imm operand but do not have
   full addressing mode, therefore can't e.g. address stack. The full list is:
   {INSNS_USE_REGIMM}.
 """
 
-INSNS_USE_REGIMM = "[%OpLoad], [%OpLoadInc], [%OpStore], [%OpStoreInc], [%OpLoadPointer], [%OpLoadPointerInc], [%OpStaticReadInc], [%OpStaticRead], [%OpStaticWrite], [%OpStaticWriteInc]"
+RET_LEGACY= ["`ret in1`",
+"`ret` is an alias for `ret r1`",
+"`ret.ok in1` aliased as `ret in1`"
+]
 
 
-USES_REGIMM = r"""
-- One of few instructions that accept only reg or imm operand but do not have
-  full addressing mode, therefore can't e.g. address stack. The full list is:
-  {INSNS_USE_REGIMM}.
-"""
-
+REVERT_LEGACY= [
+   "`revert` is an alias for `revert r1`",
+"`ret.revert in1`"
+]
 
 def heap_var_op_syntax(ins):
    return syntax(ins) + [

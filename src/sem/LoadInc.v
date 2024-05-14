@@ -8,7 +8,7 @@ Section LoadIncDefinition.
   Generalizable Variables cs flags regs mem.
   Inductive step_load_inc : instruction -> tsmallstep :=
 (** {{{
-ins=Instruction("OpLoadInc", "ldvli", in1 = In.RegImm, out1=Out.Reg, out2=Out.Reg, modifiers = [Modifier.DataPageType])
+ins=Instruction("OpLoadInc", "ldmi", in1 = In.RegImm, out1=Out.Reg, out2=Out.Reg, modifiers = [Modifier.DataPageType])
 descr = InstructionDoc(ins=ins,
 legacy = """
 - `uma.inc.heap_read in1, out1, out2` aliased as `ld.1.inc in1, out1, out2`

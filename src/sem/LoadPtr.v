@@ -10,7 +10,7 @@ Section LoadPtrDefinition.
  (** {{{!
 describe(InstructionDoc(
 
-ins=Instruction("OpLoadPtr", "ldp", in1 = In.RegImm, out1=Out.Reg),
+ins=Instruction("OpLoadPtr", "ldp", in1 = In.Reg, out1=Out.Reg),
 legacy = """
 - `uma.fat_ptr_read in1, out` aliased as `ld in1, out`
 """,
@@ -44,7 +44,7 @@ semantic = r"""
 4. Store the word to `res`.
 """,
 
-usage = """
+usage = f"""
 - Read data from a read-only slice returned from a far call, or passed to a far call.
 - One of few instructions that accept only reg or imm operand but do not have
   full addressing mode, therefore can't e.g. address stack. The full list is: {INSNS_USE_REGIMM}.

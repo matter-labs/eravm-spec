@@ -15,7 +15,7 @@ in1 = In.Reg,
 kernelOnly = False,
 notStatic = False),
 
-legacy = "`ret.ok` aliased as `ret`",
+legacy = RET_LEGACY,
 
 preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near return', 'NearRetDefinition', 'far return', 'FarRetDefinition'),
 summary = """

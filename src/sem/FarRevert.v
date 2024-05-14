@@ -42,7 +42,7 @@ Section FarRevertDefinition.
 
   Inductive step_farrevert: instruction -> smallstep :=
   (** {{{
-ins = Instruction("OpRevert", "revert", in1 = In.Reg)
+ins = Instruction("OpRevert", "rev", in1 = In.Reg)
 descr = InstructionDoc(
 ins=ins,
 add_to_title = "(case of far revert)",
@@ -53,7 +53,7 @@ An abnormal return from a far call. Will pop up current callframe, give back
 unspent ergs and execute a currently active exception handler. The input register
 describes a slice of memory passed to the external caller.
 """,
-legacy="`ret.revert in1`",
+legacy = REVERT_LEGACY,
 semantic = r"""
 Restores storage to the state before external call.
 1. Let $E$ be the address of the [%active_exception_handler].

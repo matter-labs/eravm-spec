@@ -22,7 +22,7 @@ semantic = r"""
 2. Store the value to `dest`.
 """,
 usage = """
-- Only [%OpSLoad] is capable of reading data from transient storage.
+- Only [%OpSLoad] is capable of reading data from storage.
 """
 ))
 }}}

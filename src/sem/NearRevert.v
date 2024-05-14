@@ -10,7 +10,7 @@ Section NearRevertDefinition.
 describe(InstructionDoc(
 ins=Instruction("OpRevert", "rev", in1 = In.Reg),
 add_to_title = "(case of near revert)",
-legacy = "`ret.revert` aliased as `revert`",
+legacy = REVERT_LEGACY,
 preamble = NEAR_FAR_RET_LIKE_PREAMBLE('near revert', 'NearRevertDefinition', 'far revert', 'FarRevertDefinition'),
 
 summary = """

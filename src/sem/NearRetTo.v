@@ -9,7 +9,7 @@ Section NearRetToDefinition.
 describe(InstructionDoc(
 
 ins = Instruction("OpNearRetTo", "retl", imm1="label"),
-legacy = "`ret.ok.to_label label` ",
+legacy = "`ret.ok.to_label label`",
 summary = """
 A normal return from a **near** call. Will pop up current callframe, give back
 unspent ergs and continue execution from an explicitly provided label.

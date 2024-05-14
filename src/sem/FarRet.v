@@ -53,7 +53,7 @@ A normal return from a **far** call. Will pop up current callframe, return
 unspent ergs to the caller, and continue execution from the saved return
 address (from where the call had taken place). The register `args`
 describes a span of memory passed to the external caller. """,
-
+legacy = RET_LEGACY,
 semantic = r"""
 1. Fetch the value from register `args` and decode the value of type [%fwd_memory]:
 

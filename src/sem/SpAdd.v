@@ -13,7 +13,7 @@ ins=Instruction(abstract_name = "OpSpAdd", mnemonic = "incsp", in1 = In.Reg, in2
 
 syntax_override = ["`incsp reg+imm`", "`incsp reg`", "`incsp imm`"],
 
-legacy = r"`nop r0, r0, stack+=[reg+imm]`",
+legacy = r"`nop stack+=[reg+imm]`",
 summary = " Add `(reg + imm)` to SP.",
 
 semantic = r"""

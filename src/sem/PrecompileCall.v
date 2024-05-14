@@ -12,7 +12,7 @@ Section PrecompileCallDefinition.
 describe(InstructionDoc(
 
 ins=Instruction(
-"OpPrecompile",
+"OpPrecompileCall",
 "callp",
 in1 = In.Reg,
 in2 = In.Reg,

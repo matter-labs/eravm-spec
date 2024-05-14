@@ -8,10 +8,10 @@ Section NearCallDefinition.
   (** {{{!
 describe(InstructionDoc(
 
-ins=Instruction("OpNearCall", "call", in1 = In.Reg, in2 = In.Reg, imm1 = "dest",imm2="handler"),
+ins=Instruction("OpNearCall", "call", in1 = In.Reg, in2 = None, imm1 = "dest",imm2="handler"),
 
 syntax_override = [
-r"- `call abi_reg, callee_address, exception_handler` as a fully expanded form.",
+r"`call abi_reg, callee_address, exception_handler` as a fully expanded form.",
 
 r"""`call abi_reg, callee_address`
   + The assembler expands this variation to

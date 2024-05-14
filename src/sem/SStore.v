@@ -14,7 +14,7 @@ Section SStoreDefinition.
   (** {{{!
 describe(InstructionDoc(
 
-ins=Instruction(abstract_name  = "OpTransientStore", mnemonic = "stt", in1= In.Reg, in2 = In.Reg),
+ins=Instruction(abstract_name  = "OpSStore", mnemonic = "sts", in1= In.Reg, in2 = In.Reg),
 
 legacy=" `log.swrite in1, in2` aliased as `sstore in1, in2` ",
 
@@ -28,9 +28,8 @@ semantic = r"""
 """,
 
 usage = """
-- Only [%OpTransientStore] is capable to write data to storage.
-- [%OpTransientStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
-- Transient storage is reset after the transaction ends.
+- Only [%OpSStore] is capable to write data to storage.
+- [%OpSStore] is rolled back if the current frame ended by [%OpPanic] or [%OpRevert].
 """,
 affectedState = """
 - Depot of the current shard.

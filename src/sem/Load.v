@@ -9,7 +9,7 @@ Section LoadDefinition.
   Generalizable Variables cs flags regs mem.
   Inductive step_load: instruction -> tsmallstep :=
   (** {{{
-ins = Instruction("OpLoad", "ldvl", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType])
+ins = Instruction("OpLoad", "ldm", in1 = In.RegImm, out1=Out.Reg, modifiers = [Modifier.DataPageType])
 descr = InstructionDoc(
 ins=ins,
 legacy = """
